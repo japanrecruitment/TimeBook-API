@@ -1,44 +1,55 @@
-import { MongoDataSource } from "apollo-datasource-mongodb";
-import { ApolloError } from "apollo-server-errors";
-import { User, UserDocument, UserModel } from "src/model";
+/**
+ * WRAPPER ABOVE PRISMA
+ */
 
-class UserDS extends MongoDataSource<UserDocument> {
-    constructor() {
-        super(UserModel);
+import { PrismaClient } from "@prisma/client";
+import { DataSource } from "apollo-datasource";
+import { ApolloError } from "apollo-server-lambda";
+
+import Log from "@utils/logger";
+class UserDS extends DataSource {
+    store: PrismaClient;
+
+    context: Object;
+
+    cache: Object;
+
+    constructor(store: PrismaClient) {
+        super();
+        this.store = store;
     }
 
-    getAllUsers = async () => {
-        const users = await UserModel.find({});
+    initialize(config) {
+        this.context = config.context;
+        this.cache = config.cache;
+    }
+
+    getAllUsers = async (limit: number, after: number) => {
+        const users = await this.store.user.findMany({
+            take: limit,
+            skip: after,
+        });
         console.log("getAllUsers: ", users);
         return users || [];
     };
 
-    getUserById = async (userId: string) => {
+    getUserById = async (userId: number) => {
         if (!userId) return null;
-        const user = await this.findOneById(userId);
+        const user = await this.store.user.findUnique({
+            where: { id: userId },
+        });
         if (!user) throw new ApolloError("No such user exists");
-        console.log("getUserById: ", user.toJSON());
+        Log("getUserById: ", user);
         return user;
     };
 
-    getManyUserByIds = async (userIds: string[]) => {
+    getManyUserByIds = async (userIds: number[]) => {
         if (!userIds || userIds.length === 0) return [];
-        const users = await this.findManyByIds(userIds);
-        console.log("getManyUserByIds: ", users);
+        const users = await this.store.user.findMany({
+            where: { id: { in: userIds } },
+        });
+        Log("getManyUserByIds: ", users);
         return users;
-    };
-
-    updateProfile = async (
-        user: Required<Pick<User, "id">> & Partial<Omit<User, "id">>
-    ) => {
-        const existingUser = await this.getUserById(user.id);
-        existingUser.firstName = user.firstName ?? existingUser.firstName;
-        existingUser.lastName = user.lastName ?? existingUser.lastName;
-        existingUser.bio = user.bio ?? user.bio;
-        const updatedUser = await existingUser.save();
-        this.deleteFromCacheById(user.id);
-        console.log("updateProfile updatedUser: ", updatedUser.toJSON());
-        return updatedUser;
     };
 }
 

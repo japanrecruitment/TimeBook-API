@@ -6,3 +6,8 @@ export default {
     },
     required: ["email", "password"],
 } as const;
+
+export interface LoginResponse {
+    email: string;
+    password: string;
+}

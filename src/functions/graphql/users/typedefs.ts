@@ -1,11 +1,12 @@
 import { gql } from "apollo-server-lambda";
 
+// email: String @self @auth(requires: admin)
 export default gql`
     type User {
         id: ID!
-        firstName: String! @upperFirstLetter
-        lastName: String! @upperFirstLetter
-        email: String @self @auth(requires: admin)
+        firstName: String!
+        lastName: String!
+        email: String
     }
 
     input UserInput {
@@ -16,6 +17,7 @@ export default gql`
 
     extend type Query {
         getUserById(userId: ID!): User!
+        getAllUsers: [User]
         me: User!
     }
 

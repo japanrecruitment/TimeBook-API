@@ -18,6 +18,7 @@
         "@middy/core": "^2.0.0-alpha.3",
         "@middy/do-not-wait-for-empty-event-loop": "^2.0.0-alpha.3",
         "@middy/http-json-body-parser": "^2.0.0-alpha.3",
+        "@prisma/client": "^2.25.0",
         "apollo-datasource-rest": "^0.10.0",
         "apollo-server-cache-redis": "^1.2.3",
         "apollo-server-lambda": "^2.19.2",
@@ -48,6 +49,7 @@
         "lambda-tester": "^4.0.1",
         "mocha": "^7.1.2",
         "nyc": "^15.0.1",
+        "prisma": "2.25.0",
         "serverless": "^2.29.0",
         "serverless-domain-manager": "^5.1.0",
         "serverless-offline": "^6.8.0",
@@ -57,7 +59,7 @@
         "ts-node": "^8.9.1",
         "tsconfig-paths-webpack-plugin": "^3.3.0",
         "tslint": "^6.1.2",
-        "typescript": "^3.8.3",
+        "typescript": "^4.3.4",
         "webpack": "^5.4.0",
         "webpack-node-externals": "^2.5.2"
     }

@@ -1,13 +1,10 @@
-export type Response = {
-    statusCode: number;
-    body: string;
-};
+import { APIGatewayProxyResult } from "aws-lambda";
 
-type ResponseBody = {
+type ResponseBody<T> = {
     result: boolean;
     code?: number;
     message: string;
-    data?: object;
+    data?: T | null;
 };
 
 enum StatusCode {
@@ -20,14 +17,20 @@ enum StatusCode {
     tooManyRequests = 429,
 }
 
-class Result {
+class Result<T> {
     private result: boolean;
-    private statusCode: number;
+    private statusCode: StatusCode;
     private code: number;
     private message: string;
-    private data?: any;
+    private data?: T | null;
 
-    constructor(result: boolean, statusCode: number, code: number, message: string, data?: any) {
+    constructor(
+        result: boolean,
+        statusCode: StatusCode,
+        code: number,
+        message: string,
+        data?: T | null
+    ) {
         this.result = result;
         this.statusCode = statusCode;
         this.code = code;
@@ -38,8 +41,8 @@ class Result {
     /**
      * Serverless: According to the API Gateway specs, the body content must be stringified
      */
-    bodyToString() {
-        const responseBody: ResponseBody = {
+    bodyToString(): APIGatewayProxyResult {
+        const responseBody: ResponseBody<T> = {
             result: this.result,
             code: this.code,
             message: this.message,
@@ -62,18 +65,24 @@ class Result {
 }
 
 export class MessageUtil {
-    static success(data: object): Response {
-        const result = new Result(true, StatusCode.success, 0, "success", data);
+    static success<T>(data: T | null): APIGatewayProxyResult {
+        const result = new Result<T>(
+            true,
+            StatusCode.success,
+            0,
+            "success",
+            data
+        );
         return result.bodyToString();
     }
 
-    static error(
+    static error<T>(
         statusCode: StatusCode = StatusCode.serverError,
         code: number = 1000,
         message: string,
-        data: any = null
-    ): Response {
-        const result = new Result(false, statusCode, code, message, data);
+        data: T | null = null
+    ): APIGatewayProxyResult {
+        const result = new Result<T>(false, statusCode, code, message, data);
         return result.bodyToString();
     }
 
