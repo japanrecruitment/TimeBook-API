@@ -105,3 +105,5 @@ dist
 
 # Webpack
 .webpack/
+
+.DS_Store
