@@ -7,10 +7,12 @@ import {
 } from "./src/functions";
 // emailWorker,
 
+import resources from "./cloudformation-template";
+
 const serverlessConfiguration: AWS & { app?: string; org?: string } = {
     app: "timebook",
     org: "japanrecruitment",
-    service: "api",
+    service: "timebook-api",
     frameworkVersion: "2",
     useDotenv: true,
     provider: {
@@ -25,18 +27,16 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
         },
         vpc: {
             subnetIds: [
-                "subnet-0ceadf3708dbbe3b7",
-                "subnet-0d464c5ca21b15b59",
-                "subnet-02fb4bcb589ba9bc1",
+                { Ref: "PrivateSubnet1" },
+                { Ref: "PrivateSubnet2" },
+                { Ref: "PrivateSubnet3" },
             ],
-            securityGroupIds: ["sg-04e8b0f7f14489ba3"],
+            securityGroupIds: [{ Ref: "LambdaSecurityGroup" }],
         },
         environment: {
             NODE_ENV: "${opt:stage, 'dev'}",
             DB_URL: "${param:DB_URL}",
             TOKEN_SECRET: "${param:TOKEN_SECRET}",
-            // STRIPE_SKEY: "${param:STRIPE_SKEY}",
-            // STRIPE_WH_KEY: "${param:STRIPE_WH_KEY}",
         },
         apiGateway: {
             shouldStartNameWithService: true,
@@ -57,6 +57,7 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
         login,
         // emailWorker,
     },
+    resources,
 };
 
 module.exports = serverlessConfiguration;
