@@ -4,8 +4,8 @@ import {
     login,
     adminAuthorizer,
     userAuthorizer,
+    emailWorker,
 } from "./src/functions";
-// emailWorker,
 
 import resources from "./cloudformation-template";
 
@@ -43,6 +43,7 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
             NODE_ENV: "${opt:stage, 'dev'}",
             DB_URL: "${param:DB_URL}",
             TOKEN_SECRET: "${param:TOKEN_SECRET}",
+            EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
         },
         apiGateway: {
             shouldStartNameWithService: true,
@@ -61,7 +62,7 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
         userAuthorizer,
         graphql,
         login,
-        // emailWorker,
+        emailWorker,
     },
     resources,
 };

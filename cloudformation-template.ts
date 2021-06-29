@@ -195,6 +195,70 @@ const securityGroup: AWS["resources"]["Resources"] = {
     },
 };
 
+const elasticCache: AWS["resources"]["Resources"] = {
+    ElastiCacheSecurityGroup: {
+        Type: "AWS::EC2::SecurityGroup",
+        Properties: {
+            GroupName: "${self:service}-elasticache-security-group",
+            GroupDescription: "Allow traffic for elasticache Redis Cluster",
+            VpcId: { Ref: "VPC" },
+            SecurityGroupIngress: [
+                {
+                    IpProtocol: "tcp",
+                    FromPort: "6379",
+                    ToPort: "6379",
+                    SourceSecurityGroupId: { Ref: "LambdaSecurityGroup" },
+                },
+            ],
+            Tags: [
+                {
+                    Key: "Name",
+                    Value: "${self:service} ElastiCache Security Group",
+                },
+            ],
+        },
+    },
+    ElastiCacheSubnetGroup: {
+        Type: "AWS::ElastiCache::SubnetGroup",
+        Properties: {
+            Description: "${self:service} Elasticache Subnet Group",
+            SubnetIds: [{ Ref: "PrivateSubnet1" }, { Ref: "PrivateSubnet2" }],
+        },
+    },
+    ElastiCacheCluster: {
+        DependsOn: ["ElastiCacheSecurityGroup"],
+        Type: "AWS::ElastiCache::CacheCluster",
+        Properties: {
+            AutoMinorVersionUpgrade: true,
+            Engine: "redis",
+            CacheNodeType: "cache.t2.micro",
+            NumCacheNodes: 1,
+            VpcSecurityGroupIds: [
+                { "Fn::GetAtt": "ElastiCacheSecurityGroup.GroupId" },
+            ],
+            CacheSubnetGroupName: { Ref: "ElastiCacheSubnetGroup" },
+            Tags: [
+                { Key: "Name", Value: "${self:service} Elasticache Cluster" },
+            ],
+        },
+    },
+};
+
+const emailQueue: AWS["resources"]["Resources"] = {
+    EmailQueue: {
+        Type: "AWS::SQS::Queue",
+        Properties: {
+            QueueName: "${self:service}-${sls:stage}-queue",
+            Tags: [
+                {
+                    Key: "Name",
+                    Value: "${self:service}-${sls:stage} Email Queue",
+                },
+            ],
+        },
+    },
+};
+
 // const iamRole: AWS["resources"]["Resources"] = {
 //     IamRole: {
 //         Type: "AWS::IAM::Role",
@@ -224,11 +288,15 @@ const securityGroup: AWS["resources"]["Resources"] = {
 //     },
 // };
 
+// TODO: Create Email Queue for each stage
+
 const resources: AWS["resources"] = {
     Resources: {
         ...vpc,
         ...networking,
         ...securityGroup,
+        ...elasticCache,
+        ...emailQueue,
     },
 };
 
