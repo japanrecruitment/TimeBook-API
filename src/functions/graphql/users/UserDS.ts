@@ -6,7 +6,7 @@ import { PrismaClient } from "@prisma/client";
 import { DataSource } from "apollo-datasource";
 import { ApolloError } from "apollo-server-lambda";
 
-import Log from "@utils/logger";
+import { Log } from "@utils/index";
 class UserDS extends DataSource {
     store: PrismaClient;
 

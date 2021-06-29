@@ -64,7 +64,7 @@ class Result<T> {
     }
 }
 
-export class MessageUtil {
+export class Response {
     static success<T>(data: T | null): APIGatewayProxyResult {
         const result = new Result<T>(
             true,
