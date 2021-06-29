@@ -1,10 +1,10 @@
 import { merge } from "lodash";
 import { ApolloServer, makeExecutableSchema } from "apollo-server-lambda";
 import responseCachePlugin from "apollo-server-plugin-response-cache";
-import { environment } from "../../utils";
 import { coreResolvers, coreTypedefs } from "./core";
 import { UpperFirstLetterDirective } from "./core/directives";
 import { UserDS, userResolvers, userTypeDefs } from "./users";
+import { environment } from "@utils/index";
 import { PrismaClient } from "@prisma/client";
 
 const typeDefs = [coreTypedefs, userTypeDefs];
