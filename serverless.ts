@@ -23,7 +23,13 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
         memorySize: 512,
         timeout: 20,
         iam: {
-            role: "arn:aws:iam::753724766204:role/JRG-Lambda-Execution-Role",
+            role: {
+                managedPolicies: [
+                    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+                    "arn:aws:iam::aws:policy/AmazonSESFullAccess",
+                    "arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole",
+                ],
+            },
         },
         vpc: {
             subnetIds: [
