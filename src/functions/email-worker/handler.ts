@@ -2,9 +2,10 @@ import AWS from "aws-sdk";
 import { Handler } from "aws-lambda";
 import { verify } from "zb-email-verifier";
 import { middyfy } from "../../middlewares";
-import { IEmailData } from "../../utils";
-import { emailDeliveryStatusModel as EmailDeliveryStatus } from "../../model";
-import { renderEmail } from "../../utils/emails";
+import Log from "@utils/logger";
+// import { IEmailData } from "../../utils";
+// import { emailDeliveryStatusModel as EmailDeliveryStatus } from "../../model";
+// import { renderEmail } from "../../utils/emails";
 
 const SES = new AWS.SES({ apiVersion: "2010-12-01", region: "ap-northeast-1" });
 
@@ -15,37 +16,44 @@ const emailQueueWorker: Handler = async (event) => {
         return true;
     }
     // worker messages can be obtained from event.Records
-    const { toEmail, template, args }: IEmailData = JSON.parse(event.Records[0].body);
+    const { toEmail, template, args } = JSON.parse(event.Records[0].body);
 
     let body = "";
     let subject = "";
     try {
         // TODO:Prepare email body with template & arguments
-        switch (template) {
-            case "verificationCode":
-                body = renderEmail({ toEmail, template, args });
-                subject = `${args.code} is your email verification code`;
-                break;
-            case "forgotPassword":
-                body = renderEmail({ toEmail, template, args });
-                subject = `${args.code} is your password reset code`;
-                break;
-            default:
-            // code block
-        }
+        // switch (template) {
+        //     case "verificationCode":
+        //         body = renderEmail({ toEmail, template, args });
+        //         subject = `${args.code} is your email verification code`;
+        //         break;
+        //     case "forgotPassword":
+        //         body = renderEmail({ toEmail, template, args });
+        //         subject = `${args.code} is your password reset code`;
+        //         break;
+        //     default:
+        //     // code block
+        // }
 
-        const emailData = { toEmail, subject, body };
+        // const emailData = { toEmail, subject, body };
 
-        const previousEmailStatus = await EmailDeliveryStatus.findOne({ email: toEmail });
+        // const previousEmailStatus = await EmailDeliveryStatus.findOne({
+        //     email: toEmail,
+        // });
 
-        const isEmailVerified = await verifyEmailSMTP(toEmail, previousEmailStatus);
-        if (isEmailVerified && isEmailVerified.result) {
-            await sendEmail(emailData);
-            //add this email to db as whitelist if not previously whitelisted
-            if (!previousEmailStatus) {
-                await addEmailDeliveyStatus(toEmail, false);
-            }
-        }
+        // const isEmailVerified = await verifyEmailSMTP(
+        //     toEmail,
+        //     previousEmailStatus
+        // );
+        // if (isEmailVerified && isEmailVerified.result) {
+        //     await sendEmail(emailData);
+        //     //add this email to db as whitelist if not previously whitelisted
+        //     if (!previousEmailStatus) {
+        //         await addEmailDeliveyStatus(toEmail, false);
+        //     }
+        // }
+
+        Log(toEmail, template, args);
 
         return true;
     } catch (error) {
@@ -85,14 +93,22 @@ function verifyEmailSMTP(email: string, previousEmailStatus) {
             if (!previousEmailStatus) {
                 const checkEmailFormat = validateEmail(email);
                 if (!checkEmailFormat) {
-                    await addEmailDeliveyStatus(email, true, "Email validation failed");
+                    await addEmailDeliveyStatus(
+                        email,
+                        true,
+                        "Email validation failed"
+                    );
                     resolve({
                         result: false,
                         message: "Email validation failed",
                     });
                 } else {
                     //since we have not sent email to this user,check if it falls under certain domain
-                    if (/^[^@]+@(yahoo|ymail|rocketmail)\.(com|in|co\.uk|co\.jp)$/i.test(email)) {
+                    if (
+                        /^[^@]+@(yahoo|ymail|rocketmail)\.(com|in|co\.uk|co\.jp)$/i.test(
+                            email
+                        )
+                    ) {
                         resolve({
                             result: true,
                             message: "Email falls under certain domains",
@@ -142,27 +158,36 @@ function verifyEmailSMTP(email: string, previousEmailStatus) {
                 }
             }
         } catch (err) {
-            console.log(email, "email did not succeed SMTP test hence blacklisting.");
+            console.log(
+                email,
+                "email did not succeed SMTP test hence blacklisting."
+            );
             await addEmailDeliveyStatus(email, true, err);
             resolve({
                 result: false,
-                message: "Your email was not sent due to technical issue. Please contact support.",
+                message:
+                    "Your email was not sent due to technical issue. Please contact support.",
             });
         }
     });
 }
 
-async function addEmailDeliveyStatus(email: string, blacklist: boolean, err = null) {
-    const emailDeliveryStatus = new EmailDeliveryStatus({
-        email: email,
-        blackListed: blacklist,
-        blackListedReason: err,
-    });
-    await emailDeliveryStatus.save();
+async function addEmailDeliveyStatus(
+    email: string,
+    blacklist: boolean,
+    err = null
+) {
+    // const emailDeliveryStatus = new EmailDeliveryStatus({
+    //     email: email,
+    //     blackListed: blacklist,
+    //     blackListedReason: err,
+    // });
+    // await emailDeliveryStatus.save();
 }
 
 function validateEmail(email: string) {
-    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    var re =
+        /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());
 }
 

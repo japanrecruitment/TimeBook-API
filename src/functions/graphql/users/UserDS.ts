@@ -29,7 +29,7 @@ class UserDS extends DataSource {
             take: limit,
             skip: after,
         });
-        console.log("getAllUsers: ", users);
+        Log("getAllUsers: ", users);
         return users || [];
     };
 
