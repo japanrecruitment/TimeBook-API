@@ -1,5 +1,5 @@
 import util from "util";
-import environment from "./environment";
+import { environment } from "./environment";
 
 export const Log = (...args): void => {
     if (environment.isDev) {

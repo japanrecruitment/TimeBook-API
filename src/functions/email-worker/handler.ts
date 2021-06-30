@@ -93,22 +93,14 @@ function verifyEmailSMTP(email: string, previousEmailStatus) {
             if (!previousEmailStatus) {
                 const checkEmailFormat = validateEmail(email);
                 if (!checkEmailFormat) {
-                    await addEmailDeliveyStatus(
-                        email,
-                        true,
-                        "Email validation failed"
-                    );
+                    await addEmailDeliveyStatus(email, true, "Email validation failed");
                     resolve({
                         result: false,
                         message: "Email validation failed",
                     });
                 } else {
                     //since we have not sent email to this user,check if it falls under certain domain
-                    if (
-                        /^[^@]+@(yahoo|ymail|rocketmail)\.(com|in|co\.uk|co\.jp)$/i.test(
-                            email
-                        )
-                    ) {
+                    if (/^[^@]+@(yahoo|ymail|rocketmail)\.(com|in|co\.uk|co\.jp)$/i.test(email)) {
                         resolve({
                             result: true,
                             message: "Email falls under certain domains",
@@ -158,25 +150,17 @@ function verifyEmailSMTP(email: string, previousEmailStatus) {
                 }
             }
         } catch (err) {
-            console.log(
-                email,
-                "email did not succeed SMTP test hence blacklisting."
-            );
+            console.log(email, "email did not succeed SMTP test hence blacklisting.");
             await addEmailDeliveyStatus(email, true, err);
             resolve({
                 result: false,
-                message:
-                    "Your email was not sent due to technical issue. Please contact support.",
+                message: "Your email was not sent due to technical issue. Please contact support.",
             });
         }
     });
 }
 
-async function addEmailDeliveyStatus(
-    email: string,
-    blacklist: boolean,
-    err = null
-) {
+async function addEmailDeliveyStatus(email: string, blacklist: boolean, err = null) {
     // const emailDeliveryStatus = new EmailDeliveryStatus({
     //     email: email,
     //     blackListed: blacklist,

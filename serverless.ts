@@ -1,11 +1,5 @@
 import type { AWS } from "@serverless/typescript";
-import {
-    graphql,
-    login,
-    adminAuthorizer,
-    userAuthorizer,
-    emailWorker,
-} from "./src/functions";
+import { graphql, login, register, adminAuthorizer, userAuthorizer, emailWorker } from "./src/functions";
 
 import resources from "./cloudformation-template";
 
@@ -32,11 +26,7 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
             },
         },
         vpc: {
-            subnetIds: [
-                { Ref: "PrivateSubnet1" },
-                { Ref: "PrivateSubnet2" },
-                { Ref: "PrivateSubnet3" },
-            ],
+            subnetIds: [{ Ref: "PrivateSubnet1" }, { Ref: "PrivateSubnet2" }, { Ref: "PrivateSubnet3" }],
             securityGroupIds: [{ Ref: "LambdaSecurityGroup" }],
         },
         environment: {
@@ -64,6 +54,7 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
         userAuthorizer,
         graphql,
         login,
+        register,
         emailWorker,
     },
     resources,
