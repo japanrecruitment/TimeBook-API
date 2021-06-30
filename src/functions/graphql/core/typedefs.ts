@@ -1,14 +1,15 @@
 import { gql } from "apollo-server-lambda";
 
 export default gql`
-    # directive @upperFirstLetter on FIELD_DEFINITION
-    # directive @self on FIELD_DEFINITION
-    # directive @auth(requires: Role = ADMIN) on OBJECT | FIELD_DEFINITION
+    directive @upperFirstLetter on FIELD_DEFINITION
+    directive @self on FIELD_DEFINITION
+    directive @auth(requires: Role = admin) on OBJECT | FIELD_DEFINITION
 
     enum Role {
-        ADMIN
-        USER
-        UNKNOWN
+        user
+        host
+        admin
+        unknown
     }
 
     type Image {

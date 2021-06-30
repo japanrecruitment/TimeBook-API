@@ -15,7 +15,6 @@ class SelfDirective extends SchemaDirectiveVisitor {
             const { _id: resourceId } = resource;
 
             // if resource owner is not 'admin' && not self then return null
-            // resourceId is mongodb ObjectId object and not string hence .toString()
             if (principal.role !== "admin" && principal.id.toString() !== resourceId.toString()) {
                 return null;
             }

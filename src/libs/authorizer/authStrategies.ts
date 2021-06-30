@@ -1,6 +1,6 @@
 import { UserRole } from "./UserRole";
 
-type AuthData = { role: string | undefined };
+export type AuthData = { role: string | undefined };
 
 type AuthStrategy = (authData: AuthData) => boolean;
 
@@ -10,7 +10,7 @@ type AuthStrategies = {
 
 const adminStrategy: AuthStrategy = (authData) => {
     const { role } = authData;
-    return role !== undefined && role === UserRole.ADMIN;
+    return role !== undefined && role === "admin";
 };
 
 const userStrategy: AuthStrategy = (authData) => {
@@ -18,13 +18,22 @@ const userStrategy: AuthStrategy = (authData) => {
     if (isAdmin) return true;
 
     const { role } = authData;
-    return role !== undefined && role === UserRole.USER;
+    return role !== undefined && role === "user";
+};
+
+const hostStrategy: AuthStrategy = (authData) => {
+    const isAdmin = adminStrategy(authData);
+    if (isAdmin) return true;
+
+    const { role } = authData;
+    return role !== undefined && role === "host";
 };
 
 const unknownStrategy: AuthStrategy = () => false;
 
 export const authStrategies: AuthStrategies = {
-    admin: adminStrategy,
     user: userStrategy,
+    host: hostStrategy,
+    admin: adminStrategy,
     unknown: unknownStrategy,
 };

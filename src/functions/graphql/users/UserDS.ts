@@ -33,7 +33,7 @@ class UserDS extends DataSource {
         return users || [];
     };
 
-    getUserById = async (userId: number) => {
+    getUserById = async (userId: string) => {
         if (!userId) return null;
         const user = await this.store.user.findUnique({
             where: { id: userId },
@@ -43,7 +43,7 @@ class UserDS extends DataSource {
         return user;
     };
 
-    getManyUserByIds = async (userIds: number[]) => {
+    getManyUserByIds = async (userIds: string[]) => {
         if (!userIds || userIds.length === 0) return [];
         const users = await this.store.user.findMany({
             where: { id: { in: userIds } },
