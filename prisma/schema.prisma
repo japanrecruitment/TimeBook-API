@@ -11,15 +11,21 @@ generator client {
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
 }
 
+enum Role {
+  user
+  host
+  admin
+}
+
 model User {
   id            String    @id @default(cuid())
-  email         String    @db.VarChar(255) @unique
+  email         String    @unique @db.VarChar(255)
   password      String    @db.VarChar(255)
   firstName     String    @db.VarChar(255)
   lastName      String    @db.VarChar(255)
   firstNameKana String    @db.VarChar(255)
   lastNameKana  String    @db.VarChar(255)
-  type          String    @default("user") @db.VarChar(10)
+  type          Role      @default(user) @db.VarChar(10)
   phoneNumber   String?   @db.VarChar(10)
   dob           DateTime?
   approved      Boolean   @default(false)
