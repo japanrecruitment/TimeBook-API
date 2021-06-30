@@ -6,6 +6,7 @@ datasource db {
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
+  previewFeatures = ["referentialActions"]
 }
 
 enum Role {
@@ -37,7 +38,7 @@ model User {
 model Session {
   id        String  @id @default(cuid())
   userId    String
-  user      User    @relation(fields: [userId], references: [id])
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   revoked   Boolean @default(false)
   ip        String  @db.VarChar(15)
   userAgent String

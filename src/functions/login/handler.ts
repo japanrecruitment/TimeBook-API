@@ -19,7 +19,7 @@ const login: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event): 
         const user: User = await Store.user.findUnique({
             where: { email },
         });
-
+        Log(user);
         if (!user) {
             return Response.error(404, 3, "User not found");
         }

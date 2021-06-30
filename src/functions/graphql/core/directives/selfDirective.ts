@@ -12,7 +12,7 @@ class SelfDirective extends SchemaDirectiveVisitor {
             const resource = args[0];
 
             const { principal } = context;
-            const { _id: resourceId } = resource;
+            const { id: resourceId } = resource;
 
             // if resource owner is not 'admin' && not self then return null
             if (principal.role !== "admin" && principal.id.toString() !== resourceId.toString()) {
