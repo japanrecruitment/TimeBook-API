@@ -7,15 +7,30 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
-  binaryTargets = "rhel-openssl-1.0.x"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+enum Role {
+  user
+  host
+  admin
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @db.VarChar(255)
-  password  String   @db.VarChar(255)
-  firstName String   @db.VarChar(255)
-  lastName  String   @db.VarChar(255)
-  createdAt DateTime @default(now()) @db.Timestamp(6)
+  id            String    @id @default(cuid())
+  email         String    @unique @db.VarChar(255)
+  password      String    @db.VarChar(255)
+  firstName     String    @db.VarChar(255)
+  lastName      String    @db.VarChar(255)
+  firstNameKana String    @db.VarChar(255)
+  lastNameKana  String    @db.VarChar(255)
+  type          Role      @default(user) @db.VarChar(10)
+  phoneNumber   String?   @db.VarChar(10)
+  dob           DateTime?
+  approved      Boolean   @default(false)
+  suspended     Boolean   @default(false)
+  emailVerified Boolean   @default(false)
+  phoneVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
 }

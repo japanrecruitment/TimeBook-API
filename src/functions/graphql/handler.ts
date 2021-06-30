@@ -4,8 +4,7 @@ import responseCachePlugin from "apollo-server-plugin-response-cache";
 import { coreResolvers, coreTypedefs } from "./core";
 import { UpperFirstLetterDirective } from "./core/directives";
 import { UserDS, userResolvers, userTypeDefs } from "./users";
-import { environment } from "@utils/index";
-import { PrismaClient } from "@prisma/client";
+import { environment, Store } from "@utils/index";
 
 const typeDefs = [coreTypedefs, userTypeDefs];
 const resolvers = merge([coreResolvers, userResolvers]);
@@ -16,9 +15,6 @@ const schemaDirectives = {
 };
 
 /* tslint:disable:top-level-await */
-// const db = createStore();
-
-const store = new PrismaClient();
 
 const schema = makeExecutableSchema({
     typeDefs,
@@ -33,14 +29,12 @@ const server = new ApolloServer({
         defaultMaxAge: 300,
     },
     dataSources: () => ({
-        userDS: new UserDS(store),
+        userDS: new UserDS(Store),
     }),
     plugins: [
         responseCachePlugin({
             sessionId: (requestContext) => {
-                return (
-                    requestContext.request.http.headers.get("sessionid") || null
-                );
+                return requestContext.request.http.headers.get("sessionid") || null;
             },
         }),
     ],
