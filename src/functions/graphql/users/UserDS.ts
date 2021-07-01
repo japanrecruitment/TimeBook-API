@@ -1,29 +1,7 @@
-/**
- * WRAPPER ABOVE PRISMA
- */
-
-import { PrismaClient } from "@prisma/client";
-import { DataSource } from "apollo-datasource";
 import { ApolloError } from "apollo-server-lambda";
-
 import { Log } from "@utils/index";
-class UserDS extends DataSource {
-    store: PrismaClient;
-
-    context: Object;
-
-    cache: Object;
-
-    constructor(store: PrismaClient) {
-        super();
-        this.store = store;
-    }
-
-    initialize(config) {
-        this.context = config.context;
-        this.cache = config.cache;
-    }
-
+import PrismaDataSource from "@libs/PrismaDataSource";
+class UserDS extends PrismaDataSource {
     getAllUsers = async (limit: number, after: number) => {
         const users = await this.store.user.findMany({
             take: limit,
@@ -35,10 +13,13 @@ class UserDS extends DataSource {
 
     getUserById = async (userId: string) => {
         if (!userId) return null;
+        const cacheDoc = await this.fetchFromCache(userId);
+        if (cacheDoc) return cacheDoc;
         const user = await this.store.user.findUnique({
             where: { id: userId },
         });
         if (!user) throw new ApolloError("No such user exists");
+        // this.storeInCache(user.id, user, 100);
         Log("getUserById: ", user);
         return user;
     };

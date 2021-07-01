@@ -2,7 +2,7 @@ import { APIGatewayProxyResult } from "aws-lambda";
 
 import { ValidatedEventAPIGatewayProxyEvent } from "@libs/apiGateway";
 import { middyfy } from "@middlewares/index";
-import { Response, Log, Store, comparePassword } from "@utils/index";
+import { Response, Log, store, comparePassword } from "@utils/index";
 
 import schema, { LoginResponse } from "./schema";
 
@@ -16,7 +16,7 @@ const login: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event): 
         if (!email.trim() || !password.trim()) {
             return Response.error(400, 0, "Provide all necessary fields");
         }
-        const user: User = await Store.user.findUnique({
+        const user: User = await store.user.findUnique({
             where: { email },
         });
         Log(user);
@@ -44,7 +44,7 @@ const login: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event): 
             userAgent,
         };
         // store session and id of new sessioin
-        const { userId, id: sessionId } = await Store.session.create({ data: { userId: user.id, ...newSession } });
+        const { userId, id: sessionId } = await store.session.create({ data: { userId: user.id, ...newSession } });
 
         // ommit sensitive fields from User
         const publicUserData = publicUser(user);

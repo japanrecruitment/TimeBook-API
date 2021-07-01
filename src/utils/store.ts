@@ -1,3 +1,3 @@
 import { PrismaClient } from "@prisma/client";
 
-export const Store = new PrismaClient();
+export const store = new PrismaClient();

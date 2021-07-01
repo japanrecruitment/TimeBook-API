@@ -6,7 +6,7 @@ export default {
                 method: "post",
                 path: "graphql",
                 cors: true,
-                authorizer: { name: "userAuthorizer", resultTtlInSeconds: 0 },
+                // authorizer: { name: "userAuthorizer", resultTtlInSeconds: 0 },
             },
         },
         {
@@ -14,7 +14,7 @@ export default {
                 method: "get",
                 path: "graphql",
                 cors: true,
-                authorizer: { name: "userAuthorizer", resultTtlInSeconds: 0 },
+                // authorizer: { name: "userAuthorizer", resultTtlInSeconds: 0 },
             },
         },
     ],

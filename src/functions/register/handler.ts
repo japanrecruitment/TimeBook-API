@@ -4,7 +4,7 @@ import { APIGatewayProxyResult } from "aws-lambda";
 
 import { ValidatedEventAPIGatewayProxyEvent } from "@libs/apiGateway";
 import { middyfy } from "@middlewares/index";
-import { Response, Log, Store, encodePassword } from "@utils/index";
+import { Response, Log, store, encodePassword } from "@utils/index";
 
 import schema, { RegisterParams, RegisterResponse, RegisterError } from "./schema";
 
@@ -20,7 +20,7 @@ const login: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event): 
             firstNameKana.trim() &&
             lastNameKana.trim()
         ) {
-            const data = await Store.user.create({
+            const data = await store.user.create({
                 data: { email, password: encodePassword(password), firstName, lastName, firstNameKana, lastNameKana },
             });
 
