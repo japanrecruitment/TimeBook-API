@@ -7,6 +7,16 @@ export default {
                 path: "graphql",
                 cors: true,
                 authorizer: { name: "userAuthorizer", resultTtlInSeconds: 0 },
+                response: {
+                    statusCodes: {
+                        403: {
+                            pattern: '.*"statusCode":403,.*', // JSON Response
+                            template: {
+                                "application/json": '$input.path("$.errorMessage")',
+                            },
+                        },
+                    },
+                },
             },
         },
         {
