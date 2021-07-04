@@ -3,5 +3,5 @@ import { Handler } from "aws-lambda";
 
 export const main: Handler = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
-    return authorizer(event, "user");
+    return authorizer(event, ["user"]);
 };

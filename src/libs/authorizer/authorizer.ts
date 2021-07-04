@@ -10,9 +10,9 @@ type ApiGatewayEvent = {
     methodArn: any;
 };
 
-type Authorizer = (event: ApiGatewayEvent, requiredRole: UserRole) => ExecutionPolicy | APIGatewayProxyResult;
+type Authorizer = (event: ApiGatewayEvent, requiredRoles: UserRole[]) => ExecutionPolicy | APIGatewayProxyResult;
 
-export const authorizer: Authorizer = (event, requiredRole): ExecutionPolicy | APIGatewayProxyResult => {
+export const authorizer: Authorizer = (event, requiredRoles) => {
     try {
         // Instantiate JWT
         const jwt = new JWT();
@@ -21,8 +21,10 @@ export const authorizer: Authorizer = (event, requiredRole): ExecutionPolicy | A
         // check if verification was unsuccessful & did not throw any error
         if (!decodedData) return Response.error(Response.errorCode.unauthorized, 10000, "Unauthorized");
 
-        if (authStrategies[requiredRole](decodedData))
-            return generatePolicy(decodedData.id, "Allow", event.methodArn, decodedData);
+        for (let role of requiredRoles) {
+            if (authStrategies[role](decodedData))
+                return generatePolicy(decodedData.id, "Allow", event.methodArn, decodedData);
+        }
         return generatePolicy(null, "Deny", event.methodArn, {
             error: "unauthorized",
             action: null,

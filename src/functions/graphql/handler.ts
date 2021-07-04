@@ -1,16 +1,18 @@
 import { merge } from "lodash";
 import { ApolloServer, makeExecutableSchema } from "apollo-server-lambda";
+import { formatApolloErrors } from "apollo-server-errors";
 import { RedisClusterCache } from "apollo-server-cache-redis";
 import responseCachePlugin from "apollo-server-plugin-response-cache";
 import { environment } from "@utils/index";
 import { AuthenticatedUser } from "@libs/authorizer";
 import { coreResolvers, coreTypedefs } from "./core";
 import { AuthDirective, SelfDirective, UpperFirstLetterDirective } from "./core/directives";
-import { UserDS, userResolvers, userTypeDefs } from "./users";
+import { SessionDS, UserDS, userResolvers, userTypeDefs } from "./users";
+import GQLError from "./core/GQLError";
 
 const typeDefs = [coreTypedefs, userTypeDefs];
 
-const resolvers = merge([coreResolvers, userResolvers]);
+const resolvers = merge(coreResolvers, userResolvers);
 
 const schemaDirectives = {
     upperFirstLetter: UpperFirstLetterDirective,
@@ -59,8 +61,10 @@ const server = new ApolloServer({
     cacheControl: {
         defaultMaxAge: 300,
     },
+    formatError: GQLError.formatError,
     dataSources: () => ({
         userDS: new UserDS(),
+        sessionDS: new SessionDS(),
     }),
     plugins: [
         responseCachePlugin({
@@ -69,10 +73,11 @@ const server = new ApolloServer({
             },
         }),
     ],
-
     context: async ({ event, context }) => {
         // assign principal with new AuthenticatedUser helper class
         const principal = new AuthenticatedUser(event);
+
+        const { sourceIp, userAgent } = event.requestContext.identity;
 
         return {
             headers: event.headers,
@@ -80,6 +85,8 @@ const server = new ApolloServer({
             event,
             context,
             principal,
+            sourceIp,
+            userAgent,
         };
     },
     introspection: environment.isDev(),

@@ -4,23 +4,27 @@ import { UserRole } from "./UserRole";
 type AuthTokenPayload = {
     id: string;
     role: UserRole;
-    countryCode: string | undefined;
-    countryName: string | undefined;
 };
 
-type AuthTokenEncoder = (payload: AuthTokenPayload) => string;
+type TokenType = "refresh" | "access";
 
-type AuthTokenDecoder = (bearerToken: string | undefined) => AuthTokenPayload | undefined;
+type AuthTokenEncoder = (payload: Partial<AuthTokenPayload>, type: TokenType) => string;
 
-const encodeAuthToken: AuthTokenEncoder = (payload) => {
-    return jwt.sign(payload, process.env.TOKEN_SECRET, { expiresIn: "12h" });
+type AuthTokenDecoder = (bearerToken: string | undefined, type: TokenType) => AuthTokenPayload | undefined;
+
+const encodeAuthToken: AuthTokenEncoder = (payload, type) => {
+    const tokenSecret = type === "refresh" ? process.env.REFRESH_TOKEN_SECRET : process.env.TOKEN_SECRET;
+    const expiresIn = type === "refresh" ? "30d" : "6h";
+    const jwtid = payload.id;
+    return jwt.sign(payload, tokenSecret, { expiresIn, jwtid });
 };
 
-const decodeAuthToken: AuthTokenDecoder = (bearerToken) => {
+const decodeAuthToken: AuthTokenDecoder = (bearerToken, type) => {
     if (!bearerToken) return;
     const token = bearerToken.split(" ")[1];
     if (!token) return;
-    return jwt.verify(token, process.env.TOKEN_SECRET);
+    const tokenSecret = type === "refresh" ? process.env.REFRESH_TOKEN_SECRET : process.env.TOKEN_SECRET;
+    return jwt.verify(token, tokenSecret);
 };
 
 export { decodeAuthToken, encodeAuthToken, AuthTokenPayload };
