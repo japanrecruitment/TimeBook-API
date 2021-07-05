@@ -33,6 +33,7 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
             NODE_ENV: "${opt:stage, 'dev'}",
             DB_URL: "${param:DB_URL}",
             TOKEN_SECRET: "${param:TOKEN_SECRET}",
+            REFRESH_TOKEN_SECRET: "${param:REFRESH_TOKEN_SECRET}",
             STRIPE_PK: "${param:STRIPE_PK}",
             STRIPE_SK: "${param:STRIPE_SK}",
             EMAIL_QUEUE_URL: { Ref: "EmailQueue" },

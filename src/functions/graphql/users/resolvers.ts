@@ -5,7 +5,7 @@ export default {
     Query: {
         getUserById: async (_, { userId }, context, info) => {
             const userDS: UserDS = context.dataSources.userDS;
-            const result = await userDS.getUserById(parseInt(userId, 10));
+            const result = await userDS.getUserById(userId);
             info.cacheControl.setCacheHint({ maxAge: 60, scope: "PUBLIC" });
             return result;
         },
@@ -24,7 +24,7 @@ export default {
             // claims = returns all the claims made in authentication Token
             const principal: AuthenticatedUser = context.principal;
             const userDS: UserDS = context.dataSources.userDS;
-            const me = await userDS.getUserById(parseInt(principal.id, 10));
+            const me = await userDS.getUserById(principal.id);
             info.cacheControl.setCacheHint({ maxAge: 0, scope: "PRIVATE" });
             return me;
         },

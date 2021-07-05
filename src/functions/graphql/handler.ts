@@ -1,21 +1,24 @@
 import { merge } from "lodash";
 import { ApolloServer, makeExecutableSchema } from "apollo-server-lambda";
 import responseCachePlugin from "apollo-server-plugin-response-cache";
-import { coreResolvers, coreTypedefs } from "./core";
-import { UpperFirstLetterDirective } from "./core/directives";
-import { UserDS, userResolvers, userTypeDefs } from "./users";
+
 import { environment, Store } from "@utils/index";
+import { AuthenticatedUser } from "@libs/authorizer";
+
+import { coreResolvers, coreTypedefs } from "./core";
+import { AuthDirective, SelfDirective, UpperFirstLetterDirective } from "./core/directives";
+
+import { UserDS, userResolvers, userTypeDefs } from "./users";
 
 const typeDefs = [coreTypedefs, userTypeDefs];
 const resolvers = merge([coreResolvers, userResolvers]);
 const schemaDirectives = {
     upperFirstLetter: UpperFirstLetterDirective,
-    // self: SelfDirective,
-    // auth: AuthDirective,
+    self: SelfDirective,
+    auth: AuthDirective,
 };
 
 /* tslint:disable:top-level-await */
-
 const schema = makeExecutableSchema({
     typeDefs,
     schemaDirectives,
@@ -39,35 +42,18 @@ const server = new ApolloServer({
         }),
     ],
 
-    // context: async ({ event, context }) => {
-    //     // connect to database first
+    context: async ({ event, context }) => {
+        // assign principal with new AuthenticatedUser helper class
+        const principal = new AuthenticatedUser(event);
 
-    //     // try {
-    //     //     await dbConn();
-    //     // } catch (error) {
-    //     //     console.log(error);
-    //     //     return MessageUtil.error(
-    //     //         MessageUtil.errorCode.serverError,
-    //     //         error.code,
-    //     //         error.message
-    //     //     );
-    //     // }
-
-    //     // assign principal with new AuthenticatedUser helper class
-    //     const principal = new AuthenticatedUser(event);
-
-    //     // get locale from request header
-    //     const locale = event.headers["Locale"] || event.headers["locale"];
-
-    //     return {
-    //         headers: event.headers,
-    //         functionName: context.functionName,
-    //         event,
-    //         context,
-    //         principal,
-    //         locale,
-    //     };
-    // },
+        return {
+            headers: event.headers,
+            functionName: context.functionName,
+            event,
+            context,
+            principal,
+        };
+    },
     introspection: environment.isDev(),
     playground: environment.isDev(),
     debug: environment.isDev(),

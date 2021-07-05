@@ -1,4 +1,7 @@
-export const users = [
+import { User } from "@prisma/client";
+import { encodePassword } from "../../src/utils";
+
+export const users: Partial<User>[] = [
     {
         email: "approved.user@mail.com",
         password: "wakeup",
@@ -18,3 +21,8 @@ export const users = [
         lastNameKana: "タパ",
     },
 ];
+
+export const userProcessor = (user: Partial<User>): Partial<User> => {
+    user.password = encodePassword(user.password);
+    return user;
+};
