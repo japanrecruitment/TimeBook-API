@@ -1,5 +1,2 @@
-import { UserRole } from "@libs/authorizer";
-
-export default {
-    Role: UserRole,
-};
+const coreResolvers = {};
+export default coreResolvers;

@@ -1,12 +1,15 @@
 import { gql } from "apollo-server-lambda";
 
-// email: String @self @auth(requires: admin)
+// || @auth(requires: admin)
+
 export default gql`
     type User {
         id: ID!
         firstName: String!
         lastName: String!
-        email: String
+        firstNameKana: String!
+        lastNameKana: String!
+        email: String @self
     }
 
     input UserInput {

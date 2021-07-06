@@ -1,4 +1,5 @@
 import { AuthenticatedUser, authStrategies } from "@libs/authorizer";
+import { Log } from "@utils/logger";
 import { ApolloError } from "apollo-server-lambda";
 import { defaultFieldResolver } from "graphql";
 import { SchemaDirectiveVisitor } from "graphql-tools";
@@ -31,7 +32,7 @@ export default class AuthDirective extends SchemaDirectiveVisitor {
                 const requiredRole = field._requiredAuthRole || objectType._requiredAuthRole;
 
                 if (!requiredRole) return resolve.apply(this, args);
-                console.log(fieldName, requiredRole);
+                Log({ fieldName, requiredRole });
 
                 // Get the principal object of type AuthenticatedUser from
                 // which we can get user's role to check whether the user
@@ -49,7 +50,6 @@ export default class AuthDirective extends SchemaDirectiveVisitor {
     private async executeStrategy(role, requestData) {
         const strategyResult = await authStrategies[role.toLowerCase()](requestData);
 
-        console.log(strategyResult);
         if (!strategyResult) throw new ApolloError("Not authorized");
     }
 }
