@@ -217,6 +217,8 @@ model NearestStation {
   spaceId   String
   station   Station @relation(fields: [stationId], references: [id])
   stationId Int
+  time Int
+  via String
 
   @@id([spaceId, stationId])
 }
