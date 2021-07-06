@@ -3,8 +3,8 @@ import { environment, Log } from "../src/utils";
 
 import { users, userProcessor } from "./seeds/users";
 import { prefectures } from "./seeds/prefecture";
-import { stations } from "./seeds/trainStations";
 import { trainLines } from "./seeds/trainLines";
+import { stations, stationProcessor } from "./seeds/trainStations";
 
 const prisma = new PrismaClient();
 
@@ -13,10 +13,10 @@ const main = async () => {
     if (environment.isDev()) {
         Log("Running on dev environment");
         // Call seedTable function for each schema
-        // await seedTable("user", users, userProcessor);
-        // await seedTable("prefecture", prefectures, null);
-        // await seedTable("trainLine", trainLines, null);
-        await seedTable("station", stations, null);
+        await seedTable("user", users, userProcessor);
+        await seedTable("prefecture", prefectures, null);
+        await seedTable("trainLine", trainLines, null);
+        await seedTable("station", stations, stationProcessor);
     } else {
         Log("Looks like you're trying to seed on production environment...");
         throw new Error("Can't seed on production environment!");

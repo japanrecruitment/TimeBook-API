@@ -204,10 +204,11 @@ model Station {
   status         Int?    @db.SmallInt
   order          Int?
 
-  prefectureCodeId  Int
-  prefectureCode      Prefecture       @relation(fields: [prefectureCodeId], references: [id])
-  lineCode        Int
-  stationGroup    TrainLine        @relation(fields: [lineCode], references: [id])
+  prefectureCode Int
+  prefecture     Prefecture @relation(fields: [prefectureCode], references: [id])
+  lineCode       Int
+  line           TrainLine  @relation(fields: [lineCode], references: [id])
+
   nearestStations NearestStation[]
 }
 
