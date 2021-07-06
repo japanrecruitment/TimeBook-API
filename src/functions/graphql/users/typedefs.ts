@@ -44,7 +44,7 @@ export default gql`
     }
 
     extend type Query {
-        getUserById(userId: ID!): User!
+        getUserById(userId: ID!): User
         getAllUsers: [User]
         me: User!
     }

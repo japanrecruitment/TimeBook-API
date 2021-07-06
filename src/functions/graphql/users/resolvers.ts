@@ -1,43 +1,19 @@
 import { AuthenticatedUser } from "@libs/authorizer";
-import { publicUser } from "@libs/types";
-import { comparePassword, encodePassword } from "@utils/authUtils";
-import { JWT } from "@utils/jwtUtil";
-import { Log } from "@utils/logger";
-import { ApolloError, UserInputError } from "apollo-server-lambda";
-import GQLError from "../core/GQLError";
 import SessionDS from "./SessionDS";
 import UserDS from "./UserDS";
 
 export default {
-    LoginResult: {
-        __resolveType(obj) {
-            if (obj.message) {
-                return "Error";
-            } else {
-                return "LoginSuccess";
-            }
-        },
-    },
-    RegisterResult: {
-        __resolveType(obj) {
-            if (obj.message) {
-                return "Error";
-            } else {
-                return "RegisterSuccess";
-            }
-        },
-    },
     Query: {
         getUserById: async (_, { userId }, context, info) => {
             const userDS: UserDS = context.dataSources.userDS;
             const result = await userDS.getUserById(userId);
-            info.cacheControl.setCacheHint({ maxAge: 60, scope: "PUBLIC" });
+            // info.cacheControl.setCacheHint({ maxAge: 60, scope: "PUBLIC" });
             return result;
         },
         getAllUsers: async (_, __, context, info) => {
             const userDS: UserDS = context.dataSources.userDS;
             const result = await userDS.getAllUsers(10, 0);
-            info.cacheControl.setCacheHint({ maxAge: 60, scope: "PUBLIC" });
+            // info.cacheControl.setCacheHint({ maxAge: 60, scope: "PUBLIC" });
             return result;
         },
 
@@ -50,7 +26,7 @@ export default {
             const principal: AuthenticatedUser = context.principal;
             const userDS: UserDS = context.dataSources.userDS;
             const me = await userDS.getUserById(principal.id);
-            info.cacheControl.setCacheHint({ maxAge: 0, scope: "PRIVATE" });
+            // info.cacheControl.setCacheHint({ maxAge: 0, scope: "PRIVATE" });
             return me;
         },
     },

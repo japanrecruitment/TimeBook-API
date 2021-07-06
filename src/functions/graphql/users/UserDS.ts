@@ -1,8 +1,9 @@
 import { ApolloError } from "apollo-server-lambda";
 import { User } from "@prisma/client";
-import { Log } from "@utils/index";
+import { encodePassword, Log, randomNumberOfNDigits } from "@utils/index";
 import PrismaDataSource from "@libs/PrismaDataSource";
 import { GQLError } from "../core";
+import { addEmailToQueue, EmailVerificationEmailData } from "@utils/email-helper";
 class UserDS extends PrismaDataSource {
     getAllUsers = async (limit: number, after: number) => {
         const users = await this.store.user.findMany({
@@ -15,13 +16,13 @@ class UserDS extends PrismaDataSource {
 
     getUserById = async (userId: string) => {
         if (!userId) return null;
-        const cacheDoc = await this.fetchFromCache(userId);
+        const cacheDoc = await this.fetchFromCache(`getUserById-${userId}`);
         if (cacheDoc) return cacheDoc;
         const user = await this.store.user.findUnique({
             where: { id: userId },
         });
         if (!user) throw new ApolloError("No such user exists");
-        // this.storeInCache(user.id, user, 100);
+        this.storeInCache(`getUserById-${user.id}`, user, 100);
         Log("getUserById: ", user);
         return user;
     };
@@ -52,8 +53,20 @@ class UserDS extends PrismaDataSource {
             firstNameKana.trim() &&
             lastNameKana.trim();
         if (!isValid) throw new GQLError({ message: "Provide all necessary fields" });
-        const newUser = await this.store.user.create({ data: user });
-        Log("[SUCCESS]: register user ", newUser);
+        const userAlreadyExists = this.getUserByEmail(email) !== null;
+        if (userAlreadyExists) throw new GQLError({ message: "User with this email already exists" });
+        const encodedPassword = encodePassword(password);
+        const newUser = await this.store.user.create({ data: { ...user, password: encodedPassword } });
+        const verificationCode = randomNumberOfNDigits(6);
+        this.storeInCache(`register-verification-code-${newUser.email}`, verificationCode, 600);
+        await addEmailToQueue<EmailVerificationEmailData>({
+            template: "email-verification",
+            recipientEmail: newUser.email,
+            recipientName: `${newUser.firstName} ${newUser.lastName}`,
+            verificationCode,
+        });
+        console.log("[SUCCESS]: register user ");
+        Log(newUser);
         return newUser;
     };
 }
