@@ -18,6 +18,31 @@ export default gql`
         bio: String
     }
 
+    input LoginInput {
+        email: String!
+        password: String!
+    }
+
+    input RegisterInput {
+        email: String!
+        password: String!
+        firstName: String!
+        lastName: String!
+        firstNameKana: String!
+        lastNameKana: String!
+    }
+
+    type LoginResult {
+        user: User!
+        token: String!
+        refreshToken: String!
+    }
+
+    type RegisterResult {
+        email: String!
+        message: String!
+    }
+
     extend type Query {
         getUserById(userId: ID!): User!
         getAllUsers: [User]
@@ -25,6 +50,8 @@ export default gql`
     }
 
     extend type Mutation {
+        login(input: LoginInput): LoginResult!
+        register(input: RegisterInput!): RegisterResult!
         updateProfile(user: UserInput!): User!
     }
 `;

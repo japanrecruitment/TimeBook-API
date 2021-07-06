@@ -12,6 +12,11 @@ export default gql`
         unknown
     }
 
+    type Error {
+        message: String!
+        action: String
+    }
+
     type Image {
         url: String!
         height: Int

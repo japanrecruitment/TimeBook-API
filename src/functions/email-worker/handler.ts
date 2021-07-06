@@ -2,7 +2,6 @@ import AWS from "aws-sdk";
 import { Handler } from "aws-lambda";
 import { verify } from "zb-email-verifier";
 import { middyfy } from "@middlewares/index";
-import { Log } from "@utils/logger";
 // import { IEmailData } from "../../utils";
 // import { emailDeliveryStatusModel as EmailDeliveryStatus } from "../../model";
 // import { renderEmail } from "../../utils/emails";
@@ -53,7 +52,7 @@ const emailQueueWorker: Handler = async (event) => {
         //     }
         // }
 
-        Log(toEmail, template, args);
+        console.dlog(toEmail, template, args);
 
         return true;
     } catch (error) {
