@@ -1,32 +1,30 @@
+import { APIGatewayProxyResult } from "aws-lambda";
 import { Response } from "../../utils/message";
 import { UserRole } from "./UserRole";
-import { decodeAuthToken } from "./AuthTokenHandler";
 import { authStrategies } from "./authStrategies";
-import { generatePolicy } from "./generatePolicy";
+import { ExecutionPolicy, generatePolicy } from "./generatePolicy";
+import { Log, JWT } from "@utils/index";
 
 type ApiGatewayEvent = {
     authorizationToken: string | undefined;
     methodArn: any;
 };
 
-type Authorizer = (event: ApiGatewayEvent, requiredRole: UserRole) => void;
+type Authorizer = (event: ApiGatewayEvent, requiredRoles: UserRole[]) => ExecutionPolicy | APIGatewayProxyResult;
 
-export const authorizer: Authorizer = (event, requiredRole) => {
+export const authorizer: Authorizer = (event, requiredRoles) => {
     try {
-        const decodedData = decodeAuthToken(event.authorizationToken);
-        if (!decodedData)
-            return Response.error(
-                Response.errorCode.unauthorized,
-                10000,
-                "Unauthorized"
-            );
-        if (authStrategies[requiredRole](decodedData))
-            return generatePolicy(
-                decodedData.id,
-                "Allow",
-                event.methodArn,
-                decodedData
-            );
+        // Instantiate JWT
+        const jwt = new JWT();
+        // verify JWT Token
+        const decodedData: any = jwt.verify(event.authorizationToken, "accessToken");
+        // check if verification was unsuccessful & did not throw any error
+        if (!decodedData) return Response.error(Response.errorCode.unauthorized, 10000, "Unauthorized");
+
+        for (let role of requiredRoles) {
+            if (authStrategies[role](decodedData))
+                return generatePolicy(decodedData.id, "Allow", event.methodArn, decodedData);
+        }
         return generatePolicy(null, "Deny", event.methodArn, {
             error: "unauthorized",
             action: null,

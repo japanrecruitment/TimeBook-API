@@ -2,13 +2,18 @@ type PrincipalId = string | null;
 
 type PolicyEffect = "Allow" | "Deny";
 
-type ExecutionPolicy = {
+export type ExecutionPolicy = {
     principalId: PrincipalId;
     policyDocument: any;
     context: any;
 };
 
-type PolicyGenerator = (principalId: PrincipalId, effect: PolicyEffect, resource: any, data: any) => ExecutionPolicy;
+export type PolicyGenerator = (
+    principalId: PrincipalId,
+    effect: PolicyEffect,
+    resource: any,
+    data: any
+) => ExecutionPolicy;
 
 export const generatePolicy: PolicyGenerator = (principalId, effect, resource, data) => {
     const statementOne = { Action: "execute-api:Invoke", Effect: effect, Resource: resource };

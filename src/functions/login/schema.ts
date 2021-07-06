@@ -1,3 +1,5 @@
+import { User } from "@prisma/client";
+
 export default {
     type: "object",
     properties: {
@@ -7,7 +9,8 @@ export default {
     required: ["email", "password"],
 } as const;
 
-export interface LoginResponse {
-    email: string;
-    password: string;
-}
+export type LoginResponse = {
+    user: Partial<User>;
+    token: string;
+    refreshToken: string;
+};

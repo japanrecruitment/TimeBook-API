@@ -1,5 +1,3 @@
-export enum UserRole {
-    USER = "user",
-    ADMIN = "admin",
-    UNKNOWN = "unknown",
-}
+import { Role } from "@prisma/client";
+
+export type UserRole = Role | "unknown";
