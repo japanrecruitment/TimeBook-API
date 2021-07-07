@@ -16,35 +16,232 @@ enum Role {
 }
 
 model User {
-  id            String        @id @default(cuid())
-  email         String        @unique @db.VarChar(255)
-  password      String        @db.VarChar(255)
-  firstName     String        @db.VarChar(255)
-  lastName      String        @db.VarChar(255)
-  firstNameKana String        @db.VarChar(255)
-  lastNameKana  String        @db.VarChar(255)
-  type          String        @default("user") @db.VarChar(10)
-  phoneNumber   String?       @db.VarChar(10)
+  id            String    @id @default(cuid())
+  email         String    @unique @db.VarChar(255)
+  password      String    @db.VarChar(255)
+  firstName     String    @db.VarChar(255)
+  lastName      String    @db.VarChar(255)
+  firstNameKana String    @db.VarChar(255)
+  lastNameKana  String    @db.VarChar(255)
+  type          String    @default("user") @db.VarChar(10)
+  phoneNumber   String?   @db.VarChar(10)
   dob           DateTime?
-  approved      Boolean       @default(false)
-  suspended     Boolean       @default(false)
-  emailVerified Boolean       @default(false)
-  phoneVerified Boolean       @default(false)
-  createdAt     DateTime      @default(now()) @db.Timestamp(6)
-  address       Address?
-  reservations  Reservation[]
-  documents     Document[]
-  sessions      Session[]
+  approved      Boolean   @default(false)
+  suspended     Boolean   @default(false)
+  emailVerified Boolean   @default(false)
+  phoneVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime  @updatedAt
+
+  sessions     Session[]
+  address      Address?
+  reservations Reservation[]
+  documents    Document[]
+}
+
+model Host {
+  id                 String    @id @default(cuid())
+  hostType           HostType  @default(Personal)
+  email              String    @unique @db.VarChar(255)
+  password           String    @db.VarChar(255)
+  firstName          String    @db.VarChar(255)
+  lastName           String    @db.VarChar(255)
+  firstNameKana      String    @db.VarChar(255)
+  lastNameKana       String    @db.VarChar(255)
+  phoneNumber        String?   @db.VarChar(10)
+  dob                DateTime?
+  emailVerified      Boolean   @default(false)
+  phoneVerified      Boolean   @default(false)
+  RegistrationNumber String    @db.VarChar(50)
+  createdAt          DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime  @updatedAt
+
+  sessions     Session[]
+  address      Address?
+  reservations Reservation[]
+  documents    Document[]
+
 }
 
 model Session {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   revoked   Boolean  @default(false)
-  ip        String   @db.VarChar(15)
   userAgent String
   createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+
+  userId String
+  users  User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hostId String
+  hosts  Host     @relation(fields: [hostId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ips    String   @db.VarChar(15)
+  ipData IpData[]
+}
+
+model IpData {
+  id          String   @id
+  country     String   @db.VarChar(255)
+  countryCode String   @db.VarChar(2)
+  city        String   @db.VarChar(255)
+  data        Json
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt
+
+  sessionId String
+  sessions  Session @relation(fields: [sessionId], references: [id])
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  postalCode   String   @db.VarChar(8)
+  city         String   @db.VarChar(255)
+  addressLine1 String   @db.VarChar(255)
+  addressLine2 String   @db.VarChar(255)
+  createdAt    DateTime @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime @updatedAt
+
+  prefectureId Int
+  prefecture   Prefecture @relation(fields: [prefectureId], references: [id])
+  hosts        Host       @relation(fields: [hostId], references: [id])
+  hostId       String
+  users        User       @relation(fields: [userId], references: [id])
+  userId       String
+}
+
+model Space {
+  id              String   @id @default(cuid())
+  name            String   @db.VarChar(255)
+  maximumCapacity Int      @default(0)
+  numberOfSeats   Int      @default(0)
+  spaceSize       Float    @default(0)
+  needApproval    Boolean  @default(false)
+  createdAt       DateTime @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime @updatedAt
+
+  spacePricePlans SpacePricePlan?
+  reservations    Reservation[]
+  nearestStations NearestStation[]
+  documents       Document[]
+  spaceTypes      Space_To_SpaceType[]
+}
+
+model SpacePricePlan {
+  id                 String   @id @default(cuid())
+  planTitle          String   @db.VarChar(255)
+  hourlyPrice        Float    @default(0)
+  dailyPrice         Float    @default(0)
+  maintenanceFee     Float    @default(0)
+  lastMinuteDiscount Float    @default(0)
+  cooldownTime       Int      @default(0)
+  createdAt          DateTime @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime @updatedAt
+
+  spaceId String
+  space   Space  @relation(fields: [spaceId], references: [id])
+}
+
+model Reservation {
+  id           String            @id @default(cuid())
+  fromDateTime DateTime          @default(now()) @db.Timestamp(6)
+  toDateTime   DateTime
+  status       ReservationStatus @default(Pending)
+  createdAt    DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime          @updatedAt
+
+  space      Space  @relation(fields: [spaceId], references: [id])
+  spaceId    String
+  user       User   @relation(fields: [userId], references: [id])
+  userId     String
+  host       Host   @relation(fields: [approvedBy], references: [id])
+  approvedBy String
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  original  String   @db.VarChar(255)
+  medium    String   @db.VarChar(255)
+  small     String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+
+  Document Document[]
+}
+
+model Document {
+  id           String       @id @default(cuid())
+  space        Space?       @relation(fields: [spaceId], references: [id])
+  spaceId      String?
+  host         Host?        @relation(fields: [hostId], references: [id])
+  hostId       String?
+  user         User?        @relation(fields: [userId], references: [id])
+  userId       String?
+  documentType DocumentType
+  media        Media        @relation(fields: [mediaId], references: [id])
+  mediaId      String
+}
+
+model TrainLine {
+  id           Int     @id
+  name         String  @db.VarChar(255)
+  nameKana     String? @db.VarChar(255)
+  nameOfficial String? @db.VarChar(255)
+  color        String? @db.VarChar(6)
+  longitude    Float?
+  latitude     Float?
+  zoom         Int?    @db.SmallInt
+  status       Int?    @db.SmallInt
+  order        Int
+
+  stations Station[]
+}
+
+model Station {
+  id             Int     @id
+  stationName    String  @db.VarChar(255)
+  stationZipCode String? @db.VarChar(8)
+  address        String? @db.VarChar(511)
+  longitude      Float?
+  latitude       Float?
+  status         Int?    @db.SmallInt
+  order          Int?
+
+  prefectureCode Int
+  prefecture     Prefecture @relation(fields: [prefectureCode], references: [id])
+  lineCode       Int
+  line           TrainLine  @relation(fields: [lineCode], references: [id])
+
+  nearestStations NearestStation[]
+}
+
+model NearestStation {
+  space     Space   @relation(fields: [spaceId], references: [id])
+  spaceId   String
+  station   Station @relation(fields: [stationId], references: [id])
+  stationId Int
+  time Int
+  via String
+
+  @@id([spaceId, stationId])
+}
+
+model Prefecture {
+  id         Int     @id
+  name       String  @db.VarChar(255)
+  nameKana   String  @db.VarChar(255)
+  nameRomaji String  @db.VarChar(255)
+  available  Boolean @default(false)
+
+  station Station[]
+  Address Address[]
+}
+
+model SpaceType {
+  id          String @id @default(cuid())
+  title       String @db.VarChar(100)
+  description String @db.VarChar(100)
+
+
+  spaceToSpaceTypes Space_To_SpaceType[]
 }
 
 model Host {
@@ -188,7 +385,7 @@ model EmailVerification {
 }
 
 enum HostType {
-  Company
+  Corporate
   Personal
 }
 
@@ -201,15 +398,13 @@ enum Gender {
 enum ReservationStatus {
   Reserved
   Hold
-  NotReserved
+  Pending
 }
 
 enum DocumentType {
   Profile
   Space
   OtherDocuments
-
-
 }
 
 enum VerificationType {
