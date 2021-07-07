@@ -1,7 +1,6 @@
 import { merge } from "lodash";
 import { ApolloServer, makeExecutableSchema } from "apollo-server-lambda";
-import { formatApolloErrors } from "apollo-server-errors";
-import { RedisCache, RedisClusterCache } from "apollo-server-cache-redis";
+import { RedisCache } from "apollo-server-cache-redis";
 import responseCachePlugin from "apollo-server-plugin-response-cache";
 import { environment } from "@utils/index";
 import { AuthenticatedUser } from "@libs/authorizer";

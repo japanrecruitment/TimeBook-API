@@ -32,6 +32,17 @@ export default gql`
         lastNameKana: String!
     }
 
+    input ResetPasswordInput {
+        email: String!
+        newPassword: String!
+        code: Int!
+    }
+
+    input VerifyCodeInput {
+        email: String!
+        code: Int!
+    }
+
     type LoginResult {
         user: User!
         token: String!
@@ -52,6 +63,10 @@ export default gql`
     extend type Mutation {
         login(input: LoginInput): LoginResult!
         register(input: RegisterInput!): RegisterResult!
-        updateProfile(user: UserInput!): User!
+        forgotPassword(email: String!): Result!
+        resendVerificationCode(email: String!): Result!
+        resetPassword(input: ResetPasswordInput!): Result!
+        verifyEmail(input: VerifyCodeInput!): Result!
+        verifyResetPasswordCode(input: VerifyCodeInput!): Result!
     }
 `;

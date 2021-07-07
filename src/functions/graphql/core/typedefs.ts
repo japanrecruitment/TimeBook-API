@@ -12,7 +12,7 @@ export default gql`
         unknown
     }
 
-    type Error {
+    type Result {
         message: String!
         action: String
     }

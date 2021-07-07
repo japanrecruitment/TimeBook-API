@@ -20,7 +20,7 @@ const emailQueueWorker: SQSHandler = async (event) => {
     if (!validateEmailOnCertainDomain(to)) return;
     if (!verifyEmailViaSMTP(to)) return;
 
-    sendEmail(to, subject, body);
+    await sendEmail(to, subject, body);
 };
 
 export const main = middyfy(emailQueueWorker, true);

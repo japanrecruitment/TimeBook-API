@@ -2,7 +2,7 @@ import Handlebars from "handlebars";
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
 
-export type EmailVerificationEmailData = EmailData & {
+export type EmailVerificationData = EmailData & {
     verificationCode: number;
 };
 
@@ -38,4 +38,4 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<EmailVerificationEmailData>(template, "Please verify your email address");
+export default generateTemplate<EmailVerificationData>(template, "Please verify your email address");

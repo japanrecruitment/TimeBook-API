@@ -1,7 +1,7 @@
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
 
-export type ResetPasswordEmailData = EmailData & {
+export type ResetPasswordData = EmailData & {
     verificationCode: number;
 };
 
@@ -30,4 +30,4 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<ResetPasswordEmailData>(template, "Reset password");
+export default generateTemplate<ResetPasswordData>(template, "Reset password");
