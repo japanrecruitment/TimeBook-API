@@ -4,8 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-1.0.x", "debian-openssl-1.1.x"]
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "rhel-openssl-1.0.x", "debian-openssl-1.1.x"]
   previewFeatures = ["referentialActions"]
 }
 
@@ -34,15 +34,15 @@ model User {
   address       Address?
   reservations  Reservation[]
   documents     Document[]
-  sessions Session[]
+  sessions      Session[]
 }
 
 model Session {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  revoked   Boolean @default(false)
-  ip        String  @db.VarChar(15)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  revoked   Boolean  @default(false)
+  ip        String   @db.VarChar(15)
   userAgent String
   createdAt DateTime @default(now()) @db.Timestamp(6)
 }
@@ -175,6 +175,18 @@ model Space_To_SpaceType {
   @@id([spaceId, spaceTypeId])
 }
 
+model EmailVerification {
+  id               String           @id @default(cuid())
+  expiresInMinutes Int              @default(20)
+  code             String           @db.VarChar(6)
+  userId           String?          @db.VarChar(40)
+  verificationType VerificationType
+  email            String           @db.VarChar(255)
+  emailStatus      EmailStatus      @default(Sent)
+
+
+}
+
 enum HostType {
   Company
   Personal
@@ -198,4 +210,16 @@ enum DocumentType {
   OtherDocuments
 
 
+}
+
+enum VerificationType {
+  Register
+  ForgotPassword
+
+}
+
+enum EmailStatus {
+  Sent
+  VerificationPending
+  Verified
 }
