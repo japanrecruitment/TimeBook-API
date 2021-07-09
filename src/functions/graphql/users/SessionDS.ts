@@ -31,7 +31,7 @@ class SessionDS extends PrismaDataSource<Session> {
                 message: "Email not verified",
                 action: "resend-email-verification-code",
             });
-        const session = await await this.store.session.create({
+        const session = await this.store.session.create({
             data: { ip: this.sourceIp, userAgent: this.userAgent, userId: user.id },
         });
         const userData = publicUser(user);

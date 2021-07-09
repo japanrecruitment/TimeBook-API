@@ -8,11 +8,12 @@ import { AuthenticatedUser } from "@libs/authorizer";
 import { coreResolvers, coreTypedefs } from "./core";
 import { AuthDirective, SelfDirective, UpperFirstLetterDirective } from "./core/directives";
 import { SessionDS, UserDS, userResolvers, userTypeDefs } from "./users";
+import { StationDS, stationResolvers, stationTypeDefs } from "./stations";
 import GQLError from "./core/GQLError";
 
-const typeDefs = [coreTypedefs, userTypeDefs];
+const typeDefs = [coreTypedefs, userTypeDefs, stationTypeDefs];
 
-const resolvers = merge(coreResolvers, userResolvers);
+const resolvers = merge(coreResolvers, userResolvers, stationResolvers);
 
 const schemaDirectives = {
     upperFirstLetter: UpperFirstLetterDirective,
@@ -65,6 +66,7 @@ const server = new ApolloServer({
     dataSources: () => ({
         userDS: new UserDS(),
         sessionDS: new SessionDS(),
+        stationDS: new StationDS(),
     }),
     plugins: [
         responseCachePlugin({

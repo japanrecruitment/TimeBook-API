@@ -4,8 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-1.0.x", "debian-openssl-1.1.x"]
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "rhel-openssl-1.0.x", "debian-openssl-1.1.x"]
   previewFeatures = ["referentialActions"]
 }
 
@@ -71,24 +71,23 @@ model Session {
   updatedAt DateTime @updatedAt
 
   userId String
-  users  User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user  User?   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   hostId String
-  hosts  Host     @relation(fields: [hostId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  ips    String   @db.VarChar(15)
-  ipData IpData[]
+  host  Host?   @relation(fields: [hostId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ip     String @db.VarChar(15)
+//   ipData IpData @relation(fields: [ip], references: [id])
 }
 
 model IpData {
-  id          String   @id
-  country     String   @db.VarChar(255)
-  countryCode String   @db.VarChar(2)
-  city        String   @db.VarChar(255)
-  data        Json
+  id          String   @id @db.VarChar(15)
+  country     String?  @db.VarChar(255)
+  countryCode String?  @db.VarChar(2)
+  city        String?  @db.VarChar(255)
+  data        Json?
   createdAt   DateTime @default(now()) @db.Timestamp(6)
   updatedAt   DateTime @updatedAt
 
-  sessionId String
-  sessions  Session @relation(fields: [sessionId], references: [id])
+//   sessionId Session[]
 }
 
 model Address {
@@ -218,8 +217,8 @@ model NearestStation {
   spaceId   String
   station   Station @relation(fields: [stationId], references: [id])
   stationId Int
-  time Int
-  via String
+  time      Int
+  via       String
 
   @@id([spaceId, stationId])
 }
