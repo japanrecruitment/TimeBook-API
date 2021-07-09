@@ -30,8 +30,8 @@ class SessionDS extends PrismaDataSource {
                 message: "Email not verified",
                 action: "resend-email-verification-code",
             });
-        const session = await await this.store.session.create({
-            data: { ip: this.sourceIp, userAgent: this.userAgent, userId: user.id },
+        const session = await this.store.session.create({
+            data: { ip: this.sourceIp, userAgent: this.userAgent, user: { connect: { id: user.id } } },
         });
         const userData = publicUser(user);
         const jwt = new JWT();
