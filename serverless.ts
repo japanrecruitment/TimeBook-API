@@ -37,8 +37,8 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
             STRIPE_PK: "${param:STRIPE_PK}",
             STRIPE_SK: "${param:STRIPE_SK}",
             EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
-            REDIS_HOST: { "Fn::GetAtt": ["ElasticCacheCluster", "RedisEndpoint.Address"] },
-            REDIS_PORT: { "Fn::GetAtt": ["ElasticCacheCluster", "RedisEndpoint.Port"] },
+            REDIS_HOST: "${param:REDIS_HOST}",
+            REDIS_PORT: "${param:REDIS_PORT}",
         },
         apiGateway: {
             shouldStartNameWithService: true,
