@@ -1,7 +1,6 @@
 import { merge } from "lodash";
 import { ApolloServer, makeExecutableSchema } from "apollo-server-lambda";
-import { formatApolloErrors } from "apollo-server-errors";
-import { RedisClusterCache } from "apollo-server-cache-redis";
+import { RedisCache } from "apollo-server-cache-redis";
 import responseCachePlugin from "apollo-server-plugin-response-cache";
 import { environment } from "@utils/index";
 import { AuthenticatedUser } from "@libs/authorizer";
@@ -27,39 +26,34 @@ const schema = makeExecutableSchema({
     resolvers,
 });
 
-// const cache = new RedisClusterCache(
-//     [
-//         {
-//             host: process.env.REDIS_HOST,
-//             port: process.env.REDIS_PORT,
-//         },
-//     ],
-//     {
-//         clusterRetryStrategy: function (times) {
-//             console.log("Redis Retry", times);
-//             if (times >= 3) return undefined;
-//             var delay = Math.min(times * 50, 2000);
-//             return delay;
-//         },
-//         slotsRefreshTimeout: 3000,
-//         dnsLookup: (hostname, callback) => callback(null, hostname),
-//         redisOptions: {
-//             reconnectOnError: function (err) {
-//                 console.log("Reconnect on error", err);
-//                 var targetError = "READONLY";
-//                 // Only reconnect when the error starts with "READONLY"
-//                 if (err.message.slice(0, targetError.length) === targetError) return true;
-//             },
-//             tls: {},
-//         },
-//     }
-// );
+const cache = new RedisCache({
+    host: "127.0.0.1",
+    port: 6379,
+    connectTimeout: 5000,
+    reconnectOnError: function (err) {
+        console.log("Reconnect on error", err);
+        var targetError = "READONLY";
+        if (err.message.slice(0, targetError.length) === targetError) {
+            // Only reconnect when the error starts with "READONLY"
+            return true;
+        }
+    },
+    retryStrategy: function (times) {
+        console.log("Redis Retry", times);
+        if (times >= 3) {
+            return undefined;
+        }
+        var delay = Math.min(times * 50, 2000);
+        return delay;
+    },
+});
 
 const server = new ApolloServer({
     schema,
-    // cache,
+    cache,
     cacheControl: {
-        defaultMaxAge: 300,
+        calculateHttpHeaders: environment.isDev(),
+        stripFormattedExtensions: !environment.isDev(),
     },
     formatError: GQLError.formatError,
     dataSources: () => ({

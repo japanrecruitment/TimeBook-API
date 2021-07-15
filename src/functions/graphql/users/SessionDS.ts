@@ -1,4 +1,3 @@
-import { Session } from "@prisma/client";
 import PrismaDataSource from "@libs/PrismaDataSource";
 import { GQLError } from "../core";
 import UserDS from "./UserDS";
@@ -7,7 +6,7 @@ import { publicUser } from "@libs/types";
 import { JWT } from "@utils/jwtUtil";
 import { Log } from "@utils/logger";
 
-class SessionDS extends PrismaDataSource<Session> {
+class SessionDS extends PrismaDataSource {
     private get sourceIp() {
         return this.context.sourceIp;
     }

@@ -3,7 +3,7 @@ import { DataSource, DataSourceConfig } from "apollo-datasource";
 import { InMemoryLRUCache, KeyValueCache } from "apollo-server-caching";
 
 const store = new PrismaClient();
-abstract class PrismaDataSource<TData = any, TContext = any> extends DataSource {
+abstract class PrismaDataSource<TContext = any> extends DataSource {
     protected store: PrismaClient = store;
     protected context: TContext;
     private cache: KeyValueCache;
@@ -17,10 +17,11 @@ abstract class PrismaDataSource<TData = any, TContext = any> extends DataSource 
         this.cache = config.cache || new InMemoryLRUCache();
     }
 
-    protected async fetchFromCache<T extends TData | TData[]>(key: number | string): Promise<T | null | undefined> {
+    protected async fetchFromCache<TData = any>(key: number | string): Promise<TData | null | undefined> {
         try {
             console.log("[STARTED]: Fetching data from cache.");
-            const cacheDoc = await this.cache.get(`${this.cachePrefix}-${key}`);
+            const cacheKey = Buffer.from(`${this.cachePrefix}-${key}`).toString("base64");
+            const cacheDoc = await this.cache.get(cacheKey);
             console.log(`[${cacheDoc ? "COMPLETED" : "FAILED"}]: Fetching data from cache.`);
             if (cacheDoc) return JSON.parse(cacheDoc);
         } catch (error) {
@@ -29,11 +30,12 @@ abstract class PrismaDataSource<TData = any, TContext = any> extends DataSource 
         }
     }
 
-    protected async storeInCache(key: number | string, doc: TData | TData[], ttl: number) {
+    protected async storeInCache<TData = any>(key: number | string, doc: TData, ttl: number) {
         console.log("[STARTED]: Storing data in cache.");
+        const cacheKey = Buffer.from(`${this.cachePrefix}-${key}`).toString("base64");
         if (Number.isInteger(ttl)) {
             this.cache
-                .set(`${this.cachePrefix}-${key}`, JSON.stringify(doc), { ttl })
+                .set(cacheKey, JSON.stringify(doc), { ttl })
                 .then(() => {
                     console.log("[COMPLETED]: Storing data in cache.");
                 })
