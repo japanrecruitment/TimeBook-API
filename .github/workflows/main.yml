@@ -1,28 +1,28 @@
 name: CI
 on:
-  push:
-    branches: [ main ]
+    push:
+        branches: [main]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-  
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [14.x]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - name: Serverless deploy
-        uses: serverless/github-action@master
-        with:
-          args: deploy
-        env:
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    build:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                node-version: [14.x]
+        steps:
+            - uses: actions/checkout@v2
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v1
+              with:
+                  node-version: ${{ matrix.node-version }}
+            - run: yarn install --frozen-lockfile
+            - name: Serverless deploy
+              uses: serverless/github-action@master
+              with:
+                  args: deploy
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
