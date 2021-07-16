@@ -1,5 +1,5 @@
 import type { AWS } from "@serverless/typescript";
-import { graphql, login, register, adminAuthorizer, userAuthorizer, emailWorker } from "./src/functions";
+import * as functions from "./src/functions";
 
 import resources from "./cloudformation-template";
 
@@ -36,9 +36,10 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
             REFRESH_TOKEN_SECRET: "${param:REFRESH_TOKEN_SECRET}",
             STRIPE_PK: "${param:STRIPE_PK}",
             STRIPE_SK: "${param:STRIPE_SK}",
-            EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
-            REDIS_HOST: { "Fn::GetAtt": ["ElasticCacheCluster", "RedisEndpoint.Address"] },
-            REDIS_PORT: { "Fn::GetAtt": ["ElasticCacheCluster", "RedisEndpoint.Port"] },
+            EMAIL_QUEUE_URL: "${param:EMAIL_QUEUE_URL}",
+            REDIS_HOST: "${param:REDIS_HOST}",
+            REDIS_PORT: "${param:REDIS_PORT}",
+            IP_STACK_KEY: "${param:IP_STACK_KEY}",
         },
         apiGateway: {
             shouldStartNameWithService: true,
@@ -49,17 +50,13 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
             webpackConfig: "./webpack.config.js",
             includeModules: true,
         },
+        enterprise: {
+            collectLambdaLogs: false,
+        },
     },
     plugins: ["serverless-webpack", "serverless-offline"],
     variablesResolutionMode: "20210219",
-    functions: {
-        adminAuthorizer,
-        userAuthorizer,
-        graphql,
-        login,
-        register,
-        emailWorker,
-    },
+    functions,
     resources,
 };
 
