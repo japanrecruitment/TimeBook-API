@@ -1,4 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { Role } from "@prisma/client";
 import { encodePassword } from "@utils/authUtils";
 import { randomNumberOfNDigits } from "@utils/compute";
 import { addEmailToQueue, EmailVerificationData } from "@utils/email-helper";
@@ -26,6 +27,7 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
     if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
 
     const account = await store.account.findUnique({ where: { email } });
+    Log(account);
     if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
 
     password = encodePassword(password);
@@ -34,6 +36,7 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
         data: {
             email,
             password,
+            roles: [Role.user],
             userProfile: { create: { email, firstName, lastName, firstNameKana, lastNameKana } },
         },
     });

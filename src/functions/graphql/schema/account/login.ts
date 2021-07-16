@@ -2,6 +2,7 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { matchPassword } from "@utils/authUtils";
 import { getIpData } from "@utils/ip-helper";
 import { JWT } from "@utils/jwtUtil";
+import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
@@ -26,10 +27,13 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     const isEmpty = !email.trim() || !password.trim();
     if (isEmpty) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
 
+    Log(input);
+
     const account = await store.account.findUnique({
         where: { email },
         include: { userProfile: true, companyProfile: true },
     });
+    Log(account);
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
 
     const passwordMatched = matchPassword(password, account.password);

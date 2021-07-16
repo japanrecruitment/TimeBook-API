@@ -16,8 +16,9 @@ export const addEmailToQueue = async <D extends EmailData = EmailData>(data: Ema
             DelaySeconds: 0,
             QueueUrl: environment.EMAIL_QUEUE_URL,
             MessageBody: JSON.stringify(data),
-        });
+        }).promise();
         console.log("[COMPLETED]: Adding to queue");
+        Log(result);
         return result;
     } catch (error) {
         console.log("[FAILED]: Adding to queue");
