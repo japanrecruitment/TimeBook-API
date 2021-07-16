@@ -233,13 +233,9 @@ const elasticCache: AWS["resources"]["Resources"] = {
             Engine: "redis",
             CacheNodeType: "cache.t2.micro",
             NumCacheNodes: 1,
-            VpcSecurityGroupIds: [
-                { "Fn::GetAtt": "ElastiCacheSecurityGroup.GroupId" },
-            ],
+            VpcSecurityGroupIds: [{ "Fn::GetAtt": "ElastiCacheSecurityGroup.GroupId" }],
             CacheSubnetGroupName: { Ref: "ElastiCacheSubnetGroup" },
-            Tags: [
-                { Key: "Name", Value: "${self:service} Elasticache Cluster" },
-            ],
+            Tags: [{ Key: "Name", Value: "${self:service} Elasticache Cluster" }],
         },
     },
 };

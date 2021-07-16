@@ -1,23 +1,17 @@
-import { PrismaClient } from "@prisma/client";
 import { DataSource, DataSourceConfig } from "apollo-datasource";
 import { InMemoryLRUCache, KeyValueCache } from "apollo-server-caching";
 
-const store = new PrismaClient();
-abstract class PrismaDataSource<TContext = any> extends DataSource {
-    protected store: PrismaClient = store;
+export default class CacheDataSource<TContext = any> extends DataSource {
     protected context: TContext;
     private cache: KeyValueCache;
-
-    private get cachePrefix() {
-        return `prisma-ds-cache`;
-    }
+    private cachePrefix = `cache-data-source`;
 
     initialize(config: DataSourceConfig<TContext>) {
         this.context = config.context;
         this.cache = config.cache || new InMemoryLRUCache();
     }
 
-    protected async fetchFromCache<TData = any>(key: number | string): Promise<TData | null | undefined> {
+    async fetchFromCache<TData = any>(key: number | string): Promise<TData | null | undefined> {
         try {
             console.log("[STARTED]: Fetching data from cache.");
             const cacheKey = Buffer.from(`${this.cachePrefix}-${key}`).toString("base64");
@@ -30,7 +24,7 @@ abstract class PrismaDataSource<TContext = any> extends DataSource {
         }
     }
 
-    protected async storeInCache<TData = any>(key: number | string, doc: TData, ttl: number) {
+    async storeInCache<TData = any>(key: number | string, doc: TData, ttl: number) {
         console.log("[STARTED]: Storing data in cache.");
         const cacheKey = Buffer.from(`${this.cachePrefix}-${key}`).toString("base64");
         if (Number.isInteger(ttl)) {
@@ -46,7 +40,7 @@ abstract class PrismaDataSource<TContext = any> extends DataSource {
         }
     }
 
-    protected async deleteFromCache(key: number | string) {
+    async deleteFromCache(key: number | string) {
         try {
             console.log("[STARTED]: Deleting data from cache.");
             await this.cache.delete(`${this.cachePrefix}-${key}`);
@@ -57,5 +51,3 @@ abstract class PrismaDataSource<TContext = any> extends DataSource {
         }
     }
 }
-
-export default PrismaDataSource;

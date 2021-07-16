@@ -14,13 +14,9 @@ type Authorizer = (event: ApiGatewayEvent, requiredRoles: UserRole[]) => Executi
 
 export const authorizer: Authorizer = (event, requiredRoles) => {
     try {
-        // Instantiate JWT
         const jwt = new JWT();
-        // verify JWT Token
         const decodedData: any = jwt.verify(event.authorizationToken, "accessToken");
-        // check if verification was unsuccessful & did not throw any error
         if (!decodedData) return Response.error(Response.errorCode.unauthorized, 10000, "Unauthorized");
-
         for (let role of requiredRoles) {
             if (authStrategies[role](decodedData))
                 return generatePolicy(decodedData.id, "Allow", event.methodArn, decodedData);

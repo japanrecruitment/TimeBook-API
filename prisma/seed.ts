@@ -13,7 +13,7 @@ const main = async () => {
     if (environment.isDev()) {
         Log("Running on dev environment");
         // Call seedTable function for each schema
-        await seedTable("user", users, userProcessor);
+        // await seedTable("user", users, userProcessor);
         await seedTable("prefecture", prefectures, null);
         await seedTable("trainLine", trainLines, null);
         await seedTable("station", stations, stationProcessor);

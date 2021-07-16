@@ -7,10 +7,13 @@ export class AuthenticatedUser {
         this.authorizer = event.requestContext.authorizer;
     }
     get id(): string {
-        return this.authorizer?.principalId;
+        return this.authorizer?.principalId || this.authorizer?.claims?.id;
     }
-    get role(): UserRole {
-        return this.authorizer?.claims?.role;
+    get roles(): UserRole[] {
+        return this.authorizer?.claims?.roles;
+    }
+    get accountId(): string {
+        return this.authorizer?.claims?.accountId;
     }
     get claims(): AuthTokenPayload {
         return this.authorizer?.claims;
