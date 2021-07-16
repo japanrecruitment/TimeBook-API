@@ -1,7 +1,8 @@
+import { Log } from "@utils/index";
 import { GraphQLError } from "graphql";
 
 export default (error: GraphQLError) => {
-    console.log(error);
+    Log(error);
     const { message, locations, path, extensions } = error;
     const { exception, ...exts } = extensions;
     const { stacktrace } = exception;

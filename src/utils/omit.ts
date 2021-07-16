@@ -17,4 +17,4 @@ const omit: Omit = (obj, ...keys) => {
     return ret;
 };
 
-export default omit
+export default omit;

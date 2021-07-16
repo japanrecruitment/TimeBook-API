@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { Log } from "@utils/index";
 const stripe = new Stripe(process.env.STRIPE_SK, {
     apiVersion: "2020-08-27",
 });
@@ -31,7 +32,7 @@ export class StripeUtil implements IStripeUtil {
             });
             return account;
         } catch (error) {
-            console.log(error);
+            Log(error);
         }
     }
 

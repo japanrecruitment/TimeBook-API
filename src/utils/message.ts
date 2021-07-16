@@ -24,13 +24,7 @@ class Result<T> {
     private message: string;
     private data?: T | null;
 
-    constructor(
-        result: boolean,
-        statusCode: StatusCode,
-        code: number,
-        message: string,
-        data?: T | null
-    ) {
+    constructor(result: boolean, statusCode: StatusCode, code: number, message: string, data?: T | null) {
         this.result = result;
         this.statusCode = statusCode;
         this.code = code;
@@ -66,13 +60,7 @@ class Result<T> {
 
 export class Response {
     static success<T>(data: T | null): APIGatewayProxyResult {
-        const result = new Result<T>(
-            true,
-            StatusCode.success,
-            0,
-            "success",
-            data
-        );
+        const result = new Result<T>(true, StatusCode.success, 0, "success", data);
         return result.bodyToString();
     }
 

@@ -5,7 +5,7 @@ const SES = new AWS.SES({ apiVersion: "2010-12-01", region: "ap-northeast-1" });
 
 export const sendEmail = async (to: string, subject: string, body: string) => {
     try {
-        console.log("[STARTED] sending email");
+        Log("[STARTED] sending email");
         Log(to);
         const result = await SES.sendEmail({
             Source: "eLearning JRG <info@japanrecruitment.co.jp>",
@@ -24,11 +24,11 @@ export const sendEmail = async (to: string, subject: string, body: string) => {
                 },
             },
         });
-        console.log("[COMPLETED] sending email");
+        Log("[COMPLETED] sending email");
         Log(to, result);
         return result;
     } catch (error) {
-        console.log("[FAILED] sending email");
-        console.log(error);
+        Log("[FAILED] sending email");
+        Log(error);
     }
 };

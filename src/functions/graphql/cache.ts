@@ -1,4 +1,4 @@
-import { environment } from "@utils/environment";
+import { Log, environment } from "@utils/index";
 import { RedisCache } from "apollo-server-cache-redis";
 
 export default new RedisCache({
@@ -6,7 +6,7 @@ export default new RedisCache({
     port: environment.REDIS_PORT,
     connectTimeout: 5000,
     reconnectOnError: function (err) {
-        console.log("Reconnect on error", err);
+        Log("Reconnect on error", err);
         var targetError = "READONLY";
         if (err.message.slice(0, targetError.length) === targetError) {
             // Only reconnect when the error starts with "READONLY"
@@ -14,7 +14,7 @@ export default new RedisCache({
         }
     },
     retryStrategy: function (times) {
-        console.log("Redis Retry", times);
+        Log("Redis Retry", times);
         if (times >= 3) {
             return undefined;
         }

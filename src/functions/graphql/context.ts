@@ -15,6 +15,7 @@ const store = new PrismaClient();
 export default ({ event }): Context => {
     const { sourceIp, userAgent } = event.requestContext.identity;
 
+    // TODO Take care of authorization
     const principal = new AuthenticatedUser(event);
 
     return {
