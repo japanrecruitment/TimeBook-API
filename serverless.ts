@@ -39,6 +39,7 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
             EMAIL_QUEUE_URL: "${param:EMAIL_QUEUE_URL}",
             REDIS_HOST: "${param:REDIS_HOST}",
             REDIS_PORT: "${param:REDIS_PORT}",
+            IP_STACK_KEY: "${param:IP_STACK_KEY}",
         },
         apiGateway: {
             shouldStartNameWithService: true,
@@ -48,6 +49,9 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
         webpack: {
             webpackConfig: "./webpack.config.js",
             includeModules: true,
+        },
+        enterprise: {
+            collectLambdaLogs: false,
         },
     },
     plugins: ["serverless-webpack", "serverless-offline"],

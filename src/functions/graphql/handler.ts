@@ -11,7 +11,7 @@ const server = new ApolloServer({
     cache,
     context,
     dataSources,
-    debug: environment.isDev(),
+    debug: true,
     formatError,
     introspection: environment.isDev(),
     plugins,
