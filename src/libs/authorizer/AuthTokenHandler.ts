@@ -3,7 +3,7 @@ import { UserRole } from "./UserRole";
 
 type AuthTokenPayload = {
     id: string;
-    role: UserRole;
+    roles: UserRole[];
 };
 
 type TokenType = "refresh" | "access";

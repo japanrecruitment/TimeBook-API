@@ -9,7 +9,7 @@ export const encodePassword = (raw: string): string => {
     }
 };
 
-export const comparePassword = (raw: string, encoded: string): boolean => {
+export const matchPassword = (raw: string, encoded: string): boolean => {
     try {
         return bcrypt.compareSync(raw, encoded);
     } catch (error) {

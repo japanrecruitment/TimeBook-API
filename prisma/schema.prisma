@@ -10,54 +10,77 @@ generator client {
 }
 
 enum Role {
-  user
-  host
   admin
+  host
+  user
+}
+
+enum Gender {
+  Male
+  Female
+  Other
+}
+
+enum ReservationStatus {
+  Reserved
+  Hold
+  Pending
+}
+
+enum DocumentType {
+  Profile
+  Space
+  OtherDocuments
+}
+
+model Account {
+  id             String        @id @default(cuid())
+  approved       Boolean       @default(false)
+  email          String        @unique @db.VarChar(255)
+  emailVerified  Boolean       @default(false)
+  phoneNumber    String?       @db.VarChar(10)
+  phoneVerified  Boolean       @default(false)
+  password       String        @db.VarChar(255)
+  roles          Role[]
+  suspended      Boolean       @default(false)
+  createdAt      DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime      @updatedAt
+  userProfile    User?
+  companyProfile Company?
+  session        Session?
+  myReservation  Reservation[]
+  mySpace        Space[]
 }
 
 model User {
-  id            String        @id @default(cuid())
-  email         String        @unique @db.VarChar(255)
-  password      String        @db.VarChar(255)
-  firstName     String        @db.VarChar(255)
-  lastName      String        @db.VarChar(255)
-  firstNameKana String        @db.VarChar(255)
-  lastNameKana  String        @db.VarChar(255)
-  type          String        @default("user") @db.VarChar(10)
-  phoneNumber   String?       @db.VarChar(10)
+  id            String     @id @default(cuid())
   dob           DateTime?
-  approved      Boolean       @default(false)
-  suspended     Boolean       @default(false)
-  emailVerified Boolean       @default(false)
-  phoneVerified Boolean       @default(false)
-  createdAt     DateTime      @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime      @updatedAt
-  sessions      Session[]
-  address       Address?
-  reservations  Reservation[]
+  firstName     String     @db.VarChar(255)
+  firstNameKana String     @db.VarChar(255)
+  lastName      String     @db.VarChar(255)
+  lastNameKana  String     @db.VarChar(255)
+  email         String?    @unique @db.VarChar(255)
+  phoneNumber   String?    @unique @db.VarChar(10)
+  createdAt     DateTime   @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime   @updatedAt
+  acountId      String
+  account       Account    @relation(fields: [acountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  address       Address[]
   documents     Document[]
 }
 
-model Host {
-  id                 String        @id @default(cuid())
-  hostType           HostType      @default(Personal)
-  email              String        @unique @db.VarChar(255)
-  password           String        @db.VarChar(255)
-  firstName          String        @db.VarChar(255)
-  lastName           String        @db.VarChar(255)
-  firstNameKana      String        @db.VarChar(255)
-  lastNameKana       String        @db.VarChar(255)
-  phoneNumber        String?       @db.VarChar(10)
-  dob                DateTime?
-  emailVerified      Boolean       @default(false)
-  phoneVerified      Boolean       @default(false)
-  RegistrationNumber String        @db.VarChar(50)
-  createdAt          DateTime      @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime      @updatedAt
-  sessions           Session[]
-  address            Address?
-  reservations       Reservation[]
-  documents          Document[]
+model Company {
+  id                 String    @id @default(cuid())
+  email              String?   @unique @db.VarChar(255)
+  name               String    @db.VarChar(255)
+  nameKana           String    @db.VarChar(255)
+  phoneNumber        String?   @unique @db.VarChar(10)
+  registrationNumber String    @db.VarBit(255)
+  createdAt          DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime  @updatedAt
+  acountId           String
+  account            Account   @relation(fields: [acountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  address            Address[]
 }
 
 model Session {
@@ -66,40 +89,40 @@ model Session {
   userAgent String
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @updatedAt
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  hostId    String?
-  host      Host?    @relation(fields: [hostId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  acountId  String
+  account   Account  @relation(fields: [acountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   ipData    IpData[]
 }
 
 model IpData {
   id          String   @id @default(cuid())
-  ip          String   @db.VarChar(15)
+  city        String   @db.VarChar(255)
   country     String   @db.VarChar(255)
   countryCode String   @db.VarChar(2)
-  city        String   @db.VarChar(255)
   data        Json
+  ipAddress   String   @unique @db.VarChar(15)
   createdAt   DateTime @default(now()) @db.Timestamp(6)
   updatedAt   DateTime @updatedAt
   sessionId   String
-  session     Session  @relation(fields: [sessionId], references: [id])
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Address {
   id           String     @id @default(cuid())
-  postalCode   String     @db.VarChar(8)
-  city         String     @db.VarChar(255)
   addressLine1 String     @db.VarChar(255)
   addressLine2 String     @db.VarChar(255)
+  city         String     @db.VarChar(255)
+  longitude    Float?
+  latitude     Float?
+  postalCode   String     @db.VarChar(8)
   createdAt    DateTime   @default(now()) @db.Timestamp(6)
   updatedAt    DateTime   @updatedAt
-  prefectureId Int
-  prefecture   Prefecture @relation(fields: [prefectureId], references: [id])
-  hosts        Host       @relation(fields: [hostId], references: [id])
-  hostId       String
-  users        User       @relation(fields: [userId], references: [id])
   userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  companyId    String
+  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  prefectureId Int
+  prefecture   Prefecture @relation(fields: [prefectureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Space {
@@ -111,10 +134,11 @@ model Space {
   needApproval    Boolean              @default(false)
   createdAt       DateTime             @default(now()) @db.Timestamp(6)
   updatedAt       DateTime             @updatedAt
+  accountId       String
+  account         Account              @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   spacePricePlans SpacePricePlan?
   reservations    Reservation[]
   nearestStations NearestStation[]
-  documents       Document[]
   spaceTypes      Space_To_SpaceType[]
 }
 
@@ -141,28 +165,23 @@ model Reservation {
   updatedAt    DateTime          @updatedAt
   space        Space             @relation(fields: [spaceId], references: [id])
   spaceId      String
-  user         User              @relation(fields: [userId], references: [id])
-  userId       String
-  host         Host              @relation(fields: [approvedBy], references: [id])
-  approvedBy   String
+  reservee     Account           @relation(fields: [reserveeId], references: [id])
+  reserveeId   String
+  approvedOn   DateTime          @db.Timestamp(6)
 }
 
 model Media {
-  id        String     @id @default(cuid())
-  original  String     @db.VarChar(255)
-  medium    String     @db.VarChar(255)
-  small     String     @db.VarChar(255)
-  createdAt DateTime   @default(now()) @db.Timestamp(6)
-  updatedAt DateTime   @updatedAt
-  Document  Document[]
+  id        String    @id @default(cuid())
+  original  String    @db.VarChar(255)
+  medium    String    @db.VarChar(255)
+  small     String    @db.VarChar(255)
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt DateTime  @updatedAt
+  document  Document?
 }
 
 model Document {
   id           String       @id @default(cuid())
-  space        Space?       @relation(fields: [spaceId], references: [id])
-  spaceId      String?
-  host         Host?        @relation(fields: [hostId], references: [id])
-  hostId       String?
   user         User?        @relation(fields: [userId], references: [id])
   userId       String?
   documentType DocumentType
@@ -235,51 +254,4 @@ model Space_To_SpaceType {
   spaceTypeId String
 
   @@id([spaceId, spaceTypeId])
-}
-
-model EmailVerification {
-  id               String           @id @default(cuid())
-  expiresInMinutes Int              @default(20)
-  code             String           @db.VarChar(6)
-  userId           String?          @db.VarChar(40)
-  verificationType VerificationType
-  email            String           @db.VarChar(255)
-  emailStatus      EmailStatus      @default(Sent)
-  createdAt        DateTime         @default(now()) @db.Timestamp(6)
-  VerifiedAt       DateTime?
-}
-
-enum HostType {
-  Corporate
-  Personal
-}
-
-enum Gender {
-  Male
-  Female
-  Other
-}
-
-enum ReservationStatus {
-  Reserved
-  Hold
-  Pending
-}
-
-enum DocumentType {
-  Profile
-  Space
-  OtherDocuments
-}
-
-enum VerificationType {
-  Register
-  ForgotPassword
-
-}
-
-enum EmailStatus {
-  Sent
-  VerificationPending
-  Verified
 }
