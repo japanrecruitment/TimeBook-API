@@ -1,8 +1,8 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { matchPassword } from "@utils/authUtils";
 import { getIpData } from "@utils/ip-helper";
-import { JWT } from "@utils/jwtUtil";
 import { Log } from "@utils/logger";
+import { encodeToken } from "@utils/token-helper";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
@@ -49,7 +49,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     const session = await store.session.create({
         data: {
             userAgent,
-            acountId: account.id,
+            accountId: account.id,
             ipData: {
                 connectOrCreate: {
                     where: { ipAddress: sourceIp },
@@ -66,9 +66,8 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     });
 
     const profile = account.userProfile || account.companyProfile;
-    const jwt = new JWT();
-    const accessToken = jwt.sign(account.id, { ...profile, roles: account.roles }, "accessToken");
-    const refreshToken = jwt.sign(session.id, { accountId: account.id }, "refreshToken");
+    const accessToken = encodeToken({ ...profile, roles: account.roles }, "access", { jwtid: account.id });
+    const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
 
     return { profile, accessToken, refreshToken };
 };

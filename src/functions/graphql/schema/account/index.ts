@@ -1,6 +1,7 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { forgotPasswordResolvers, forgotPasswordTypeDefs } from "./forgotPassword";
 import { loginResolvers, loginTypeDefs } from "./login";
+import { myProfileResolvers, myProfileTypeDefs } from "./myProfile";
 import { profileResolvers, profileTypeDefs } from "./profile";
 import { registerCompanyResolvers, registerCompanyTypeDefs } from "./registerCompany";
 import { registerUserResolvers, registerUserTypeDefs } from "./registerUser";
@@ -19,6 +20,7 @@ export const accountTypeDefs = mergeTypeDefs([
     resetPasswordTypeDefs,
     verifyEmailTypeDefs,
     verifyResetPasswordRequestTypeDefs,
+    myProfileTypeDefs,
 ]);
 
 export const accountResolvers = mergeResolvers([
@@ -31,4 +33,5 @@ export const accountResolvers = mergeResolvers([
     resetPasswordResolvers,
     verifyEmailResolvers,
     verifyResetPasswordRequestResolvers,
+    myProfileResolvers,
 ]);

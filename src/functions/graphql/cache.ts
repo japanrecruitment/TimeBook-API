@@ -2,8 +2,8 @@ import { environment } from "@utils/environment";
 import { RedisCache } from "apollo-server-cache-redis";
 
 export default new RedisCache({
-    host: environment.REDIS_HOST,
-    port: environment.REDIS_PORT,
+    host: "127.0.0.1",
+    port: "6379",
     connectTimeout: 5000,
     reconnectOnError: function (err) {
         console.log("Reconnect on error", err);

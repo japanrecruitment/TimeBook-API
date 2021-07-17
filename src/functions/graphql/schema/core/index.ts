@@ -1,9 +1,9 @@
 import { mergeTypeDefs } from "@graphql-tools/merge";
 import { merge } from "lodash";
-import { authDirectives } from "./authDirective";
+import { authDirectives, authDirectiveTypeDefs } from "./authDirective";
 import { resultTypeDefs } from "./result";
-import { upperFirstLetterDirective } from "./upperFirstLetterDirective";
+import { upperFirstLetterDirective, upperFirstLetterDirectiveTypeDefs } from "./upperFirstLetterDirective";
 
-export const coreTypeDefs = mergeTypeDefs([resultTypeDefs]);
+export const coreTypeDefs = mergeTypeDefs([resultTypeDefs, authDirectiveTypeDefs, upperFirstLetterDirectiveTypeDefs]);
 
 export const coreDirectives = merge(authDirectives, upperFirstLetterDirective);

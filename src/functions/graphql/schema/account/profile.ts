@@ -1,26 +1,8 @@
 import { IUnionTypeResolver } from "@graphql-tools/utils";
+import { Company, User } from "@prisma/client";
 import { gql } from "apollo-server-core";
 
-type UserProfile = {
-    id: string;
-    firstName: string;
-    lastName: string;
-    firstNameKana: string;
-    lastNameKana: string;
-    phoneNumber?: string;
-    email: string;
-};
-
-type CompanyProfile = {
-    id: string;
-    name: string;
-    nameKana: string;
-    registrationNumber: string;
-    phoneNumber?: string;
-    email: string;
-};
-
-export type ProfileResult = UserProfile | CompanyProfile;
+export type ProfileResult = User | Company;
 
 const ProfileResult: IUnionTypeResolver = {
     __resolveType: (obj) => {

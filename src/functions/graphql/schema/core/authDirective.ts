@@ -1,7 +1,7 @@
 import { SchemaDirectiveVisitor } from "@graphql-tools/utils";
 import { gql } from "apollo-server-lambda";
 import { defaultFieldResolver } from "graphql";
-import { AuthenticatedUser, authStrategies } from "@libs/authorizer";
+import { authStrategies } from "@libs/authorizer";
 import { Log } from "@utils/logger";
 import { GqlError } from "../../error";
 
@@ -38,23 +38,26 @@ class AuthDirective extends SchemaDirectiveVisitor {
                 // Get the principal object of type AuthenticatedUser from
                 // which we can get user's role to check whether the user
                 // has the role required to access this field
-                const principal: AuthenticatedUser = args[2]?.principal;
-                if (principal?.roles?.length === 0)
+                const authData = args[2]?.authData;
+                if (authData?.roles?.length === 0)
                     throw new GqlError({ code: "UNAUTHORIZED", message: "Not authorized" });
 
-                for (let role of requiredRoles) {
-                    await executeStrategy(role, principal);
-                }
+                await executeStrategy(requiredRoles, authData);
 
                 return await resolve.apply(this, args);
             };
         });
     }
 
-    private async executeStrategy(role, requestData) {
-        const strategyResult = await authStrategies[role.toLowerCase()](requestData);
+    private async executeStrategy(requiredRoles, requestData) {
+        console.log(requiredRoles, requestData.roles);
 
-        if (!strategyResult) throw new GqlError({ code: "UNAUTHORIZED", message: "Not authorized" });
+        for (let role of requiredRoles) {
+            const strategyResult = await authStrategies[role.toLowerCase()](requestData);
+            if (strategyResult) return;
+        }
+
+        throw new GqlError({ code: "UNAUTHORIZED", message: "Not authorized" });
     }
 }
 

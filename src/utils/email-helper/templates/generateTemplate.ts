@@ -1,3 +1,5 @@
+import Handlebars from "handlebars";
+
 export type EmailData = {
     recipientEmail: string;
     recipientName: string;

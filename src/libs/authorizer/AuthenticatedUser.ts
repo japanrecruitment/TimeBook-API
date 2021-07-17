@@ -1,7 +1,6 @@
-import { AuthTokenPayload } from "./AuthTokenHandler";
 import { UserRole } from "./UserRole";
 
-export class AuthenticatedUser {
+export class AuthenticatedUser<TData = any> {
     private authorizer;
     constructor(event) {
         this.authorizer = event.requestContext.authorizer;
@@ -15,7 +14,7 @@ export class AuthenticatedUser {
     get accountId(): string {
         return this.authorizer?.claims?.accountId;
     }
-    get claims(): AuthTokenPayload {
+    get data(): TData {
         return this.authorizer?.claims;
     }
 }

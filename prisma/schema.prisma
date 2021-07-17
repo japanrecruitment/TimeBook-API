@@ -63,8 +63,8 @@ model User {
   phoneNumber   String?    @unique @db.VarChar(10)
   createdAt     DateTime   @default(now()) @db.Timestamp(6)
   updatedAt     DateTime   @updatedAt
-  acountId      String
-  account       Account    @relation(fields: [acountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  accountId     String
+  account       Account    @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   address       Address[]
   documents     Document[]
 }
@@ -78,8 +78,8 @@ model Company {
   registrationNumber String    @db.VarBit(255)
   createdAt          DateTime  @default(now()) @db.Timestamp(6)
   updatedAt          DateTime  @updatedAt
-  acountId           String
-  account            Account   @relation(fields: [acountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  accountId          String
+  account            Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   address            Address[]
 }
 
@@ -89,17 +89,17 @@ model Session {
   userAgent String
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @updatedAt
-  acountId  String
-  account   Account  @relation(fields: [acountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   ipData    IpData[]
 }
 
 model IpData {
   id          String   @id @default(cuid())
-  city        String   @db.VarChar(255)
-  country     String   @db.VarChar(255)
-  countryCode String   @db.VarChar(2)
-  data        Json
+  city        String?  @db.VarChar(255)
+  country     String?  @db.VarChar(255)
+  countryCode String?  @db.VarChar(2)
+  data        Json?
   ipAddress   String   @unique @db.VarChar(15)
   createdAt   DateTime @default(now()) @db.Timestamp(6)
   updatedAt   DateTime @updatedAt
