@@ -1,15 +1,23 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { pick } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
+import { merge } from "lodash";
 import { Context } from "../../context";
+import { GqlError } from "../../error";
 import { ProfileResult } from "./profile";
 
 type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<ProfileResult>>;
 
 const myProfile: MyProfile = async (_, __, { store, authData }) => {
-    const { id, registrationNumber } = authData;
-    return registrationNumber
-        ? await store.company.findUnique({ where: { id } })
-        : await store.user.findUnique({ where: { id } });
+    const { accountId } = authData;
+
+    const account = await store.account.findUnique({
+        where: { id: accountId },
+        select: { email: true, phoneNumber: true, userProfile: true, companyProfile: true },
+    });
+    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
+
+    return merge(pick(account, "email", "phoneNumber"), account.userProfile || account.companyProfile);
 };
 
 export const myProfileTypeDefs = gql`

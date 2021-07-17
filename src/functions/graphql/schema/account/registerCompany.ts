@@ -35,7 +35,7 @@ const registerCompany: RegisterCompany = async (_, { input }, { store, dataSourc
             email,
             password,
             roles: [Role.user],
-            companyProfile: { create: { email, name, nameKana, registrationNumber } },
+            companyProfile: { create: { name, nameKana, registrationNumber } },
         },
     });
 

@@ -1,4 +1,4 @@
-import { environment } from "@utils/environment";
+import { environment } from "../environment";
 import { TokenKind } from "graphql";
 
 type TokenConfigs = {

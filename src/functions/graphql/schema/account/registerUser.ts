@@ -37,7 +37,7 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
             email,
             password,
             roles: [Role.user],
-            userProfile: { create: { email, firstName, lastName, firstNameKana, lastNameKana } },
+            userProfile: { create: { firstName, lastName, firstNameKana, lastNameKana } },
         },
     });
 

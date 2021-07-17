@@ -6,3 +6,4 @@ export * from "./logger";
 export * from "./authUtils";
 export * from "./token-helper";
 export * from "./compute";
+export * from "./object-helper";

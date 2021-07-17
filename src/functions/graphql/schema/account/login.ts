@@ -2,8 +2,10 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { matchPassword } from "@utils/authUtils";
 import { getIpData } from "@utils/ip-helper";
 import { Log } from "@utils/logger";
+import { pick } from "@utils/object-helper";
 import { encodeToken } from "@utils/token-helper";
 import { gql } from "apollo-server-core";
+import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { ProfileResult } from "./profile";
@@ -65,8 +67,8 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
         },
     });
 
-    const profile = account.userProfile || account.companyProfile;
-    const accessToken = encodeToken({ ...profile, roles: account.roles }, "access", { jwtid: account.id });
+    const profile = merge(pick(account, "email", "phoneNumber"), account.userProfile || account.companyProfile);
+    const accessToken = encodeToken(merge(profile, { roles: account.roles }), "access", { jwtid: account.id });
     const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
 
     return { profile, accessToken, refreshToken };
