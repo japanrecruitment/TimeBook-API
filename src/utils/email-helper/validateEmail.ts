@@ -1,4 +1,5 @@
 import ZBEmailVerifier from "zb-email-verifier";
+import { Log } from "@utils/index";
 
 export const validateEmail = (email: string) => {
     const regex =
@@ -13,7 +14,7 @@ export const validateEmailOnCertainDomain = (email: string) => {
 
 export const verifyEmailViaSMTP = async (email: string) => {
     try {
-        console.log(`[STARTED] verifying email via SMTP ${email}`);
+        Log(`[STARTED] verifying email via SMTP ${email}`);
         if (!email) return false;
         const result = await ZBEmailVerifier.verify({
             helo: "japanrecruitment.co.jp",
@@ -22,10 +23,10 @@ export const verifyEmailViaSMTP = async (email: string) => {
             catchalltest: true, // default false
             timeout: 5000, // default 5000
         });
-        console.log(`[COMPLETED] verifying email via SMTP ${email}`);
+        Log(`[COMPLETED] verifying email via SMTP ${email}`);
         return result === "EXIST";
     } catch (error) {
-        console.log(`[FAILED] verifying email via SMTP ${email}`);
+        Log(`[FAILED] verifying email via SMTP ${email}`);
         return false;
     }
 };
