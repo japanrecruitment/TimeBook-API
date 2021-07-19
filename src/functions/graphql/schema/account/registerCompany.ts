@@ -1,5 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { Role } from "@prisma/client";
+import { ProfileType, Role } from "@prisma/client";
 import { encodePassword } from "@utils/authUtils";
 import { randomNumberOfNDigits } from "@utils/compute";
 import { addEmailToQueue, EmailVerificationData } from "@utils/email-helper";
@@ -34,6 +34,7 @@ const registerCompany: RegisterCompany = async (_, { input }, { store, dataSourc
         data: {
             email,
             password,
+            profileType: ProfileType.CompanyProfile,
             roles: [Role.user],
             companyProfile: { create: { name, nameKana, registrationNumber } },
         },

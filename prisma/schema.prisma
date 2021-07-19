@@ -15,6 +15,11 @@ enum Role {
   user
 }
 
+enum ProfileType {
+  UserProfile
+  CompanyProfile
+}
+
 enum Gender {
   Male
   Female
@@ -45,6 +50,7 @@ model Account {
   suspended      Boolean       @default(false)
   createdAt      DateTime      @default(now()) @db.Timestamp(6)
   updatedAt      DateTime      @updatedAt
+  profileType    ProfileType
   userProfile    User?
   companyProfile Company?
   session        Session?

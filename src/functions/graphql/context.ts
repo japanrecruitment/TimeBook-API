@@ -1,5 +1,5 @@
 import { UserRole } from "@libs/authorizer";
-import { Company, PrismaClient, User } from "@prisma/client";
+import { Company, PrismaClient, ProfileType, User } from "@prisma/client";
 import { decodeToken } from "@utils/token-helper";
 import { DataSources } from "./dataSources";
 import { GqlError } from "./error";
@@ -9,7 +9,7 @@ export type Context = {
     sourceIp: string;
     userAgent: string;
     dataSources?: DataSources;
-    authData: { roles: UserRole[] } & Partial<User & Company>;
+    authData: { roles: UserRole[]; profileType: ProfileType } & Partial<User & Company>;
 };
 
 const store = new PrismaClient();
@@ -25,10 +25,7 @@ const getAuthData = (event) => {
     }
 };
 
-export default ({ event, context }): Context => {
-    console.log(event);
-    console.log(context);
-
+export default ({ event }): Context => {
     const { sourceIp, userAgent } = event.requestContext.identity;
 
     const authData = getAuthData(event);

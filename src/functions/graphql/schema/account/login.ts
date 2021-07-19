@@ -21,7 +21,9 @@ type LoginResult = {
     refreshToken: string;
 };
 
-type Login = IFieldResolver<any, Context, Record<"input", LoginInput>, Promise<LoginResult>>;
+type LoginArgs = { input: LoginInput };
+
+type Login = IFieldResolver<any, Context, LoginArgs, Promise<LoginResult>>;
 
 const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     const { email, password } = input;
@@ -67,7 +69,10 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
         },
     });
 
-    const profile = merge(pick(account, "email", "phoneNumber"), account.userProfile || account.companyProfile);
+    const profile = merge(
+        pick(account, "email", "phoneNumber", "profileType"),
+        account.userProfile || account.companyProfile
+    );
     const accessToken = encodeToken(merge(profile, { roles: account.roles }), "access", { jwtid: account.id });
     const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
 

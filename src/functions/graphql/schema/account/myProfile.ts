@@ -9,15 +9,21 @@ import { ProfileResult } from "./profile";
 type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<ProfileResult>>;
 
 const myProfile: MyProfile = async (_, __, { store, authData }) => {
-    const { accountId } = authData;
+    const { accountId, profileType } = authData;
 
     const account = await store.account.findUnique({
         where: { id: accountId },
-        select: { email: true, phoneNumber: true, userProfile: true, companyProfile: true },
+        select: {
+            email: true,
+            phoneNumber: true,
+            profileType: true,
+            userProfile: profileType === "UserProfile",
+            companyProfile: profileType === "CompanyProfile",
+        },
     });
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
 
-    return merge(pick(account, "email", "phoneNumber"), account.userProfile || account.companyProfile);
+    return merge(pick(account, "email", "phoneNumber", "profileType"), account.userProfile || account.companyProfile);
 };
 
 export const myProfileTypeDefs = gql`
