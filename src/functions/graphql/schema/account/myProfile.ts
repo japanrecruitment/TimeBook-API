@@ -4,9 +4,9 @@ import { gql } from "apollo-server-core";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { ProfileResult } from "./profile";
+import { Profile } from "./profile";
 
-type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<ProfileResult>>;
+type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<Profile>>;
 
 const myProfile: MyProfile = async (_, __, { store, authData }) => {
     const { accountId, profileType } = authData;
@@ -28,7 +28,7 @@ const myProfile: MyProfile = async (_, __, { store, authData }) => {
 
 export const myProfileTypeDefs = gql`
     type Query {
-        myProfile: ProfileResult @auth(requires: [user, host])
+        myProfile: Profile @auth(requires: [user, host])
     }
 `;
 

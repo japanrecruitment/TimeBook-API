@@ -8,7 +8,7 @@ import { gql } from "apollo-server-core";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { ProfileResult } from "./profile";
+import { Profile } from "./profile";
 
 type LoginInput = {
     email: string;
@@ -16,7 +16,7 @@ type LoginInput = {
 };
 
 type LoginResult = {
-    profile: ProfileResult;
+    profile: Profile;
     accessToken: string;
     refreshToken: string;
 };
@@ -86,7 +86,7 @@ export const loginTypeDefs = gql`
     }
 
     type LoginResult {
-        profile: ProfileResult!
+        profile: Profile!
         accessToken: String!
         refreshToken: String!
     }
