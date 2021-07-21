@@ -4076,6 +4076,13 @@ graphlib@^2.1.8:
   dependencies:
     lodash "^4.17.15"
 
+graphql-map-selections@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/graphql-map-selections/-/graphql-map-selections-1.0.2.tgz#d97379f550188113cdf00dabaa840ee7737fab94"
+  integrity sha512-oPN1lD0aVgwbD6QT3TVJj0ic1qPdxTsPidM/IAGQDTlNgElpdFcYBtdCHaFVAJat4Mjulmh7jfWVDp6BbrJxBw==
+  dependencies:
+    graphql "^15.5.1"
+
 graphql-tag@^2.11.0:
   version "2.12.5"
   resolved "https://registry.yarnpkg.com/graphql-tag/-/graphql-tag-2.12.5.tgz#5cff974a67b417747d05c8d9f5f3cb4495d0db8f"
@@ -4083,7 +4090,7 @@ graphql-tag@^2.11.0:
   dependencies:
     tslib "^2.1.0"
 
-graphql@^15.5.0:
+graphql@^15.5.1:
   version "15.5.1"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-15.5.1.tgz#f2f84415d8985e7b84731e7f3536f8bb9d383aad"
   integrity sha512-FeTRX67T3LoE3LWAxxOlW2K3Bz+rMYAC18rRguK4wgXaTZMiJwSUwDmPFo3UadAKbzirKIg5Qy+sNJXbpPRnQw==

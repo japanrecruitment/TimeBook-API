@@ -8,6 +8,7 @@ export default async (ipAddress: string) => {
         const url = `http://api.ipstack.com/${ipAddress}?access_key=${environment.IP_STACK_KEY}`;
         const response = await axios.get(url);
         // Log(response);
+        Log("[COMPLETED]: Fetching ip data");
         if (response.status === 200) return response.data;
     } catch (error) {
         Log("[FAILED]: fetching ip data");
