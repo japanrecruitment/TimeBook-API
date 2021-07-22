@@ -20,7 +20,7 @@ const getAuthData = (event) => {
     } catch (error) {
         const code = "FORBIDDEN";
         const message = error.name === "TokenExpiredError" ? "Token expired" : "Invalid token";
-        const action = error.name === "TokenExpiredError" ? "refresh-token" : "login";
+        const action = error.name === "TokenExpiredError" ? "refresh-token" : "logout";
         throw new GqlError({ code, message, action });
     }
 };

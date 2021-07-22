@@ -4,6 +4,7 @@ import { forgotPasswordResolvers, forgotPasswordTypeDefs } from "./forgotPasswor
 import { loginResolvers, loginTypeDefs } from "./login";
 import { myProfileResolvers, myProfileTypeDefs } from "./myProfile";
 import { profileResolvers, profileTypeDefs } from "./profile";
+import { refreshTokenResolvers, refreshTokenTypeDefs } from "./refreshToken";
 import { registerCompanyResolvers, registerCompanyTypeDefs } from "./registerCompany";
 import { registerUserResolvers, registerUserTypeDefs } from "./registerUser";
 import { resendVerificationCodeResolvers, resendVerificationCodeTypeDefs } from "./resendVerificationCode";
@@ -15,28 +16,30 @@ import { verifyResetPasswordRequestResolvers, verifyResetPasswordRequestTypeDefs
 export const accountTypeDefs = mergeTypeDefs([
     forgotPasswordTypeDefs,
     loginTypeDefs,
+    myProfileTypeDefs,
     profileTypeDefs,
+    refreshTokenTypeDefs,
     registerCompanyTypeDefs,
     registerUserTypeDefs,
     resendVerificationCodeTypeDefs,
     resetPasswordTypeDefs,
+    selfDirectiveTypeDefs,
     verifyEmailTypeDefs,
     verifyResetPasswordRequestTypeDefs,
-    myProfileTypeDefs,
-    selfDirectiveTypeDefs,
 ]);
 
 export const accountResolvers = mergeResolvers([
     forgotPasswordResolvers,
     loginResolvers,
+    myProfileResolvers,
     profileResolvers,
+    refreshTokenResolvers,
     registerCompanyResolvers,
     registerUserResolvers,
     resendVerificationCodeResolvers,
     resetPasswordResolvers,
     verifyEmailResolvers,
     verifyResetPasswordRequestResolvers,
-    myProfileResolvers,
 ]);
 
 export const accountDirectives = merge(selfDirectives);
