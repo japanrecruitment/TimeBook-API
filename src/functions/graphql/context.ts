@@ -1,5 +1,4 @@
-import { UserRole } from "@libs/authorizer";
-import { Company, PrismaClient, ProfileType, User } from "@prisma/client";
+import { Account, Company, PrismaClient, ProfileType, User } from "@prisma/client";
 import { decodeToken } from "@utils/token-helper";
 import { DataSources } from "./dataSources";
 import { GqlError } from "./error";
@@ -9,7 +8,7 @@ export type Context = {
     sourceIp: string;
     userAgent: string;
     dataSources?: DataSources;
-    authData: { roles: UserRole[]; profileType: ProfileType } & Partial<User & Company>;
+    authData: Pick<Account, "email" | "phoneNumber" | "roles" | "profileType"> & Partial<User & Company>;
 };
 
 const store = new PrismaClient();

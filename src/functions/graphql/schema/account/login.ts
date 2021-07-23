@@ -70,10 +70,10 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     });
 
     const profile = merge(
-        pick(account, "email", "phoneNumber", "profileType"),
+        pick(account, "email", "phoneNumber", "profileType", "roles"),
         account.userProfile || account.companyProfile
     );
-    const accessToken = encodeToken(merge(profile, { roles: account.roles }), "access", { jwtid: account.id });
+    const accessToken = encodeToken(profile, "access", { jwtid: account.id });
     const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
 
     return { profile, accessToken, refreshToken };

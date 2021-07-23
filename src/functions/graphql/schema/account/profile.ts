@@ -26,7 +26,7 @@ export const profileTypeDefs = gql`
         firstNameKana: String!
         lastNameKana: String!
         phoneNumber: String
-        address: [Address]
+        address: Address
     }
 
     type CompanyProfile {
@@ -36,7 +36,7 @@ export const profileTypeDefs = gql`
         nameKana: String!
         phoneNumber: String
         registrationNumber: String!
-        address: [Address]
+        address: Address
     }
 
     union Profile = UserProfile | CompanyProfile

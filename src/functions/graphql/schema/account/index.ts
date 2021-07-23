@@ -10,6 +10,7 @@ import { registerUserResolvers, registerUserTypeDefs } from "./registerUser";
 import { resendVerificationCodeResolvers, resendVerificationCodeTypeDefs } from "./resendVerificationCode";
 import { resetPasswordResolvers, resetPasswordTypeDefs } from "./resetPassword";
 import { selfDirectives, selfDirectiveTypeDefs } from "./selfDirective";
+import { updateMyProfileResolvers, updateMyProfileTypeDefs } from "./updateMyProfile";
 import { verifyEmailResolvers, verifyEmailTypeDefs } from "./verifyEmail";
 import { verifyResetPasswordRequestResolvers, verifyResetPasswordRequestTypeDefs } from "./verifyResetPasswordRequest";
 
@@ -24,6 +25,7 @@ export const accountTypeDefs = mergeTypeDefs([
     resendVerificationCodeTypeDefs,
     resetPasswordTypeDefs,
     selfDirectiveTypeDefs,
+    updateMyProfileTypeDefs,
     verifyEmailTypeDefs,
     verifyResetPasswordRequestTypeDefs,
 ]);
@@ -38,6 +40,7 @@ export const accountResolvers = mergeResolvers([
     registerUserResolvers,
     resendVerificationCodeResolvers,
     resetPasswordResolvers,
+    updateMyProfileResolvers,
     verifyEmailResolvers,
     verifyResetPasswordRequestResolvers,
 ]);

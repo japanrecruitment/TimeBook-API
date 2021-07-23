@@ -69,20 +69,20 @@ model User {
   updatedAt     DateTime   @updatedAt
   accountId     String
   account       Account    @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  address       Address[]
+  address       Address?
   documents     Document[]
 }
 
 model Company {
-  id                 String    @id @default(cuid())
-  name               String    @db.VarChar(255)
-  nameKana           String    @db.VarChar(255)
-  registrationNumber String    @db.VarBit(255)
-  createdAt          DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime  @updatedAt
+  id                 String   @id @default(cuid())
+  name               String   @db.VarChar(255)
+  nameKana           String   @db.VarChar(255)
+  registrationNumber String   @db.VarBit(255)
+  createdAt          DateTime @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime @updatedAt
   accountId          String
-  account            Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  address            Address[]
+  account            Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  address            Address?
 }
 
 model Session {

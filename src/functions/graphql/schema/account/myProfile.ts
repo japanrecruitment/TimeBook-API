@@ -1,6 +1,7 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { pick } from "@utils/object-helper";
+import { omit, pick } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
+import { mapSelections } from "graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
@@ -8,7 +9,8 @@ import { Profile } from "./profile";
 
 type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<Profile>>;
 
-const myProfile: MyProfile = async (_, __, { store, authData }) => {
+const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
+    const { UserProfile, CompanyProfile } = mapSelections(info);
     const { accountId, profileType } = authData;
 
     const account = await store.account.findUnique({
@@ -17,8 +19,9 @@ const myProfile: MyProfile = async (_, __, { store, authData }) => {
             email: true,
             phoneNumber: true,
             profileType: true,
-            userProfile: profileType === "UserProfile",
-            companyProfile: profileType === "CompanyProfile",
+            userProfile: profileType === "UserProfile" ? { select: omit(UserProfile, "email", "phoneNumber") } : false,
+            companyProfile:
+                profileType === "CompanyProfile" ? { select: omit(CompanyProfile, "email", "phoneNumber") } : false,
         },
     });
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
