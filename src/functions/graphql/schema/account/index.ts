@@ -3,6 +3,7 @@ import { merge } from "lodash";
 import { forgotPasswordResolvers, forgotPasswordTypeDefs } from "./forgotPassword";
 import { loginResolvers, loginTypeDefs } from "./login";
 import { myProfileResolvers, myProfileTypeDefs } from "./myProfile";
+import { mySessionsResolvers, mySessionsTypeDefs } from "./mySessions";
 import { profileResolvers, profileTypeDefs } from "./profile";
 import { refreshTokenResolvers, refreshTokenTypeDefs } from "./refreshToken";
 import { registerCompanyResolvers, registerCompanyTypeDefs } from "./registerCompany";
@@ -18,6 +19,7 @@ export const accountTypeDefs = mergeTypeDefs([
     forgotPasswordTypeDefs,
     loginTypeDefs,
     myProfileTypeDefs,
+    mySessionsTypeDefs,
     profileTypeDefs,
     refreshTokenTypeDefs,
     registerCompanyTypeDefs,
@@ -34,6 +36,7 @@ export const accountResolvers = mergeResolvers([
     forgotPasswordResolvers,
     loginResolvers,
     myProfileResolvers,
+    mySessionsResolvers,
     profileResolvers,
     refreshTokenResolvers,
     registerCompanyResolvers,

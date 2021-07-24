@@ -1,8 +1,8 @@
+import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
-import { IFieldResolver } from "@graphql-tools/utils";
 
 type AddSpaceInput = {
     name: string;
@@ -13,6 +13,7 @@ type AddSpaceInput = {
     nearestStations: NearestStation[];
     space_To_Space_Types: Space_to_Space_Types[];
 };
+
 type SpacePricePlan = {
     planTitle: string;
     hourlyPrice: number;
@@ -21,20 +22,24 @@ type SpacePricePlan = {
     lastMinuteDiscount: number;
     cooldownTime: number;
 };
+
 type NearestStation = {
     stationId: number;
     via: string;
     time: number;
 };
+
 type Space_to_Space_Types = {
     spaceTypeId: string;
 };
+
 type AddSpace = IFieldResolver<any, Context, Record<"input", AddSpaceInput>, Promise<Result>>;
-const addSpace: AddSpace = async (_, { input }, { store, dataSources }) => {
-    const accountId = "accountidfromtoken"; //for test
-    let { name, maximumCapacity, numberOfSeats, spaceSize, spacePricePlan, nearestStations, space_To_Space_Types } =
+
+const addSpace: AddSpace = async (_, { input }, { authData, store }) => {
+    const { accountId } = authData;
+    const { name, maximumCapacity, numberOfSeats, spaceSize, spacePricePlan, nearestStations, space_To_Space_Types } =
         input;
-    let { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime } = spacePricePlan;
+    const { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime } = spacePricePlan;
     const isValid =
         name.trim() &&
         planTitle.trim() &&
@@ -52,35 +57,18 @@ const addSpace: AddSpace = async (_, { input }, { store, dataSources }) => {
             maximumCapacity,
             numberOfSeats,
             spaceSize,
-            accountId,
+            account: { connect: { id: accountId } },
             spacePricePlans: {
-                create: {
-                    planTitle,
-                    hourlyPrice,
-                    dailyPrice,
-                    maintenanceFee,
-                    lastMinuteDiscount,
-                    cooldownTime,
-                },
+                create: { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime },
             },
-            nearestStations: {
-                createMany: {
-                    data: nearestStations,
-                },
-            },
-            spaceTypes: {
-                createMany: {
-                    data: space_To_Space_Types,
-                },
-            },
+            nearestStations: { createMany: { data: nearestStations } },
+            spaceTypes: { createMany: { data: space_To_Space_Types } },
         },
     });
 
-    return {
-        message: `Successfully added space`,
-        action: null,
-    };
+    return { message: `Successfully added space` };
 };
+
 export const addSpaceTypeDefs = gql`
     input AddSpaceInput {
         name: String!
@@ -91,6 +79,7 @@ export const addSpaceTypeDefs = gql`
         nearestStations: [NearestStations]
         space_To_Space_Types: [Space_to_Space_Types]
     }
+
     input SpacePricePlan {
         planTitle: String
         hourlyPrice: Float
@@ -109,11 +98,10 @@ export const addSpaceTypeDefs = gql`
     input Space_to_Space_Types {
         spaceTypeId: String!
     }
+
     type Mutation {
         addSpace(input: AddSpaceInput!): Result! @auth(requires: [host])
     }
 `;
 
-export const addSpaceResolvers = {
-    Mutation: { addSpace },
-};
+export const addSpaceResolvers = { Mutation: { addSpace } };
