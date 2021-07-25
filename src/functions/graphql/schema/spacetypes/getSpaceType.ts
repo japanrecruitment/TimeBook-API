@@ -5,20 +5,18 @@ import { Result } from "../core/result";
 import { IFieldResolver } from "@graphql-tools/utils";
 
 type GetSpaceTypeResult = any;
-   
-type GetSpaceType = IFieldResolver<any, Context, Record<string,any>, Promise<GetSpaceTypeResult>>;
 
-const getSpaceTypes:GetSpaceType =  async (_, __, { store,dataSources}) => {
+type GetSpaceType = IFieldResolver<any, Context, Record<string, any>, Promise<GetSpaceTypeResult>>;
 
-  const spaceTypes =   await store.spaceType.findMany({
-    orderBy: {title: "asc" },
-    take: 20,
-    skip: 0,
+const getSpaceTypes: GetSpaceType = async (_, __, { store, dataSources }) => {
+    const spaceTypes = await store.spaceType.findMany({
+        orderBy: { title: "asc" },
+        take: 20,
+        skip: 0,
     });
-   
-    return spaceTypes || []
-}
 
+    return spaceTypes || [];
+};
 
 export const getSpaceTypeDefs = gql`
     type SpaceType {
@@ -31,6 +29,6 @@ export const getSpaceTypeDefs = gql`
         getAllSpaceTypes: SpaceType[] @auth(requires: [admin,user,host])
     }
 `;
-export const addSpaceTypeResolvers = {
-    Query: { getSpaceTypes }
+export const getSpaceTypeResolvers = {
+    Query: { getSpaceTypes },
 };
