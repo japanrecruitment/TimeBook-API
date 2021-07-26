@@ -8,13 +8,16 @@ import {
     validateEmailOnCertainDomain,
     verifyEmailViaSMTP,
 } from "@utils/email-helper";
+import { Log } from "@utils/logger";
 
 const emailQueueWorker: SQSHandler = async (event) => {
     if (event.Records.length === 0) return;
     const emailQueueData: EmailQueueData = JSON.parse(event.Records[0].body);
     const { template, ...emailData } = emailQueueData;
 
+    Log(emailQueueData);
     const { to, subject, body } = emailTemplates[template](emailData as any);
+    Log(to, subject, body);
 
     if (!validateEmail(to)) return;
     if (!validateEmailOnCertainDomain(to)) return;

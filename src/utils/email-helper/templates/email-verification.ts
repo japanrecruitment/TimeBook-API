@@ -1,4 +1,3 @@
-import Handlebars from "handlebars";
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
 

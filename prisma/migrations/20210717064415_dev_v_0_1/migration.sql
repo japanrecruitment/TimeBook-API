@@ -16,7 +16,8 @@ CREATE TABLE "Account" (
     "approved" BOOLEAN NOT NULL DEFAULT false,
     "email" VARCHAR(255) NOT NULL,
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,
-    "emailVerifiedOn" TIMESTAMP(6),
+    "phoneNumber" VARCHAR(10),
+    "phoneVerified" BOOLEAN NOT NULL DEFAULT false,
     "password" VARCHAR(255) NOT NULL,
     "roles" "Role"[],
     "suspended" BOOLEAN NOT NULL DEFAULT false,
@@ -34,11 +35,9 @@ CREATE TABLE "User" (
     "firstNameKana" VARCHAR(255) NOT NULL,
     "lastName" VARCHAR(255) NOT NULL,
     "lastNameKana" VARCHAR(255) NOT NULL,
-    "phoneNumber" VARCHAR(10),
-    "phoneVerified" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "acountId" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
 
     PRIMARY KEY ("id")
 );
@@ -48,12 +47,10 @@ CREATE TABLE "Company" (
     "id" TEXT NOT NULL,
     "name" VARCHAR(255) NOT NULL,
     "nameKana" VARCHAR(255) NOT NULL,
-    "phoneNumber" VARCHAR(10),
-    "phoneVerified" BOOLEAN NOT NULL DEFAULT false,
     "registrationNumber" VARBIT(255) NOT NULL,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "acountId" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
 
     PRIMARY KEY ("id")
 );
@@ -65,7 +62,7 @@ CREATE TABLE "Session" (
     "userAgent" TEXT NOT NULL,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "acountId" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
 
     PRIMARY KEY ("id")
 );
@@ -73,10 +70,10 @@ CREATE TABLE "Session" (
 -- CreateTable
 CREATE TABLE "IpData" (
     "id" TEXT NOT NULL,
-    "city" VARCHAR(255) NOT NULL,
-    "country" VARCHAR(255) NOT NULL,
-    "countryCode" VARCHAR(2) NOT NULL,
-    "data" JSONB NOT NULL,
+    "city" VARCHAR(255),
+    "country" VARCHAR(255),
+    "countryCode" VARCHAR(2),
+    "data" JSONB,
     "ipAddress" VARCHAR(15) NOT NULL,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -245,28 +242,31 @@ CREATE TABLE "Space_To_SpaceType" (
 CREATE UNIQUE INDEX "Account.email_unique" ON "Account"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_acountId_unique" ON "User"("acountId");
+CREATE UNIQUE INDEX "User_accountId_unique" ON "User"("accountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Company_acountId_unique" ON "Company"("acountId");
+CREATE UNIQUE INDEX "Company_accountId_unique" ON "Company"("accountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Session_acountId_unique" ON "Session"("acountId");
+CREATE UNIQUE INDEX "Session_accountId_unique" ON "Session"("accountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IpData.ipAddress_unique" ON "IpData"("ipAddress");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SpacePricePlan_spaceId_unique" ON "SpacePricePlan"("spaceId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Reservation_reserveeId_unique" ON "Reservation"("reserveeId");
+CREATE UNIQUE INDEX "Document_mediaId_unique" ON "Document"("mediaId");
 
 -- AddForeignKey
-ALTER TABLE "User" ADD FOREIGN KEY ("acountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "User" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Company" ADD FOREIGN KEY ("acountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Company" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Session" ADD FOREIGN KEY ("acountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Session" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "IpData" ADD FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;

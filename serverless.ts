@@ -3,9 +3,11 @@ import * as functions from "./src/functions";
 
 import resources from "./cloudformation-template";
 
-const serverlessConfiguration: AWS & { app?: string; org?: string } = {
-    app: "timebook",
-    org: "japanrecruitment",
+// { app?: string; org?: string }
+// app: "timebook",
+// org: "japanrecruitment",
+
+const serverlessConfiguration: AWS = {
     service: "timebook-api",
     frameworkVersion: "2",
     useDotenv: true,
@@ -31,15 +33,15 @@ const serverlessConfiguration: AWS & { app?: string; org?: string } = {
         },
         environment: {
             NODE_ENV: "${opt:stage, 'dev'}",
-            DB_URL: "${param:DB_URL}",
-            TOKEN_SECRET: "${param:TOKEN_SECRET}",
-            REFRESH_TOKEN_SECRET: "${param:REFRESH_TOKEN_SECRET}",
-            STRIPE_PK: "${param:STRIPE_PK}",
-            STRIPE_SK: "${param:STRIPE_SK}",
-            EMAIL_QUEUE_URL: "${param:EMAIL_QUEUE_URL}",
-            REDIS_HOST: "${param:REDIS_HOST}",
-            REDIS_PORT: "${param:REDIS_PORT}",
-            IP_STACK_KEY: "${param:IP_STACK_KEY}",
+            DB_URL: "${env:DB_URL}",
+            TOKEN_SECRET: "${env:TOKEN_SECRET}",
+            REFRESH_TOKEN_SECRET: "${env:REFRESH_TOKEN_SECRET}",
+            STRIPE_PK: "${env:STRIPE_PK}",
+            STRIPE_SK: "${env:STRIPE_SK}",
+            REDIS_HOST: "${env:REDIS_HOST}",
+            REDIS_PORT: "${env:REDIS_PORT}",
+            IP_STACK_KEY: "${env:IP_STACK_KEY}",
+            EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
         },
         apiGateway: {
             shouldStartNameWithService: true,

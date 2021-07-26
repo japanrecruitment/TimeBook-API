@@ -1,12 +1,14 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { matchPassword } from "@utils/authUtils";
 import { getIpData } from "@utils/ip-helper";
-import { JWT } from "@utils/jwtUtil";
 import { Log } from "@utils/logger";
+import { pick } from "@utils/object-helper";
+import { encodeToken } from "@utils/token-helper";
 import { gql } from "apollo-server-core";
+import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { ProfileResult } from "./profile";
+import { Profile } from "./profile";
 
 type LoginInput = {
     email: string;
@@ -14,12 +16,14 @@ type LoginInput = {
 };
 
 type LoginResult = {
-    profile: ProfileResult;
+    profile: Profile;
     accessToken: string;
     refreshToken: string;
 };
 
-type Login = IFieldResolver<any, Context, Record<"input", LoginInput>, Promise<LoginResult>>;
+type LoginArgs = { input: LoginInput };
+
+type Login = IFieldResolver<any, Context, LoginArgs, Promise<LoginResult>>;
 
 const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     const { email, password } = input;
@@ -49,7 +53,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     const session = await store.session.create({
         data: {
             userAgent,
-            acountId: account.id,
+            accountId: account.id,
             ipData: {
                 connectOrCreate: {
                     where: { ipAddress: sourceIp },
@@ -65,10 +69,12 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
         },
     });
 
-    const profile = account.userProfile || account.companyProfile;
-    const jwt = new JWT();
-    const accessToken = jwt.sign(account.id, { ...profile, roles: account.roles }, "accessToken");
-    const refreshToken = jwt.sign(session.id, { accountId: account.id }, "refreshToken");
+    const profile = merge(
+        pick(account, "email", "phoneNumber", "profileType", "roles"),
+        account.userProfile || account.companyProfile
+    );
+    const accessToken = encodeToken(profile, "access", { jwtid: account.id });
+    const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
 
     return { profile, accessToken, refreshToken };
 };
@@ -80,7 +86,7 @@ export const loginTypeDefs = gql`
     }
 
     type LoginResult {
-        profile: ProfileResult!
+        profile: Profile!
         accessToken: String!
         refreshToken: String!
     }
