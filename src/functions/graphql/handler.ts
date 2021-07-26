@@ -1,5 +1,5 @@
 import { ApolloServer } from "apollo-server-lambda";
-import { environment, Log } from "@utils/index";
+import { environment } from "@utils/index";
 import cache from "./cache";
 import context from "./context";
 import dataSources from "./dataSources";
@@ -18,4 +18,6 @@ const server = new ApolloServer({
     introspection: environment.isDev(),
 });
 
-export const main = server.createHandler();
+export const main = server.createHandler({
+    expressGetMiddlewareOptions: { cors: { origin: "*", credentials: false } },
+});
