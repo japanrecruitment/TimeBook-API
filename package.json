@@ -40,7 +40,6 @@
         "bcryptjs": "^2.4.3",
         "dotenv": "^10.0.0",
         "graphql": "^15.5.1",
-        "graphql-map-selections": "^1.1.0",
         "handlebars": "^4.7.7",
         "jsonwebtoken": "^8.5.1",
         "stripe": "^8.157.0",

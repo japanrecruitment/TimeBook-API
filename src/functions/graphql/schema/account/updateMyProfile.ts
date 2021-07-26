@@ -1,10 +1,10 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { mapSelections, toPrismaSelect } from "@libs/gql-map-selection";
 import { Address } from "@prisma/client";
 import { Log } from "@utils/logger";
 import { merge } from "lodash";
 import { omit, pick } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
-import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Profile } from "./profile";
