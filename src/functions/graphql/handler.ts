@@ -1,5 +1,5 @@
 import { ApolloServer } from "apollo-server-lambda";
-import { environment } from "@utils/index";
+import { environment, Log } from "@utils/index";
 import cache from "./cache";
 import context from "./context";
 import dataSources from "./dataSources";
@@ -11,11 +11,11 @@ const server = new ApolloServer({
     cache,
     context,
     dataSources,
-    debug: environment.isDev(),
     formatError,
-    introspection: environment.isDev(),
     plugins,
     schema,
+    debug: environment.isDev(),
+    introspection: environment.isDev(),
 });
 
 export const main = server.createHandler();
