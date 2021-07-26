@@ -4,12 +4,16 @@ import { Log } from "@utils/index";
 export const validateEmail = (email: string) => {
     const regex =
         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return regex.test(email.toLowerCase());
+    const isValid = regex.test(email.toLowerCase());
+    Log(isValid);
+    return isValid;
 };
 
 export const validateEmailOnCertainDomain = (email: string) => {
     const regex = /^[^@]+@(yahoo|ymail|rocketmail)\.(com|in|co\.uk|co\.jp)$/i;
-    return regex.test(email);
+    const isValid = regex.test(email);
+    Log(isValid);
+    return isValid;
 };
 
 export const verifyEmailViaSMTP = async (email: string) => {
