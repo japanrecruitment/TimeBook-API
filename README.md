@@ -1,4 +1,5 @@
 # TimeBook-Serverless-API
+[![CI dev](https://github.com/japanrecruitment/TimeBook-API/actions/workflows/dev.yml/badge.svg)](https://github.com/japanrecruitment/TimeBook-API/actions/workflows/dev.yml)
 
 ## Install
 
