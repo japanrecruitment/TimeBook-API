@@ -260,10 +260,10 @@ model Space_To_SpaceType {
 }
 
 model Credit {
-  id              String  @id @default(cuid())
-  accountId       String
-  account         Account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  remainingCredit Int?    @default(0)
+  id              String   @id @default(cuid())
+  accountId       String?
+  account         Account? @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  remainingCredit Int?     @default(0)
   month           String?
 
   @@unique([accountId, month], name: "Credit_accountId_month_key")
