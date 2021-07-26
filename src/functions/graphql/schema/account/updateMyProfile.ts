@@ -4,7 +4,7 @@ import { Log } from "@utils/logger";
 import { merge } from "lodash";
 import { omit, pick } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
-import { mapSelections } from "graphql-map-selections";
+import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Profile } from "./profile";
@@ -28,31 +28,54 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, { authData, store 
     const { UserProfile, CompanyProfile } = mapSelections(info);
     const { id, email, phoneNumber, profileType } = authData;
 
+    const userProfileSelect =
+        profileType === "UserProfile" ? toPrismaSelect(omit(UserProfile, "email", "phoneNumber")) : false;
+    const companyProfileSelect =
+        profileType === "CompanyProfile" ? toPrismaSelect(omit(CompanyProfile, "email", "phoneNumber")) : false;
+
     if (id !== input.id)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this profile" });
 
     let updatedProfile;
     if (profileType === "UserProfile") {
         const userProfile = pick(input, "firstName", "firstNameKana", "lastName", "lastNameKana", "dob");
-        const address = input.address;
         updatedProfile = await store.user.update({
             where: { id },
             data: {
                 ...userProfile,
-                address: address ? { upsert: { create: omit(address, "id"), update: address } } : undefined,
+                address: input.address
+                    ? {
+                          upsert: {
+                              create: {
+                                  ...omit(input.address, "companyId", "prefectureId"),
+                                  prefecture: { connect: { id: input.address.prefectureId } },
+                              },
+                              update: input.address,
+                          },
+                      }
+                    : undefined,
             },
-            select: { ...omit(UserProfile, "email", "phoneNumber"), address: { select: UserProfile.address } },
+            ...userProfileSelect,
         });
     } else if (profileType === "CompanyProfile") {
         const companyProfile = pick(input, "name", "nameKana", "registrationNumber");
-        const address = input.address;
         updatedProfile = await store.company.update({
             where: { id },
             data: {
                 ...companyProfile,
-                address: address ? { upsert: { create: omit(address, "id"), update: address } } : undefined,
+                address: input.address
+                    ? {
+                          upsert: {
+                              create: {
+                                  ...omit(input.address, "userId", "prefectureId"),
+                                  prefecture: { connect: { id: input.address.prefectureId } },
+                              },
+                              update: input.address,
+                          },
+                      }
+                    : undefined,
             },
-            select: { ...omit(CompanyProfile, "email", "phoneNumber"), address: { select: CompanyProfile.address } },
+            ...companyProfileSelect,
         });
     }
 
