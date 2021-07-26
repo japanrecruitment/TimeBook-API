@@ -14,13 +14,12 @@
         "outDir": "lib",
         "skipLibCheck": true
     },
-    "include": ["src/**/*"],
+    "include": ["src/**/*","serverless.ts"],
     "exclude": [
         "node_modules/**/*",
         ".serverless/**/*",
         ".webpack/**/*",
         "_warmup/**/*",
         ".vscode/**/*",
-        "node_modules/mongoose/index.d.ts"
     ]
 }

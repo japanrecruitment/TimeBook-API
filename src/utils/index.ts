@@ -4,5 +4,6 @@ export * from "./message";
 export * from "./appConfig";
 export * from "./logger";
 export * from "./authUtils";
-export * from "./jwtUtil";
+export * from "./token-helper";
 export * from "./compute";
+export * from "./object-helper";

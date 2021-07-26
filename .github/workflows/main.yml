@@ -1,7 +1,7 @@
 name: CI
 on:
     push:
-        branches: [main]
+        branches: [dev]
 
     # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
@@ -18,11 +18,19 @@ jobs:
               uses: actions/setup-node@v1
               with:
                   node-version: ${{ matrix.node-version }}
-            - run: yarn install --frozen-lockfile
-            - name: Serverless deploy
+            - run: npm ci
+            - name: Serverless Deploy
               uses: serverless/github-action@master
               with:
-                  args: deploy
+                  args: deploy --stage dev
               env:
                   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  DB_URL: ${{ secrets.DB_URL }}
+                  TOKEN_SECRET: ${{ secrets.TOKEN_SECRET }}
+                  REFRESH_TOKEN_SECRET: ${{ secrets.REFRESH_TOKEN_SECRET }}
+                  STRIPE_PK: ${{ secrets.STRIPE_PK }}
+                  STRIPE_SK: ${{ secrets.STRIPE_SK }}
+                  REDIS_HOST: ${{ secrets.REDIS_HOST }}
+                  REDIS_PORT: ${{ secrets.REDIS_PORT }}
+                  IP_STACK_KEY: ${{ secrets.IP_STACK_KEY }}

@@ -1,27 +1,38 @@
-import { AuthenticatedUser } from "@libs/authorizer";
-import { PrismaClient } from "@prisma/client";
+import { Account, Company, PrismaClient, ProfileType, User } from "@prisma/client";
+import { decodeToken } from "@utils/token-helper";
 import { DataSources } from "./dataSources";
+import { GqlError } from "./error";
 
 export type Context = {
     store: PrismaClient;
     sourceIp: string;
     userAgent: string;
     dataSources?: DataSources;
-    principal: AuthenticatedUser;
+    authData: Pick<Account, "email" | "phoneNumber" | "roles" | "profileType"> & Partial<User & Company>;
 };
 
 const store = new PrismaClient();
 
+const getAuthData = (event) => {
+    try {
+        return decodeToken(event.headers.authorization, "access") || { roles: ["unknown"] };
+    } catch (error) {
+        const code = "FORBIDDEN";
+        const message = error.name === "TokenExpiredError" ? "Token expired" : "Invalid token";
+        const action = error.name === "TokenExpiredError" ? "refresh-token" : "logout";
+        throw new GqlError({ code, message, action });
+    }
+};
+
 export default ({ event }): Context => {
     const { sourceIp, userAgent } = event.requestContext.identity;
 
-    // TODO Take care of authorization
-    const principal = new AuthenticatedUser(event);
+    const authData = getAuthData(event);
 
     return {
         store,
         sourceIp,
         userAgent,
-        principal,
+        authData,
     };
 };

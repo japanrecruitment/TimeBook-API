@@ -255,37 +255,6 @@ const emailQueue: AWS["resources"]["Resources"] = {
     },
 };
 
-// const iamRole: AWS["resources"]["Resources"] = {
-//     IamRole: {
-//         Type: "AWS::IAM::Role",
-//         Properties: {
-//             RoleName: {
-//                 "Fn::Sub": "lambda-role",
-//             },
-//             AssumeRolePolicyDocument: {
-//                 Version: "2012-10-17",
-//                 Statement: [
-//                     {
-//                         Effect: "Allow",
-//                         Principal: { Service: ["lambda.amazonaws.com"] },
-//                         Action: ["sts:AssumeRole"],
-//                     },
-//                 ],
-//             },
-//             Path: "/",
-//             ManagedPolicyArns: [
-//                 "arn:aws:iam:aws:policy/AWSLambdaExecute",
-//                 "arn:aws:iam:aws:policy/AmazonS3FullAccess",
-//                 "arn:aws:iam:aws:policy/AWSLambdaSQSQueueExecutionRole",
-//                 "arn:aws:iam:aws:policy/AWSLambdaVPCAccessExecutionRole",
-//                 "arn:aws:iam:aws:policy/AmazonSESFullAccess",
-//             ],
-//         },
-//     },
-// };
-
-// TODO: Create Email Queue for each stage
-
 const resources: AWS["resources"] = {
     Resources: {
         ...vpc,

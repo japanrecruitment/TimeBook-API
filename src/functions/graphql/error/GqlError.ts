@@ -21,6 +21,6 @@ export default class GqlError extends ApolloError {
         const { code, message, ...extensions } = args;
         super(message, code || "INTERNAL_SERVER_ERROR", extensions);
 
-        Object.defineProperty(this, "name", { value: "GQLError" });
+        Object.defineProperty(this, "name", { value: "GqlError" });
     }
 }

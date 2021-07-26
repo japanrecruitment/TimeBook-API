@@ -15,6 +15,11 @@ enum Role {
   user
 }
 
+enum ProfileType {
+  UserProfile
+  CompanyProfile
+}
+
 enum Gender {
   Male
   Female
@@ -45,9 +50,10 @@ model Account {
   suspended      Boolean       @default(false)
   createdAt      DateTime      @default(now()) @db.Timestamp(6)
   updatedAt      DateTime      @updatedAt
+  profileType    ProfileType
   userProfile    User?
   companyProfile Company?
-  session        Session?
+  session        Session[]
   myReservation  Reservation[]
   mySpace        Space[]
 }
@@ -59,28 +65,24 @@ model User {
   firstNameKana String     @db.VarChar(255)
   lastName      String     @db.VarChar(255)
   lastNameKana  String     @db.VarChar(255)
-  email         String?    @unique @db.VarChar(255)
-  phoneNumber   String?    @unique @db.VarChar(10)
   createdAt     DateTime   @default(now()) @db.Timestamp(6)
   updatedAt     DateTime   @updatedAt
-  acountId      String
-  account       Account    @relation(fields: [acountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  address       Address[]
+  accountId     String
+  account       Account    @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  address       Address?
   documents     Document[]
 }
 
 model Company {
-  id                 String    @id @default(cuid())
-  email              String?   @unique @db.VarChar(255)
-  name               String    @db.VarChar(255)
-  nameKana           String    @db.VarChar(255)
-  phoneNumber        String?   @unique @db.VarChar(10)
-  registrationNumber String    @db.VarBit(255)
-  createdAt          DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime  @updatedAt
-  acountId           String
-  account            Account   @relation(fields: [acountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  address            Address[]
+  id                 String   @id @default(cuid())
+  name               String   @db.VarChar(255)
+  nameKana           String   @db.VarChar(255)
+  registrationNumber String   @db.VarBit(255)
+  createdAt          DateTime @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime @updatedAt
+  accountId          String
+  account            Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  address            Address?
 }
 
 model Session {
@@ -89,17 +91,17 @@ model Session {
   userAgent String
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @updatedAt
-  acountId  String
-  account   Account  @relation(fields: [acountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   ipData    IpData[]
 }
 
 model IpData {
   id          String   @id @default(cuid())
-  city        String   @db.VarChar(255)
-  country     String   @db.VarChar(255)
-  countryCode String   @db.VarChar(2)
-  data        Json
+  city        String?  @db.VarChar(255)
+  country     String?  @db.VarChar(255)
+  countryCode String?  @db.VarChar(2)
+  data        Json?
   ipAddress   String   @unique @db.VarChar(15)
   createdAt   DateTime @default(now()) @db.Timestamp(6)
   updatedAt   DateTime @updatedAt
@@ -117,10 +119,10 @@ model Address {
   postalCode   String     @db.VarChar(8)
   createdAt    DateTime   @default(now()) @db.Timestamp(6)
   updatedAt    DateTime   @updatedAt
-  userId       String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  companyId    String
-  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId       String?
+  user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  companyId    String?
+  company      Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   prefectureId Int
   prefecture   Prefecture @relation(fields: [prefectureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
