@@ -11,11 +11,11 @@ const server = new ApolloServer({
     cache,
     context,
     dataSources,
-    debug: environment.isDev(),
     formatError,
-    introspection: environment.isDev(),
     plugins,
     schema,
+    debug: environment.isDev(),
+    introspection: environment.isDev(),
 });
 
 export const main = server.createHandler({
