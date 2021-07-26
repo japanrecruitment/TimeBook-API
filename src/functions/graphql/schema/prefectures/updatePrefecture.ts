@@ -1,7 +1,7 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { mapSelections, toPrismaSelect } from "@libs/gql-map-selection";
 import { Prefecture } from "@prisma/client";
 import { gql } from "apollo-server-core";
-import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 
 type UpdatePrefecture = IFieldResolver<any, Context, Record<"input", Prefecture>, Promise<Partial<Prefecture>>>;
