@@ -3,10 +3,6 @@ import * as functions from "./src/functions";
 
 import resources from "./cloudformation-template";
 
-// { app?: string; org?: string }
-// app: "timebook",
-// org: "japanrecruitment",
-
 const serverlessConfiguration: AWS = {
     service: "timebook-api",
     frameworkVersion: "2",

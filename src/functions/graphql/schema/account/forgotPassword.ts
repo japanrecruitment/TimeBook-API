@@ -23,7 +23,7 @@ const forgotPassword: ForgotPassword = async (_, { email }, { store, dataSources
 
     return {
         message: `Verificaiton code sent successfully to ${email}. Please check your email.`,
-        action: "reset-password",
+        action: "veriy-reset-password-code",
     };
 };
 
