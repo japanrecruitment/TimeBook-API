@@ -18,6 +18,4 @@ const server = new ApolloServer({
     introspection: environment.isDev(),
 });
 
-export const main = server.createHandler({
-    expressGetMiddlewareOptions: { cors: { origin: "*", credentials: false } },
-});
+export const main = server.createHandler();
