@@ -1,4 +1,5 @@
 import { Account, Company, PrismaClient, ProfileType, User } from "@prisma/client";
+import { store } from "@utils/store";
 import { decodeToken } from "@utils/token-helper";
 import { DataSources } from "./dataSources";
 import { GqlError } from "./error";
@@ -10,8 +11,6 @@ export type Context = {
     dataSources?: DataSources;
     authData: Pick<Account, "email" | "phoneNumber" | "roles" | "profileType"> & Partial<User & Company>;
 };
-
-const store = new PrismaClient();
 
 const getAuthData = (event) => {
     try {

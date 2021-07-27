@@ -52,7 +52,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) 
     if (!account.emailVerified)
         throw new GqlError({ code: "FORBIDDEN", message: "Please verify email first", action: "verify-email" });
 
-    const { city, country_code, country_name, ...ipData } = await getIpData(sourceIp);
+    let ipData = await getIpData(sourceIp);
 
     const session = await store.session.create({
         data: {
@@ -61,13 +61,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) 
             ipData: {
                 connectOrCreate: {
                     where: { ipAddress: sourceIp },
-                    create: {
-                        ipAddress: sourceIp,
-                        city,
-                        countryCode: country_code,
-                        country: country_name,
-                        data: ipData,
-                    },
+                    create: ipData,
                 },
             },
         },
