@@ -23,7 +23,7 @@ export const sendEmail = async (to: string, subject: string, body: string) => {
                     },
                 },
             },
-        });
+        }).promise();
         Log("[COMPLETED] sending email");
         Log(to, result);
         return result;

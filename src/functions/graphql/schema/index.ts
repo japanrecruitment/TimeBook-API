@@ -4,10 +4,12 @@ import { merge } from "lodash";
 import { accountDirectives, accountResolvers, accountTypeDefs } from "./account";
 import { addressTypeDefs } from "./address";
 import { coreDirectives, coreResolvers, coreTypeDefs } from "./core";
+import { prefectureResolvers, prefectureTypeDefs } from "./prefectures";
+import { stationsResolvers, stationsTypeDefs } from "./stations";
 
-const typeDefs = mergeTypeDefs([coreTypeDefs, accountTypeDefs, addressTypeDefs]);
+const typeDefs = mergeTypeDefs([coreTypeDefs, accountTypeDefs, addressTypeDefs, prefectureTypeDefs, stationsTypeDefs]);
 
-const resolvers = mergeResolvers([coreResolvers, accountResolvers]);
+const resolvers = mergeResolvers([coreResolvers, accountResolvers, prefectureResolvers, stationsResolvers]);
 
 const schemaDirectives = merge(coreDirectives, accountDirectives);
 

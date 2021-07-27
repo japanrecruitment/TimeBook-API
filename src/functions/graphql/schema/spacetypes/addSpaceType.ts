@@ -30,7 +30,7 @@ export const addSpaceTypeTypeDefs = gql`
     }
 
     type Mutation {
-        addSpaceType(input: AddSpaceTypeInput!): Result! @auth(requires: [admin, user, host])
+        addSpaceType(input: AddSpaceTypeInput!): Result! @auth(requires: [user, host])
     }
 `;
 

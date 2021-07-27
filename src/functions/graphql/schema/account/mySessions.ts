@@ -1,22 +1,22 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { Session } from "@prisma/client";
+import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
+import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 
-type MySessions = IFieldResolver<any, Context, Record<string, any>>;
+type MySessions = IFieldResolver<any, Context, Record<string, any>, Promise<Partial<Session>[]>>;
 
-const mySessions: MySessions = async (_, __, { authData, store }) => {
+const mySessions: MySessions = async (_, __, { authData, store }, info) => {
+    const select = toPrismaSelect(mapSelections(info));
     const { accountId } = authData;
 
     let sessions = await store.session.findMany({
         where: { accountId },
-        select: {
-            id: true,
-            userAgent: true,
-            createdAt: true,
-            ipData: { select: { id: true, city: true, country: true, countryCode: true } },
-        },
+        ...select,
     });
 
+    Log(sessions);
     if (!sessions) return [];
 
     return sessions;
