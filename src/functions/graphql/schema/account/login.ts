@@ -27,6 +27,8 @@ type LoginArgs = { input: LoginInput };
 type Login = IFieldResolver<any, Context, LoginArgs, Promise<LoginResult>>;
 
 const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) => {
+    console.log(process.env.NODE_ENV);
+    console.log(process.env.ENV);
     Log(input);
     const gqlSelect = mapSelections(info);
     const { UserProfile, CompanyProfile } = gqlSelect;
