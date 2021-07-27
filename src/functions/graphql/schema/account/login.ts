@@ -1,11 +1,11 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { mapSelections, toPrismaSelect } from "@libs/gql-map-selection";
 import { matchPassword } from "@utils/authUtils";
 import { getIpData } from "@utils/ip-helper";
 import { Log } from "@utils/logger";
 import { omit, pick } from "@utils/object-helper";
 import { encodeToken } from "@utils/token-helper";
 import { gql } from "apollo-server-core";
+import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
@@ -27,6 +27,7 @@ type LoginArgs = { input: LoginInput };
 type Login = IFieldResolver<any, Context, LoginArgs, Promise<LoginResult>>;
 
 const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) => {
+    Log(input);
     const gqlSelect = mapSelections(info);
     const { UserProfile, CompanyProfile } = gqlSelect;
     const userProfileSelect = toPrismaSelect(omit(UserProfile, "email", "phoneNumber")) || true;
@@ -36,8 +37,6 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) 
 
     const isEmpty = !email.trim() || !password.trim();
     if (isEmpty) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
-
-    Log(input);
 
     const account = await store.account.findUnique({
         where: { email },

@@ -1,4 +1,5 @@
-import { ApolloError } from "apollo-server-lambda";
+import { Log } from "@utils/logger";
+import { ApolloError } from "apollo-server-core";
 
 type ErrorCode =
     | "BAD_REQUEST"
@@ -18,6 +19,7 @@ type GQLErrorConstructorArgs =
 
 export default class GqlError extends ApolloError {
     constructor(args: GQLErrorConstructorArgs) {
+        Log(args);
         const { code, message, ...extensions } = args;
         super(message, code || "INTERNAL_SERVER_ERROR", extensions);
 
