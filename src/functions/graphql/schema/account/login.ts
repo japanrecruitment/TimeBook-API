@@ -27,7 +27,6 @@ type LoginArgs = { input: LoginInput };
 type Login = IFieldResolver<any, Context, LoginArgs, Promise<LoginResult>>;
 
 const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) => {
-    Log(input);
     const gqlSelect = mapSelections(info);
     const { UserProfile, CompanyProfile } = gqlSelect.profile || {};
     const userProfileSelect = toPrismaSelect(omit(UserProfile, "email", "phoneNumber")) || true;

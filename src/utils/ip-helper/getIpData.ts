@@ -10,7 +10,9 @@ export default async (ipAddress: string) => {
         // Log(response);
         Log("[COMPLETED]: Fetching ip data");
         if (response.status === 200) return response.data;
+        else return { data: { ip: ipAddress } };
     } catch (error) {
-        Log("[FAILED]: fetching ip data");
+        Log("[FAILED]: fetching ip data", error);
+        return { data: { ip: ipAddress } };
     }
 };
