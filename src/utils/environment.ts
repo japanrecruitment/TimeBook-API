@@ -1,5 +1,5 @@
 export const environment = {
-    NODE_ENV: process.env.ENV,
+    NODE_ENV: process.env.NODE_ENV,
     DB_URL: process.env.DB_URL,
     EMAIL_QUEUE_URL: process.env.EMAIL_QUEUE_URL,
     TOKEN_SECRET: process.env.TOKEN_SECRET,
