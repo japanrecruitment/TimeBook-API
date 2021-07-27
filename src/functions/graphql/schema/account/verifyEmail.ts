@@ -21,6 +21,8 @@ const verifyEmail: VerifyEmail = async (_, { input }, { store, dataSources }) =>
     const account = store.account.update({ where: { email }, data: { emailVerified: true } });
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "Account with the given email not found" });
 
+    dataSources.cacheDS.deleteFromCache(`email-verification-code-${email}`);
+
     Log(account);
 
     return { message: `Your account has been verified`, action: "login" };
