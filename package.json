@@ -40,11 +40,11 @@
         "bcryptjs": "^2.4.3",
         "dotenv": "^10.0.0",
         "graphql": "^15.5.1",
-        "graphql-map-selections": "^1.1.0",
+        "graphql-map-selections": "^1.1.2",
         "handlebars": "^4.7.7",
         "jsonwebtoken": "^8.5.1",
         "stripe": "^8.157.0",
-        "zb-email-verifier": "^0.6.2"
+        "zb-email-verifier": "^0.6.5"
     },
     "devDependencies": {
         "@serverless/typescript": "2.29.0",

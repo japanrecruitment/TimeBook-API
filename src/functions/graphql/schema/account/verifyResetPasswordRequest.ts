@@ -18,8 +18,8 @@ const verifyResetPasswordRequest: VerifyResetPasswordRequest = async (_, { input
     if (cacheCode !== code) throw new GqlError({ code: "FORBIDDEN", message: "Reset password code expired" });
 
     return {
-        message: `Your password has been changed successfully. You can use your new password to login.`,
-        action: "login",
+        message: `Request for reset password has been verified.`,
+        action: "reset-password",
     };
 };
 
