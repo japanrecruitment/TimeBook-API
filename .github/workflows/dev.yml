@@ -1,8 +1,7 @@
-name: CI
+name: SLS Deploy
 on:
     push:
         branches: [dev]
-
     # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
 
@@ -25,6 +24,7 @@ jobs:
               with:
                   args: deploy --stage dev
               env:
+                  NODE_ENV: development
                   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   DB_URL: ${{ secrets.DB_URL }}
