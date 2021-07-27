@@ -5,7 +5,7 @@ const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 
 module.exports = {
     context: __dirname,
-    mode: slsw.lib.webpack.isLocal ? "development" : "production",
+    mode: slsw.lib.serverless.service.provider.stage === "prod" ? "production" : "development",
     entry: slsw.lib.entries,
     devtool: slsw.lib.webpack.isLocal ? "eval-cheap-module-source-map" : "source-map",
     resolve: {
