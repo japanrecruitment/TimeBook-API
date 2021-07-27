@@ -10,8 +10,4 @@ export const resultTypeDefs = gql`
         message: String!
         action: String
     }
-
-    type Query {
-        _empty: String
-    }
 `;
