@@ -7,6 +7,8 @@ import { formatError } from "./error";
 import plugins from "./plugins";
 import schema from "./schema";
 
+console.log(process.env.NODE_ENV);
+
 const server = new ApolloServer({
     cache,
     context,
