@@ -3,7 +3,7 @@ import { merge } from "lodash";
 import { authDirectives, authDirectiveTypeDefs } from "./authDirective";
 import { dateScalarResolvers, dateScalarTypeDefs } from "./dateScalar";
 import { intIDScalarResolvers, intIDScalarTypeDefs } from "./intIDScalar";
-import { paginationOptionsTypeDefs } from "./paginationOption";
+import { paginationOptionTypeDefs } from "./paginationOption";
 import { resultTypeDefs } from "./result";
 import { upperFirstLetterDirective, upperFirstLetterDirectiveTypeDefs } from "./upperFirstLetterDirective";
 
@@ -11,7 +11,7 @@ export const coreTypeDefs = mergeTypeDefs([
     authDirectiveTypeDefs,
     dateScalarTypeDefs,
     intIDScalarTypeDefs,
-    paginationOptionsTypeDefs,
+    paginationOptionTypeDefs,
     resultTypeDefs,
     upperFirstLetterDirectiveTypeDefs,
 ]);
