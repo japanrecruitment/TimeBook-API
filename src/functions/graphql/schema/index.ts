@@ -8,11 +8,13 @@ import { spaceTypesTypeDefs, spaceTypesResolvers } from "./spacetypes";
 import { coreDirectives, coreResolvers, coreTypeDefs } from "./core";
 import { prefectureResolvers, prefectureTypeDefs } from "./prefectures";
 import { stationsResolvers, stationsTypeDefs } from "./stations";
+import { paymentSourceResolvers, paymentSourceTypeDefs } from "./payment";
 
 const typeDefs = mergeTypeDefs([
     coreTypeDefs,
     accountTypeDefs,
     addressTypeDefs,
+    paymentSourceTypeDefs,
     prefectureTypeDefs,
     stationsTypeDefs,
     spaceTypeDefs,
@@ -22,6 +24,7 @@ const typeDefs = mergeTypeDefs([
 const resolvers = mergeResolvers([
     coreResolvers,
     accountResolvers,
+    paymentSourceResolvers,
     prefectureResolvers,
     stationsResolvers,
     spaceResolvers,

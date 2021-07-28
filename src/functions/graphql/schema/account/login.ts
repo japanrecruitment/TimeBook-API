@@ -71,7 +71,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) 
         pick(account, "email", "phoneNumber", "profileType", "roles"),
         account.userProfile || account.companyProfile
     );
-    const accessToken = encodeToken(profile, "access", { jwtid: account.id });
+    const accessToken = encodeToken({ accountId: account.id, ...profile }, "access", { jwtid: account.id });
     const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
 
     return { profile, accessToken, refreshToken };
