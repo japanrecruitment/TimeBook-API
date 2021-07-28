@@ -1,4 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { Log } from "@utils/logger";
 import { pick } from "@utils/object-helper";
 import { decodeToken, encodeToken } from "@utils/token-helper";
 import { gql } from "apollo-server-core";
@@ -12,10 +13,14 @@ const refreshToken: RefreshToken = async (_, { token }, { store }) => {
     try {
         const { accountId, jti: id } = decodeToken(token, "refresh");
 
-        const { account } = await store.session.findFirst({
+        const session = await store.session.findFirst({
             where: { id, accountId },
             select: { id: true, account: { include: { userProfile: true, companyProfile: true } } },
         });
+
+        if (!session) throw new GqlError({ code: "NOT_FOUND", message: "Invalid token", action: "logout" });
+
+        const { account } = session;
 
         if (!account) throw new GqlError({ code: "NOT_FOUND", message: "Invalid token", action: "logout" });
 

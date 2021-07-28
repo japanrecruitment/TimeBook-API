@@ -6,10 +6,12 @@ import { addressTypeDefs } from "./address";
 import { spaceTypeDefs, spaceResolvers } from "./space";
 import { spaceTypeTypeDefs, spaceTypeResolvers } from "./spacetypes";
 import { coreDirectives, coreResolvers, coreTypeDefs } from "./core";
+import { prefectureResolvers, prefectureTypeDefs } from "./prefectures";
+import { stationsResolvers, stationsTypeDefs } from "./stations";
 
-const typeDefs = mergeTypeDefs([coreTypeDefs, accountTypeDefs, addressTypeDefs, spaceTypeDefs, spaceTypeTypeDefs]);
+const typeDefs = mergeTypeDefs([coreTypeDefs, accountTypeDefs, addressTypeDefs, prefectureTypeDefs, stationsTypeDefs]);
 
-const resolvers = mergeResolvers([coreResolvers, accountResolvers, spaceResolvers, spaceTypeResolvers]);
+const resolvers = mergeResolvers([coreResolvers, accountResolvers, prefectureResolvers, stationsResolvers]);
 
 const schemaDirectives = merge(coreDirectives, accountDirectives);
 
