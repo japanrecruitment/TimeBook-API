@@ -38,24 +38,46 @@ enum DocumentType {
   OtherDocuments
 }
 
+enum PaymentSourceType {
+  Card
+}
+
 model Account {
-  id             String        @id @default(cuid())
-  approved       Boolean       @default(false)
-  email          String        @unique @db.VarChar(255)
-  emailVerified  Boolean       @default(false)
-  phoneNumber    String?       @db.VarChar(10)
-  phoneVerified  Boolean       @default(false)
-  password       String        @db.VarChar(255)
+  id             String          @id @default(cuid())
+  approved       Boolean         @default(false)
+  email          String          @unique @db.VarChar(255)
+  emailVerified  Boolean         @default(false)
+  phoneNumber    String?         @db.VarChar(10)
+  phoneVerified  Boolean         @default(false)
+  password       String          @db.VarChar(255)
   roles          Role[]
-  suspended      Boolean       @default(false)
-  createdAt      DateTime      @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime      @updatedAt
+  suspended      Boolean         @default(false)
+  createdAt      DateTime        @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime        @updatedAt
   profileType    ProfileType
   userProfile    User?
   companyProfile Company?
   session        Session[]
   myReservation  Reservation[]
   mySpace        Space[]
+  paymentSource  PaymentSource[]
+}
+
+model PaymentSource {
+  id       String            @id @default(cuid())
+  token    String
+  type     PaymentSourceType
+  expMonth Int
+  expYear  Int
+  last4    String
+  brand    String
+  country  String
+  customer String
+  rawData  Json
+  createdAt      DateTime        @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime        @updatedAt
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model User {
