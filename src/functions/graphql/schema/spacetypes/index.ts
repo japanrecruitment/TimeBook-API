@@ -1,7 +1,7 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
-import { addSpaceResolvers, addSpaceTypeDefs } from "../space/addSpace";
+import { addSpaceTypeResolvers, addSpaceTypeTypeDefs } from "./addSpaceType";
 import { allSpaceResolvers, allSpaceTypeDefs } from "./allSpaceTypes";
 
-export const spaceTypesTypeDefs = mergeTypeDefs([addSpaceTypeDefs, allSpaceTypeDefs]);
+export const spaceTypesTypeDefs = mergeTypeDefs([addSpaceTypeTypeDefs, allSpaceTypeDefs]);
 
-export const spaceTypesResolvers = mergeResolvers([addSpaceResolvers, allSpaceResolvers]);
+export const spaceTypesResolvers = mergeResolvers([addSpaceTypeResolvers, allSpaceResolvers]);
