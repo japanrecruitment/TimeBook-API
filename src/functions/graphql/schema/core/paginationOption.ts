@@ -1,13 +1,13 @@
 import { gql } from "apollo-server-core";
 
-export type PaginationOptions = {
-    limit: number;
+export type PaginationOption = {
+    take: number;
     skip: number;
 };
 
-export const paginationOptionsTypeDefs = gql`
-    input PaginationOptions {
-        limit: Int
+export const paginationOptionTypeDefs = gql`
+    input PaginationOption {
+        take: Int
         skip: Int
     }
 `;

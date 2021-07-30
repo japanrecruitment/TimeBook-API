@@ -18,7 +18,7 @@ const verifyEmail: VerifyEmail = async (_, { input }, { store, dataSources }) =>
     const cacheCode = await dataSources.cacheDS.fetchFromCache(`email-verification-code-${email}`);
     if (cacheCode !== code) throw new GqlError({ code: "FORBIDDEN", message: "Verificaiton code expired" });
 
-    const account = store.account.update({ where: { email }, data: { emailVerified: true } });
+    const account = await store.account.update({ where: { email }, data: { emailVerified: true } });
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "Account with the given email not found" });
 
     dataSources.cacheDS.deleteFromCache(`email-verification-code-${email}`);

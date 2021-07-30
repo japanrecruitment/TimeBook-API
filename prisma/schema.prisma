@@ -60,24 +60,25 @@ model Account {
   session        Session[]
   myReservation  Reservation[]
   mySpace        Space[]
+  Credit         Credit[]
   paymentSource  PaymentSource[]
 }
 
 model PaymentSource {
-  id       String            @id @default(cuid())
-  token    String
-  type     PaymentSourceType
-  expMonth Int
-  expYear  Int
-  last4    String
-  brand    String
-  country  String
-  customer String
-  rawData  Json
-  createdAt      DateTime        @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime        @updatedAt
+  id        String            @id @default(cuid())
+  token     String
+  type      PaymentSourceType
+  expMonth  Int
+  expYear   Int
+  last4     String
+  brand     String
+  country   String
+  customer  String
+  rawData   Json
+  createdAt DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt DateTime          @updatedAt
   accountId String
-  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  account   Account           @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model User {
@@ -278,4 +279,24 @@ model Space_To_SpaceType {
   spaceTypeId String
 
   @@id([spaceId, spaceTypeId])
+}
+
+model Credit {
+  id              String    @id @default(cuid())
+  accountId       String?
+  account         Account?  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  remainingCredit Int?      @default(0)
+  date            DateTime? @db.Date
+
+  @@unique([accountId, date], name: "Credit_accountId_date_key")
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  credit      Float
+  title       String
+  monthlyFees Float
+  yearlyFees  Float
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt
 }
