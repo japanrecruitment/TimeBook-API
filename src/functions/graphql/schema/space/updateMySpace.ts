@@ -3,7 +3,7 @@ import { Context } from "../../context";
 import { IFieldResolver } from "@graphql-tools/utils";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
-import { spacePricePlanTypeDefs, UpdateSpacePricePlanInput } from "./spacePricePlan";
+import { UpdateSpacePricePlanInput } from "./spacePricePlan";
 
 type UpdateSpaceInput = {
     id: string;
@@ -41,7 +41,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
         where: { id },
         data: {
             ...spaceData,
-            spacePricePlans: { update: spacePricePlanTypeDefs },
+            spacePricePlans: { update: spacePricePlan },
             spaceTypes: {
                 deleteMany: { spaceTypeId: { in: spaceTypesToDelete } },
                 createMany: { data: spaceTypesToAdd },
