@@ -43,7 +43,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
             ...spaceData,
             spacePricePlans: { update: spacePricePlan },
             spaceTypes: {
-                deleteMany: { spaceTypeId: { in: spaceTypesToDelete } },
+                deleteMany: { spaceTypeId: { in: spaceTypesToDelete }, spaceId: id },
                 createMany: { data: spaceTypesToAdd },
             },
         },
@@ -52,7 +52,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
     return { message: `Successfully added space` };
 };
 
-export const updateSpaceTypeTypeDefs = gql`
+export const updateMySpaceTypeDefs = gql`
     input UpdateMySpaceInput {
         id: ID!
         name: String
