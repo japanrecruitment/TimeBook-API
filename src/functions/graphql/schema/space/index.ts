@@ -4,6 +4,7 @@ import { allSpacesTypeDefs, allSpacesResolvers } from "./allSpaces";
 import { mySpacesResolvers, mySpacesTypeDefs } from "./mySpaces";
 import { nearestStationTypeDefs } from "./nearestStation";
 import { spacePricePlanTypeDefs } from "./spacePricePlan";
+import { updateMySpaceResolvers, updateMySpaceTypeDefs } from "./updateMySpace";
 
 export const spaceTypeDefs = mergeTypeDefs([
     addSpaceTypeDefs,
@@ -11,6 +12,12 @@ export const spaceTypeDefs = mergeTypeDefs([
     mySpacesTypeDefs,
     nearestStationTypeDefs,
     spacePricePlanTypeDefs,
+    updateMySpaceTypeDefs,
 ]);
 
-export const spaceResolvers = mergeResolvers([addSpaceResolvers, allSpacesResolvers, mySpacesResolvers]);
+export const spaceResolvers = mergeResolvers([
+    addSpaceResolvers,
+    allSpacesResolvers,
+    mySpacesResolvers,
+    updateMySpaceResolvers,
+]);

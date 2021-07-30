@@ -11,13 +11,13 @@ import { upperFirstLetterDirective, upperFirstLetterDirectiveTypeDefs } from "./
 export const coreTypeDefs = mergeTypeDefs([
     authDirectiveTypeDefs,
     dateScalarTypeDefs,
+    float100ScalarTypeDefs,
     intIDScalarTypeDefs,
     paginationOptionTypeDefs,
     resultTypeDefs,
     upperFirstLetterDirectiveTypeDefs,
-    float100ScalarTypeDefs,
 ]);
 
-export const coreResolvers = mergeResolvers([dateScalarResolvers, intIDScalarResolvers, float100ScalarResolvers]);
+export const coreResolvers = mergeResolvers([dateScalarResolvers, float100ScalarResolvers, intIDScalarResolvers]);
 
 export const coreDirectives = merge(authDirectives, upperFirstLetterDirective);
