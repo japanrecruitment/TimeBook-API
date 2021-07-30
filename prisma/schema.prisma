@@ -290,3 +290,13 @@ model Credit {
 
   @@unique([accountId, date], name: "Credit_accountId_date_key")
 }
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  credit      Float
+  title       String
+  monthlyFees Float
+  yearlyFees  Float
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt
+}

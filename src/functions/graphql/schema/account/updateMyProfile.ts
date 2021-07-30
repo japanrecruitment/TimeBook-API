@@ -9,18 +9,25 @@ import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Profile } from "./profile";
 
-type UpdateMyProfileInput = {
+type UpdateUserProfileInput = {
     id: string;
     firstName?: string;
     lastName?: string;
     dob?: Date;
     firstNameKana?: string;
     lastNameKana?: string;
+    address?: Partial<Address>;
+};
+
+type UpdateCompanyProfileInput = {
+    id: string;
     name?: string;
     nameKana?: string;
     registrationNumber?: string;
     address?: Partial<Address>;
 };
+
+type UpdateMyProfileInput = UpdateUserProfileInput & UpdateCompanyProfileInput;
 
 type UpdateMyProfile = IFieldResolver<any, Context, Record<"input", UpdateMyProfileInput>, Promise<Profile>>;
 

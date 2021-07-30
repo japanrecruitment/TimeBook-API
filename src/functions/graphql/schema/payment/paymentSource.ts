@@ -1,9 +1,9 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { PaymentSource as paymentSource } from "@prisma/client";
+import { PaymentSource } from "@prisma/client";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 
-type PaymentSources = IFieldResolver<any, Context, Record<string, any>, Promise<paymentSource[]>>;
+type PaymentSources = IFieldResolver<any, Context, Record<string, any>, Promise<PaymentSource[]>>;
 
 const paymentSources: PaymentSources = async (_, __, { store, dataSources, authData }) => {
     console.log("Auth data", authData);
