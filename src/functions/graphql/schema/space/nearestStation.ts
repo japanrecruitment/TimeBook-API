@@ -7,7 +7,7 @@ export type NearestStation = {
     time?: number;
 };
 
-export type AddNearestStationsInput = {
+export type NearestStationsInput = {
     stationId: number;
     via: string;
     time: number;
@@ -20,7 +20,7 @@ export const nearestStationTypeDefs = gql`
         time: Int
     }
 
-    input AddNearestStationsInput {
+    input NearestStationsInput {
         stationId: IntID!
         via: String!
         time: Int!

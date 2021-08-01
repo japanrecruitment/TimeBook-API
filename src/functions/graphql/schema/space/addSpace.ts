@@ -3,7 +3,7 @@ import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
-import { AddNearestStationsInput } from "./nearestStation";
+import { NearestStationsInput } from "./nearestStation";
 import { AddSpacePricePlanInput } from "./spacePricePlan";
 
 type AddSpaceInput = {
@@ -12,7 +12,7 @@ type AddSpaceInput = {
     numberOfSeats: number;
     spaceSize: number;
     spacePricePlan: AddSpacePricePlanInput;
-    nearestStations: AddNearestStationsInput[];
+    nearestStations: NearestStationsInput[];
     spaceTypes: string[];
 };
 
@@ -57,13 +57,13 @@ export const addSpaceTypeDefs = gql`
         maximumCapacity: Int!
         numberOfSeats: Int!
         spaceSize: Float
-        spacePricePlan: AddSpacePricePlanInput
-        nearestStations: [AddNearestStationsInput]
+        spacePricePlan: AddSpacePricePlanInput!
+        nearestStations: [NearestStationsInput]!
         spaceTypes: [ID]!
     }
 
     type Mutation {
-        addSpace(input: AddSpaceInput!): Result! @auth(requires: [host])
+        addSpace(input: AddSpaceInput!): Result! @auth(requires: [user, host])
     }
 `;
 
