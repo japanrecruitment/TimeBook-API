@@ -12,7 +12,7 @@ type SpaceTypeInput = {
 type SpaceType = IFieldResolver<any, Context, Record<"input", SpaceTypeInput>, Promise<Result>>;
 
 const addSpaceType: SpaceType = async (_, { input }, { store }) => {
-    let { title, description } = input;
+    const { title, description } = input;
     const isValid = title.trim() && description.trim();
     if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
     const spaceType = await store.spaceType.findFirst({ where: { title } });
@@ -30,7 +30,7 @@ export const addSpaceTypeTypeDefs = gql`
     }
 
     type Mutation {
-        addSpaceType(input: AddSpaceTypeInput!): Result! @auth(requires: [user, host])
+        addSpaceType(input: AddSpaceTypeInput!): Space! @auth(requires: [user, host])
     }
 `;
 

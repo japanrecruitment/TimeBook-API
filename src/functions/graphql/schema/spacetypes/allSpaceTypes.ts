@@ -23,7 +23,7 @@ export const allSpaceTypesTypeDefs = gql`
     }
 
     type Query {
-        allSpaceTypes: [SpaceType] @auth(requires: [user, host])
+        allSpaceTypes: [SpaceType]
     }
 `;
 export const allSpaceTypesResolvers = {
