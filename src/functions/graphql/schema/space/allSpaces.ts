@@ -23,7 +23,7 @@ type AllSpaces = IFieldResolver<any, Context, AllSpaceArgs, Promise<SpaceResult[
 const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
     const gqlSelect = mapSelections(info);
     const nearestStationsSelect = toPrismaSelect(gqlSelect.nearestStations);
-    const spacePricePlanSelect = toPrismaSelect(gqlSelect.spacePricePlan);
+    const spacePricePlansSelect = toPrismaSelect(gqlSelect.spacePricePlans);
     const spaceTypesSelect = toPrismaSelect(gqlSelect.spaceTypes);
     const spaceSelect = omit(gqlSelect, "nearestStations", "spacePricePlan", "spaceTypes");
 
@@ -33,7 +33,7 @@ const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
         select: {
             ...spaceSelect,
             nearestStations: nearestStationsSelect,
-            spacePricePlans: spacePricePlanSelect,
+            spacePricePlans: spacePricePlansSelect,
             spaceTypes: spaceTypesSelect ? { select: { spaceType: spaceTypesSelect } } : undefined,
         },
         take,
@@ -59,7 +59,7 @@ export const allSpacesTypeDefs = gql`
         spaceSize: Float
         needApproval: Boolean
         nearestStations: [NearestStation]
-        spacePricePlan: [SpacePricePlan]
+        spacePricePlans: SpacePricePlan
         spaceTypes: [SpaceType]
     }
 
