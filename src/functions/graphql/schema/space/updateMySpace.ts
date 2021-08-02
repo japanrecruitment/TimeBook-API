@@ -13,7 +13,7 @@ type UpdateMySpaceInput = {
     numberOfSeats?: number;
     spaceSize?: number;
     nearestStations?: NearestStationsInput[];
-    spacePricePlan?: UpdateSpacePricePlanInput;
+    spacePricePlans?: UpdateSpacePricePlanInput;
     spaceTypes?: string[];
 };
 
@@ -21,7 +21,7 @@ type UpdateMySpace = IFieldResolver<any, Context, Record<"input", UpdateMySpaceI
 
 const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) => {
     const { accountId } = authData;
-    const { id, nearestStations, spacePricePlan, spaceTypes, ...spaceData } = input;
+    const { id, nearestStations, spacePricePlans, spaceTypes, ...spaceData } = input;
 
     const space = await store.space.findUnique({
         where: { id },
@@ -31,6 +31,8 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
             spaceTypes: { select: { spaceTypeId: true } },
         },
     });
+
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
@@ -58,7 +60,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
         where: { id },
         data: {
             ...spaceData,
-            spacePricePlans: spacePricePlan && { update: spacePricePlan },
+            spacePricePlans: spacePricePlans && { update: spacePricePlans },
             spaceTypes: {
                 deleteMany:
                     spaceTypesToDelete?.length > 0
@@ -87,7 +89,7 @@ export const updateMySpaceTypeDefs = gql`
         numberOfSeats: Int
         spaceSize: Float
         nearestStations: [NearestStationsInput]
-        spacePricePlan: UpdateSpacePricePlanInput
+        spacePricePlans: UpdateSpacePricePlanInput
         spaceTypes: [ID]
     }
 

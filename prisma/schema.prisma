@@ -178,7 +178,7 @@ model SpacePricePlan {
   createdAt          DateTime @default(now()) @db.Timestamp(6)
   updatedAt          DateTime @updatedAt
   spaceId            String
-  space              Space    @relation(fields: [spaceId], references: [id])
+  space              Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Reservation {
@@ -245,9 +245,9 @@ model Station {
 }
 
 model NearestStation {
-  space     Space   @relation(fields: [spaceId], references: [id])
+  space     Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   spaceId   String
-  station   Station @relation(fields: [stationId], references: [id])
+  station   Station @relation(fields: [stationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   stationId Int
   time      Int
   via       String
@@ -273,9 +273,9 @@ model SpaceType {
 }
 
 model Space_To_SpaceType {
-  space       Space     @relation(fields: [spaceId], references: [id])
+  space       Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   spaceId     String
-  spaceType   SpaceType @relation(fields: [spaceTypeId], references: [id])
+  spaceType   SpaceType @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   spaceTypeId String
 
   @@id([spaceId, spaceTypeId])
