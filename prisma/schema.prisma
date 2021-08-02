@@ -62,6 +62,8 @@ model Account {
   mySpace        Space[]
   Credit         Credit[]
   paymentSource  PaymentSource[]
+  media          Media?
+
 }
 
 model PaymentSource {
@@ -82,18 +84,18 @@ model PaymentSource {
 }
 
 model User {
-  id            String     @id @default(cuid())
+  id            String    @id @default(cuid())
   dob           DateTime?
-  firstName     String     @db.VarChar(255)
-  firstNameKana String     @db.VarChar(255)
-  lastName      String     @db.VarChar(255)
-  lastNameKana  String     @db.VarChar(255)
-  createdAt     DateTime   @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime   @updatedAt
+  firstName     String    @db.VarChar(255)
+  firstNameKana String    @db.VarChar(255)
+  lastName      String    @db.VarChar(255)
+  lastNameKana  String    @db.VarChar(255)
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime  @updatedAt
   accountId     String
-  account       Account    @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  account       Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   address       Address?
-  documents     Document[]
+  documents     Media[]
 }
 
 model Company {
@@ -165,6 +167,7 @@ model Space {
   reservations    Reservation[]
   nearestStations NearestStation[]
   spaceTypes      Space_To_SpaceType[]
+  medias          Media[]
 }
 
 model SpacePricePlan {
@@ -193,25 +196,6 @@ model Reservation {
   reservee     Account           @relation(fields: [reserveeId], references: [id])
   reserveeId   String
   approvedOn   DateTime          @db.Timestamp(6)
-}
-
-model Media {
-  id        String    @id @default(cuid())
-  original  String    @db.VarChar(255)
-  medium    String    @db.VarChar(255)
-  small     String    @db.VarChar(255)
-  createdAt DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt DateTime  @updatedAt
-  document  Document?
-}
-
-model Document {
-  id           String       @id @default(cuid())
-  user         User?        @relation(fields: [userId], references: [id])
-  userId       String?
-  documentType DocumentType
-  media        Media        @relation(fields: [mediaId], references: [id])
-  mediaId      String
 }
 
 model TrainLine {
@@ -270,6 +254,8 @@ model SpaceType {
   title             String               @db.VarChar(100)
   description       String               @db.VarChar(100)
   spaceToSpaceTypes Space_To_SpaceType[]
+  media             Media                @relation(fields: [mediaId], references: [id])
+  mediaId           String
 }
 
 model Space_To_SpaceType {
@@ -299,4 +285,30 @@ model SubscriptionPlan {
   yearlyFees  Float
   createdAt   DateTime @default(now()) @db.Timestamp(6)
   updatedAt   DateTime @updatedAt
+}
+
+model PhotoGallery {
+  id        String   @id @default(cuid())
+  original  String   @db.VarChar(255)
+  medium    String   @db.VarChar(255)
+  small     String   @db.VarChar(255)
+  large     String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+  media     Media?
+}
+
+model Media {
+  id             String       @id @default(cuid())
+  account        Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  accountId      String
+  documentType   DocumentType
+  photoGallery   PhotoGallery @relation(fields: [photoGalleryId], references: [id])
+  photoGalleryId String
+  space          Space?       @relation(fields: [spaceId], references: [id])
+  spaceId        String?
+  spaceType      SpaceType?
+
+  User   User?   @relation(fields: [userId], references: [id])
+  userId String?
 }
