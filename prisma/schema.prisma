@@ -63,7 +63,6 @@ model Account {
   Credit         Credit[]
   paymentSource  PaymentSource[]
   media          Media?
-
 }
 
 model PaymentSource {
@@ -95,7 +94,7 @@ model User {
   accountId     String
   account       Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   address       Address?
-  medias     Media[]
+  medias        Media[]
 }
 
 model Company {
@@ -145,11 +144,13 @@ model Address {
   createdAt    DateTime   @default(now()) @db.Timestamp(6)
   updatedAt    DateTime   @updatedAt
   userId       String?
+  prefectureId Int
+  prefecture   Prefecture @relation(fields: [prefectureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   companyId    String?
   company      Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  prefectureId Int
-  prefecture   Prefecture @relation(fields: [prefectureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaceId      String?
+  space        Space?     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Space {
@@ -167,6 +168,7 @@ model Space {
   reservations    Reservation[]
   nearestStations NearestStation[]
   spaceTypes      Space_To_SpaceType[]
+  address         Address?
   medias          Media[]
 }
 
@@ -254,8 +256,7 @@ model SpaceType {
   title             String               @db.VarChar(100)
   description       String               @db.VarChar(100)
   spaceToSpaceTypes Space_To_SpaceType[]
-  media             Media                @relation(fields: [mediaId], references: [id])
-  mediaId           String
+  Media             Media?
 }
 
 model Space_To_SpaceType {
@@ -272,9 +273,11 @@ model Credit {
   accountId       String?
   account         Account?  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   remainingCredit Int?      @default(0)
-  date            DateTime? @db.Date
+  expiryDate      DateTime? @db.Date
+  createdAt       DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt
 
-  @@unique([accountId, date], name: "Credit_accountId_date_key")
+  @@unique([accountId], name: "Credit_accountId_date_key")
 }
 
 model SubscriptionPlan {
@@ -303,12 +306,12 @@ model Media {
   account        Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   accountId      String
   documentType   DocumentType
-  photoGallery   PhotoGallery @relation(fields: [photoGalleryId], references: [id])
+  photoGallery   PhotoGallery @relation(fields: [photoGalleryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   photoGalleryId String
-  space          Space?       @relation(fields: [spaceId], references: [id])
+  space          Space?       @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   spaceId        String?
-  spaceType      SpaceType?
-
-  User   User?   @relation(fields: [userId], references: [id])
-  userId String?
+  spaceType      SpaceType?   @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaceTypeId    String?
+  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId         String?
 }
