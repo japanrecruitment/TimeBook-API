@@ -14,6 +14,19 @@ export type SpaceResult = Partial<Space> & {
     spaceTypes?: Partial<SpaceType>[];
 };
 
+type AllSpaceFilterOptions = {
+    prefecture?: string;
+    spaceType?: string;
+    hourlyPriceRange?: {
+        max: number;
+        min: number;
+    };
+    dailyPriceRange?: {
+        max: number;
+        min: number;
+    };
+};
+
 type AllSpaceArgs = {
     paginate: PaginationOption;
 };
@@ -51,6 +64,18 @@ const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
 };
 
 export const allSpacesTypeDefs = gql`
+    input PriceRange {
+        max: Float
+        min: Float
+    }
+
+    input AllSpaceFilterOptions {
+        prefecture: String
+        spaceType: String
+        hourlyPriceRange: PriceRange
+        dailyPriceRange: PriceRange
+    }
+
     type Space {
         id: ID!
         name: String
