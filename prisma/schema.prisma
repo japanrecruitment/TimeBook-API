@@ -293,11 +293,11 @@ model SubscriptionPlan {
 model PhotoGallery {
   id        String   @id @default(cuid())
   original  String   @db.VarChar(255)
-  medium    String   @db.VarChar(255)
-  small     String   @db.VarChar(255)
-  large     String   @db.VarChar(255)
+  medium    String?   @db.VarChar(255)
+  small     String?   @db.VarChar(255)
+  large     String?   @db.VarChar(255)
   createdAt DateTime @default(now()) @db.Timestamp(6)
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime? @updatedAt
   media     Media?
 }
 

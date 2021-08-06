@@ -7,6 +7,13 @@ export const environment = {
     REDIS_HOST: process.env.REDIS_HOST,
     REDIS_PORT: process.env.REDIS_PORT,
     IP_STACK_KEY: process.env.IP_STACK_KEY,
+    // S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
+    // S3_SECRET_KEY: process.env.S3_SECRET_KEY,
+    // BUCKET_URL: process.env.BUCKET_URL,
+    S3_ACCESS_KEY: "accessKey",
+    S3_SECRET_KEY: "SECRET_KEY",
+    BUCKET_URL: "BUCKET_URL",
+
     isDev() {
         return !this.NODE_ENV || !["production"].includes(this.NODE_ENV);
     },
