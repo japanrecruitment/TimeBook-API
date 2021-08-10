@@ -14,6 +14,7 @@ import { selfDirectives, selfDirectiveTypeDefs } from "./selfDirective";
 import { updateMyProfileResolvers, updateMyProfileTypeDefs } from "./updateMyProfile";
 import { verifyEmailResolvers, verifyEmailTypeDefs } from "./verifyEmail";
 import { verifyResetPasswordRequestResolvers, verifyResetPasswordRequestTypeDefs } from "./verifyResetPasswordRequest";
+import { hostResolvers, hostTypeDefs } from "./host";
 
 export const accountTypeDefs = mergeTypeDefs([
     forgotPasswordTypeDefs,
@@ -30,6 +31,7 @@ export const accountTypeDefs = mergeTypeDefs([
     updateMyProfileTypeDefs,
     verifyEmailTypeDefs,
     verifyResetPasswordRequestTypeDefs,
+    hostTypeDefs,
 ]);
 
 export const accountResolvers = mergeResolvers([
@@ -46,6 +48,7 @@ export const accountResolvers = mergeResolvers([
     updateMyProfileResolvers,
     verifyEmailResolvers,
     verifyResetPasswordRequestResolvers,
+    hostResolvers,
 ]);
 
 export const accountDirectives = merge(selfDirectives);
