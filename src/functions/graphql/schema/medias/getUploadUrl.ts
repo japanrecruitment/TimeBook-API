@@ -29,7 +29,7 @@ const getUploadToken: GetUploadToken = async (_, __, { authData, store }) => {
     return { presignedPUTURL, photoGalleryId: photo.id };
 };
 
-export const allSpaceTypesTypeDefs = gql`
+export const getUploadTokenTypeDefs = gql`
     type UploadTokenResult {
         presignedPUTURL: String!
         photoGalleryId: String!
