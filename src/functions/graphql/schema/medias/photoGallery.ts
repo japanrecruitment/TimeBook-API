@@ -9,7 +9,7 @@ export type PhotoGallery = {
     large: string;
 };
 
-export const nearestStationTypeDefs = gql`
+export const PhotoGalleryTypeDefs = gql`
     type PhotoGallery {
         id: String
         original: String

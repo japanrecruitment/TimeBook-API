@@ -10,9 +10,9 @@ export const environment = {
     // S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
     // S3_SECRET_KEY: process.env.S3_SECRET_KEY,
     // BUCKET_URL: process.env.BUCKET_URL,
-    S3_ACCESS_KEY: "accessKey",
-    S3_SECRET_KEY: "SECRET_KEY",
-    BUCKET_URL: "BUCKET_URL",
+    S3_ACCESS_KEY: "AKIA267L7G76NKHOXLP2",
+    S3_SECRET_KEY: "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",
+    BUCKET_URL: "timebookdev",
 
     isDev() {
         return !this.NODE_ENV || !["production"].includes(this.NODE_ENV);

@@ -6,7 +6,7 @@ export const getUrlGenerator = (original: string) => {
         accessKeyId: environment.S3_ACCESS_KEY,
         secretAccessKey: environment.S3_SECRET_KEY,
     };
-    AWS.config.update({ credentials: credentials, region: "eu-west-2" });
+    AWS.config.update({ credentials: credentials, region: "ap-northeast-1" });
     var s3 = new AWS.S3();
     return s3.getSignedUrl("getObject", {
         Bucket: environment.BUCKET_URL,
