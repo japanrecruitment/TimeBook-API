@@ -1,5 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { Host, ProfileType } from "@prisma/client";
+import { Host, ProfileType, Role } from "@prisma/client";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections, toPrismaSelect } from "graphql-map-selections";
@@ -99,6 +99,9 @@ const registerHost: RegisterHost = async (_, { input }, { store, authData }) => 
             where: { id: accountId },
             data: {
                 host: { create: newHost },
+                roles: {
+                    push: Role.host,
+                },
             },
             select: { host: true },
         });
