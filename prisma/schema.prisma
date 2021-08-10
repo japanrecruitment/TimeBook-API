@@ -304,8 +304,8 @@ model PhotoGallery {
 model Media {
   id             String       @id @default(cuid())
   account        Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  accountId      String
-  documentType   DocumentType
+  accountId      String?
+  documentType   DocumentType?
   photoGallery   PhotoGallery @relation(fields: [photoGalleryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   photoGalleryId String
   space          Space?       @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)

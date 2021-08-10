@@ -1,5 +1,6 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
+import { create } from "domain";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
@@ -7,18 +8,29 @@ import { Result } from "../core/result";
 type SpaceTypeInput = {
     title: string;
     description: string;
+    photoGalleryId: string;
 };
 
 type SpaceType = IFieldResolver<any, Context, Record<"input", SpaceTypeInput>, Promise<Result>>;
 
 const addSpaceType: SpaceType = async (_, { input }, { store }) => {
-    const { title, description } = input;
+    const { title, description, photoGalleryId } = input;
     const isValid = title.trim() && description.trim();
     if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
     const spaceType = await store.spaceType.findFirst({ where: { title } });
     if (spaceType)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "The title for space type is already in use" });
-    await store.spaceType.create({ data: { title, description } });
+    await store.spaceType.create({
+        data: {
+            title,
+            description,
+            Media: {
+                create: {
+                    photoGalleryId,
+                },
+            },
+        },
+    });
 
     return { message: `Successfully registered space type` };
 };
@@ -27,6 +39,7 @@ export const addSpaceTypeTypeDefs = gql`
     input AddSpaceTypeInput {
         title: String!
         description: String!
+        photoGalleryId: String!
     }
 
     type Mutation {
