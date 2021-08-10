@@ -10,8 +10,8 @@ export const environment = {
     // S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
     // S3_SECRET_KEY: process.env.S3_SECRET_KEY,
     // BUCKET_URL: process.env.BUCKET_URL,
-    S3_ACCESS_KEY: "AKIA267L7G76NKHOXLP2",
-    S3_SECRET_KEY: "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",
+    S3_ACCESS_KEY: "AKIA267L7G76", // use IAM key
+    S3_SECRET_KEY: "PAzlmMAWLurWf/", // use IAM password
     BUCKET_URL: "timebookdev",
 
     isDev() {
