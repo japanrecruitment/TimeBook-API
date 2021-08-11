@@ -2,8 +2,9 @@ import AWS from "aws-sdk";
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
-import { randomUUID } from "crypto";
 import { environment } from "@utils/environment";
+import { v4 as uuidv4 } from "uuid";
+
 type UploadTokenResult = {
     presignedPUTURL: string;
     photoGalleryId: string;
@@ -17,16 +18,16 @@ const getUploadToken: GetUploadToken = async (_, __, { authData, store }) => {
     };
     AWS.config.update({ credentials: credentials, region: "ap-northeast-1" });
     var s3 = new AWS.S3();
-
+    const original = uuidv4();
     //insert into photogallery table and return that id in the response
-    const original = randomUUID();
-    const photo = await store.photoGallery.create({ data: { original } });
-    const presignedPUTURL = s3.getSignedUrl("putObject", {
+    //const photo = await store.photoGallery.create({ data: { original } });
+    const presignedPUTURL = await s3.getSignedUrlPromise("putObject", {
         Bucket: environment.BUCKET_URL,
-        Key: `spaceType/${original}.jpg`, //filename
-        Expires: 100, //time to expire in seconds
+        Key: `${original}.jpg`, //filename
+        Expires: 200, //time to expire in seconds
+        Body: "image/jpeg",
     });
-    return { presignedPUTURL, photoGalleryId: photo.id };
+    return { presignedPUTURL, photoGalleryId: "231" };
 };
 
 export const getUploadTokenTypeDefs = gql`
