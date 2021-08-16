@@ -17,14 +17,13 @@ export type SpaceResult = Partial<Space> & {
 type AllSpaceFilterOptions = {
     prefecture?: string;
     spaceType?: string;
-    hourlyPriceRange?: {
-        max: number;
-        min: number;
-    };
-    dailyPriceRange?: {
-        max: number;
-        min: number;
-    };
+    hourlyPrice?: number;
+    dailyPrice?: number;
+    updatedAt?: number;
+    rating?: number;
+    mostViewed?: number;
+    stationId?: string;
+    stationDistance?: number;
 };
 
 type AllSpaceArgs = {
