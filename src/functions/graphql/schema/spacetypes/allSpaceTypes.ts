@@ -15,17 +15,17 @@ const allSpaceTypes: AllSpaceTypes = async (_, __, { store, dataSources }) => {
     return spaceTypes || [];
 };
 
-export const allSpaceTypeDefs = gql`
+export const allSpaceTypesTypeDefs = gql`
     type SpaceType {
-        id:ID!
+        id: ID!
         title: String!
         description: String!
     }
 
     type Query {
-        allSpaceTypes: SpaceType[] @auth(requires: [user,host])
+        allSpaceTypes: [SpaceType]
     }
 `;
-export const allSpaceResolvers = {
+export const allSpaceTypesResolvers = {
     Query: { allSpaceTypes },
 };

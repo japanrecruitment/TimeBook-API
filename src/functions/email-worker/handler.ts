@@ -19,7 +19,7 @@ const emailQueueWorker: SQSHandler = async (event) => {
     const { to, subject, body } = emailTemplates[template](emailData as any);
 
     if (!validateEmail(to)) return;
-    if (!validateEmailOnCertainDomain(to) && !verifyEmailViaSMTP(to)) return;
+    if (!validateEmailOnCertainDomain(to) && !(await verifyEmailViaSMTP(to))) return;
 
     await sendEmail(to, subject, body);
 };

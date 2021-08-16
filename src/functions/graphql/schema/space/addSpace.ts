@@ -3,42 +3,24 @@ import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
+import { NearestStationsInput } from "./nearestStation";
+import { AddSpacePricePlanInput } from "./spacePricePlan";
 
 type AddSpaceInput = {
     name: string;
     maximumCapacity: number;
     numberOfSeats: number;
     spaceSize: number;
-    spacePricePlan: SpacePricePlan;
-    nearestStations: NearestStation[];
-    space_To_Space_Types: Space_to_Space_Types[];
-};
-
-type SpacePricePlan = {
-    planTitle: string;
-    hourlyPrice: number;
-    dailyPrice: number;
-    maintenanceFee: number;
-    lastMinuteDiscount: number;
-    cooldownTime: number;
-};
-
-type NearestStation = {
-    stationId: number;
-    via: string;
-    time: number;
-};
-
-type Space_to_Space_Types = {
-    spaceTypeId: string;
+    spacePricePlan: AddSpacePricePlanInput;
+    nearestStations: NearestStationsInput[];
+    spaceTypes: string[];
 };
 
 type AddSpace = IFieldResolver<any, Context, Record<"input", AddSpaceInput>, Promise<Result>>;
 
 const addSpace: AddSpace = async (_, { input }, { authData, store }) => {
     const { accountId } = authData;
-    const { name, maximumCapacity, numberOfSeats, spaceSize, spacePricePlan, nearestStations, space_To_Space_Types } =
-        input;
+    const { name, maximumCapacity, numberOfSeats, spaceSize, spacePricePlan, nearestStations, spaceTypes } = input;
     const { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime } = spacePricePlan;
     const isValid =
         name.trim() &&
@@ -62,7 +44,7 @@ const addSpace: AddSpace = async (_, { input }, { authData, store }) => {
                 create: { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime },
             },
             nearestStations: { createMany: { data: nearestStations } },
-            spaceTypes: { createMany: { data: space_To_Space_Types } },
+            spaceTypes: { createMany: { data: spaceTypes.map((spaceTypeId) => ({ spaceTypeId })) } },
         },
     });
 
@@ -75,32 +57,13 @@ export const addSpaceTypeDefs = gql`
         maximumCapacity: Int!
         numberOfSeats: Int!
         spaceSize: Float
-        spacePricePlan: SpacePricePlan
-        nearestStations: [NearestStations]
-        space_To_Space_Types: [Space_to_Space_Types]
-    }
-
-    input SpacePricePlan {
-        planTitle: String
-        hourlyPrice: Float
-        dailyPrice: Float
-        maintenanceFee: Float
-        lastMinuteDiscount: Float
-        cooldownTime: Int
-    }
-
-    input NearestStations {
-        stationId: Int!
-        via: String
-        time: Int
-    }
-
-    input Space_to_Space_Types {
-        spaceTypeId: String!
+        spacePricePlan: AddSpacePricePlanInput!
+        nearestStations: [NearestStationsInput]!
+        spaceTypes: [ID]!
     }
 
     type Mutation {
-        addSpace(input: AddSpaceInput!): Result! @auth(requires: [host])
+        addSpace(input: AddSpaceInput!): Result! @auth(requires: [user, host])
     }
 `;
 

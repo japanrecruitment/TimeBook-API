@@ -45,13 +45,15 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
     Log(newAccount);
 
     const verificationCode = randomNumberOfNDigits(6);
-    dataSources.cacheDS.storeInCache(`email-verification-code-${email}`, verificationCode, 600);
-    await addEmailToQueue<EmailVerificationData>({
-        template: "email-verification",
-        recipientEmail: email,
-        recipientName: `${firstName} ${lastName}`,
-        verificationCode,
-    });
+    await Promise.all([
+        dataSources.cacheDS.storeInCache(`email-verification-code-${email}`, verificationCode, 600),
+        addEmailToQueue<EmailVerificationData>({
+            template: "email-verification",
+            recipientEmail: email,
+            recipientName: `${firstName} ${lastName}`,
+            verificationCode,
+        }),
+    ]);
 
     return {
         message: `Successfully registered an user account with email: ${email}`,

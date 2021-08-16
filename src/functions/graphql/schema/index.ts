@@ -3,13 +3,33 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { merge } from "lodash";
 import { accountDirectives, accountResolvers, accountTypeDefs } from "./account";
 import { addressTypeDefs } from "./address";
+import { spaceTypeDefs, spaceResolvers } from "./space";
+import { spaceTypesTypeDefs, spaceTypesResolvers } from "./spacetypes";
 import { coreDirectives, coreResolvers, coreTypeDefs } from "./core";
 import { prefectureResolvers, prefectureTypeDefs } from "./prefectures";
 import { stationsResolvers, stationsTypeDefs } from "./stations";
+import { paymentSourceResolvers, paymentSourceTypeDefs } from "./payment";
 
-const typeDefs = mergeTypeDefs([coreTypeDefs, accountTypeDefs, addressTypeDefs, prefectureTypeDefs, stationsTypeDefs]);
+const typeDefs = mergeTypeDefs([
+    coreTypeDefs,
+    accountTypeDefs,
+    addressTypeDefs,
+    paymentSourceTypeDefs,
+    prefectureTypeDefs,
+    stationsTypeDefs,
+    spaceTypeDefs,
+    spaceTypesTypeDefs,
+]);
 
-const resolvers = mergeResolvers([coreResolvers, accountResolvers, prefectureResolvers, stationsResolvers]);
+const resolvers = mergeResolvers([
+    coreResolvers,
+    accountResolvers,
+    paymentSourceResolvers,
+    prefectureResolvers,
+    stationsResolvers,
+    spaceResolvers,
+    spaceTypesResolvers,
+]);
 
 const schemaDirectives = merge(coreDirectives, accountDirectives);
 

@@ -24,7 +24,7 @@ export const allStationsTypeDefs = gql`
     }
 
     type Query {
-        allStations(paginate: PaginationOptions): [Station]
+        allStations: [Station]
     }
 `;
 

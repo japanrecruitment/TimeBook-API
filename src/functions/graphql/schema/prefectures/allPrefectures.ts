@@ -18,7 +18,7 @@ export const allPrefecturesTypeDefs = gql`
         id: IntID!
         name: String!
         nameKana: String!
-        nnameRomaji: String
+        nameRomaji: String
         available: Boolean
     }
 

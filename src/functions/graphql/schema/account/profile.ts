@@ -1,5 +1,5 @@
 import { IUnionTypeResolver } from "@graphql-tools/utils";
-import { Account, Address, Company, User } from "@prisma/client";
+import { Account, Address, Company, ProfileType, User } from "@prisma/client";
 import { gql } from "apollo-server-core";
 
 export type UserProfile = User & Partial<Pick<Account, "email" | "password">> & Partial<Record<"address", Address>>;
@@ -18,6 +18,11 @@ const Profile: IUnionTypeResolver = {
 };
 
 export const profileTypeDefs = gql`
+    enum ProfileType {
+        UserProfile
+        CompanyProfile
+    }
+
     type UserProfile {
         id: ID!
         email: String
@@ -42,4 +47,4 @@ export const profileTypeDefs = gql`
     union Profile = UserProfile | CompanyProfile
 `;
 
-export const profileResolvers = { Profile };
+export const profileResolvers = { Profile, ProfileType };

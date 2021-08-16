@@ -2,6 +2,12 @@
 CREATE TYPE "Role" AS ENUM ('admin', 'host', 'user');
 
 -- CreateEnum
+CREATE TYPE "ProfileType" AS ENUM ('UserProfile', 'CompanyProfile');
+
+-- CreateEnum
+CREATE TYPE "HostType" AS ENUM ('Individual', 'Corporate');
+
+-- CreateEnum
 CREATE TYPE "Gender" AS ENUM ('Male', 'Female', 'Other');
 
 -- CreateEnum
@@ -9,6 +15,9 @@ CREATE TYPE "ReservationStatus" AS ENUM ('Reserved', 'Hold', 'Pending');
 
 -- CreateEnum
 CREATE TYPE "DocumentType" AS ENUM ('Profile', 'Space', 'OtherDocuments');
+
+-- CreateEnum
+CREATE TYPE "PaymentSourceType" AS ENUM ('Card');
 
 -- CreateTable
 CREATE TABLE "Account" (
@@ -23,6 +32,26 @@ CREATE TABLE "Account" (
     "suspended" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "profileType" "ProfileType" NOT NULL,
+
+    PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PaymentSource" (
+    "id" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "type" "PaymentSourceType" NOT NULL,
+    "expMonth" INTEGER NOT NULL,
+    "expYear" INTEGER NOT NULL,
+    "last4" TEXT NOT NULL,
+    "brand" TEXT NOT NULL,
+    "country" TEXT NOT NULL,
+    "customer" TEXT NOT NULL,
+    "rawData" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "accountId" TEXT NOT NULL,
 
     PRIMARY KEY ("id")
 );
@@ -48,6 +77,21 @@ CREATE TABLE "Company" (
     "name" VARCHAR(255) NOT NULL,
     "nameKana" VARCHAR(255) NOT NULL,
     "registrationNumber" VARBIT(255) NOT NULL,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "accountId" TEXT NOT NULL,
+
+    PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Host" (
+    "id" TEXT NOT NULL,
+    "type" "HostType" NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
+    "stripeAccountId" VARCHAR(255),
+    "approved" BOOLEAN NOT NULL DEFAULT false,
+    "suspended" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "accountId" TEXT NOT NULL,
@@ -93,9 +137,10 @@ CREATE TABLE "Address" (
     "postalCode" VARCHAR(8) NOT NULL,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "userId" TEXT NOT NULL,
-    "companyId" TEXT NOT NULL,
+    "userId" TEXT,
     "prefectureId" INTEGER NOT NULL,
+    "companyId" TEXT,
+    "spaceId" TEXT,
 
     PRIMARY KEY ("id")
 );
@@ -142,28 +187,6 @@ CREATE TABLE "Reservation" (
     "spaceId" TEXT NOT NULL,
     "reserveeId" TEXT NOT NULL,
     "approvedOn" TIMESTAMP(6) NOT NULL,
-
-    PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Media" (
-    "id" TEXT NOT NULL,
-    "original" VARCHAR(255) NOT NULL,
-    "medium" VARCHAR(255) NOT NULL,
-    "small" VARCHAR(255) NOT NULL,
-    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Document" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT,
-    "documentType" "DocumentType" NOT NULL,
-    "mediaId" TEXT NOT NULL,
 
     PRIMARY KEY ("id")
 );
@@ -238,6 +261,57 @@ CREATE TABLE "Space_To_SpaceType" (
     PRIMARY KEY ("spaceId","spaceTypeId")
 );
 
+-- CreateTable
+CREATE TABLE "Credit" (
+    "id" TEXT NOT NULL,
+    "accountId" TEXT,
+    "remainingCredit" INTEGER DEFAULT 0,
+    "expiryDate" DATE,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SubscriptionPlan" (
+    "id" TEXT NOT NULL,
+    "credit" DOUBLE PRECISION NOT NULL,
+    "title" TEXT NOT NULL,
+    "monthlyFees" DOUBLE PRECISION NOT NULL,
+    "yearlyFees" DOUBLE PRECISION NOT NULL,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PhotoGallery" (
+    "id" TEXT NOT NULL,
+    "original" VARCHAR(255) NOT NULL,
+    "medium" VARCHAR(255) NOT NULL,
+    "small" VARCHAR(255) NOT NULL,
+    "large" VARCHAR(255) NOT NULL,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Media" (
+    "id" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
+    "documentType" "DocumentType" NOT NULL,
+    "photoGalleryId" TEXT NOT NULL,
+    "spaceId" TEXT,
+    "spaceTypeId" TEXT,
+    "userId" TEXT,
+
+    PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Account.email_unique" ON "Account"("email");
 
@@ -248,16 +322,37 @@ CREATE UNIQUE INDEX "User_accountId_unique" ON "User"("accountId");
 CREATE UNIQUE INDEX "Company_accountId_unique" ON "Company"("accountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Session_accountId_unique" ON "Session"("accountId");
+CREATE UNIQUE INDEX "Host.accountId_unique" ON "Host"("accountId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "IpData.ipAddress_unique" ON "IpData"("ipAddress");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Address_userId_unique" ON "Address"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Address_companyId_unique" ON "Address"("companyId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Address_spaceId_unique" ON "Address"("spaceId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "SpacePricePlan_spaceId_unique" ON "SpacePricePlan"("spaceId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Document_mediaId_unique" ON "Document"("mediaId");
+CREATE UNIQUE INDEX "Credit_accountId_date_key" ON "Credit"("accountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Media_accountId_unique" ON "Media"("accountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Media_photoGalleryId_unique" ON "Media"("photoGalleryId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Media_spaceTypeId_unique" ON "Media"("spaceTypeId");
+
+-- AddForeignKey
+ALTER TABLE "PaymentSource" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "User" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -266,10 +361,16 @@ ALTER TABLE "User" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON D
 ALTER TABLE "Company" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Host" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Session" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "IpData" ADD FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Address" ADD FOREIGN KEY ("prefectureId") REFERENCES "Prefecture"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Address" ADD FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -278,13 +379,13 @@ ALTER TABLE "Address" ADD FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELE
 ALTER TABLE "Address" ADD FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Address" ADD FOREIGN KEY ("prefectureId") REFERENCES "Prefecture"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Address" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Space" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SpacePricePlan" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SpacePricePlan" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Reservation" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -293,25 +394,37 @@ ALTER TABLE "Reservation" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") O
 ALTER TABLE "Reservation" ADD FOREIGN KEY ("reserveeId") REFERENCES "Account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Document" ADD FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Document" ADD FOREIGN KEY ("mediaId") REFERENCES "Media"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Station" ADD FOREIGN KEY ("prefectureCode") REFERENCES "Prefecture"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Station" ADD FOREIGN KEY ("lineCode") REFERENCES "TrainLine"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "NearestStation" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "NearestStation" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "NearestStation" ADD FOREIGN KEY ("stationId") REFERENCES "Station"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "NearestStation" ADD FOREIGN KEY ("stationId") REFERENCES "Station"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Space_To_SpaceType" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Space_To_SpaceType" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Space_To_SpaceType" ADD FOREIGN KEY ("spaceTypeId") REFERENCES "SpaceType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Space_To_SpaceType" ADD FOREIGN KEY ("spaceTypeId") REFERENCES "SpaceType"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Credit" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Media" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Media" ADD FOREIGN KEY ("photoGalleryId") REFERENCES "PhotoGallery"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Media" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Media" ADD FOREIGN KEY ("spaceTypeId") REFERENCES "SpaceType"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Media" ADD FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

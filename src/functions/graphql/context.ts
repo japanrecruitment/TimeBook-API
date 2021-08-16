@@ -14,7 +14,7 @@ export type Context = {
 
 const getAuthData = (event) => {
     try {
-        return decodeToken(event.headers.authorization, "access") || { roles: ["unknown"] };
+        return decodeToken(event.headers.Authorization, "access") || { roles: ["unknown"] };
     } catch (error) {
         const code = "FORBIDDEN";
         const message = error.name === "TokenExpiredError" ? "Token expired" : "Invalid token";
