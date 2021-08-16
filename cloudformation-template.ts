@@ -256,10 +256,16 @@ const emailQueue: AWS["resources"]["Resources"] = {
 };
 
 const mediaS3Bucket: AWS["resources"]["Resources"] = {
-    MediaS3Bucket: {
+    MediaBucket: {
         Type: "AWS::S3::Bucket",
         Properties: {
             BucketName: "${self:service}-${sls:stage}-media",
+        },
+    },
+    MediaUploadBucket: {
+        Type: "AWS::S3::Bucket",
+        Properties: {
+            BucketName: "${self:service}-${sls:stage}-media-upload",
         },
     },
 };
