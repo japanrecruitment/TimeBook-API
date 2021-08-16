@@ -7,13 +7,9 @@ export const environment = {
     REDIS_HOST: process.env.REDIS_HOST,
     REDIS_PORT: process.env.REDIS_PORT,
     IP_STACK_KEY: process.env.IP_STACK_KEY,
-    // S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
-    // S3_SECRET_KEY: process.env.S3_SECRET_KEY,
-    // BUCKET_URL: process.env.BUCKET_URL,
-    S3_ACCESS_KEY: "AKIA267L7G76", // use IAM key
-    S3_SECRET_KEY: "PAzlmMAWLurWf/", // use IAM password
-    BUCKET_URL: "timebookdev",
-
+    STRIPE_CONNECT_CLIENT_ID: process.env.STRIPE_CONNECT_CLIENT_ID,
+    STRIPE_CONNECT_ACCOUNT_RETURN_URL: process.env.STRIPE_CONNECT_ACCOUNT_RETURN_URL,
+    STRIPE_CONNECT_ACCOUNT_REFRESH_URL: process.env.STRIPE_CONNECT_ACCOUNT_REFRESH_URL,
     isDev() {
         return !this.NODE_ENV || !["production"].includes(this.NODE_ENV);
     },
