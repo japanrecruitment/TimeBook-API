@@ -7,9 +7,13 @@ export const environment = {
     REDIS_HOST: process.env.REDIS_HOST,
     REDIS_PORT: process.env.REDIS_PORT,
     IP_STACK_KEY: process.env.IP_STACK_KEY,
+    MEDIA_BUCKET: process.env.MEDIA_BUCKET,
+    MEDIA_UPLOAD_BUCKET: process.env.MEDIA_UPLOAD_BUCKET,
     STRIPE_CONNECT_CLIENT_ID: process.env.STRIPE_CONNECT_CLIENT_ID,
-    STRIPE_CONNECT_ACCOUNT_RETURN_URL: process.env.STRIPE_CONNECT_ACCOUNT_RETURN_URL,
-    STRIPE_CONNECT_ACCOUNT_REFRESH_URL: process.env.STRIPE_CONNECT_ACCOUNT_REFRESH_URL,
+    STRIPE_CONNECT_ACCOUNT_RETURN_URL:
+        process.env.STRIPE_CONNECT_ACCOUNT_RETURN_URL || "http://localhost:3001/return-url",
+    STRIPE_CONNECT_ACCOUNT_REFRESH_URL:
+        process.env.STRIPE_CONNECT_ACCOUNT_REFRESH_URL || "http://localhost:3001/refresh-url",
     isDev() {
         return !this.NODE_ENV || !["production"].includes(this.NODE_ENV);
     },

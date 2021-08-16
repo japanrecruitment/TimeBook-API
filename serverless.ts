@@ -21,6 +21,7 @@ const serverlessConfiguration: AWS = {
                     "arn:aws:iam::aws:policy/AmazonSESFullAccess",
                     "arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole",
                 ],
+                statements: [{ Effect: "Allow", Action: ["s3:PutBucketNotification"], Resource: "*" }],
             },
         },
         vpc: {
@@ -34,10 +35,15 @@ const serverlessConfiguration: AWS = {
             REFRESH_TOKEN_SECRET: "${env:REFRESH_TOKEN_SECRET}",
             STRIPE_PK: "${env:STRIPE_PK}",
             STRIPE_SK: "${env:STRIPE_SK}",
+            STRIPE_CONNECT_CLIENT_ID: "${env:STRIPE_CONNECT_CLIENT_ID}",
+            STRIPE_CONNECT_ACCOUNT_RETURN_URL: "${env:STRIPE_CONNECT_ACCOUNT_RETURN_URL}",
+            STRIPE_CONNECT_ACCOUNT_REFRESH_URL: "${env:STRIPE_CONNECT_ACCOUNT_REFRESH_URL}",
             REDIS_HOST: { "Fn::GetAtt": ["ElastiCacheCluster", "RedisEndpoint.Address"] },
             REDIS_PORT: { "Fn::GetAtt": ["ElastiCacheCluster", "RedisEndpoint.Port"] },
             IP_STACK_KEY: "${env:IP_STACK_KEY}",
             EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
+            MEDIA_BUCKET: "${self:custom.mediaBucket}",
+            MEDIA_UPLOAD_BUCKET: "${self:custom.uploadMediaBucket}",
         },
         apiGateway: {
             shouldStartNameWithService: true,
@@ -51,6 +57,8 @@ const serverlessConfiguration: AWS = {
         enterprise: {
             collectLambdaLogs: false,
         },
+        mediaBucket: "${self:service}-${sls:stage}-media",
+        uploadMediaBucket: "${self:service}-${sls:stage}-media-upload",
     },
     plugins: ["serverless-webpack", "serverless-offline"],
     variablesResolutionMode: "20210219",
