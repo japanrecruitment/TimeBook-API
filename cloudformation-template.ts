@@ -255,14 +255,15 @@ const emailQueue: AWS["resources"]["Resources"] = {
     },
 };
 
-const mediaS3Bucket: AWS["resources"]["Resources"] = {
-    MediaBucket: {
-        Type: "AWS::S3::Bucket",
-        Properties: {
-            BucketName: "${self:service}-${sls:stage}-media",
-        },
-    },
-};
+// // After one successful deployment, this results in error "bucket already exists" vanera
+// const mediaS3Bucket: AWS["resources"]["Resources"] = {
+//     MediaBucket: {
+//         Type: "AWS::S3::Bucket",
+//         Properties: {
+//             BucketName: "${self:service}-${sls:stage}-media",
+//         },
+//     },
+// };
 
 const resources: AWS["resources"] = {
     Resources: {
@@ -271,7 +272,7 @@ const resources: AWS["resources"] = {
         ...securityGroup,
         ...elasticCache,
         ...emailQueue,
-        ...mediaS3Bucket,
+        // ...mediaS3Bucket,
     },
 };
 
