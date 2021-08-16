@@ -262,12 +262,6 @@ const mediaS3Bucket: AWS["resources"]["Resources"] = {
             BucketName: "${self:service}-${sls:stage}-media",
         },
     },
-    MediaUploadBucket: {
-        Type: "AWS::S3::Bucket",
-        Properties: {
-            BucketName: "${self:service}-${sls:stage}-media-upload",
-        },
-    },
 };
 
 const resources: AWS["resources"] = {

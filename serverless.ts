@@ -42,7 +42,7 @@ const serverlessConfiguration: AWS = {
             IP_STACK_KEY: "${env:IP_STACK_KEY}",
             EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
             MEDIA_BUCKET: { Ref: "MediaBucket" },
-            MEDIA_UPLOAD_BUCKET: { Ref: "MediaUploadBucket" },
+            MEDIA_UPLOAD_BUCKET: "${self:custom.uploadMediaBucket}",
         },
         apiGateway: {
             shouldStartNameWithService: true,
@@ -56,6 +56,7 @@ const serverlessConfiguration: AWS = {
         enterprise: {
             collectLambdaLogs: false,
         },
+        uploadMediaBucket: "${self:service}-${sls:stage}-media-upload",
     },
     plugins: ["serverless-webpack", "serverless-offline"],
     variablesResolutionMode: "20210219",
