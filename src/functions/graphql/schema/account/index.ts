@@ -15,6 +15,7 @@ import { updateMyProfileResolvers, updateMyProfileTypeDefs } from "./updateMyPro
 import { verifyEmailResolvers, verifyEmailTypeDefs } from "./verifyEmail";
 import { verifyResetPasswordRequestResolvers, verifyResetPasswordRequestTypeDefs } from "./verifyResetPasswordRequest";
 import { hostResolvers, hostTypeDefs } from "./host";
+import { registerHostResolvers, registerHostTypeDefs } from "./registerHost";
 
 export const accountTypeDefs = mergeTypeDefs([
     forgotPasswordTypeDefs,
@@ -24,6 +25,7 @@ export const accountTypeDefs = mergeTypeDefs([
     profileTypeDefs,
     refreshTokenTypeDefs,
     registerCompanyTypeDefs,
+    registerHostTypeDefs,
     registerUserTypeDefs,
     resendVerificationCodeTypeDefs,
     resetPasswordTypeDefs,
@@ -42,6 +44,7 @@ export const accountResolvers = mergeResolvers([
     profileResolvers,
     refreshTokenResolvers,
     registerCompanyResolvers,
+    registerHostResolvers,
     registerUserResolvers,
     resendVerificationCodeResolvers,
     resetPasswordResolvers,
