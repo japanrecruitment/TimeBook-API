@@ -43,6 +43,7 @@
         "graphql-map-selections": "^1.1.2",
         "handlebars": "^4.7.7",
         "jsonwebtoken": "^8.5.1",
+        "serverless-plugin-existing-s3": "^2.4.0",
         "stripe": "^8.157.0",
         "zb-email-verifier": "^0.6.5"
     },
