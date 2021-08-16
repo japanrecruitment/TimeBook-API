@@ -21,9 +21,9 @@ const serverlessConfiguration: AWS = {
                     "arn:aws:iam::aws:policy/AmazonSESFullAccess",
                     "arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole",
                 ],
+                statements: [{ Effect: "Allow", Action: ["s3:PutBucketNotification"], Resource: "*" }],
             },
         },
-        iamRoleStatements: [{ Effect: "Allow", Action: ["s3:PutBucketNotification"], Resource: "*" }],
         vpc: {
             subnetIds: [{ Ref: "PrivateSubnet1" }, { Ref: "PrivateSubnet2" }, { Ref: "PrivateSubnet3" }],
             securityGroupIds: [{ Ref: "LambdaSecurityGroup" }],
@@ -42,7 +42,7 @@ const serverlessConfiguration: AWS = {
             REDIS_PORT: { "Fn::GetAtt": ["ElastiCacheCluster", "RedisEndpoint.Port"] },
             IP_STACK_KEY: "${env:IP_STACK_KEY}",
             EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
-            MEDIA_BUCKET: { Ref: "MediaBucket" },
+            MEDIA_BUCKET: { Ref: "${self:custom.mediaBucket}" },
             MEDIA_UPLOAD_BUCKET: "${self:custom.uploadMediaBucket}",
         },
         apiGateway: {
@@ -57,9 +57,10 @@ const serverlessConfiguration: AWS = {
         enterprise: {
             collectLambdaLogs: false,
         },
+        mediaBucket: "${self:service}-${sls:stage}-media",
         uploadMediaBucket: "${self:service}-${sls:stage}-media-upload",
     },
-    plugins: ["serverless-webpack", "serverless-offline", "serverless-plugin-existing-s3"],
+    plugins: ["serverless-webpack", "serverless-offline"],
     variablesResolutionMode: "20210219",
     functions,
     resources,
