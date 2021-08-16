@@ -255,6 +255,15 @@ const emailQueue: AWS["resources"]["Resources"] = {
     },
 };
 
+const mediaS3Bucket: AWS["resources"]["Resources"] = {
+    MediaS3Bucket: {
+        Type: "AWS::S3::Bucket",
+        Properties: {
+            BucketName: "${self:service}-${sls:stage}-media",
+        },
+    },
+};
+
 const resources: AWS["resources"] = {
     Resources: {
         ...vpc,
@@ -262,6 +271,7 @@ const resources: AWS["resources"] = {
         ...securityGroup,
         ...elasticCache,
         ...emailQueue,
+        ...mediaS3Bucket,
     },
 };
 
