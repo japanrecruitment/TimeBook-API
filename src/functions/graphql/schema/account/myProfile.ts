@@ -11,14 +11,15 @@ import { Profile } from "./profile";
 type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<Profile>>;
 
 const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
-    const { UserProfile, CompanyProfile } = mapSelections(info);
+    const { UserProfile, CompanyProfile, Host } = mapSelections(info);
     const { accountId, profileType } = authData;
 
     const userProfileSelect =
         profileType === "UserProfile" ? toPrismaSelect(omit(UserProfile, "email", "phoneNumber")) : false;
     const companyProfileSelect =
         profileType === "CompanyProfile" ? toPrismaSelect(omit(CompanyProfile, "email", "phoneNumber")) : false;
-
+    const hostSelect = toPrismaSelect(Host);
+    
     const account = await store.account.findUnique({
         where: { id: accountId },
         select: {
@@ -27,6 +28,7 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
             profileType: true,
             userProfile: userProfileSelect,
             companyProfile: companyProfileSelect,
+            host: hostSelect
         },
     });
 
