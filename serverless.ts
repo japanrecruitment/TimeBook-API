@@ -23,6 +23,7 @@ const serverlessConfiguration: AWS = {
                 ],
             },
         },
+        iamRoleStatements: [{ Effect: "Allow", Action: ["s3:PutBucketNotification"], Resource: "*" }],
         vpc: {
             subnetIds: [{ Ref: "PrivateSubnet1" }, { Ref: "PrivateSubnet2" }, { Ref: "PrivateSubnet3" }],
             securityGroupIds: [{ Ref: "LambdaSecurityGroup" }],
@@ -58,7 +59,7 @@ const serverlessConfiguration: AWS = {
         },
         uploadMediaBucket: "${self:service}-${sls:stage}-media-upload",
     },
-    plugins: ["serverless-webpack", "serverless-offline"],
+    plugins: ["serverless-webpack", "serverless-offline", "serverless-plugin-existing-s3"],
     variablesResolutionMode: "20210219",
     functions,
     resources,
