@@ -9,7 +9,7 @@ import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
 
-type RegisterUserInput = {
+export type RegisterUserInput = {
     email: string;
     password: string;
     firstName: string;

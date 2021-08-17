@@ -28,23 +28,18 @@ const host: THost = async (_, __, { authData, store }, info) => {
     return hostAccount;
 };
 
-type RegisterHostInput = {
+type BeAHostInput = {
     type: HostType;
     name: string;
 };
 
-type RegisterHostResponse = {
+type BeAHostResult = Result & {
     url: string;
 };
 
-type RegisterHost = IFieldResolver<
-    any,
-    Context,
-    Record<"input", RegisterHostInput>,
-    Promise<Result & RegisterHostResponse>
->;
+type BeAHost = IFieldResolver<any, Context, Record<"input", BeAHostInput>, Promise<BeAHostResult>>;
 
-const registerHost: RegisterHost = async (_, { input }, { store, authData }) => {
+const beAHost: BeAHost = async (_, { input }, { store, authData }) => {
     const { accountId, profileType } = authData;
     const { type, name } = input;
 
@@ -140,7 +135,7 @@ export const hostTypeDefs = gql`
         Corporate
     }
 
-    input HostInput {
+    input BeAHostInput {
         type: HostType
         name: String
     }
@@ -154,7 +149,7 @@ export const hostTypeDefs = gql`
         updatedAt: Date
     }
 
-    type HostResult {
+    type BeAHostResult {
         message: String
         url: String!
     }
@@ -164,11 +159,11 @@ export const hostTypeDefs = gql`
     }
 
     type Mutation {
-        registerHost(input: HostInput): HostResult! @auth(requires: [user])
+        beAHost(input: BeAHostInput): BeAHostResult! @auth(requires: [user])
     }
 `;
 
 export const hostResolvers = {
     Query: { host },
-    Mutation: { registerHost },
+    Mutation: { beAHost },
 };
