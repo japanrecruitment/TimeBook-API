@@ -10,23 +10,20 @@ export type SpaceTypeResult = Partial<SpaceType> & {
 type AllSpaceTypes = IFieldResolver<any, Context, Record<string, any>, Promise<SpaceTypeResult[]>>;
 
 const allSpaceTypes: AllSpaceTypes = async (_, __, { store, dataSources }) => {
+    const cacheKey = "all-stapce-types";
+    const cacheDoc = await dataSources.cacheDS.fetchFromCache(cacheKey);
+    if (cacheDoc) return cacheDoc;
+
     const spaceTypes = await store.spaceType.findMany({
         orderBy: { title: "asc" },
-        take: 20,
-        skip: 0,
-        include: {
-            Media: {
-                select: { photoGallery: true },
-            },
-        },
-    });
-    spaceTypes.forEach((x) => (x.Media.photoGallery.original = getUrlGenerator(x.Media.photoGallery.original)));
-    const result = spaceTypes.map((spaceType) => {
-        const photoGallery = spaceType.Media.photoGallery;
-        return { ...spaceType, photoGallery };
     });
 
-    return result || [];
+    if (spaceTypes) {
+        dataSources.cacheDS.storeInCache(cacheKey, spaceTypes, 60 * 60 * 24 * 30 * 6);
+        return spaceTypes;
+    } else {
+        return [];
+    }
 };
 
 export const allSpaceTypesTypeDefs = gql`
@@ -34,7 +31,6 @@ export const allSpaceTypesTypeDefs = gql`
         id: ID!
         title: String!
         description: String!
-        photoGallery: PhotoGallery!
     }
 
     type Query {
