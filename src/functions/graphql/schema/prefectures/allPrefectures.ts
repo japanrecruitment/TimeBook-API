@@ -8,8 +8,19 @@ type AllPrefectures = IFieldResolver<any, Context, Record<string, any>, Promise<
 const allPrefectures: AllPrefectures = async (_, __, { store, dataSources }) => {
     const cacheDoc = await dataSources.cacheDS.fetchFromCache("all-prefectures");
     if (cacheDoc) return cacheDoc;
-    const allPrefectures = await store.prefecture.findMany({ where: { available: true } });
+    const allPrefectures = await store.prefecture.findMany();
     dataSources.cacheDS.storeInCache("all-prefectures", allPrefectures, 600);
+    return allPrefectures;
+};
+
+type Prefectures = IFieldResolver<any, Context, Record<string, any>, Promise<Prefecture[]>>;
+
+const prefectures: Prefectures = async (_, __, { store, dataSources }) => {
+    const cacheKey = "available-prefectures";
+    const cacheDoc = await dataSources.cacheDS.fetchFromCache(cacheKey);
+    if (cacheDoc) return cacheDoc;
+    const allPrefectures = await store.prefecture.findMany({ where: { available: true } });
+    dataSources.cacheDS.storeInCache(cacheKey, allPrefectures, 60 * 60 * 24 * 30 * 6); // sec * min * hrs * days * month
     return allPrefectures;
 };
 
@@ -23,10 +34,11 @@ export const allPrefecturesTypeDefs = gql`
     }
 
     type Query {
-        allPrefectures: [Prefecture]
+        allPrefectures: [Prefecture] @auth(requires: [admin])
+        prefectures: [Prefecture]
     }
 `;
 
 export const allPrefecturesResolvers = {
-    Query: { allPrefectures },
+    Query: { allPrefectures, prefectures },
 };
