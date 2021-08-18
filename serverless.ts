@@ -46,6 +46,7 @@ const serverlessConfiguration: AWS = {
             EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
             MEDIA_BUCKET: "${self:custom.mediaBucket}",
             MEDIA_UPLOAD_BUCKET: "${self:custom.uploadMediaBucket}",
+            FRONTEND_BASE_URL: "${env.FRONTEND_BASE_URL}",
         },
         apiGateway: {
             shouldStartNameWithService: true,
