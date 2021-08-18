@@ -10,6 +10,7 @@ import { encodePassword } from "@utils/authUtils";
 import { Log } from "@utils/logger";
 import { randomNumberOfNDigits } from "@utils/compute";
 import { addEmailToQueue, EmailVerificationData } from "@utils/email-helper";
+import { StripeUtil } from "@libs/index";
 
 type RegisterHostStrategy<T = any> = (input: T, context: Context) => Promise<Result>;
 
@@ -40,6 +41,11 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
 
     password = encodePassword(password);
 
+    // register to stripe
+    // update stripe account ID
+    const stripe = new StripeUtil();
+    const { id: connectId } = await stripe.createConnectAccount({ email });
+
     const newAccount = await store.account.create({
         data: {
             email,
@@ -47,7 +53,7 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
             profileType: ProfileType.CompanyProfile,
             roles: [Role.host],
             companyProfile: { create: { name, nameKana, registrationNumber } },
-            host: { create: { type: "Corporate", name } },
+            host: { create: { type: "Corporate", name, stripeAccountId: connectId } },
         },
     });
 
@@ -82,6 +88,11 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
 
     password = encodePassword(password);
 
+    // register to stripe
+    // update stripe account ID
+    const stripe = new StripeUtil();
+    const { id: connectId } = await stripe.createConnectAccount({ email });
+
     const newAccount = await store.account.create({
         data: {
             email,
@@ -89,7 +100,7 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
             profileType: ProfileType.UserProfile,
             roles: [Role.host],
             userProfile: { create: { firstName, lastName, firstNameKana, lastNameKana } },
-            host: { create: { type: "Individual", name: `${firstName} ${lastName}` } },
+            host: { create: { type: "Individual", name: `${firstName} ${lastName}`, stripeAccountId: connectId } },
         },
     });
 
