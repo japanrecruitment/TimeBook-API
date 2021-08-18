@@ -35,14 +35,16 @@ const host: THost = async (_, __, { authData, store }, info) => {
         });
 
     if (!hostAccount.approved)
-        throw new GqlError({ code: "UNAUTHORIZED", message: "Your account is pending approval." });
+        throw new GqlError({ code: "PENDING_APPROVAL", message: "Your account is pending approval." });
 
+    const stripe = new StripeUtil();
     // check if onboarding is finished
     if (hostAccount.stripeAccountId) {
         // Initialize Stripe Library
-        const stripe = new StripeUtil();
         hostAccount.account = await stripe.getStripeAccount(hostAccount.stripeAccountId);
         Log(hostAccount.account);
+    } else {
+        throw new GqlError({ code: "FINISH_REGISTRATION", message: "Finish your registration." });
     }
 
     return hostAccount;
