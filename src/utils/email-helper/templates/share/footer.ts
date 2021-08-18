@@ -28,7 +28,7 @@ export default `<tr class="email-wrapper">
             width="250"
             class="email-masthead_logo colorScheme-dark"
           /> -->
-          <strong>Timebool</strong>
+          <strong>Timebook</strong>
         </p>
         <p class="f-fallback sub align-center">
           <strong
