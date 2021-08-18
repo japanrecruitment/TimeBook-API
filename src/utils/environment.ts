@@ -18,4 +18,7 @@ export const environment = {
     isDev() {
         return !this.NODE_ENV || !["production"].includes(this.NODE_ENV);
     },
+    BUCKET_URL: "",
+    S3_SECRET_KEY: "",
+    S3_ACCESS_KEY: "",
 };
