@@ -14,7 +14,7 @@ export default `<tr class="email-wrapper">
           &copy; 2020 All rights reserved.
         </p>
         <p class="f-fallback sub align-center">
-          <img
+          <!-- <img
             src="https://asset.japanrecruitment.co.jp/logo/jrg.png"
             alt="ジャパンリクルートメントグループ株式会社"
             height="55"
@@ -27,14 +27,14 @@ export default `<tr class="email-wrapper">
             height="55"
             width="250"
             class="email-masthead_logo colorScheme-dark"
-          />
+          /> -->
+          <strong>Timebool</strong>
         </p>
         <p class="f-fallback sub align-center">
           <strong
-            >ジャパンリクルートメントグループ株式会社</strong
+            >株式会社 シークエンス</strong
           >
-          <br />〒110-0016 東京都台東区台東2-11-7 <br />Free Dial:
-          0120-314-081
+          <br />〒143-0016 東京都大田区大森北 4－12－3 CASA K 2C<br />お問い合わせ:　03-6404-8046
         </p>
       </td>
     </tr>
