@@ -7,6 +7,7 @@ export const environment = {
     REDIS_HOST: process.env.REDIS_HOST,
     REDIS_PORT: process.env.REDIS_PORT,
     IP_STACK_KEY: process.env.IP_STACK_KEY,
+    FRONTEND_BASE_URL: process.env.FRONTEND_BASE_URL,
     MEDIA_BUCKET: process.env.MEDIA_BUCKET,
     MEDIA_UPLOAD_BUCKET: process.env.MEDIA_UPLOAD_BUCKET,
     STRIPE_CONNECT_CLIENT_ID: process.env.STRIPE_CONNECT_CLIENT_ID,

@@ -53,7 +53,8 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
             profileType: ProfileType.CompanyProfile,
             roles: [Role.host],
             companyProfile: { create: { name, nameKana, registrationNumber } },
-            host: { create: { type: "Corporate", name, stripeAccountId: connectId } },
+            approved: true,
+            host: { create: { type: "Corporate", name, stripeAccountId: connectId, approved: true } },
         },
     });
 
@@ -100,7 +101,15 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
             profileType: ProfileType.UserProfile,
             roles: [Role.host],
             userProfile: { create: { firstName, lastName, firstNameKana, lastNameKana } },
-            host: { create: { type: "Individual", name: `${firstName} ${lastName}`, stripeAccountId: connectId } },
+            approved: true,
+            host: {
+                create: {
+                    type: "Individual",
+                    name: `${firstName} ${lastName}`,
+                    stripeAccountId: connectId,
+                    approved: true,
+                },
+            },
         },
     });
 

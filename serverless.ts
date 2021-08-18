@@ -21,6 +21,9 @@ const serverlessConfiguration: AWS = {
                     "arn:aws:iam::aws:policy/AmazonSESFullAccess",
                     "arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole",
                 ],
+                statements: [
+                    { Effect: "Allow", Action: ["sqs:SendMessage"], Resource: { "Fn::GetAtt": "EmailQueue.Arn" } },
+                ],
             },
         },
         vpc: {
@@ -43,6 +46,7 @@ const serverlessConfiguration: AWS = {
             EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
             MEDIA_BUCKET: "${self:custom.mediaBucket}",
             MEDIA_UPLOAD_BUCKET: "${self:custom.uploadMediaBucket}",
+            FRONTEND_BASE_URL: "${env.FRONTEND_BASE_URL}",
         },
         apiGateway: {
             shouldStartNameWithService: true,
