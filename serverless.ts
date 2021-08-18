@@ -21,7 +21,6 @@ const serverlessConfiguration: AWS = {
                     "arn:aws:iam::aws:policy/AmazonSESFullAccess",
                     "arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole",
                 ],
-                statements: [{ Effect: "Allow", Action: ["s3:PutBucketNotification"], Resource: "*" }],
             },
         },
         vpc: {
