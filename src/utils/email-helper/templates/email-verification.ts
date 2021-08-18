@@ -16,7 +16,7 @@ const template = `
           <td class="content-cell">
             <div class="f-fallback">
               <h1>Hi, {{recipientName}}</h1>
-              <p>Thank you for choosing eLearning.</p>
+              <p>Thank you for choosing Timebook.</p>
               <p>
                 Please confirm that
                 <strong>{{recipientEmail}}</strong> is your e-mail address by completing the email verification process.

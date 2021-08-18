@@ -510,7 +510,7 @@ export default `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "
                 >
                   <tr>
                     <td>
-                      <img
+                      <!-- <img
                         src="https://asset.japanrecruitment.co.jp/logo/jrg.png"
                         alt="ジャパンリクルートメントグループ株式会社"
                         height="55"
@@ -523,7 +523,8 @@ export default `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "
                         height="55"
                         width="250"
                         class="email-masthead_logo colorScheme-dark"
-                      />
+                      /> -->
+                      <strong>Timebook</strong>
                     </td>
                   </tr>
                 </table>
