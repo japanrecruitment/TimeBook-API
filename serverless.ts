@@ -22,7 +22,7 @@ const serverlessConfiguration: AWS = {
                     "arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole",
                 ],
                 statements: [
-                    { Effect: "Allow", Action: ["sqs:SendMessage"], Resource: { "Fn::GetAtt": "EmailQueue.Arn" } },
+                    { Effect: "Allow", Action: ["sqs:SendMessage"], Resource: { "Fn::GetAtt": ["EmailQueue", "Arn"] } },
                 ],
             },
         },
