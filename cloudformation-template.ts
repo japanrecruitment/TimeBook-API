@@ -253,6 +253,24 @@ const emailQueue: AWS["resources"]["Resources"] = {
             ],
         },
     },
+    EmailQueuePolicy: {
+        Type: "AWS::SQS::QueuePolicy",
+        Properties: {
+            Queues: [{ Ref: "EmailQueue" }],
+            PolicyDocument: {
+                Statement: [
+                    {
+                        Action: ["SQS:SendMessage", "SQS:ReceiveMessage"],
+                        Effect: "Allow",
+                        Resource: { "Fn::GetAtt": "EmailQueue.Arn" },
+                        Principal: {
+                            AWS: ["${AWS::AccountId}"],
+                        },
+                    },
+                ],
+            },
+        },
+    },
 };
 
 const resources: AWS["resources"] = {
