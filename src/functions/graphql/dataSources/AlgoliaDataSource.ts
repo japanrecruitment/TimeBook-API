@@ -5,11 +5,17 @@ import { Context } from "../context";
 import CacheDataSource from "./CacheDataSource";
 
 export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> extends CacheDataSource<Context> {
+    private indexName: string;
     private index: SearchIndex;
 
-    constructor(index: AlgoliaIndices) {
+    constructor(indexName: AlgoliaIndices) {
         super();
-        this.index = this.context.algolia[index];
+        this.indexName = indexName;
+    }
+
+    initialize(config) {
+        super.initialize(config);
+        this.index = this.context.algolia[this.indexName];
     }
 
     async add(object: R) {

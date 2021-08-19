@@ -52,11 +52,15 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, context, info) => 
 
 const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (input, { store }, info) => {
     const select = toPrismaSelect(omit(mapSelections(info).UserProfile, "email", "phoneNumber"));
-    const { id, address, ...userProfile } = input;
+    const { id, address, dob, firstName, firstNameKana, lastName, lastNameKana } = input;
     return await store.user.update({
         where: { id },
         data: {
-            ...userProfile,
+            dob,
+            firstName,
+            firstNameKana,
+            lastName,
+            lastNameKana,
             address: address
                 ? {
                       upsert: {
@@ -75,11 +79,13 @@ const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (
 
 const updateCompanyProfile: UpdateProfileStrategy<UpdateCompanyProfileInput> = async (input, { store }, info) => {
     const select = toPrismaSelect(omit(mapSelections(info).CompanyProfile, "email", "phoneNumber"));
-    const { id, address, ...companyProfile } = input;
+    const { id, address, name, nameKana, registrationNumber } = input;
     return await store.company.update({
         where: { id },
         data: {
-            ...companyProfile,
+            name,
+            nameKana,
+            registrationNumber,
             address: address
                 ? {
                       upsert: {
