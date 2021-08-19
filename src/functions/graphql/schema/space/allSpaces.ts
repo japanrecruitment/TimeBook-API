@@ -86,6 +86,7 @@ export const allSpacesTypeDefs = gql`
         nearestStations: [NearestStation]
         spacePricePlans: SpacePricePlan
         spaceTypes: [SpaceType]
+        address: Address
     }
 
     type Query {
