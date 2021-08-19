@@ -43,6 +43,11 @@ enum DocumentType {
     OtherDocuments
 }
 
+enum SpacePricePlanType {
+    DAILY
+    HOURLY
+}
+
 enum PaymentSourceType {
     Card
 }
@@ -156,7 +161,7 @@ model IpData {
 model Address {
     id           String     @id @default(cuid())
     addressLine1 String     @db.VarChar(255)
-    addressLine2 String?     @db.VarChar(255)
+    addressLine2 String?    @db.VarChar(255)
     city         String     @db.VarChar(255)
     longitude    Float?
     latitude     Float?
