@@ -5,6 +5,7 @@ import { GqlError } from "../../error";
 import { Result } from "../core/result";
 import { UpdateSpacePricePlanInput } from "./spacePricePlan";
 import { NearestStationsInput } from "./nearestStation";
+import { AddressInput } from "../address";
 
 type UpdateMySpaceInput = {
     id: string;
@@ -15,13 +16,14 @@ type UpdateMySpaceInput = {
     nearestStations?: NearestStationsInput[];
     spacePricePlans?: UpdateSpacePricePlanInput;
     spaceTypes?: string[];
+    address?: AddressInput;
 };
 
 type UpdateMySpace = IFieldResolver<any, Context, Record<"input", UpdateMySpaceInput>, Promise<Result>>;
 
 const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) => {
     const { accountId } = authData;
-    const { id, nearestStations, spacePricePlans, spaceTypes, ...spaceData } = input;
+    const { id, nearestStations, spacePricePlans, spaceTypes, address, ...spaceData } = input;
 
     const space = await store.space.findUnique({
         where: { id },
@@ -75,6 +77,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
                         : undefined,
                 createMany: nearestStationToAdd?.length > 0 ? { data: nearestStationToAdd } : undefined,
             },
+            address: address && { update: address },
         },
     });
 

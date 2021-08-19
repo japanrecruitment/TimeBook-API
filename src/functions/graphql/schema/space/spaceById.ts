@@ -14,7 +14,8 @@ const spaceById: SpaceById = async (_, { id }, { store }, info) => {
     const nearestStationsSelect = toPrismaSelect(gqlSelect.nearestStations);
     const spacePricePlansSelect = toPrismaSelect(gqlSelect.spacePricePlans);
     const spaceTypesSelect = toPrismaSelect(gqlSelect.spaceTypes);
-    const spaceSelect = omit(gqlSelect, "nearestStations", "spacePricePlan", "spaceTypes");
+    const addressSelect = toPrismaSelect(gqlSelect.address);
+    const spaceSelect = omit(gqlSelect, "nearestStations", "spacePricePlan", "spaceTypes", "address");
 
     const space = await store.space.findUnique({
         where: { id },
@@ -23,6 +24,7 @@ const spaceById: SpaceById = async (_, { id }, { store }, info) => {
             nearestStations: nearestStationsSelect,
             spacePricePlans: spacePricePlansSelect,
             spaceTypes: spaceTypesSelect ? { select: { spaceType: spaceTypesSelect } } : undefined,
+            address: addressSelect,
         },
     });
 

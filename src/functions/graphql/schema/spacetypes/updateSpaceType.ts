@@ -12,13 +12,16 @@ type UpdateSpaceTypeInput = {
 
 type UpdateSpaceType = IFieldResolver<any, Context, Record<"input", UpdateSpaceTypeInput>, Promise<SpaceType>>;
 
-const updateSpaceType: UpdateSpaceType = async (_, { input }, { store }) => {
+const updateSpaceType: UpdateSpaceType = async (_, { input }, { store, dataSources }) => {
     let { title, description, id } = input;
     const isValid = title.trim() && description.trim();
     if (!id || !isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
+
+    // check spcae type with same name
     const spaceTypeWithSimilarTitle = await store.spaceType.findFirst({ where: { title } });
     if (spaceTypeWithSimilarTitle)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "The title for space type is already in use" });
+
     const updatedSpaceType = await store.spaceType.update({
         where: {
             id: id,
@@ -28,7 +31,7 @@ const updateSpaceType: UpdateSpaceType = async (_, { input }, { store }) => {
             description: description,
         },
     });
-
+    dataSources.cacheDS.deleteFromCache("all-stapce-types");
     return updatedSpaceType;
 };
 export const updateSpaceTypeTypeDefs = gql`
@@ -39,7 +42,7 @@ export const updateSpaceTypeTypeDefs = gql`
     }
 
     type Mutation {
-        updateSpaceType(input: UpdateSpaceTypeInput!): SpaceType! @auth(requires: [user, host])
+        updateSpaceType(input: UpdateSpaceTypeInput!): SpaceType! @auth(requires: [admin])
     }
 `;
 

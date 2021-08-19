@@ -8,22 +8,44 @@ import { Result } from "../core/result";
 import { GqlError } from "../../error";
 
 import { HostType } from "@prisma/client";
-import { StripeUtil } from "@libs/index";
-import Stripe from "stripe";
+import { AccountLink, StripeUtil } from "@libs/index";
+import { omit } from "@utils/object-helper";
 
 type THost = IFieldResolver<any, Context, Record<string, any>, Promise<Partial<Host>>>;
 
 const host: THost = async (_, __, { authData, store }, info) => {
-    const select = toPrismaSelect(mapSelections(info));
     const { accountId } = authData;
 
-    let hostAccount = await store.host.findUnique({
+    const { Host } = mapSelections(info);
+
+    const select = toPrismaSelect(omit(Host, "account"));
+
+    const hostAccount: Partial<Host & { account: AccountLink }> = await store.host.findUnique({
         where: { accountId },
         ...select,
     });
 
     Log(hostAccount);
     if (!hostAccount) return null;
+
+    if (hostAccount.suspended)
+        throw new GqlError({
+            code: "UNAUTHORIZED",
+            message: "Your account has been suspended. Please contact support.",
+        });
+
+    if (!hostAccount.approved)
+        throw new GqlError({ code: "PENDING_APPROVAL", message: "Your account is pending approval." });
+
+    const stripe = new StripeUtil();
+    // check if onboarding is finished
+    if (hostAccount.stripeAccountId) {
+        // Initialize Stripe Library
+        hostAccount.account = await stripe.getStripeAccount(hostAccount.stripeAccountId);
+        Log(hostAccount.account);
+    } else {
+        throw new GqlError({ code: "FINISH_REGISTRATION", message: "Finish your registration." });
+    }
 
     return hostAccount;
 };
@@ -40,7 +62,7 @@ type BeAHostResult = Result & {
 type BeAHost = IFieldResolver<any, Context, Record<"input", BeAHostInput>, Promise<BeAHostResult>>;
 
 const beAHost: BeAHost = async (_, { input }, { store, authData }) => {
-    const { accountId, profileType } = authData;
+    const { accountId } = authData;
     const { type, name } = input;
 
     // Initialize Stripe Library
@@ -66,21 +88,8 @@ const beAHost: BeAHost = async (_, { input }, { store, authData }) => {
     if (hostAccount) {
         if (hostAccount.stripeAccountId) {
             // Check stripe account requirement hash
-            const stripeAccount = await stripe.getConnectAccount(hostAccount.stripeAccountId);
-
-            if (!stripeAccount.details_submitted) {
-                // detail submission isn't completed yet
-                const accountLink = await stripe.createAccountLinks({
-                    account: hostAccount.stripeAccountId,
-                    type: "account_onboarding",
-                });
-                return {
-                    message: `Provide neccessary information.`,
-                    url: accountLink.url,
-                };
-            }
-
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Already a host." });
+            const stripeAccount = await stripe.getStripeAccount(hostAccount.stripeAccountId);
+            return stripeAccount;
         } else {
             newHostAccount = hostAccount;
         }
@@ -140,11 +149,28 @@ export const hostTypeDefs = gql`
         name: String
     }
 
+    type StripeAccount {
+        message: String
+        balance: StripeAccountBalance
+        url: String!
+    }
+
+    type Balance {
+        amount: Int
+        currency: String
+    }
+
+    type StripeAccountBalance {
+        available: [Balance]
+        pending: [Balance]
+    }
+
     type Host {
         id: ID!
         type: HostType
         name: String
         stripeAccountId: String
+        account: StripeAccount
         createdAt: Date
         updatedAt: Date
     }

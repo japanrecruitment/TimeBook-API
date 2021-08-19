@@ -15,7 +15,7 @@ export const addressTypeDefs = gql`
     input AddressInput {
         id: ID
         addressLine1: String!
-        addressLine2: String!
+        addressLine2: String
         city: String!
         longitude: Float
         latitude: Float
@@ -23,3 +23,14 @@ export const addressTypeDefs = gql`
         prefectureId: IntID!
     }
 `;
+
+export type AddressInput = {
+    id: string;
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    longitude: number;
+    latitude: number;
+    postalCode: string;
+    prefectureId: number;
+};

@@ -21,7 +21,9 @@ const serverlessConfiguration: AWS = {
                     "arn:aws:iam::aws:policy/AmazonSESFullAccess",
                     "arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole",
                 ],
-                statements: [{ Effect: "Allow", Action: ["s3:PutBucketNotification"], Resource: "*" }],
+                statements: [
+                    { Effect: "Allow", Action: ["sqs:SendMessage"], Resource: { "Fn::GetAtt": ["EmailQueue", "Arn"] } },
+                ],
             },
         },
         vpc: {
@@ -47,6 +49,7 @@ const serverlessConfiguration: AWS = {
             ALGOLIA_APP_ID: "${env.ALGOLIA_APP_ID}",
             ALGOLIA_ADMIN_API_KEY: "${env.ALGOLIA_ADMIN_API_KEY}",
             ALGOLIA_SEARCH_API_KEY: "${env.ALGOLIA_SEARCH_API_KEY}",
+            FRONTEND_BASE_URL: "${env.FRONTEND_BASE_URL}",
         },
         apiGateway: {
             shouldStartNameWithService: true,
