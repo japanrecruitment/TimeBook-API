@@ -66,7 +66,7 @@ const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (
                       upsert: {
                           create: {
                               ...omit(address, "companyId", "prefectureId", "spaceId"),
-                              prefecture: { connect: { id: input.address.prefectureId } },
+                              prefecture: { connect: { id: address.prefectureId } },
                           },
                           update: address,
                       },
@@ -91,7 +91,7 @@ const updateCompanyProfile: UpdateProfileStrategy<UpdateCompanyProfileInput> = a
                       upsert: {
                           create: {
                               ...omit(address, "userId", "prefectureId", "spaceId"),
-                              prefecture: { connect: { id: input.address.prefectureId } },
+                              prefecture: { connect: { id: address.prefectureId } },
                           },
                           update: address,
                       },
