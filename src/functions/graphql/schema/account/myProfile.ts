@@ -15,27 +15,33 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
     const { accountId, profileType } = authData;
 
     const userProfileSelect =
-        profileType === "UserProfile" ? toPrismaSelect(omit(UserProfile, "email", "phoneNumber")) : false;
+        profileType === "UserProfile" ? toPrismaSelect(omit(UserProfile, "email", "phoneNumber", "roles")) : false;
     const companyProfileSelect =
-        profileType === "CompanyProfile" ? toPrismaSelect(omit(CompanyProfile, "email", "phoneNumber")) : false;
+        profileType === "CompanyProfile"
+            ? toPrismaSelect(omit(CompanyProfile, "email", "phoneNumber", "roles"))
+            : false;
     const hostSelect = toPrismaSelect(Host);
-    
+
     const account = await store.account.findUnique({
         where: { id: accountId },
         select: {
             email: true,
             phoneNumber: true,
             profileType: true,
+            roles: true,
             userProfile: userProfileSelect,
             companyProfile: companyProfileSelect,
-            host: hostSelect
+            host: hostSelect,
         },
     });
 
     Log(account);
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
 
-    return merge(pick(account, "email", "phoneNumber", "profileType"), account.userProfile || account.companyProfile);
+    return merge(
+        pick(account, "email", "phoneNumber", "profileType", "roles"),
+        account.userProfile || account.companyProfile
+    );
 };
 
 export const myProfileTypeDefs = gql`
