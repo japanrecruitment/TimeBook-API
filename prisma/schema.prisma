@@ -184,7 +184,7 @@ model Space {
     updatedAt       DateTime             @updatedAt
     accountId       String
     account         Account              @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spacePricePlans SpacePricePlan[]
+    spacePricePlans SpacePricePlan?
     reservations    Reservation[]
     nearestStations NearestStation[]
     spaceTypes      Space_To_SpaceType[]

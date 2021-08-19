@@ -11,6 +11,9 @@ export const environment = {
         process.env.STRIPE_CONNECT_ACCOUNT_RETURN_URL || "http://localhost:3001/return-url",
     STRIPE_CONNECT_ACCOUNT_REFRESH_URL:
         process.env.STRIPE_CONNECT_ACCOUNT_REFRESH_URL || "http://localhost:3001/refresh-url",
+    ALGOLIA_APP_ID: process.env.ALGOLIA_APP_ID,
+    ALGOLIA_ADMIN_API_KEY: process.env.ALGOLIA_ADMIN_API_KEY,
+    ALGOLIA_SEARCH_API_KEY: process.env.ALGOLIA_SEARCH_API_KEY,
     isDev() {
         return !this.NODE_ENV || !["production"].includes(this.NODE_ENV);
     },

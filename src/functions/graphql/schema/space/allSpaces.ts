@@ -14,18 +14,6 @@ export type SpaceResult = Partial<Space> & {
     spaceTypes?: Partial<SpaceType>[];
 };
 
-type AllSpaceFilterOptions = {
-    prefecture?: string;
-    spaceType?: string;
-    hourlyPrice?: number;
-    dailyPrice?: number;
-    updatedAt?: number;
-    rating?: number;
-    mostViewed?: number;
-    stationId?: string;
-    stationDistance?: number;
-};
-
 type AllSpaceArgs = {
     paginate: PaginationOption;
 };

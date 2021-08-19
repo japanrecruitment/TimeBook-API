@@ -54,7 +54,7 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, { authData, store 
                     ? {
                           upsert: {
                               create: {
-                                  ...omit(input.address, "companyId", "prefectureId"),
+                                  ...omit(input.address, "companyId", "prefectureId", "spaceId"),
                                   prefecture: { connect: { id: input.address.prefectureId } },
                               },
                               update: input.address,
@@ -74,7 +74,7 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, { authData, store 
                     ? {
                           upsert: {
                               create: {
-                                  ...omit(input.address, "userId", "prefectureId"),
+                                  ...omit(input.address, "userId", "prefectureId", "spaceId"),
                                   prefecture: { connect: { id: input.address.prefectureId } },
                               },
                               update: input.address,
