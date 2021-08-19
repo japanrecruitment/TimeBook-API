@@ -56,7 +56,15 @@ const addSpace: AddSpace = async (_, { input }, { authData, store }) => {
             nearestStations: { createMany: { data: nearestStations } },
             spaceTypes: { createMany: { data: spaceTypes.map((spaceTypeId) => ({ spaceTypeId })) } },
             address: {
-                create: { addressLine1, addressLine2, city, prefectureId, postalCode, latitude, longitude },
+                create: {
+                    addressLine1,
+                    addressLine2,
+                    city,
+                    postalCode,
+                    latitude,
+                    longitude,
+                    prefecture: prefectureId && { connect: { id: prefectureId } },
+                },
             },
         },
     });
