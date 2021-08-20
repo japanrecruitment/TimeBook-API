@@ -24,6 +24,7 @@ type UpdateMySpace = IFieldResolver<any, Context, Record<"input", UpdateMySpaceI
 const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) => {
     const { accountId } = authData;
     const { id, nearestStations, spacePricePlans, spaceTypes, address, ...spaceData } = input;
+    //const { prefectureId, ...addressInput } = address;
 
     const space = await store.space.findUnique({
         where: { id },
@@ -73,7 +74,17 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
                         : undefined,
                 createMany: nearestStationToAdd?.length > 0 ? { data: nearestStationToAdd } : undefined,
             },
-            address: address && { update: address },
+            address: address && {
+                update: {
+                    addressLine1: address.addressLine1,
+                    addressLine2: address.addressLine2,
+                    city: address.city,
+                    postalCode: address.postalCode,
+                    latitude: address.latitude,
+                    longitude: address.longitude,
+                    prefecture: address.prefectureId && { connect: { id: address.prefectureId } },
+                },
+            },
         },
     });
 
