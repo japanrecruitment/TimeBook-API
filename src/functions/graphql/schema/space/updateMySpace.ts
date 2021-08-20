@@ -94,6 +94,7 @@ export const updateMySpaceTypeDefs = gql`
         nearestStations: [NearestStationsInput]
         spacePricePlans: UpdateSpacePricePlanInput
         spaceTypes: [ID]
+        address: AddressInput
     }
 
     type Mutation {
