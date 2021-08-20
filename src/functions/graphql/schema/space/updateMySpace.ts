@@ -41,20 +41,16 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
 
     const prevNearestStationIds = space.nearestStations?.map(({ stationId }) => stationId);
     const newNearestStationIds = nearestStations?.map(({ stationId }) => stationId);
-
     const nearestStationToAdd = nearestStations?.filter(
         (station) => !prevNearestStationIds?.includes(station.stationId)
     );
-
     const nearestStationTpDelete =
         nearestStations && prevNearestStationIds?.filter((stationId) => !newNearestStationIds?.includes(stationId));
 
     const prevSpaceTypeIds = space.spaceTypes?.map(({ spaceTypeId }) => spaceTypeId);
-
     const spaceTypesToAdd = spaceTypes
         ?.filter((spaceTypeId) => !prevSpaceTypeIds?.includes(spaceTypeId))
         .map((spaceTypeId) => ({ spaceTypeId }));
-
     const spaceTypesToDelete =
         spaceTypes && prevSpaceTypeIds?.filter((spaceTypeId) => !spaceTypes?.includes(spaceTypeId));
 

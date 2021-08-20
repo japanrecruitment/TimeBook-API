@@ -1,10 +1,17 @@
+import { Address, Prefecture } from "@prisma/client";
 import { gql } from "apollo-server-core";
+
+export type AddressInput = Address;
+
+export type AddressResult = Address & {
+    prefecture: Prefecture;
+};
 
 export const addressTypeDefs = gql`
     type Address {
         id: ID!
         addressLine1: String!
-        addressLine2: String
+        addressLine2: String!
         city: String!
         longitude: Float
         latitude: Float
@@ -23,14 +30,3 @@ export const addressTypeDefs = gql`
         prefectureId: IntID!
     }
 `;
-
-export type AddressInput = {
-    id: string;
-    addressLine1: string;
-    addressLine2: string;
-    city: string;
-    longitude: number;
-    latitude: number;
-    postalCode: string;
-    prefectureId: number;
-};
