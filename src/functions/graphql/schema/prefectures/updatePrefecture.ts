@@ -10,8 +10,8 @@ const updatePrefecture: UpdatePrefecture = async (_, { input }, { store, dataSou
     const select = toPrismaSelect(mapSelections(info));
     const { id, ...data } = input;
     const updatedPrefecture = await store.prefecture.update({ where: { id }, data, ...select });
-    dataSources.cacheDS.deleteFromCache("all-prefectures");
-    dataSources.cacheDS.deleteFromCache("available-prefectures");
+    dataSources.cacheDS.delete("all-prefectures");
+    dataSources.cacheDS.delete("available-prefectures");
     return updatedPrefecture;
 };
 

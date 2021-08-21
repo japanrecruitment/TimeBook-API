@@ -10,6 +10,7 @@ import { prefectureResolvers, prefectureTypeDefs } from "./prefectures";
 import { stationsResolvers, stationsTypeDefs } from "./stations";
 import { paymentSourceResolvers, paymentSourceTypeDefs } from "./payment";
 import { uploadTokenTypeDefs, uploadTokenResolvers } from "./medias";
+import { cacheTestResolvers, cacheTestTypeDefs } from "./cacheTest";
 
 const typeDefs = mergeTypeDefs([
     coreTypeDefs,
@@ -21,6 +22,7 @@ const typeDefs = mergeTypeDefs([
     spaceTypeDefs,
     spaceTypesTypeDefs,
     uploadTokenTypeDefs,
+    cacheTestTypeDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -32,6 +34,7 @@ const resolvers = mergeResolvers([
     spaceResolvers,
     spaceTypesResolvers,
     uploadTokenResolvers,
+    cacheTestResolvers,
 ]);
 
 const schemaDirectives = merge(coreDirectives, accountDirectives);

@@ -22,7 +22,7 @@ const resetPassword: ResetPassword = async (_, { input }, { store, dataSources }
     const account = await store.account.update({ where: { email }, data: { password: encodePassword(newPassword) } });
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User with the given email not found" });
 
-    dataSources.cacheDS.deleteFromCache(`reset-password-verification-code-${email}`);
+    dataSources.cacheDS.delete(`reset-password-verification-code-${email}`);
 
     return {
         message: `Your password has been changed successfully. You can use your new password to login.`,
