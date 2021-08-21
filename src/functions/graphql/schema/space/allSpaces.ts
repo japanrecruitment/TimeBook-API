@@ -5,6 +5,7 @@ import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
+import { AddressResult } from "../address";
 import { PaginationOption } from "../core/paginationOption";
 import { NearestStation } from "./nearestStation";
 
@@ -12,6 +13,10 @@ export type SpaceResult = Partial<Space> & {
     nearestStations?: Partial<NearestStation>[];
     spacePricePlan?: Partial<SpacePricePlan>;
     spaceTypes?: Partial<SpaceType>[];
+<<<<<<< HEAD
+=======
+    address?: Partial<AddressResult>;
+>>>>>>> 23eca9d384a1ef125151f6f18b921c17634b1084
 };
 
 type AllSpaceArgs = {
@@ -25,7 +30,8 @@ const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
     const nearestStationsSelect = toPrismaSelect(gqlSelect.nearestStations);
     const spacePricePlansSelect = toPrismaSelect(gqlSelect.spacePricePlans);
     const spaceTypesSelect = toPrismaSelect(gqlSelect.spaceTypes);
-    const spaceSelect = omit(gqlSelect, "nearestStations", "spacePricePlan", "spaceTypes");
+    const addressSelect = toPrismaSelect(gqlSelect.address);
+    const spaceSelect = omit(gqlSelect, "nearestStations", "spacePricePlan", "spaceTypes", "address");
 
     const { take, skip } = paginate || {};
 
@@ -35,6 +41,7 @@ const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
             nearestStations: nearestStationsSelect,
             spacePricePlans: spacePricePlansSelect,
             spaceTypes: spaceTypesSelect ? { select: { spaceType: spaceTypesSelect } } : undefined,
+            address: addressSelect,
         },
         take,
         skip,

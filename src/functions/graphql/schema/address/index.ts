@@ -11,7 +11,7 @@ export const addressTypeDefs = gql`
     type Address {
         id: ID!
         addressLine1: String!
-        addressLine2: String
+        addressLine2: String!
         city: String!
         longitude: Float
         latitude: Float
