@@ -7,11 +7,11 @@ import { GqlError } from "../../error";
 type StationsByID = IFieldResolver<any, Context, Record<"id", number>, Promise<Station[]>>;
 
 const stationByID: StationsByID = async (_, { id }, { store, dataSources }) => {
-    const cacheDoc = await dataSources.cacheDS.fetchFromCache(`station-${id}`);
+    const cacheDoc = await dataSources.redisDS.fetchFromCache(`station-${id}`);
     if (cacheDoc) return cacheDoc;
     const station = await store.station.findUnique({ where: { id } });
     if (!station) throw new GqlError({ code: "NOT_FOUND", message: "Couldn't find the station" });
-    dataSources.cacheDS.storeInCache(`station-${id}`, station, 600);
+    dataSources.redisDS.storeInCache(`station-${id}`, station, 600);
     return station;
 };
 

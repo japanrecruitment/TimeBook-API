@@ -5,13 +5,13 @@ import { Context } from "../context";
 type CacheKeys = IFieldResolver<any, Context, Record<"pattern", string>, Promise<Array<string>>>;
 
 const cacheKeys: CacheKeys = async (_, { pattern }, { dataSources }) => {
-    return await dataSources.cacheDS.listKeys(pattern);
+    return await dataSources.redisDS.listKeys(pattern);
 };
 
 type DeleteManyFromCache = IFieldResolver<any, Context, Record<"pattern", string>, Promise<string>>;
 
 const deleteManyFromCache: DeleteManyFromCache = async (_, { pattern }, { dataSources }) => {
-    await dataSources.cacheDS.deleteMany(pattern);
+    await dataSources.redisDS.deleteMany(pattern);
     return "Deleted";
 };
 
