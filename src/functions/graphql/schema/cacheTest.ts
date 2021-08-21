@@ -15,16 +15,24 @@ const deleteManyFromCache: DeleteManyFromCache = async (_, { pattern }, { dataSo
     return "Deleted";
 };
 
+type StoreInCache = IFieldResolver<any, Context, { key: string; value: string; ttl: number }, Promise<string>>;
+
+const storeInCache: StoreInCache = async (_, { key, value, ttl }, { dataSources }) => {
+    await dataSources.redisDS.storeInCache(key, value, ttl);
+    return "Saved";
+};
+
 export const cacheTestTypeDefs = gql`
     type Query {
         cacheKeys(pattern: String): [String]
     }
     type Mutation {
+        storeInCache(key: String!, value: String!, ttl: Int): String
         deleteManyFromCache(pattern: String): String
     }
 `;
 
 export const cacheTestResolvers = {
     Query: { cacheKeys },
-    Mutation: { deleteManyFromCache },
+    Mutation: { deleteManyFromCache, storeInCache },
 };

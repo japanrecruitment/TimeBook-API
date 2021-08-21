@@ -3,7 +3,7 @@ import { DataSource, DataSourceConfig } from "apollo-datasource";
 import { RedisCache } from "apollo-server-cache-redis";
 import IORedis, { Redis } from "ioredis";
 
-export default class CacheDataSource<TContext = any> extends DataSource {
+export default class RedisDataSource<TContext = any> extends DataSource {
     protected context: TContext;
     private cache: RedisCache;
     private cachePrefix = `cache-data-source`;
@@ -62,7 +62,7 @@ export default class CacheDataSource<TContext = any> extends DataSource {
     async listKeys(pattern: string = "*") {
         try {
             Log("[STARTED]: Fetching keys from redis cache.");
-            const keys = await this.client.keys(pattern);
+            const keys = await this.client.keys(`${this.cachePrefix}-${pattern}`);
             Log("[COMPLETED]: Fetching keys from redis cache.", keys);
             return keys;
         } catch (error) {
@@ -71,7 +71,7 @@ export default class CacheDataSource<TContext = any> extends DataSource {
         }
     }
 
-    async storeInCache<TData = any>(key: number | string, doc: TData, ttl: number) {
+    async storeInCache<TData = any>(key: number | string, doc: TData, ttl: number = 300) {
         Log("[STARTED]: Storing data in cache.");
         const cacheKey = `${this.cachePrefix}-${key}`;
         if (Number.isInteger(ttl)) {
