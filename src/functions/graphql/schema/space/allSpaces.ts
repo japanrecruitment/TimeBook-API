@@ -13,10 +13,7 @@ export type SpaceResult = Partial<Space> & {
     nearestStations?: Partial<NearestStation>[];
     spacePricePlan?: Partial<SpacePricePlan>;
     spaceTypes?: Partial<SpaceType>[];
-<<<<<<< HEAD
-=======
     address?: Partial<AddressResult>;
->>>>>>> 23eca9d384a1ef125151f6f18b921c17634b1084
 };
 
 type AllSpaceArgs = {
