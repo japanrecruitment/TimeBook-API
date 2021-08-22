@@ -15,7 +15,7 @@ type VerifyEmail = IFieldResolver<any, Context, Record<"input", VerifyEmailInput
 const verifyEmail: VerifyEmail = async (_, { input }, { store, dataSources }) => {
     const { email, code } = input;
 
-    const cacheCode = await dataSources.redisDS.fetchFromCache(`email-verification-code-${email}`);
+    const cacheCode = await dataSources.redisDS.fetch(`email-verification-code-${email}`);
     if (cacheCode !== code) throw new GqlError({ code: "FORBIDDEN", message: "Verificaiton code expired" });
 
     const account = await store.account.update({ where: { email }, data: { emailVerified: true } });

@@ -46,7 +46,7 @@ export default class RedisDataSource<TContext = any> extends DataSource {
         });
     }
 
-    async fetchFromCache<TData = any>(key: number | string): Promise<TData | null | undefined> {
+    async fetch<TData = any>(key: number | string): Promise<TData | null | undefined> {
         try {
             Log("[STARTED]: Fetching data from cache.");
             const cacheKey = `${this.cachePrefix}-${key}`;
@@ -71,7 +71,7 @@ export default class RedisDataSource<TContext = any> extends DataSource {
         }
     }
 
-    async storeInCache<TData = any>(key: number | string, doc: TData, ttl: number = 300) {
+    async store<TData = any>(key: number | string, doc: TData, ttl: number = 300) {
         Log("[STARTED]: Storing data in cache.");
         const cacheKey = `${this.cachePrefix}-${key}`;
         if (Number.isInteger(ttl)) {

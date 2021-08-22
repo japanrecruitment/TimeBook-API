@@ -7,11 +7,11 @@ import { GqlError } from "../../error";
 type LineByID = IFieldResolver<any, Context, Record<"id", number>, Promise<TrainLine[]>>;
 
 const lineByID: LineByID = async (_, { id }, { store, dataSources }) => {
-    const cacheDoc = await dataSources.redisDS.fetchFromCache(`line-${id}`);
+    const cacheDoc = await dataSources.redisDS.fetch(`line-${id}`);
     if (cacheDoc) return cacheDoc;
     const line = await store.trainLine.findUnique({ where: { id } });
     if (!line) throw new GqlError({ code: "NOT_FOUND", message: "Couldn't find the train line" });
-    dataSources.redisDS.storeInCache(`line-${id}`, line, 600);
+    dataSources.redisDS.store(`line-${id}`, line, 600);
     return line;
 };
 

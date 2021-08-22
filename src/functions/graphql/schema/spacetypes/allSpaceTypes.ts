@@ -11,7 +11,7 @@ type AllSpaceTypes = IFieldResolver<any, Context, Record<string, any>, Promise<S
 
 const allSpaceTypes: AllSpaceTypes = async (_, __, { store, dataSources }) => {
     const cacheKey = "all-stapce-types";
-    const cacheDoc = await dataSources.redisDS.fetchFromCache(cacheKey);
+    const cacheDoc = await dataSources.redisDS.fetch(cacheKey);
     if (cacheDoc) return cacheDoc;
 
     const spaceTypes = await store.spaceType.findMany({
@@ -19,7 +19,7 @@ const allSpaceTypes: AllSpaceTypes = async (_, __, { store, dataSources }) => {
     });
 
     if (spaceTypes) {
-        dataSources.redisDS.storeInCache(cacheKey, spaceTypes, 60 * 60 * 24 * 30 * 6);
+        dataSources.redisDS.store(cacheKey, spaceTypes, 60 * 60 * 24 * 30 * 6);
         return spaceTypes;
     } else {
         return [];

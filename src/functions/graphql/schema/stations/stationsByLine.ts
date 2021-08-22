@@ -8,7 +8,7 @@ type StationsByLine = IFieldResolver<any, Context, any, Promise<Station[]>>;
 
 const stationsByLine: StationsByLine = async (_, { lineId }, { store, dataSources }) => {
     const cacheKey = `stations-by-line-${lineId}`;
-    const cacheDoc = await dataSources.redisDS.fetchFromCache(cacheKey);
+    const cacheDoc = await dataSources.redisDS.fetch(cacheKey);
     Log(cacheDoc);
     if (cacheDoc) return cacheDoc;
 
@@ -20,7 +20,7 @@ const stationsByLine: StationsByLine = async (_, { lineId }, { store, dataSource
     });
 
     Log(lines);
-    dataSources.redisDS.storeInCache(cacheKey, lines, 60 * 60 * 24 * 30 * 6); // sec * min * hrs * days * month
+    dataSources.redisDS.store(cacheKey, lines, 60 * 60 * 24 * 30 * 6); // sec * min * hrs * days * month
     return lines;
 };
 

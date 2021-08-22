@@ -6,10 +6,10 @@ import { Context } from "../../context";
 type AllPrefectures = IFieldResolver<any, Context, Record<string, any>, Promise<Prefecture[]>>;
 
 const allPrefectures: AllPrefectures = async (_, __, { store, dataSources }) => {
-    const cacheDoc = await dataSources.redisDS.fetchFromCache("all-prefectures");
+    const cacheDoc = await dataSources.redisDS.fetch("all-prefectures");
     if (cacheDoc) return cacheDoc;
     const allPrefectures = await store.prefecture.findMany();
-    dataSources.redisDS.storeInCache("all-prefectures", allPrefectures, 600);
+    dataSources.redisDS.store("all-prefectures", allPrefectures, 600);
     return allPrefectures;
 };
 
@@ -17,10 +17,10 @@ type Prefectures = IFieldResolver<any, Context, Record<string, any>, Promise<Pre
 
 const prefectures: Prefectures = async (_, __, { store, dataSources }) => {
     const cacheKey = "available-prefectures";
-    const cacheDoc = await dataSources.redisDS.fetchFromCache(cacheKey);
+    const cacheDoc = await dataSources.redisDS.fetch(cacheKey);
     if (cacheDoc) return cacheDoc;
     const allPrefectures = await store.prefecture.findMany({ where: { available: true } });
-    dataSources.redisDS.storeInCache(cacheKey, allPrefectures, 60 * 60 * 24 * 30 * 6); // sec * min * hrs * days * month
+    dataSources.redisDS.store(cacheKey, allPrefectures, 60 * 60 * 24 * 30 * 6); // sec * min * hrs * days * month
     return allPrefectures;
 };
 
