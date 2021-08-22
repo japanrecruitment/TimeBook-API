@@ -10,7 +10,7 @@ export type SpaceTypeResult = Partial<SpaceType> & {
 type AllSpaceTypes = IFieldResolver<any, Context, Record<string, any>, Promise<SpaceTypeResult[]>>;
 
 const allSpaceTypes: AllSpaceTypes = async (_, __, { store, dataSources }) => {
-    const cacheKey = "all-stapce-types";
+    const cacheKey = "space-types:all";
     const cacheDoc = await dataSources.redisDS.fetch(cacheKey);
     if (cacheDoc) return cacheDoc;
 
@@ -18,12 +18,10 @@ const allSpaceTypes: AllSpaceTypes = async (_, __, { store, dataSources }) => {
         orderBy: { title: "asc" },
     });
 
-    if (spaceTypes) {
-        dataSources.redisDS.store(cacheKey, spaceTypes, 60 * 60 * 24 * 30 * 6);
-        return spaceTypes;
-    } else {
-        return [];
-    }
+    if (!spaceTypes) return [];
+
+    dataSources.redisDS.store(cacheKey, spaceTypes, 60 * 60 * 24 * 30 * 6);
+    return spaceTypes;
 };
 
 export const allSpaceTypesTypeDefs = gql`
