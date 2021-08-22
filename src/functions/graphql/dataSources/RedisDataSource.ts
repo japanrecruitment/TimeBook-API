@@ -20,7 +20,7 @@ export default class RedisDataSource<TContext = any> extends DataSource {
     async delete(key: number | string) {
         try {
             Log("[STARTED]: Deleting data from cache.");
-            await this.cache.delete(`${this.cachePrefix}-${key}`);
+            await this.cache.delete(`${this.cachePrefix}:${key}`);
             Log("[COMPLETED]: Deleting data from cache.");
         } catch (error) {
             Log("[FAILED]: Deleting data from cache.");
@@ -30,7 +30,7 @@ export default class RedisDataSource<TContext = any> extends DataSource {
 
     async deleteMany(pattern: string) {
         Log([`[STARTED]: Deleting from cache with key matching ${pattern}`]);
-        const stream = this.client.scanStream({ match: `${this.cachePrefix}-${pattern}` });
+        const stream = this.client.scanStream({ match: `${this.cachePrefix}:${pattern}` });
         stream.on("data", (keys) => {
             if (!keys?.length) return;
             Log([`[DELETING]: Deleting ${keys.length} records with key matching ${pattern}`]);
@@ -49,7 +49,7 @@ export default class RedisDataSource<TContext = any> extends DataSource {
     async fetch<TData = any>(key: number | string): Promise<TData | null | undefined> {
         try {
             Log("[STARTED]: Fetching data from cache.");
-            const cacheKey = `${this.cachePrefix}-${key}`;
+            const cacheKey = `${this.cachePrefix}:${key}`;
             const cacheDoc = await this.cache?.get(cacheKey);
             Log(`[${cacheDoc ? "COMPLETED" : "FAILED"}]: Fetching data from cache.`);
             if (cacheDoc) return JSON.parse(cacheDoc);
@@ -62,7 +62,7 @@ export default class RedisDataSource<TContext = any> extends DataSource {
     async listKeys(pattern: string = "*") {
         try {
             Log("[STARTED]: Fetching keys from redis cache.");
-            const keys = await this.client.keys(`${this.cachePrefix}-${pattern}`);
+            const keys = await this.client.keys(`${this.cachePrefix}:${pattern}`);
             Log("[COMPLETED]: Fetching keys from redis cache.", keys);
             return keys;
         } catch (error) {
@@ -73,7 +73,7 @@ export default class RedisDataSource<TContext = any> extends DataSource {
 
     async store<TData = any>(key: number | string, doc: TData, ttl: number = 300) {
         Log("[STARTED]: Storing data in cache.");
-        const cacheKey = `${this.cachePrefix}-${key}`;
+        const cacheKey = `${this.cachePrefix}:${key}`;
         if (Number.isInteger(ttl)) {
             this.cache
                 ?.set(cacheKey, JSON.stringify(doc), { ttl })

@@ -6,7 +6,7 @@ import { Context } from "../../context";
 type Prefectures = IFieldResolver<any, Context, Record<string, any>, Promise<Prefecture[]>>;
 
 const prefectures: Prefectures = async (_, __, { store, dataSources }) => {
-    const cacheKey = "available-prefectures";
+    const cacheKey = "prefectures:available";
     const cacheDoc = await dataSources.redisDS.fetch(cacheKey);
     if (cacheDoc) return cacheDoc;
     const availablePrefectures = await store.prefecture.findMany({ where: { available: true } });
