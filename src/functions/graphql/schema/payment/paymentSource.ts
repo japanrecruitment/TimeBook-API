@@ -10,13 +10,13 @@ const paymentSources: PaymentSources = async (_, __, { store, dataSources, authD
     // return null;
     const { accountId } = authData;
     const cacheKey = `payment-source:${accountId}`;
-    const cacheDoc = await dataSources.cacheDS.fetchFromCache(cacheKey);
+    const cacheDoc = await dataSources.redisDS.fetch(cacheKey);
     if (cacheDoc) return cacheDoc;
     const { paymentSource } = await store.account.findUnique({
         where: { id: accountId },
         include: { paymentSource: true },
     });
-    dataSources.cacheDS.storeInCache(cacheKey, paymentSource, 600);
+    dataSources.redisDS.store(cacheKey, paymentSource, 600);
     return paymentSource;
 };
 
