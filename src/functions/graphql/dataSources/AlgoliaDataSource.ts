@@ -1,10 +1,9 @@
 import { AlgoliaIndices, AlgoliaRecord } from "@utils/algolia";
 import { Log } from "@utils/logger";
 import { SearchIndex } from "algoliasearch";
-import { Context } from "../context";
-import CacheDataSource from "./CacheDataSource";
+import { DataSource } from "apollo-datasource";
 
-export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> extends CacheDataSource<Context> {
+export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> extends DataSource {
     private indexName: string;
     private index: SearchIndex;
 
@@ -13,9 +12,8 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
         this.indexName = indexName;
     }
 
-    initialize(config) {
-        super.initialize(config);
-        this.index = this.context.algolia[this.indexName];
+    initialize({ context }) {
+        this.index = context.algolia[this.indexName];
     }
 
     async add(object: R) {

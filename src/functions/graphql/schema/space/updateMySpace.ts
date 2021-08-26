@@ -22,7 +22,7 @@ type UpdateMySpaceInput = {
 
 type UpdateMySpace = IFieldResolver<any, Context, Record<"input", UpdateMySpaceInput>, Promise<Result>>;
 
-const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) => {
+const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dataSources }) => {
     const { accountId } = authData;
     const { id, nearestStations, spacePricePlans, spaceTypes, address, ...spaceData } = input;
 
@@ -55,7 +55,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
     const spaceTypesToDelete =
         spaceTypes && prevSpaceTypeIds?.filter((spaceTypeId) => !spaceTypes?.includes(spaceTypeId));
 
-    await store.space.update({
+    const newSpace = await store.space.update({
         where: { id },
         data: {
             ...spaceData,
@@ -81,6 +81,25 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
                 },
             },
         },
+        include: {
+            address: { include: { prefecture: true } },
+            nearestStations: true,
+            spaceTypes: { include: { spaceType: true } },
+        },
+    });
+
+    await dataSources.spaceAlgoliaDS.update({
+        ...spaceData,
+        objectID: id,
+        nearestStations: newSpace?.nearestStations?.map(({ stationId }) => stationId),
+        prefecture: newSpace?.address?.prefecture?.name,
+        price: spacePricePlans.price,
+        priceType: spacePricePlans.type,
+        rating: 0,
+        spaceTypes: newSpace?.spaceTypes?.map(({ spaceType }) => spaceType.title),
+        thumbnail: "",
+        updatedAt: newSpace?.updatedAt.getTime(),
+        viewCount: 0,
     });
 
     return { message: `Successfully updated space` };
