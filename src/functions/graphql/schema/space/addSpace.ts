@@ -24,7 +24,7 @@ const addSpace: AddSpace = async (_, { input }, { authData, store, dataSources }
     const { accountId } = authData;
     const { name, maximumCapacity, numberOfSeats, spaceSize, spacePricePlan, nearestStations, spaceTypes, address } =
         input;
-    const { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime } = spacePricePlan;
+    const { title: planTitle, type, price, maintenanceFee, lastMinuteDiscount, cooldownTime } = spacePricePlan;
     const { addressLine1, addressLine2, city, prefectureId, latitude, longitude, postalCode } = address;
 
     const isValid =
@@ -33,8 +33,7 @@ const addSpace: AddSpace = async (_, { input }, { authData, store, dataSources }
         maximumCapacity != 0 &&
         numberOfSeats != 0 &&
         spaceSize != 0 &&
-        hourlyPrice != 0 &&
-        dailyPrice != 0 &&
+        price != 0 &&
         maintenanceFee != 0 &&
         cooldownTime != 0 &&
         addressLine1.trim() &&
@@ -51,7 +50,7 @@ const addSpace: AddSpace = async (_, { input }, { authData, store, dataSources }
             spaceSize,
             account: { connect: { id: accountId } },
             spacePricePlans: {
-                create: { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime },
+                create: { title: planTitle, type, price, maintenanceFee, lastMinuteDiscount, cooldownTime },
             },
             nearestStations: { createMany: { data: nearestStations } },
             spaceTypes: { createMany: { data: spaceTypes.map((spaceTypeId) => ({ spaceTypeId })) } },
@@ -70,21 +69,21 @@ const addSpace: AddSpace = async (_, { input }, { authData, store, dataSources }
         include: { address: { include: { prefecture: true } }, spaceTypes: { include: { spaceType: true } } },
     });
 
-    await dataSources.spaceAlgoliaDS.add({
-        objectID: space.id,
-        dailyPrice,
-        hourlyPrice,
-        name,
-        maximumCapacity,
-        nearestStations: nearestStations.map(({ stationId }) => stationId),
-        prefecture: space?.address?.prefecture?.name,
-        rating: 0,
-        spaceSize,
-        spaceTypes: space?.spaceTypes?.map(({ spaceType }) => spaceType.title),
-        thumbnail: "",
-        updatedAt: space?.updatedAt.getTime(),
-        viewCount: 0,
-    });
+    // await dataSources.spaceAlgoliaDS.add({
+    //     objectID: space.id,
+    //     dailyPrice,
+    //     hourlyPrice,
+    //     name,
+    //     maximumCapacity,
+    //     nearestStations: nearestStations.map(({ stationId }) => stationId),
+    //     prefecture: space?.address?.prefecture?.name,
+    //     rating: 0,
+    //     spaceSize,
+    //     spaceTypes: space?.spaceTypes?.map(({ spaceType }) => spaceType.title),
+    //     thumbnail: "",
+    //     updatedAt: space?.updatedAt.getTime(),
+    //     viewCount: 0,
+    // });
 
     return { message: `Successfully added space` };
 };

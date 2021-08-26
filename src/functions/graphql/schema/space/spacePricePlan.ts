@@ -7,20 +7,25 @@ export type UpdateSpacePricePlanInput = Required<Pick<SpacePricePlan, "id">> &
     Partial<Omit<SpacePricePlan, "id" | "createdAt" | "updatedAt">>;
 
 export const spacePricePlanTypeDefs = gql`
+    enum SpacePricePlanType {
+        DAILY
+        HOURLY
+    }
+
     type SpacePricePlan {
         id: ID!
-        planTitle: String
-        hourlyPrice: Float
-        dailyPrice: Float
+        title: String
+        type: SpacePricePlanType
+        price: Float
         maintenanceFee: Float
         lastMinuteDiscount: Float
         cooldownTime: Int
     }
 
     input AddSpacePricePlanInput {
-        planTitle: String!
-        hourlyPrice: Float
-        dailyPrice: Float
+        title: String!
+        type: SpacePricePlanType!
+        price: Float!
         maintenanceFee: Float
         lastMinuteDiscount: Float
         cooldownTime: Int
@@ -28,9 +33,9 @@ export const spacePricePlanTypeDefs = gql`
 
     input UpdateSpacePricePlanInput {
         id: ID!
-        planTitle: String
-        hourlyPrice: Float
-        dailyPrice: Float
+        title: String
+        type: SpacePricePlanType
+        price: Float
         maintenanceFee: Float
         lastMinuteDiscount: Float
         cooldownTime: Int

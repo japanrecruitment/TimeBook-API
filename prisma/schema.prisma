@@ -198,17 +198,17 @@ model Space {
 }
 
 model SpacePricePlan {
-    id                 String   @id @default(cuid())
-    planTitle          String   @db.VarChar(255)
-    hourlyPrice        Float    @default(0)
-    dailyPrice         Float    @default(0)
-    maintenanceFee     Float    @default(0)
-    lastMinuteDiscount Float    @default(0)
-    cooldownTime       Int      @default(0)
-    createdAt          DateTime @default(now()) @db.Timestamp(6)
-    updatedAt          DateTime @updatedAt
+    id                 String             @id @default(cuid())
+    title              String             @db.VarChar(255)
+    type               SpacePricePlanType
+    price              Float              @default(0)
+    maintenanceFee     Float              @default(0)
+    lastMinuteDiscount Float              @default(0)
+    cooldownTime       Int                @default(0)
+    createdAt          DateTime           @default(now()) @db.Timestamp(6)
+    updatedAt          DateTime           @updatedAt
     spaceId            String
-    space              Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    space              Space              @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Reservation {
