@@ -10,7 +10,7 @@ import { encodePassword } from "@utils/authUtils";
 import { Log } from "@utils/logger";
 import { randomNumberOfNDigits } from "@utils/compute";
 import { addEmailToQueue, EmailVerificationData } from "@utils/email-helper";
-import { StripeUtil } from "@libs/index";
+import { StripeLib } from "@libs/index";
 
 type RegisterHostStrategy<T = any> = (input: T, context: Context) => Promise<Result>;
 
@@ -43,7 +43,7 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
 
     // register to stripe
     // update stripe account ID
-    const stripe = new StripeUtil();
+    const stripe = new StripeLib();
     const { id: connectId } = await stripe.createConnectAccount({ email });
 
     const newAccount = await store.account.create({
@@ -91,7 +91,7 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
 
     // register to stripe
     // update stripe account ID
-    const stripe = new StripeUtil();
+    const stripe = new StripeLib();
     const { id: connectId } = await stripe.createConnectAccount({ email });
 
     const newAccount = await store.account.create({

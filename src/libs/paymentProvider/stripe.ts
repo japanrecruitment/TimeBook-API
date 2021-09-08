@@ -33,7 +33,7 @@ export type AccountBalance = {
     pending: Balance[];
 };
 
-export class StripeUtil implements IStripeUtil {
+export class StripeLib implements IStripeUtil {
     async createConnectAccount({ email }: CreateConnectAccountInput): Promise<Stripe.Account> {
         try {
             const account: Stripe.Response<Stripe.Account> = await stripe.accounts.create({
