@@ -43,6 +43,7 @@
         "graphql-map-selections": "^1.1.2",
         "handlebars": "^4.7.7",
         "jsonwebtoken": "^8.5.1",
+        "sharp": "^0.29.1",
         "stripe": "^8.157.0",
         "uuid": "^8.3.2",
         "zb-email-verifier": "^0.6.5"
