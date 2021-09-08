@@ -14,7 +14,7 @@ type VerifyResetPasswordRequest = IFieldResolver<any, Context, Record<"input", R
 const verifyResetPasswordRequest: VerifyResetPasswordRequest = async (_, { input }, { dataSources }) => {
     const { email, code } = input;
 
-    const cacheCode = await dataSources.cacheDS.fetchFromCache(`reset-password-verification-code-${email}`);
+    const cacheCode = await dataSources.redisDS.fetch(`reset-password-verification-code-${email}`);
     if (cacheCode !== code) throw new GqlError({ code: "FORBIDDEN", message: "Reset password code expired" });
 
     return {

@@ -1,11 +1,11 @@
-import CacheDataSource from "./CacheDataSource";
+import RedisDataSource from "./RedisDataSource";
 
 export type DataSources = {
-    cacheDS: CacheDataSource;
+    redisDS: RedisDataSource;
 };
 
 export default (): DataSources => {
     return {
-        cacheDS: new CacheDataSource(),
+        redisDS: new RedisDataSource(),
     };
 };

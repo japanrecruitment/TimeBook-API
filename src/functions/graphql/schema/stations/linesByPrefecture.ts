@@ -8,7 +8,7 @@ type LinesByPrefecture = IFieldResolver<any, Context, any, Promise<TrainLine[]>>
 
 const linesByPrefecture: LinesByPrefecture = async (_, { prefectureId }, { store, dataSources }) => {
     const cacheKey = `lines-by-prefecture-${prefectureId}`;
-    const cacheDoc = await dataSources.cacheDS.fetchFromCache(cacheKey);
+    const cacheDoc = await dataSources.redisDS.fetch(cacheKey);
     if (cacheDoc) return cacheDoc;
 
     // TODO: Two queries below needs to be optimized to use functions in postgresql
@@ -25,7 +25,7 @@ const linesByPrefecture: LinesByPrefecture = async (_, { prefectureId }, { store
         include: { stations: true },
     });
 
-    dataSources.cacheDS.storeInCache(cacheKey, lines, 60 * 60 * 24 * 30 * 6); // sec * min * hrs * days * month
+    dataSources.redisDS.store(cacheKey, lines, 60 * 60 * 24 * 30 * 6); // sec * min * hrs * days * month
     return lines;
 };
 

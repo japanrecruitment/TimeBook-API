@@ -1,16 +1,31 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
+import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { SpaceResult } from "./allSpaces";
 
 type MySpaces = IFieldResolver<any, Context, Record<string, any>, Promise<SpaceResult[]>>;
 
-const mySpaces: MySpaces = async (_, __, { store, authData }) => {
+const mySpaces: MySpaces = async (_, __, { store, authData }, info) => {
+    const gqlSelect = mapSelections(info);
+    const nearestStationsSelect = toPrismaSelect(gqlSelect.nearestStations);
+    const spacePricePlansSelect = toPrismaSelect(gqlSelect.spacePricePlans);
+    const spaceTypesSelect = toPrismaSelect(gqlSelect.spaceTypes);
+    const addressSelect = toPrismaSelect(gqlSelect.address);
+    const spaceSelect = omit(gqlSelect, "nearestStations", "spacePricePlan", "spaceTypes", "address");
+
     const { accountId } = authData;
 
     const mySpaces = await store.space.findMany({
         where: { accountId: accountId },
-        include: { spaceTypes: { include: { spaceType: true } } },
+        select: {
+            ...spaceSelect,
+            nearestStations: nearestStationsSelect,
+            spacePricePlans: spacePricePlansSelect,
+            spaceTypes: spaceTypesSelect ? { select: { spaceType: spaceTypesSelect } } : undefined,
+            address: addressSelect,
+        },
     });
 
     const result = mySpaces.map((space) => {
