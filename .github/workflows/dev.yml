@@ -31,7 +31,7 @@ jobs:
                   ec2-instance-type: t2.micro
                   # Subnet ID
                   subnet-id: subnet-3f4ab177
-                  security-group-id: sg-0352469eec6aa2296
+                  security-group-id: sg-0d438371d0cf98f5a
                   aws-resource-tags: >
                       [
                           {"Key": "Name", "Value": "Custom github action runner"},
