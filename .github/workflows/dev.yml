@@ -19,6 +19,7 @@ jobs:
               with:
                   node-version: ${{ matrix.node-version }}
             - run: npm ci
+            - run: SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm install --arch=x64 --platform=linux sharp
             - name: Serverless Deploy
               uses: serverless/github-action@master
               with:
