@@ -24,12 +24,11 @@ const addSpaceType: SpaceType = async (_, { input }, { store, dataSources }) => 
         data: {
             title,
             description,
-            Media: {
-                create: {
-                    documentType: DocumentType.OtherDocuments,
-                    photoGallery: { connect: { id: photoGalleryId } },
-                },
-            },
+            // Media: {
+            //     create: {
+            //         photoGalleryId,
+            //     },
+            // },
         },
     });
     dataSources.redisDS.deleteMany("space-types:*");
