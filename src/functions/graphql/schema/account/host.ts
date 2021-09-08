@@ -8,7 +8,7 @@ import { Result } from "../core/result";
 import { GqlError } from "../../error";
 
 import { HostType } from "@prisma/client";
-import { AccountLink, StripeUtil } from "@libs/index";
+import { AccountLink, StripeLib } from "@libs/index";
 import { omit } from "@utils/object-helper";
 
 type THost = IFieldResolver<any, Context, Record<string, any>, Promise<Partial<Host>>>;
@@ -37,7 +37,7 @@ const host: THost = async (_, __, { authData, store }, info) => {
     if (!hostAccount.approved)
         throw new GqlError({ code: "PENDING_APPROVAL", message: "Your account is pending approval." });
 
-    const stripe = new StripeUtil();
+    const stripe = new StripeLib();
     // check if onboarding is finished
     if (hostAccount.stripeAccountId) {
         // Initialize Stripe Library
@@ -66,7 +66,7 @@ const beAHost: BeAHost = async (_, { input }, { store, authData }) => {
     const { type, name } = input;
 
     // Initialize Stripe Library
-    const stripe = new StripeUtil();
+    const stripe = new StripeLib();
 
     // check if name is valid
     if (!name || name.trim() === "")
