@@ -23,11 +23,11 @@ const addSpaceType: SpaceType = async (_, { input }, { store }) => {
         data: {
             title,
             description,
-            Media: {
-                create: {
-                    photoGalleryId,
-                },
-            },
+            // Media: {
+            //     create: {
+            //         photoGalleryId,
+            //     },
+            // },
         },
     });
 
