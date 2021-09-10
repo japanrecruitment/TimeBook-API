@@ -6,9 +6,6 @@ import sharp from "sharp";
 
 import { Log } from "@utils/logger";
 
-// initialize s3 sdk
-const s3ClientConfig: AWS.S3.ClientConfiguration = {};
-
 const s3 = new S3({ region: "ap-northeast-1" });
 
 const emailQueueWorker: S3Handler = async (event: S3Event) => {
@@ -22,9 +19,12 @@ const emailQueueWorker: S3Handler = async (event: S3Event) => {
     // run concurrently
     const imageData = await Promise.all(images);
 
+    Log(imageData);
+
     // store all data
     const imageProcessedData = imageData.map((image) => {
         // const {} = image;
+        Log(image);
     });
     // run concurrently
 

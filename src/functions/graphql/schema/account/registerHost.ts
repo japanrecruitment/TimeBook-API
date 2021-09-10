@@ -40,7 +40,7 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
     if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
 
     password = encodePassword(password);
-
+    email = email.toLocaleLowerCase(); // change email to lowercase
     // register to stripe
     // update stripe account ID
     const stripe = new StripeLib();
@@ -88,6 +88,7 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
     if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
 
     password = encodePassword(password);
+    email = email.toLocaleLowerCase(); // change email to lowercase
 
     // register to stripe
     // update stripe account ID
