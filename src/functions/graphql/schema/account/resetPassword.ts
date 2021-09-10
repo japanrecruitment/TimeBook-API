@@ -14,7 +14,9 @@ type ResetPasswordInput = {
 type ResetPassword = IFieldResolver<any, Context, Record<"input", ResetPasswordInput>, Promise<Result>>;
 
 const resetPassword: ResetPassword = async (_, { input }, { store, dataSources }) => {
-    const { email, newPassword, code } = input;
+    let { email, newPassword, code } = input;
+
+    email = email.toLocaleLowerCase(); // change email to lower case
 
     const cacheCode = await dataSources.redisDS.fetch(`reset-password-verification-code-${email}`);
     if (cacheCode !== code) throw new GqlError({ code: "FORBIDDEN", message: "Reset password code expired" });
