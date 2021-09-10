@@ -15,7 +15,7 @@ const allPrefectures: AllPrefectures = async (_, __, { store, dataSources }) => 
 
 export const allPrefecturesTypeDefs = gql`
     type Prefecture {
-        id: IntID!
+        id: ID!
         name: String!
         nameKana: String!
         nameRomaji: String
