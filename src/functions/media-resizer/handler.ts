@@ -4,7 +4,8 @@ import { middyfy } from "@middlewares/index";
 
 import sharp from "sharp";
 
-import { Log } from "@utils/logger";
+import { Log, ImageProcessor, ImageTypes } from "@utils/index";
+import { S3Lib } from "@libs/index";
 
 const s3 = new S3({ region: "ap-northeast-1" });
 
@@ -13,34 +14,35 @@ const emailQueueWorker: S3Handler = async (event: S3Event) => {
 
     // retrieve all data
     const images = event.Records.map((event: S3EventRecord) => {
-        return s3.getObject({ Bucket: event.s3.bucket.name, Key: event.s3.object.key }).promise();
+        // TODO: need to fetch type from DB
+        return readAndResize(event.s3.object.key, "general");
     });
 
     // run concurrently
-    const imageData = await Promise.all(images);
+    await Promise.all(images);
+};
 
-    Log(imageData);
+const readAndResize = async (key: string, type: ImageTypes = "general") => {
+    const S3 = new S3Lib("upload");
 
-    // store all data
-    const imageProcessedData = imageData.map((image) => {
-        // const {} = image;
-        Log(image);
-    });
-    // run concurrently
+    const uploadedImage = await S3.getObject(key);
 
-    const test = await sharp({
-        create: {
-            width: 48,
-            height: 48,
-            channels: 4,
-            background: { r: 255, g: 0, b: 0, alpha: 0.5 },
-        },
-    })
-        .png()
-        .toBuffer();
+    const imageProcessor = new ImageProcessor();
+    await imageProcessor.init(uploadedImage.Body as Buffer);
 
-    console.log(test);
-    // return { statusCode: 200, body: JSON.stringify({ result: true }) };
+    const processedImages = await imageProcessor.resize({ type });
+
+    // put resized images to media bucket
+    await Promise.all(
+        processedImages.map(({ size, image }) =>
+            S3.putObject({ Key: `${type}/${size}/${key}`, Body: image, ContentType: uploadedImage.ContentType })
+        )
+    );
+
+    // Delete original from
+    await S3.deleteObject(key);
+
+    return key;
 };
 
 export const main = middyfy(emailQueueWorker, true);
