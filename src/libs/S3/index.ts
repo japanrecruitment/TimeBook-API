@@ -1,6 +1,5 @@
 import { S3 } from "aws-sdk";
 import { omit, Log, environment } from "@utils/index";
-import { resultTypeDefs } from "src/functions/graphql/schema/core/result";
 
 export class S3Lib {
     private _S3 = new S3({ region: "ap-northeast-1" });
@@ -8,7 +7,7 @@ export class S3Lib {
     private _MEDIA_UPLOAD_BUCKET = environment.MEDIA_UPLOAD_BUCKET;
     private _MEDIA_BUCKET = environment.MEDIA_BUCKET;
 
-    constructor(bucket) {
+    constructor(bucket: "media" | "upload") {
         this._BUCKET = bucket === "upload" ? this._MEDIA_UPLOAD_BUCKET : this._MEDIA_BUCKET;
     }
 
@@ -23,7 +22,7 @@ export class S3Lib {
 
     public getDownloadUrl(key: string, ttl: number): string {
         return this._S3.getSignedUrl("getObject", {
-            Bucket: this._BUCKET,
+            Bucket: this._MEDIA_BUCKET,
             Key: key,
             Expires: ttl,
         });
@@ -57,11 +56,11 @@ export class S3Lib {
         }
     }
 
-    public async deleteObject(key: string): Promise<S3.DeleteObjectOutput> {
+    public async deleteObject(key: string, bucket: string = "upload"): Promise<S3.DeleteObjectOutput> {
         try {
             const params: S3.DeleteObjectRequest = {
                 Key: key,
-                Bucket: this._MEDIA_UPLOAD_BUCKET,
+                Bucket: bucket === "upload" ? this._MEDIA_UPLOAD_BUCKET : this._MEDIA_BUCKET,
             };
 
             return (await this._S3.deleteObject(params).promise()) as S3.DeleteObjectOutput;

@@ -42,7 +42,7 @@ const uploadImage: UploadImage = async (_, { input }, { store }, info) => {
 
 const readImage = async (_, { key }, { store }, info) => {
     // get signedURL
-    const S3 = new S3Lib("upload");
+    const S3 = new S3Lib("media");
     const signedURL = S3.getDownloadUrl(key, 60);
 
     return { url: signedURL };
