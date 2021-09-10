@@ -7,14 +7,10 @@ import { S3Lib } from "@libs/index";
 import { Log } from "@utils/logger";
 import { ImageProcessor } from "@utils/image-processor";
 
-enum ImageType {
-    profile = "profile",
-    cover = "cover",
-    general = "general",
-}
+type ImageType = "profile" | "cover" | "general";
 type ImageUploadInput = {
-    type: ImageType;
     mime: string;
+    type?: ImageType;
 };
 
 type ImageUploadResult = {
@@ -27,10 +23,10 @@ type UploadImageArgs = { input: ImageUploadInput };
 type UploadImage = IFieldResolver<any, Context, UploadImageArgs, Promise<ImageUploadResult>>;
 
 const uploadImage: UploadImage = async (_, { input }, { store }, info) => {
-    Log(input);
     // check input
-    const type = input.type ? ImageType[input.type] : ImageType.general;
+    const type = input.type ? input.type : "general";
     const mime = input.mime || "image/jpeg";
+
     // add record in DB
     const mediaId = `1234${Date.now()}.jpeg`;
     // get signedURL
@@ -71,38 +67,33 @@ const readAndResizeImage = async (_, { key }) => {
     return key;
 };
 
-export const uploadImageTypeDefs = gql`
+export const MediaTypeDefs = gql`
     enum ImageType {
         profile
         cover
         general
     }
     input ImageUploadInput {
-        type: ImageType
         mime: String
+        type: ImageType?
     }
 
     type ImageUploadResult {
         type: ImageType!
         url: String!
         mime: String!
+        key: String!
     }
-
-    type test {
-        url: String!
-    }
-
-    type Query {
-        readImage(key: String): test
-        readAndResizeImage(key: String): String
-    }
-
-    type Mutation {
-        uploadImage(input: ImageUploadInput!): ImageUploadResult!
-    }
+    
+    
 `;
 
-export const uploadImageResolvers = {
-    Query: { readImage, readAndResizeImage },
-    Mutation: { uploadImage },
-};
+export const MediaResolvers = {};
+
+// type Media {
+
+//     }
+
+//     type Photo {
+
+//     }

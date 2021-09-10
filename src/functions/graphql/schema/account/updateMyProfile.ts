@@ -93,6 +93,9 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, { authData, store 
     return merge(updatedProfile, { email, phoneNumber });
 };
 
+// type AddProfile = IFieldResolver<any, Context, Record<"input", PhotoUploadInput>, Promise<PhotoUploadResult>>;
+// const addProfilePhoto: AddProfile = async (_, { input }, { authData, store }, info) => {};
+
 export const updateMyProfileTypeDefs = gql`
     input UpdateMyProfileInput {
         id: ID!
@@ -109,6 +112,7 @@ export const updateMyProfileTypeDefs = gql`
 
     type Mutation {
         updateMyProfile(input: UpdateMyProfileInput!): Profile @auth(requires: [user, host])
+        addProfilePhoto(input: PhotoUploadInput!): PhotoUpload
     }
 `;
 
