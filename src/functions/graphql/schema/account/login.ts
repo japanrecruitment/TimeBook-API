@@ -32,7 +32,9 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) 
     const userProfileSelect = toPrismaSelect(omit(UserProfile, "email", "phoneNumber")) || true;
     const companyProfileSelect = toPrismaSelect(omit(CompanyProfile, "email", "phoneNumber")) || true;
 
-    const { email, password } = input;
+    let { email, password } = input;
+
+    email = email.toLocaleLowerCase(); // change email to lowercase
 
     const isEmpty = !email.trim() || !password.trim();
     if (isEmpty) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
