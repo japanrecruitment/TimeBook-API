@@ -7,3 +7,4 @@ export * from "./authUtils";
 export * from "./token-helper";
 export * from "./compute";
 export * from "./object-helper";
+export * from "./image-processor";
