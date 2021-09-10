@@ -163,9 +163,10 @@ model Address {
     postalCode   String     @db.VarChar(8)
     createdAt    DateTime   @default(now()) @db.Timestamp(6)
     updatedAt    DateTime   @updatedAt
-    userId       String?
+
     prefectureId Int
     prefecture   Prefecture @relation(fields: [prefectureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    userId       String?
     user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
     companyId    String?
     company      Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
