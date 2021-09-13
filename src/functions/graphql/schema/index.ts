@@ -9,7 +9,6 @@ import { coreDirectives, coreResolvers, coreTypeDefs } from "./core";
 import { prefectureResolvers, prefectureTypeDefs } from "./prefectures";
 import { stationsResolvers, stationsTypeDefs } from "./stations";
 import { paymentSourceResolvers, paymentSourceTypeDefs } from "./payment";
-// import { uploadTokenTypeDefs, uploadTokenResolvers } from "./medias";
 import { mediaTypeDefs, mediaResolvers } from "./media";
 
 const typeDefs = mergeTypeDefs([

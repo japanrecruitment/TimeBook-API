@@ -1,6 +1,7 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
-import { uploadImageTypeDefs, uploadImageResolvers } from "./addMedia";
+import { MediaResolvers, MediaTypeDefs } from "./media";
 
-export const mediaTypeDefs = mergeTypeDefs([uploadImageTypeDefs]);
+export { ImageTypes } from "./media";
 
-export const mediaResolvers = mergeResolvers([uploadImageResolvers]);
+export const mediaResolvers = mergeResolvers([MediaResolvers]);
+export const mediaTypeDefs = mergeTypeDefs([MediaTypeDefs]);

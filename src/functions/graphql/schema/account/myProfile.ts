@@ -15,11 +15,37 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
     const { accountId, profileType } = authData;
 
     const userProfileSelect =
-        profileType === "UserProfile" ? toPrismaSelect(omit(UserProfile, "email", "phoneNumber")) : false;
+        profileType === "UserProfile"
+            ? toPrismaSelect({
+                  ...omit(UserProfile, "email", "phoneNumber", "profilePhoto"),
+                  profilePhoto: {
+                      id: true,
+                      mime: true,
+                      type: true,
+                      thumbnail: true,
+                      medium: true,
+                      small: true,
+                      large: true,
+                  },
+              })
+            : false;
     const companyProfileSelect =
-        profileType === "CompanyProfile" ? toPrismaSelect(omit(CompanyProfile, "email", "phoneNumber")) : false;
+        profileType === "CompanyProfile"
+            ? toPrismaSelect({
+                  ...omit(CompanyProfile, "email", "phoneNumber", "profilePhoto"),
+                  profilePhoto: {
+                      id: true,
+                      mime: true,
+                      type: true,
+                      thumbnail: true,
+                      medium: true,
+                      small: true,
+                      large: true,
+                  },
+              })
+            : false;
     const hostSelect = toPrismaSelect(Host);
-    
+
     const account = await store.account.findUnique({
         where: { id: accountId },
         select: {
@@ -28,7 +54,7 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
             profileType: true,
             userProfile: userProfileSelect,
             companyProfile: companyProfileSelect,
-            host: hostSelect
+            host: hostSelect,
         },
     });
 

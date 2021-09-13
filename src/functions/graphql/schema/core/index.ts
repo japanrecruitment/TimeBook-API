@@ -7,6 +7,7 @@ import { intIDScalarResolvers, intIDScalarTypeDefs } from "./intIDScalar";
 import { paginationOptionTypeDefs } from "./paginationOption";
 import { resultTypeDefs } from "./result";
 import { upperFirstLetterDirective, upperFirstLetterDirectiveTypeDefs } from "./upperFirstLetterDirective";
+import { signMediaReadDirective, signMediaReadDirectiveTypeDefs } from "./signMediaReadDirective";
 
 export const coreTypeDefs = mergeTypeDefs([
     authDirectiveTypeDefs,
@@ -16,8 +17,9 @@ export const coreTypeDefs = mergeTypeDefs([
     paginationOptionTypeDefs,
     resultTypeDefs,
     upperFirstLetterDirectiveTypeDefs,
+    signMediaReadDirectiveTypeDefs,
 ]);
 
 export const coreResolvers = mergeResolvers([dateScalarResolvers, float100ScalarResolvers, intIDScalarResolvers]);
 
-export const coreDirectives = merge(authDirectives, upperFirstLetterDirective);
+export const coreDirectives = merge(authDirectives, upperFirstLetterDirective, signMediaReadDirective);

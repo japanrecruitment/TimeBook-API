@@ -1,338 +1,332 @@
 datasource db {
-    provider = "postgresql"
-    url      = env("DB_URL")
+  provider = "postgresql"
+  url      = env("DB_URL")
 }
 
 generator client {
-    provider        = "prisma-client-js"
-    binaryTargets   = ["native", "rhel-openssl-1.0.x", "debian-openssl-1.1.x"]
-    previewFeatures = ["referentialActions"]
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "rhel-openssl-1.0.x", "debian-openssl-1.1.x"]
 }
 
 enum Role {
-    admin
-    host
-    user
+  admin
+  host
+  user
 }
 
 enum ProfileType {
-    UserProfile
-    CompanyProfile
+  UserProfile
+  CompanyProfile
 }
 
 enum HostType {
-    Individual
-    Corporate
+  Individual
+  Corporate
 }
 
 enum Gender {
-    Male
-    Female
-    Other
+  Male
+  Female
+  Other
 }
 
 enum ReservationStatus {
-    Reserved
-    Hold
-    Pending
+  Reserved
+  Hold
+  Pending
 }
 
-enum DocumentType {
+enum PhotoType {
     Profile
-    Space
-    OtherDocuments
+    Cover
+    General
 }
 
 enum PaymentSourceType {
-    Card
+  Card
 }
 
 model Account {
-    id             String          @id @default(cuid())
-    approved       Boolean         @default(false)
-    email          String          @unique @db.VarChar(255)
-    emailVerified  Boolean         @default(false)
-    phoneNumber    String?         @db.VarChar(10)
-    phoneVerified  Boolean         @default(false)
-    password       String          @db.VarChar(255)
-    roles          Role[]
-    suspended      Boolean         @default(false)
-    createdAt      DateTime        @default(now()) @db.Timestamp(6)
-    updatedAt      DateTime        @updatedAt
-    profileType    ProfileType
-    userProfile    User?
-    companyProfile Company?
-    session        Session[]
-    myReservation  Reservation[]
-    mySpace        Space[]
-    Credit         Credit[]
-    paymentSource  PaymentSource[]
-    media          Media?
-    host           Host?
+  id             String          @id @default(cuid())
+  approved       Boolean         @default(false)
+  email          String          @unique @db.VarChar(255)
+  emailVerified  Boolean         @default(false)
+  phoneNumber    String?         @db.VarChar(10)
+  phoneVerified  Boolean         @default(false)
+  password       String          @db.VarChar(255)
+  roles          Role[]
+  suspended      Boolean         @default(false)
+  createdAt      DateTime        @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime        @updatedAt
+  profileType    ProfileType
+  userProfile    User?
+  companyProfile Company?
+  session        Session[]
+  myReservation  Reservation[]
+  mySpace        Space[]
+  Credit         Credit[]
+  paymentSource  PaymentSource[]
+  host           Host?
 }
 
 model PaymentSource {
-    id        String            @id @default(cuid())
-    token     String
-    type      PaymentSourceType
-    expMonth  Int
-    expYear   Int
-    last4     String
-    brand     String
-    country   String
-    customer  String
-    rawData   Json
-    createdAt DateTime          @default(now()) @db.Timestamp(6)
-    updatedAt DateTime          @updatedAt
-    accountId String
-    account   Account           @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id        String            @id @default(cuid())
+  token     String
+  type      PaymentSourceType
+  expMonth  Int
+  expYear   Int
+  last4     String
+  brand     String
+  country   String
+  customer  String
+  rawData   Json
+  createdAt DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt DateTime          @updatedAt
+  accountId String
+  account   Account           @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model User {
-    id            String    @id @default(cuid())
-    dob           DateTime?
-    firstName     String    @db.VarChar(255)
-    firstNameKana String    @db.VarChar(255)
-    lastName      String    @db.VarChar(255)
-    lastNameKana  String    @db.VarChar(255)
-    createdAt     DateTime  @default(now()) @db.Timestamp(6)
-    updatedAt     DateTime  @updatedAt
-    accountId     String
-    account       Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    address       Address?
-    medias        Media[]
+  id            String    @id @default(cuid())
+  dob           DateTime?
+  firstName     String    @db.VarChar(255)
+  firstNameKana String    @db.VarChar(255)
+  lastName      String    @db.VarChar(255)
+  lastNameKana  String    @db.VarChar(255)
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime  @updatedAt
+  accountId     String
+  account       Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  address       Address?
+  profilePhoto  Photo?
 }
 
 model Company {
-    id                 String   @id @default(cuid())
-    name               String   @db.VarChar(255)
-    nameKana           String   @db.VarChar(255)
-    registrationNumber String   @db.VarBit(255)
-    createdAt          DateTime @default(now()) @db.Timestamp(6)
-    updatedAt          DateTime @updatedAt
-    accountId          String
-    account            Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    address            Address?
+  id                 String   @id @default(cuid())
+  name               String   @db.VarChar(255)
+  nameKana           String   @db.VarChar(255)
+  registrationNumber String   @db.VarBit(255)
+  createdAt          DateTime @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime @updatedAt
+  accountId          String
+  account            Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  address            Address?
+  profilePhoto Photo?
 }
 
 model Host {
-    id              String   @id @default(cuid())
-    type            HostType
-    name            String   @db.VarChar(255)
-    stripeAccountId String?  @db.VarChar(255)
-    approved        Boolean  @default(false)
-    suspended       Boolean  @default(false)
-    createdAt       DateTime @default(now()) @db.Timestamp(6)
-    updatedAt       DateTime @updatedAt
-    accountId       String   @unique
-    account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    // Default Settings for host goes below
+  id              String   @id @default(cuid())
+  type            HostType
+  name            String   @db.VarChar(255)
+  stripeAccountId String?  @db.VarChar(255)
+  approved        Boolean  @default(false)
+  suspended       Boolean  @default(false)
+  createdAt       DateTime @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime @updatedAt
+  accountId       String   @unique
+  account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  // Default Settings for host goes below
 }
 
 model Session {
-    id        String   @id @default(cuid())
-    revoked   Boolean  @default(false)
-    userAgent String
-    createdAt DateTime @default(now()) @db.Timestamp(6)
-    updatedAt DateTime @updatedAt
-    accountId String
-    account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    ipData    IpData[]
+  id        String   @id @default(cuid())
+  revoked   Boolean  @default(false)
+  userAgent String
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ipData    IpData[]
 }
 
 model IpData {
-    id          String   @id @default(cuid())
-    city        String?  @db.VarChar(255)
-    country     String?  @db.VarChar(255)
-    countryCode String?  @db.VarChar(2)
-    data        Json?
-    ipAddress   String   @unique @db.VarChar(15)
-    createdAt   DateTime @default(now()) @db.Timestamp(6)
-    updatedAt   DateTime @updatedAt
-    sessionId   String
-    session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id          String   @id @default(cuid())
+  city        String?  @db.VarChar(255)
+  country     String?  @db.VarChar(255)
+  countryCode String?  @db.VarChar(2)
+  data        Json?
+  ipAddress   String   @unique @db.VarChar(15)
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt
+  sessionId   String
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Address {
-    id           String     @id @default(cuid())
-    addressLine1 String     @db.VarChar(255)
-    addressLine2 String?     @db.VarChar(255)
-    city         String     @db.VarChar(255)
-    longitude    Float?
-    latitude     Float?
-    postalCode   String     @db.VarChar(8)
-    createdAt    DateTime   @default(now()) @db.Timestamp(6)
-    updatedAt    DateTime   @updatedAt
+  id           String   @id @default(cuid())
+  addressLine1 String   @db.VarChar(255)
+  addressLine2 String?  @db.VarChar(255)
+  city         String   @db.VarChar(255)
+  longitude    Float?
+  latitude     Float?
+  postalCode   String   @db.VarChar(8)
+  createdAt    DateTime @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime @updatedAt
 
-    prefectureId Int
-    prefecture   Prefecture @relation(fields: [prefectureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    userId       String?
-    user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    companyId    String?
-    company      Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spaceId      String?
-    space        Space?     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  prefectureId Int
+  prefecture   Prefecture @relation(fields: [prefectureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId       String?
+  user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  companyId    String?
+  company      Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaceId      String?
+  space        Space?     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Space {
-    id              String               @id @default(cuid())
-    name            String               @db.VarChar(255)
-    maximumCapacity Int                  @default(0)
-    numberOfSeats   Int                  @default(0)
-    spaceSize       Float                @default(0)
-    needApproval    Boolean              @default(false)
-    createdAt       DateTime             @default(now()) @db.Timestamp(6)
-    updatedAt       DateTime             @updatedAt
-    accountId       String
-    account         Account              @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spacePricePlans SpacePricePlan?
-    reservations    Reservation[]
-    nearestStations NearestStation[]
-    spaceTypes      Space_To_SpaceType[]
-    address         Address?
-    medias          Media[]
+  id              String               @id @default(cuid())
+  name            String               @db.VarChar(255)
+  maximumCapacity Int                  @default(0)
+  numberOfSeats   Int                  @default(0)
+  spaceSize       Float                @default(0)
+  needApproval    Boolean              @default(false)
+  createdAt       DateTime             @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime             @updatedAt
+  accountId       String
+  account         Account              @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spacePricePlans SpacePricePlan?
+  reservations    Reservation[]
+  nearestStations NearestStation[]
+  spaceTypes      Space_To_SpaceType[]
+  address         Address?
+  photos          Photo[]
 }
 
 model SpacePricePlan {
-    id                 String   @id @default(cuid())
-    planTitle          String   @db.VarChar(255)
-    hourlyPrice        Float    @default(0)
-    dailyPrice         Float    @default(0)
-    maintenanceFee     Float    @default(0)
-    lastMinuteDiscount Float    @default(0)
-    cooldownTime       Int      @default(0)
-    createdAt          DateTime @default(now()) @db.Timestamp(6)
-    updatedAt          DateTime @updatedAt
-    spaceId            String
-    space              Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id                 String   @id @default(cuid())
+  planTitle          String   @db.VarChar(255)
+  hourlyPrice        Float    @default(0)
+  dailyPrice         Float    @default(0)
+  maintenanceFee     Float    @default(0)
+  lastMinuteDiscount Float    @default(0)
+  cooldownTime       Int      @default(0)
+  createdAt          DateTime @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime @updatedAt
+  spaceId            String
+  space              Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Reservation {
-    id           String            @id @default(cuid())
-    fromDateTime DateTime          @default(now()) @db.Timestamp(6)
-    toDateTime   DateTime
-    status       ReservationStatus @default(Pending)
-    createdAt    DateTime          @default(now()) @db.Timestamp(6)
-    updatedAt    DateTime          @updatedAt
-    space        Space             @relation(fields: [spaceId], references: [id])
-    spaceId      String
-    reservee     Account           @relation(fields: [reserveeId], references: [id])
-    reserveeId   String
-    approvedOn   DateTime          @db.Timestamp(6)
+  id           String            @id @default(cuid())
+  fromDateTime DateTime          @default(now()) @db.Timestamp(6)
+  toDateTime   DateTime
+  status       ReservationStatus @default(Pending)
+  createdAt    DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime          @updatedAt
+  space        Space             @relation(fields: [spaceId], references: [id])
+  spaceId      String
+  reservee     Account           @relation(fields: [reserveeId], references: [id])
+  reserveeId   String
+  approvedOn   DateTime          @db.Timestamp(6)
 }
 
 model TrainLine {
-    id           Int       @id
-    name         String    @db.VarChar(255)
-    nameKana     String?   @db.VarChar(255)
-    nameOfficial String?   @db.VarChar(255)
-    color        String?   @db.VarChar(6)
-    longitude    Float?
-    latitude     Float?
-    zoom         Int?      @db.SmallInt
-    status       Int?      @db.SmallInt
-    order        Int
-    stations     Station[]
+  id           Int       @id
+  name         String    @db.VarChar(255)
+  nameKana     String?   @db.VarChar(255)
+  nameOfficial String?   @db.VarChar(255)
+  color        String?   @db.VarChar(6)
+  longitude    Float?
+  latitude     Float?
+  zoom         Int?      @db.SmallInt
+  status       Int?      @db.SmallInt
+  order        Int
+  stations     Station[]
 }
 
 model Station {
-    id              Int              @id
-    stationName     String           @db.VarChar(255)
-    stationZipCode  String?          @db.VarChar(8)
-    address         String?          @db.VarChar(511)
-    longitude       Float?
-    latitude        Float?
-    status          Int?             @db.SmallInt
-    order           Int?
-    prefectureCode  Int
-    prefecture      Prefecture       @relation(fields: [prefectureCode], references: [id])
-    lineCode        Int
-    line            TrainLine        @relation(fields: [lineCode], references: [id])
-    nearestStations NearestStation[]
+  id              Int              @id
+  stationName     String           @db.VarChar(255)
+  stationZipCode  String?          @db.VarChar(8)
+  address         String?          @db.VarChar(511)
+  longitude       Float?
+  latitude        Float?
+  status          Int?             @db.SmallInt
+  order           Int?
+  prefectureCode  Int
+  prefecture      Prefecture       @relation(fields: [prefectureCode], references: [id])
+  lineCode        Int
+  line            TrainLine        @relation(fields: [lineCode], references: [id])
+  nearestStations NearestStation[]
 }
 
 model NearestStation {
-    space     Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spaceId   String
-    station   Station @relation(fields: [stationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    stationId Int
-    time      Int
-    via       String
+  space     Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaceId   String
+  station   Station @relation(fields: [stationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  stationId Int
+  time      Int
+  via       String
 
-    @@id([spaceId, stationId])
+  @@id([spaceId, stationId])
 }
 
 model Prefecture {
-    id         Int       @id
-    name       String    @db.VarChar(255)
-    nameKana   String    @db.VarChar(255)
-    nameRomaji String    @db.VarChar(255)
-    available  Boolean   @default(false)
-    station    Station[]
-    Address    Address[]
+  id         Int       @id
+  name       String    @db.VarChar(255)
+  nameKana   String    @db.VarChar(255)
+  nameRomaji String    @db.VarChar(255)
+  available  Boolean   @default(false)
+  station    Station[]
+  Address    Address[]
 }
 
 model SpaceType {
-    id                String               @id @default(cuid())
-    title             String               @db.VarChar(100)
-    description       String               @db.VarChar(100)
-    spaceToSpaceTypes Space_To_SpaceType[]
-    Media             Media?
+  id                String               @id @default(cuid())
+  title             String               @db.VarChar(100)
+  description       String               @db.VarChar(100)
+  spaceToSpaceTypes Space_To_SpaceType[]
+  photo             Photo?
 }
 
 model Space_To_SpaceType {
-    space       Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spaceId     String
-    spaceType   SpaceType @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spaceTypeId String
+  space       Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaceId     String
+  spaceType   SpaceType @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaceTypeId String
 
-    @@id([spaceId, spaceTypeId])
+  @@id([spaceId, spaceTypeId])
 }
 
 model Credit {
-    id              String    @id @default(cuid())
-    accountId       String?
-    account         Account?  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    remainingCredit Int?      @default(0)
-    expiryDate      DateTime? @db.Date
-    createdAt       DateTime  @default(now()) @db.Timestamp(6)
-    updatedAt       DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  accountId       String?
+  account         Account?  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  remainingCredit Int?      @default(0)
+  expiryDate      DateTime? @db.Date
+  createdAt       DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt
 
-    @@unique([accountId], name: "Credit_accountId_date_key")
+  @@unique([accountId], name: "Credit_accountId_date_key")
 }
 
 model SubscriptionPlan {
-    id          String   @id @default(cuid())
-    credit      Float
-    title       String
-    monthlyFees Float
-    yearlyFees  Float
-    createdAt   DateTime @default(now()) @db.Timestamp(6)
-    updatedAt   DateTime @updatedAt
+  id          String   @id @default(cuid())
+  credit      Float
+  title       String
+  monthlyFees Float
+  yearlyFees  Float
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt
 }
 
-model PhotoGallery {
-    id        String   @id @default(cuid())
-    original  String   @db.VarChar(255)
-    medium    String   @db.VarChar(255)
-    small     String   @db.VarChar(255)
-    large     String   @db.VarChar(255)
-    createdAt DateTime @default(now()) @db.Timestamp(6)
-    updatedAt DateTime @updatedAt
-    media     Media?
-}
+model Photo {
+  id          String     @id @default(cuid())
+  mime String @db.VarChar(15)
+  type PhotoType
+  thumbnail Json?
+  medium    Json?
+  small     Json?
+  large     Json?
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
 
-model Media {
-    id             String       @id @default(cuid())
-    account        Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    accountId      String
-    documentType   DocumentType
-    photoGallery   PhotoGallery @relation(fields: [photoGalleryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    photoGalleryId String
-    space          Space?       @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spaceId        String?
-    spaceType      SpaceType?   @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spaceTypeId    String?
-    user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    userId         String?
+  space       Space?     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaceId     String?
+  spaceType   SpaceType? @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaceTypeId String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId      String?
+  company     Company?      @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  companyId   String?
 }
