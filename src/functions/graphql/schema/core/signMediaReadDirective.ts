@@ -21,7 +21,7 @@ class SignMediaReadDirective extends SchemaDirectiveVisitor {
 }
 
 export const signMediaReadDirectiveTypeDefs = gql`
-    directive @signMediaRead(ttl: Int = 600) on FIELD_DEFINITION
+    directive @signMediaRead(ttl: Int = 86400) on FIELD_DEFINITION
 `;
 
 export const signMediaReadDirective = {
