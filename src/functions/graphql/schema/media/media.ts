@@ -2,6 +2,17 @@ import { gql } from "apollo-server-core";
 
 export type ImageTypes = "Profile" | "Cover" | "General";
 
+export type ImageUploadInput = {
+    mime: string;
+};
+
+export type ImageUploadResult = {
+    type: ImageTypes;
+    url: string;
+    mime: string;
+    key: string;
+};
+
 export const MediaTypeDefs = gql`
     enum ImageType {
         Profile
