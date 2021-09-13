@@ -10,7 +10,7 @@
         "postinstall": "npm run schema:generate",
         "schema:migrate": "npx prisma migrate dev --skip-seed",
         "schema:reset": "npx prisma migrate reset --skip-seed",
-        "schema:seed": "npx prisma db seed --preview-feature",
+        "schema:seed": "npx prisma db seed",
         "schema:generate": "npx prisma generate",
         "schema:format": "npx prisma format",
         "test": "echo \"Error: no test specified\" && exit 1",
@@ -20,6 +20,9 @@
     "pre-commit": [
         "lint"
     ],
+    "prisma": {
+        "seed": "ts-node prisma/seed.ts"
+    },
     "dependencies": {
         "@graphql-tools/merge": "^6.2.14",
         "@graphql-tools/schema": "^7.1.5",
@@ -27,7 +30,7 @@
         "@middy/core": "^2.0.0-alpha.3",
         "@middy/do-not-wait-for-empty-event-loop": "^2.0.0-alpha.3",
         "@middy/http-json-body-parser": "^2.0.0-alpha.3",
-        "@prisma/client": "^2.27.0",
+        "@prisma/client": "^3.0.2",
         "algoliasearch": "^4.10.3",
         "apollo-datasource": "^3.0.0",
         "apollo-datasource-rest": "^3.0.0",
@@ -70,7 +73,7 @@
         "lambda-tester": "^4.0.1",
         "mocha": "^7.1.2",
         "nyc": "^15.0.1",
-        "prisma": "^2.27.0",
+        "prisma": "^3.0.2",
         "serverless": "^2.29.0",
         "serverless-domain-manager": "^5.1.0",
         "serverless-offline": "^6.8.0",

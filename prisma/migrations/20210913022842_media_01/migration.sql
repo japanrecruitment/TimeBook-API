@@ -14,7 +14,10 @@ CREATE TYPE "Gender" AS ENUM ('Male', 'Female', 'Other');
 CREATE TYPE "ReservationStatus" AS ENUM ('Reserved', 'Hold', 'Pending');
 
 -- CreateEnum
-CREATE TYPE "DocumentType" AS ENUM ('Profile', 'Space', 'OtherDocuments');
+CREATE TYPE "MediaType" AS ENUM ('Profile', 'Space', 'PhotoId');
+
+-- CreateEnum
+CREATE TYPE "PhotoType" AS ENUM ('Profile', 'Cover', 'General');
 
 -- CreateEnum
 CREATE TYPE "PaymentSourceType" AS ENUM ('Card');
@@ -34,7 +37,7 @@ CREATE TABLE "Account" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "profileType" "ProfileType" NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Account_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -53,7 +56,7 @@ CREATE TABLE "PaymentSource" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "accountId" TEXT NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "PaymentSource_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -68,7 +71,7 @@ CREATE TABLE "User" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "accountId" TEXT NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -81,7 +84,7 @@ CREATE TABLE "Company" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "accountId" TEXT NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Company_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -96,7 +99,7 @@ CREATE TABLE "Host" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "accountId" TEXT NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Host_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -108,7 +111,7 @@ CREATE TABLE "Session" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "accountId" TEXT NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -123,26 +126,26 @@ CREATE TABLE "IpData" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "sessionId" TEXT NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "IpData_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Address" (
     "id" TEXT NOT NULL,
     "addressLine1" VARCHAR(255) NOT NULL,
-    "addressLine2" VARCHAR(255) NOT NULL,
+    "addressLine2" VARCHAR(255),
     "city" VARCHAR(255) NOT NULL,
     "longitude" DOUBLE PRECISION,
     "latitude" DOUBLE PRECISION,
     "postalCode" VARCHAR(8) NOT NULL,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "userId" TEXT,
     "prefectureId" INTEGER NOT NULL,
+    "userId" TEXT,
     "companyId" TEXT,
     "spaceId" TEXT,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Address_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -157,7 +160,7 @@ CREATE TABLE "Space" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "accountId" TEXT NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Space_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -173,7 +176,7 @@ CREATE TABLE "SpacePricePlan" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "spaceId" TEXT NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "SpacePricePlan_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -188,7 +191,7 @@ CREATE TABLE "Reservation" (
     "reserveeId" TEXT NOT NULL,
     "approvedOn" TIMESTAMP(6) NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Reservation_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -204,7 +207,7 @@ CREATE TABLE "TrainLine" (
     "status" SMALLINT,
     "order" INTEGER NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "TrainLine_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -220,7 +223,7 @@ CREATE TABLE "Station" (
     "prefectureCode" INTEGER NOT NULL,
     "lineCode" INTEGER NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Station_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -230,7 +233,7 @@ CREATE TABLE "NearestStation" (
     "time" INTEGER NOT NULL,
     "via" TEXT NOT NULL,
 
-    PRIMARY KEY ("spaceId","stationId")
+    CONSTRAINT "NearestStation_pkey" PRIMARY KEY ("spaceId","stationId")
 );
 
 -- CreateTable
@@ -241,7 +244,7 @@ CREATE TABLE "Prefecture" (
     "nameRomaji" VARCHAR(255) NOT NULL,
     "available" BOOLEAN NOT NULL DEFAULT false,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Prefecture_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -250,7 +253,7 @@ CREATE TABLE "SpaceType" (
     "title" VARCHAR(100) NOT NULL,
     "description" VARCHAR(100) NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "SpaceType_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -258,7 +261,7 @@ CREATE TABLE "Space_To_SpaceType" (
     "spaceId" TEXT NOT NULL,
     "spaceTypeId" TEXT NOT NULL,
 
-    PRIMARY KEY ("spaceId","spaceTypeId")
+    CONSTRAINT "Space_To_SpaceType_pkey" PRIMARY KEY ("spaceId","spaceTypeId")
 );
 
 -- CreateTable
@@ -270,7 +273,7 @@ CREATE TABLE "Credit" (
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Credit_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -283,37 +286,38 @@ CREATE TABLE "SubscriptionPlan" (
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "SubscriptionPlan_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "PhotoGallery" (
+CREATE TABLE "Photo" (
     "id" TEXT NOT NULL,
-    "original" VARCHAR(255) NOT NULL,
-    "medium" VARCHAR(255) NOT NULL,
-    "small" VARCHAR(255) NOT NULL,
-    "large" VARCHAR(255) NOT NULL,
+    "mime" VARCHAR(15) NOT NULL,
+    "thumbnail" VARCHAR(255),
+    "medium" VARCHAR(255),
+    "small" VARCHAR(255),
+    "large" VARCHAR(255),
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Photo_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Media" (
     "id" TEXT NOT NULL,
     "accountId" TEXT NOT NULL,
-    "documentType" "DocumentType" NOT NULL,
-    "photoGalleryId" TEXT NOT NULL,
+    "photoId" TEXT NOT NULL,
     "spaceId" TEXT,
     "spaceTypeId" TEXT,
     "userId" TEXT,
+    "companyId" TEXT,
 
-    PRIMARY KEY ("id")
+    CONSTRAINT "Media_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Account.email_unique" ON "Account"("email");
+CREATE UNIQUE INDEX "Account_email_key" ON "Account"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_accountId_unique" ON "User"("accountId");
@@ -322,10 +326,10 @@ CREATE UNIQUE INDEX "User_accountId_unique" ON "User"("accountId");
 CREATE UNIQUE INDEX "Company_accountId_unique" ON "Company"("accountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Host.accountId_unique" ON "Host"("accountId");
+CREATE UNIQUE INDEX "Host_accountId_key" ON "Host"("accountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "IpData.ipAddress_unique" ON "IpData"("ipAddress");
+CREATE UNIQUE INDEX "IpData_ipAddress_key" ON "IpData"("ipAddress");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Address_userId_unique" ON "Address"("userId");
@@ -340,91 +344,100 @@ CREATE UNIQUE INDEX "Address_spaceId_unique" ON "Address"("spaceId");
 CREATE UNIQUE INDEX "SpacePricePlan_spaceId_unique" ON "SpacePricePlan"("spaceId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Credit_accountId_date_key" ON "Credit"("accountId");
+CREATE UNIQUE INDEX "Credit_accountId_key" ON "Credit"("accountId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Media_accountId_unique" ON "Media"("accountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Media_photoGalleryId_unique" ON "Media"("photoGalleryId");
+CREATE UNIQUE INDEX "Media_photoId_unique" ON "Media"("photoId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Media_spaceTypeId_unique" ON "Media"("spaceTypeId");
 
--- AddForeignKey
-ALTER TABLE "PaymentSource" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- CreateIndex
+CREATE UNIQUE INDEX "Media_userId_unique" ON "Media"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Media_companyId_unique" ON "Media"("companyId");
 
 -- AddForeignKey
-ALTER TABLE "User" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PaymentSource" ADD CONSTRAINT "PaymentSource_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Company" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "User" ADD CONSTRAINT "User_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Host" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Company" ADD CONSTRAINT "Company_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Session" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Host" ADD CONSTRAINT "Host_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "IpData" ADD FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Session" ADD CONSTRAINT "Session_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Address" ADD FOREIGN KEY ("prefectureId") REFERENCES "Prefecture"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "IpData" ADD CONSTRAINT "IpData_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Address" ADD FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Address" ADD CONSTRAINT "Address_prefectureId_fkey" FOREIGN KEY ("prefectureId") REFERENCES "Prefecture"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Address" ADD FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Address" ADD CONSTRAINT "Address_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Address" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Address" ADD CONSTRAINT "Address_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Space" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Address" ADD CONSTRAINT "Address_spaceId_fkey" FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SpacePricePlan" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Space" ADD CONSTRAINT "Space_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Reservation" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SpacePricePlan" ADD CONSTRAINT "SpacePricePlan_spaceId_fkey" FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Reservation" ADD FOREIGN KEY ("reserveeId") REFERENCES "Account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Reservation" ADD CONSTRAINT "Reservation_spaceId_fkey" FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Station" ADD FOREIGN KEY ("prefectureCode") REFERENCES "Prefecture"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Reservation" ADD CONSTRAINT "Reservation_reserveeId_fkey" FOREIGN KEY ("reserveeId") REFERENCES "Account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Station" ADD FOREIGN KEY ("lineCode") REFERENCES "TrainLine"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Station" ADD CONSTRAINT "Station_prefectureCode_fkey" FOREIGN KEY ("prefectureCode") REFERENCES "Prefecture"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "NearestStation" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Station" ADD CONSTRAINT "Station_lineCode_fkey" FOREIGN KEY ("lineCode") REFERENCES "TrainLine"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "NearestStation" ADD FOREIGN KEY ("stationId") REFERENCES "Station"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "NearestStation" ADD CONSTRAINT "NearestStation_spaceId_fkey" FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Space_To_SpaceType" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "NearestStation" ADD CONSTRAINT "NearestStation_stationId_fkey" FOREIGN KEY ("stationId") REFERENCES "Station"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Space_To_SpaceType" ADD FOREIGN KEY ("spaceTypeId") REFERENCES "SpaceType"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Space_To_SpaceType" ADD CONSTRAINT "Space_To_SpaceType_spaceId_fkey" FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Credit" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Space_To_SpaceType" ADD CONSTRAINT "Space_To_SpaceType_spaceTypeId_fkey" FOREIGN KEY ("spaceTypeId") REFERENCES "SpaceType"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Media" ADD FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Credit" ADD CONSTRAINT "Credit_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Media" ADD FOREIGN KEY ("photoGalleryId") REFERENCES "PhotoGallery"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Media" ADD FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_photoId_fkey" FOREIGN KEY ("photoId") REFERENCES "Photo"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Media" ADD FOREIGN KEY ("spaceTypeId") REFERENCES "SpaceType"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_spaceId_fkey" FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Media" ADD FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_spaceTypeId_fkey" FOREIGN KEY ("spaceTypeId") REFERENCES "SpaceType"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Media" ADD CONSTRAINT "Media_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Media" ADD CONSTRAINT "Media_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;

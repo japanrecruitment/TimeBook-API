@@ -1,13 +1,15 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { Address } from "@prisma/client";
-import { Log } from "@utils/logger";
+import { Log, omit, pick } from "@utils/index";
+import { S3Lib } from "@libs/index";
+
 import { merge } from "lodash";
-import { omit, pick } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Profile } from "./profile";
+import { ImageTypes } from "../media";
 
 type UpdateUserProfileInput = {
     id: string;
@@ -40,65 +42,122 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, { authData, store 
     const companyProfileSelect =
         profileType === "CompanyProfile" ? toPrismaSelect(omit(CompanyProfile, "email", "phoneNumber")) : false;
 
-    if (id !== input.id)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this profile" });
-
     let updatedProfile;
     if (profileType === "UserProfile") {
         const userProfile = pick(input, "firstName", "firstNameKana", "lastName", "lastNameKana", "dob");
+
+        const updatedData = { ...userProfile };
+        if (input.address) {
+            updatedData["address"] = {
+                upsert: {
+                    create: {
+                        ...omit(input.address, "companyId", "prefectureId"),
+                        prefecture: { connect: { id: input.address.prefectureId } },
+                    },
+                    update: input.address,
+                },
+            };
+        }
+
         updatedProfile = await store.user.update({
             where: { id },
-            data: {
-                ...userProfile,
-                address: input.address
-                    ? {
-                          upsert: {
-                              create: {
-                                  ...omit(input.address, "companyId", "prefectureId"),
-                                  prefecture: { connect: { id: input.address.prefectureId } },
-                              },
-                              update: input.address,
-                          },
-                      }
-                    : undefined,
-            },
+            data: updatedData,
             ...userProfileSelect,
         });
     } else if (profileType === "CompanyProfile") {
         const companyProfile = pick(input, "name", "nameKana", "registrationNumber");
+
+        const updatedData = { ...companyProfile };
+        if (input.address) {
+            updatedData["address"] = {
+                upsert: {
+                    create: {
+                        ...omit(input.address, "companyId", "prefectureId"),
+                        prefecture: { connect: { id: input.address.prefectureId } },
+                    },
+                    update: input.address,
+                },
+            };
+        }
+
         updatedProfile = await store.company.update({
             where: { id },
-            data: {
-                ...companyProfile,
-                address: input.address
-                    ? {
-                          upsert: {
-                              create: {
-                                  ...omit(input.address, "userId", "prefectureId"),
-                                  prefecture: { connect: { id: input.address.prefectureId } },
-                              },
-                              update: input.address,
-                          },
-                      }
-                    : undefined,
-            },
+            data: updatedData,
             ...companyProfileSelect,
         });
     }
-
-    Log(updatedProfile);
 
     if (!updatedProfile) throw new GqlError({ code: "NOT_FOUND", message: "Profile not found" });
 
     return merge(updatedProfile, { email, phoneNumber });
 };
 
-// type AddProfile = IFieldResolver<any, Context, Record<"input", PhotoUploadInput>, Promise<PhotoUploadResult>>;
-// const addProfilePhoto: AddProfile = async (_, { input }, { authData, store }, info) => {};
+type ImageUploadInput = {
+    mime: string;
+};
+
+type ImageUploadResult = {
+    type: ImageTypes;
+    url: string;
+    mime: string;
+    key: string;
+};
+
+type AddProfile = IFieldResolver<any, Context, Record<"input", ImageUploadInput>, Promise<ImageUploadResult>>;
+const addProfilePhoto: AddProfile = async (_, { input }, { authData, store }, info) => {
+    // check input
+    const type = "Profile";
+    const mime = input.mime || "image/jpeg";
+
+    const { id, profileType } = authData;
+
+    // add record in DB
+    let updatedProfile;
+    if (profileType === "UserProfile") {
+        updatedProfile = await store.user.update({
+            where: { id },
+            data: {
+                profilePhoto: {
+                    create: {
+                        mime,
+                        type,
+                    },
+                },
+            },
+            select: {
+                profilePhoto: true,
+            },
+        });
+    } else {
+        updatedProfile = await store.user.update({
+            where: { id },
+            data: {
+                profilePhoto: {
+                    create: {
+                        mime,
+                        type,
+                    },
+                },
+            },
+            select: {
+                profilePhoto: true,
+            },
+        });
+    }
+
+    const { profilePhoto } = updatedProfile;
+
+    const key = `${profilePhoto.id}.${profilePhoto.mime.split("/")[1]}`;
+
+    // get signedURL
+    const S3 = new S3Lib("upload");
+    const signedURL = S3.getUploadUrl(key, mime, 60 * 10);
+
+    return { type, mime, url: signedURL, key };
+};
 
 export const updateMyProfileTypeDefs = gql`
     input UpdateMyProfileInput {
-        id: ID!
         firstName: String
         lastName: String
         dob: Date
@@ -112,10 +171,10 @@ export const updateMyProfileTypeDefs = gql`
 
     type Mutation {
         updateMyProfile(input: UpdateMyProfileInput!): Profile @auth(requires: [user, host])
-        addProfilePhoto(input: PhotoUploadInput!): PhotoUpload
+        addProfilePhoto(input: ImageUploadInput!): ImageUploadResult
     }
 `;
 
 export const updateMyProfileResolvers = {
-    Mutation: { updateMyProfile },
+    Mutation: { updateMyProfile, addProfilePhoto },
 };

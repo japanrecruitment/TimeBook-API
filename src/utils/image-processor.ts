@@ -1,8 +1,7 @@
 import sharp, { Sharp } from "sharp";
 import { Log } from ".";
+import { ImageTypes } from "../functions/graphql/schema/media";
 
-// Class accepts binary image data and returns resized
-export type ImageTypes = "profile" | "cover" | "general";
 export interface ImageResizeParams {
     type: ImageTypes;
     quality?: number;
@@ -65,14 +64,14 @@ export class ImageProcessor {
 
     private imageSize({ type, quality }: ImageResizeParams): ResizedImage[] {
         switch (type) {
-            case "profile":
+            case "Profile":
                 return [
                     { size: "large", width: 1000, height: 1000, quality },
                     { size: "medium", width: 500, height: 500, quality },
                     { size: "small", width: 250, height: 250, quality },
                     { size: "thumbnail", width: 100, height: 100, quality: 50 },
                 ];
-            case "cover":
+            case "Cover":
                 return [
                     { size: "large", width: 1770, height: 1000, quality },
                     { size: "medium", width: 885, height: 500, quality },
@@ -109,7 +108,7 @@ export class ImageProcessor {
         }
     }
 
-    private async doResize({ size, width, height, quality }: ResizedImage): Promise<Buffer> {
+    private async doResize({ width, height, quality }: ResizedImage): Promise<Buffer> {
         if (!this._isInitialized) throw new Error("Error with image data or instance not initialized.");
         try {
             // make a copy of image
