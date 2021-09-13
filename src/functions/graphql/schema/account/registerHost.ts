@@ -187,7 +187,7 @@ export const registerHostTypeDefs = gql`
 
     type Mutation {
         registerHost(input: RegisterHostInput!): Result
-        addPhotoId(input: ImageUploadInput!): ImageUploadResult @auth(requires: ['host'])
+        addPhotoId(input: ImageUploadInput!): ImageUploadResult @auth(requires: [host])
     }
 `;
 
