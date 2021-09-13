@@ -6,11 +6,9 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
-import { encodePassword } from "@utils/authUtils";
-import { Log } from "@utils/logger";
-import { randomNumberOfNDigits } from "@utils/compute";
-import { addEmailToQueue, EmailVerificationData } from "@utils/email-helper";
-import { StripeLib } from "@libs/index";
+import { Log, encodePassword, randomNumberOfNDigits, addEmailToQueue, EmailVerificationData } from "@utils/index";
+import { S3Lib, StripeLib } from "@libs/index";
+import { ImageUploadInput, ImageUploadResult } from "../media";
 
 type RegisterHostStrategy<T = any> = (input: T, context: Context) => Promise<Result>;
 
@@ -53,7 +51,7 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
             profileType: ProfileType.CompanyProfile,
             roles: [Role.host],
             companyProfile: { create: { name, nameKana, registrationNumber } },
-            approved: true,
+            approved: false,
             host: { create: { type: "Corporate", name, stripeAccountId: connectId, approved: true } },
         },
     });
@@ -138,6 +136,43 @@ const registerHostStrategies: RegisterHostStrategies = {
     Individual: registerIndividualHost,
 };
 
+type AddPhotoId = IFieldResolver<any, Context, Record<"input", ImageUploadInput>, Promise<ImageUploadResult>>;
+const addPhotoId: AddPhotoId = async (_, { input }, { authData, store }, info) => {
+    // check input
+    const type = "General";
+    const mime = input.mime || "image/jpeg";
+
+    const { id } = authData;
+
+    // add record in DB
+    let updatedProfile;
+
+    updatedProfile = await store.host.update({
+        where: { id },
+        data: {
+            photoId: {
+                create: {
+                    mime,
+                    type,
+                },
+            },
+        },
+        select: {
+            photoId: true,
+        },
+    });
+
+    const { photoId } = updatedProfile;
+
+    const key = `${photoId.id}.${photoId.mime.split("/")[1]}`;
+
+    // get signedURL
+    const S3 = new S3Lib("upload");
+    const signedURL = S3.getUploadUrl(key, mime, 60 * 10);
+
+    return { type, mime, url: signedURL, key };
+};
+
 export const registerHostTypeDefs = gql`
     enum HostType {
         Individual
@@ -152,9 +187,10 @@ export const registerHostTypeDefs = gql`
 
     type Mutation {
         registerHost(input: RegisterHostInput!): Result
+        addPhotoId(input: ImageUploadInput!): ImageUploadResult @auth(requires: ['host'])
     }
 `;
 
 export const registerHostResolvers = {
-    Mutation: { registerHost },
+    Mutation: { registerHost, addPhotoId },
 };

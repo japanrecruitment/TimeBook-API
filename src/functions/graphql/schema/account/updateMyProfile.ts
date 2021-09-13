@@ -9,7 +9,7 @@ import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Profile } from "./profile";
-import { ImageTypes } from "../media";
+import { ImageUploadInput, ImageUploadResult } from "../media";
 
 type UpdateUserProfileInput = {
     id: string;
@@ -90,17 +90,6 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, { authData, store 
     if (!updatedProfile) throw new GqlError({ code: "NOT_FOUND", message: "Profile not found" });
 
     return merge(updatedProfile, { email, phoneNumber });
-};
-
-type ImageUploadInput = {
-    mime: string;
-};
-
-type ImageUploadResult = {
-    type: ImageTypes;
-    url: string;
-    mime: string;
-    key: string;
 };
 
 type AddProfile = IFieldResolver<any, Context, Record<"input", ImageUploadInput>, Promise<ImageUploadResult>>;
