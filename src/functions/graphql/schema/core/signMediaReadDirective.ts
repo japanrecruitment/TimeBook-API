@@ -2,6 +2,9 @@ import { SchemaDirectiveVisitor } from "@graphql-tools/utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { defaultFieldResolver } from "graphql";
+import { S3Lib } from "@libs/index";
+
+const S3 = new S3Lib("media");
 
 class SignMediaReadDirective extends SchemaDirectiveVisitor {
     visitFieldDefinition(field) {
@@ -9,9 +12,8 @@ class SignMediaReadDirective extends SchemaDirectiveVisitor {
         field.resolve = async (...args) => {
             const result = await resolve.apply(this, args);
 
-            Log(result);
             if (typeof result === "string") {
-                return result.charAt(0).toUpperCase() + result.slice(1);
+                return await S3.getDownloadUrl(result, this.args.ttl);
             }
             return result;
         };
