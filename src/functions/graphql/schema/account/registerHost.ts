@@ -52,11 +52,9 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
             roles: [Role.host],
             companyProfile: { create: { name, nameKana, registrationNumber } },
             approved: false,
-            host: { create: { type: "Corporate", name, stripeAccountId: connectId, approved: true } },
+            host: { create: { type: "Corporate", name, stripeAccountId: connectId, approved: false } },
         },
     });
-
-    Log(newAccount);
 
     const verificationCode = randomNumberOfNDigits(6);
     await Promise.all([
@@ -142,13 +140,13 @@ const addPhotoId: AddPhotoId = async (_, { input }, { authData, store }, info) =
     const type = "General";
     const mime = input.mime || "image/jpeg";
 
-    const { id } = authData;
+    const { accountId } = authData;
 
     // add record in DB
     let updatedProfile;
 
     updatedProfile = await store.host.update({
-        where: { id },
+        where: { accountId },
         data: {
             photoId: {
                 create: {

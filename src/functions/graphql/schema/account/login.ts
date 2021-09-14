@@ -1,15 +1,12 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { matchPassword } from "@utils/authUtils";
-import { getIpData } from "@utils/ip-helper";
-import { Log } from "@utils/logger";
-import { omit, pick } from "@utils/object-helper";
-import { encodeToken } from "@utils/token-helper";
+import { getIpData, Log, matchPassword, omit, pick, encodeToken } from "@utils/index";
 import { gql } from "apollo-server-core";
 import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Profile } from "./profile";
+import { photoSelect } from "../media";
 
 type LoginInput = {
     email: string;
@@ -29,8 +26,14 @@ type Login = IFieldResolver<any, Context, LoginArgs, Promise<LoginResult>>;
 const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) => {
     const gqlSelect = mapSelections(info);
     const { UserProfile, CompanyProfile } = gqlSelect.profile || {};
-    const userProfileSelect = toPrismaSelect(omit(UserProfile, "email", "phoneNumber")) || true;
-    const companyProfileSelect = toPrismaSelect(omit(CompanyProfile, "email", "phoneNumber")) || true;
+    const userProfileSelect =
+        toPrismaSelect({ ...omit(UserProfile, "email", "phoneNumber", "profilePhoto"), profilePhoto: photoSelect }) ||
+        true;
+    const companyProfileSelect =
+        toPrismaSelect({
+            ...omit(CompanyProfile, "email", "phoneNumber", "profilePhoto"),
+            profilePhoto: photoSelect,
+        }) || true;
 
     let { email, password } = input;
 
@@ -76,7 +79,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) 
     const accessToken = encodeToken({ accountId: account.id, ...profile }, "access", { jwtid: account.id });
     const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
 
-    return { profile, accessToken, refreshToken };
+    return { profile, accessToken, refreshToken, roles: account.roles };
 };
 
 export const loginTypeDefs = gql`
@@ -87,6 +90,7 @@ export const loginTypeDefs = gql`
 
     type LoginResult {
         profile: Profile!
+        roles: [String]!
         accessToken: String!
         refreshToken: String!
     }
