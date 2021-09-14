@@ -16,7 +16,7 @@ export const spacePricePlanTypeDefs = gql`
         id: ID!
         title: String
         type: SpacePricePlanType
-        price: Float
+        amount: Float
         maintenanceFee: Float
         lastMinuteDiscount: Float
         cooldownTime: Int
@@ -25,7 +25,7 @@ export const spacePricePlanTypeDefs = gql`
     input AddSpacePricePlanInput {
         title: String!
         type: SpacePricePlanType!
-        price: Float!
+        amount: Float!
         maintenanceFee: Float
         lastMinuteDiscount: Float
         cooldownTime: Int

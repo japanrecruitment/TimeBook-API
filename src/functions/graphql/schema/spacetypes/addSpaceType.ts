@@ -1,5 +1,4 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { DocumentType } from "@prisma/client";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
@@ -43,7 +42,7 @@ export const addSpaceTypeTypeDefs = gql`
     }
 
     type Mutation {
-        addSpaceType(input: AddSpaceTypeInput!): Space! @auth(requires: [user, host])
+        addSpaceType(input: AddSpaceTypeInput!): Result! @auth(requires: [user, host])
     }
 `;
 

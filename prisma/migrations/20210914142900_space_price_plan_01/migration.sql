@@ -11,13 +11,13 @@
 -- CreateEnum
 CREATE TYPE "SpacePricePlanType" AS ENUM ('DAILY', 'HOURLY');
 
--- AlterTable
-ALTER TABLE "Address" ALTER COLUMN "addressLine2" DROP NOT NULL;
+-- DropIndex
+DROP INDEX "SpacePricePlan_spaceId_unique";
 
 -- AlterTable
 ALTER TABLE "SpacePricePlan" DROP COLUMN "dailyPrice",
 DROP COLUMN "hourlyPrice",
 DROP COLUMN "planTitle",
-ADD COLUMN     "price" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "amount" DOUBLE PRECISION NOT NULL DEFAULT 0,
 ADD COLUMN     "title" VARCHAR(255) NOT NULL,
 ADD COLUMN     "type" "SpacePricePlanType" NOT NULL;
