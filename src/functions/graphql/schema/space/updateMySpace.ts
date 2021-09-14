@@ -104,7 +104,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
         objectID: id,
         nearestStations: newSpace?.nearestStations?.map(({ stationId }) => stationId),
         prefecture: newSpace?.address?.prefecture?.name,
-        price: spacePricePlans.map(({ type, amount }) => ({ type, amount })),
+        price: spacePricePlans?.map(({ type, amount }) => ({ type, amount })),
         rating: 0,
         spaceTypes: newSpace?.spaceTypes?.map(({ spaceType }) => spaceType.title),
         thumbnail: "",
