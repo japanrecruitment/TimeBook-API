@@ -36,3 +36,7 @@ jobs:
                   STRIPE_CONNECT_ACCOUNT_RETURN_URL: ${{ secrets.STRIPE_CONNECT_ACCOUNT_RETURN_URL }}
                   STRIPE_CONNECT_ACCOUNT_REFRESH_URL: ${{ secrets.STRIPE_CONNECT_ACCOUNT_REFRESH_URL }}
                   IP_STACK_KEY: ${{ secrets.IP_STACK_KEY }}
+                  ALGOLIA_APP_ID: "${{ secrets.ALGOLIA_APP_ID }}"
+                  ALGOLIA_ADMIN_API_KEY: "${{ secrets.ALGOLIA_ADMIN_API_KEY }}"
+                  ALGOLIA_SEARCH_API_KEY: "${{ secrets.ALGOLIA_SEARCH_API_KEY }}"
+                  FRONTEND_BASE_URL: "${{ secrets.FRONTEND_BASE_URL }}"
