@@ -1,11 +1,15 @@
+import { SpaceIndexRecord } from "@utils/algolia";
+import AlgoliaDataSource from "./AlgoliaDataSource";
 import RedisDataSource from "./RedisDataSource";
 
 export type DataSources = {
-    redisDS: RedisDataSource;
+    redis: RedisDataSource;
+    spaceAlgolia: AlgoliaDataSource<SpaceIndexRecord>;
 };
 
 export default (): DataSources => {
     return {
-        redisDS: new RedisDataSource(),
+        redis: new RedisDataSource(),
+        spaceAlgolia: new AlgoliaDataSource("space"),
     };
 };

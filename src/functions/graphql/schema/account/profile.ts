@@ -34,6 +34,7 @@ export const profileTypeDefs = gql`
         firstNameKana: String!
         lastNameKana: String!
         phoneNumber: String
+        roles: [Role]
         address: Address
         profilePhoto: Photo
     }
@@ -45,6 +46,7 @@ export const profileTypeDefs = gql`
         nameKana: String!
         phoneNumber: String
         registrationNumber: String!
+        roles: [Role]
         address: Address
         profilePhoto: Photo
     }

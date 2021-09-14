@@ -58,7 +58,7 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
 
     const verificationCode = randomNumberOfNDigits(6);
     await Promise.all([
-        dataSources.redisDS.store(`email-verification-code-${email}`, verificationCode, 600),
+        dataSources.redis.store(`email-verification-code-${email}`, verificationCode, 600),
         addEmailToQueue<EmailVerificationData>({
             template: "email-verification",
             recipientEmail: email,
@@ -114,7 +114,7 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
 
     const verificationCode = randomNumberOfNDigits(6);
     await Promise.all([
-        dataSources.redisDS.store(`email-verification-code-${email}`, verificationCode, 600),
+        dataSources.redis.store(`email-verification-code-${email}`, verificationCode, 600),
         addEmailToQueue<EmailVerificationData>({
             template: "email-verification",
             recipientEmail: email,

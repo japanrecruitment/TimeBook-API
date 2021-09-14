@@ -1,15 +1,20 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { Address } from "@prisma/client";
-import { Log, omit, pick } from "@utils/index";
+import { Address, ProfileType } from "@prisma/client";
+import { Log } from "@utils/logger";
+import { omit, pick } from "@utils/object-helper";
 import { S3Lib } from "@libs/index";
-
 import { merge } from "lodash";
 import { gql } from "apollo-server-core";
+import { GraphQLResolveInfo } from "graphql";
 import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Profile } from "./profile";
-import { ImageUploadInput, ImageUploadResult } from "../media";
+import { ImageUploadInput, ImageUploadResult, mapPhotoSelection } from "../media";
+
+type UpdateProfileStrategy<T> = (input: T, context: Context, info: GraphQLResolveInfo) => Promise<Partial<Profile>>;
+
+type UpdateProfileStrategies = { [T in ProfileType]: UpdateProfileStrategy<any> };
 
 type UpdateUserProfileInput = {
     id: string;
@@ -31,65 +36,79 @@ type UpdateCompanyProfileInput = {
 
 type UpdateMyProfileInput = UpdateUserProfileInput & UpdateCompanyProfileInput;
 
-type UpdateMyProfile = IFieldResolver<any, Context, Record<"input", UpdateMyProfileInput>, Promise<Profile>>;
+type UpdateMyProfile = IFieldResolver<any, Context, Record<"input", UpdateMyProfileInput>, Promise<Partial<Profile>>>;
 
-const updateMyProfile: UpdateMyProfile = async (_, { input }, { authData, store }, info) => {
-    const { UserProfile, CompanyProfile } = mapSelections(info);
-    const { id, email, phoneNumber, profileType } = authData;
+const updateMyProfile: UpdateMyProfile = async (_, { input }, context, info) => {
+    const { id, email, phoneNumber, profileType } = context.authData;
 
-    const userProfileSelect =
-        profileType === "UserProfile" ? toPrismaSelect(omit(UserProfile, "email", "phoneNumber")) : false;
-    const companyProfileSelect =
-        profileType === "CompanyProfile" ? toPrismaSelect(omit(CompanyProfile, "email", "phoneNumber")) : false;
+    Log(id, context.authData);
+    if (id !== input.id)
+        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this profile" });
 
-    let updatedProfile;
-    if (profileType === "UserProfile") {
-        const userProfile = pick(input, "firstName", "firstNameKana", "lastName", "lastNameKana", "dob");
-
-        const updatedData = { ...userProfile };
-        if (input.address) {
-            updatedData["address"] = {
-                upsert: {
-                    create: {
-                        ...omit(input.address, "companyId", "prefectureId"),
-                        prefecture: { connect: { id: input.address.prefectureId } },
-                    },
-                    update: input.address,
-                },
-            };
-        }
-
-        updatedProfile = await store.user.update({
-            where: { id },
-            data: updatedData,
-            ...userProfileSelect,
-        });
-    } else if (profileType === "CompanyProfile") {
-        const companyProfile = pick(input, "name", "nameKana", "registrationNumber");
-
-        const updatedData = { ...companyProfile };
-        if (input.address) {
-            updatedData["address"] = {
-                upsert: {
-                    create: {
-                        ...omit(input.address, "companyId", "prefectureId"),
-                        prefecture: { connect: { id: input.address.prefectureId } },
-                    },
-                    update: input.address,
-                },
-            };
-        }
-
-        updatedProfile = await store.company.update({
-            where: { id },
-            data: updatedData,
-            ...companyProfileSelect,
-        });
-    }
+    const updatedProfile = await updateProfileStrategies[profileType](input, context, info);
 
     if (!updatedProfile) throw new GqlError({ code: "NOT_FOUND", message: "Profile not found" });
 
-    return merge(updatedProfile, { email, phoneNumber });
+    return { ...updatedProfile, email, phoneNumber };
+};
+
+const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (input, { store }, info) => {
+    const { profilePhoto, ...selections } = omit(mapSelections(info).UserProfile, "email", "phoneNumber", "roles");
+    const select = toPrismaSelect(merge(selections, { profilePhoto: mapPhotoSelection(profilePhoto) }));
+    const { id, address, dob, firstName, firstNameKana, lastName, lastNameKana } = input;
+    return await store.user.update({
+        where: { id },
+        data: {
+            dob,
+            firstName,
+            firstNameKana,
+            lastName,
+            lastNameKana,
+            address: address
+                ? {
+                      upsert: {
+                          create: {
+                              ...omit(address, "companyId", "prefectureId", "spaceId"),
+                              prefecture: { connect: { id: address.prefectureId } },
+                          },
+                          update: address,
+                      },
+                  }
+                : undefined,
+        },
+        ...select,
+    });
+};
+
+const updateCompanyProfile: UpdateProfileStrategy<UpdateCompanyProfileInput> = async (input, { store }, info) => {
+    const { profilePhoto, ...selections } = omit(mapSelections(info).CompanyProfile, "email", "phoneNumber", "roles");
+    const select = toPrismaSelect(merge(selections, { profilePhoto: mapPhotoSelection(profilePhoto) }));
+    const { id, address, name, nameKana, registrationNumber } = input;
+    return await store.company.update({
+        where: { id },
+        data: {
+            name,
+            nameKana,
+            registrationNumber,
+            address: address
+                ? {
+                      upsert: {
+                          create: {
+                              ...omit(address, "userId", "prefectureId", "spaceId"),
+                              prefecture: { connect: { id: address.prefectureId } },
+                          },
+                          update: address,
+                      },
+                  }
+                : undefined,
+        },
+        ...select,
+    });
+};
+
+const updateProfileStrategies: UpdateProfileStrategies = {
+    CompanyProfile: updateCompanyProfile,
+    UserProfile: updateUserProfile,
 };
 
 type AddProfile = IFieldResolver<any, Context, Record<"input", ImageUploadInput>, Promise<ImageUploadResult>>;
@@ -105,32 +124,14 @@ const addProfilePhoto: AddProfile = async (_, { input }, { authData, store }, in
     if (profileType === "UserProfile") {
         updatedProfile = await store.user.update({
             where: { id },
-            data: {
-                profilePhoto: {
-                    create: {
-                        mime,
-                        type,
-                    },
-                },
-            },
-            select: {
-                profilePhoto: true,
-            },
+            data: { profilePhoto: { create: { mime, type } } },
+            select: { profilePhoto: true },
         });
     } else {
         updatedProfile = await store.user.update({
             where: { id },
-            data: {
-                profilePhoto: {
-                    create: {
-                        mime,
-                        type,
-                    },
-                },
-            },
-            select: {
-                profilePhoto: true,
-            },
+            data: { profilePhoto: { create: { mime, type } } },
+            select: { profilePhoto: true },
         });
     }
 
@@ -147,6 +148,7 @@ const addProfilePhoto: AddProfile = async (_, { input }, { authData, store }, in
 
 export const updateMyProfileTypeDefs = gql`
     input UpdateMyProfileInput {
+        id: ID!
         firstName: String
         lastName: String
         dob: Date

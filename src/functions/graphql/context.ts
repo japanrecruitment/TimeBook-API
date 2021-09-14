@@ -1,4 +1,5 @@
-import { Account, Company, PrismaClient, ProfileType, User } from "@prisma/client";
+import { Account, Company, PrismaClient, User } from "@prisma/client";
+import { algolia, Algolia } from "@utils/algolia";
 import { store } from "@utils/store";
 import { decodeToken } from "@utils/token-helper";
 import { DataSources } from "./dataSources";
@@ -6,6 +7,7 @@ import { GqlError } from "./error";
 
 export type Context = {
     store: PrismaClient;
+    algolia: Algolia;
     sourceIp: string;
     userAgent: string;
     dataSources?: DataSources;
@@ -33,6 +35,7 @@ export default ({ event }): Context => {
 
     return {
         store,
+        algolia,
         sourceIp,
         userAgent,
         authData,

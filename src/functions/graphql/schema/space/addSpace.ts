@@ -12,7 +12,7 @@ type AddSpaceInput = {
     maximumCapacity: number;
     numberOfSeats: number;
     spaceSize: number;
-    spacePricePlan: AddSpacePricePlanInput;
+    spacePricePlans: AddSpacePricePlanInput[];
     nearestStations: NearestStationsInput[];
     spaceTypes: string[];
     address: AddressInput;
@@ -20,39 +20,31 @@ type AddSpaceInput = {
 
 type AddSpace = IFieldResolver<any, Context, Record<"input", AddSpaceInput>, Promise<Result>>;
 
-const addSpace: AddSpace = async (_, { input }, { authData, store }) => {
+const addSpace: AddSpace = async (_, { input }, { authData, store, dataSources }) => {
     const { accountId } = authData;
-    const { name, maximumCapacity, numberOfSeats, spaceSize, spacePricePlan, nearestStations, spaceTypes, address } =
+    const { name, maximumCapacity, numberOfSeats, spaceSize, spacePricePlans, nearestStations, spaceTypes, address } =
         input;
-    const { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime } = spacePricePlan;
     const { addressLine1, addressLine2, city, prefectureId, latitude, longitude, postalCode } = address;
 
     const isValid =
         name.trim() &&
-        planTitle.trim() &&
         maximumCapacity != 0 &&
         numberOfSeats != 0 &&
         spaceSize != 0 &&
-        hourlyPrice != 0 &&
-        dailyPrice != 0 &&
-        maintenanceFee != 0 &&
-        cooldownTime != 0 &&
         addressLine1.trim() &&
         city.trim() &&
         postalCode.trim() &&
         postalCode.trim();
 
     if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
-    await store.space.create({
+    const space = await store.space.create({
         data: {
             name,
             maximumCapacity,
             numberOfSeats,
             spaceSize,
             account: { connect: { id: accountId } },
-            spacePricePlans: {
-                create: { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime },
-            },
+            spacePricePlans: { createMany: { data: spacePricePlans } },
             nearestStations: { createMany: { data: nearestStations } },
             spaceTypes: { createMany: { data: spaceTypes.map((spaceTypeId) => ({ spaceTypeId })) } },
             address: {
@@ -67,6 +59,22 @@ const addSpace: AddSpace = async (_, { input }, { authData, store }) => {
                 },
             },
         },
+        include: { address: { include: { prefecture: true } }, spaceTypes: { include: { spaceType: true } } },
+    });
+
+    await dataSources.spaceAlgolia.saveObject({
+        maximumCapacity,
+        objectID: space.id,
+        name,
+        nearestStations: nearestStations.map(({ stationId }) => stationId),
+        prefecture: space?.address?.prefecture?.name,
+        price: spacePricePlans.map(({ type, amount }) => ({ type, amount })),
+        rating: 0,
+        spaceSize,
+        spaceTypes: space?.spaceTypes?.map(({ spaceType }) => spaceType.title),
+        thumbnail: "",
+        updatedAt: space?.updatedAt.getTime(),
+        viewCount: 0,
     });
 
     return { message: `Successfully added space` };
@@ -78,7 +86,7 @@ export const addSpaceTypeDefs = gql`
         maximumCapacity: Int!
         numberOfSeats: Int!
         spaceSize: Float
-        spacePricePlan: AddSpacePricePlanInput!
+        spacePricePlans: [AddSpacePricePlanInput]!
         nearestStations: [NearestStationsInput]!
         spaceTypes: [ID]!
         address: AddressInput!

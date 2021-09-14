@@ -15,14 +15,14 @@ type UpdateMySpaceInput = {
     numberOfSeats?: number;
     spaceSize?: number;
     nearestStations?: NearestStationsInput[];
-    spacePricePlans?: UpdateSpacePricePlanInput;
+    spacePricePlans?: UpdateSpacePricePlanInput[];
     spaceTypes?: string[];
     address?: AddressInput;
 };
 
 type UpdateMySpace = IFieldResolver<any, Context, Record<"input", UpdateMySpaceInput>, Promise<Result>>;
 
-const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) => {
+const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dataSources }) => {
     const { accountId } = authData;
     const { id, nearestStations, spacePricePlans, spaceTypes, address, ...spaceData } = input;
 
@@ -31,6 +31,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
         select: {
             accountId: true,
             nearestStations: { select: { stationId: true } },
+            spacePricePlans: { select: { id: true } },
             spaceTypes: { select: { spaceTypeId: true } },
         },
     });
@@ -40,12 +41,16 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
+    const prevSpacePricePlanIds = space.spacePricePlans?.map(({ id }) => id);
+    const newSpacePricePlanIds = spacePricePlans?.map(({ id }) => id);
+    const spacePricePlanToAdd = spacePricePlans?.filter(({ id }) => prevSpacePricePlanIds?.includes(id));
+    const spacePricePlanToDelete =
+        spacePricePlans && prevSpacePricePlanIds?.filter((id) => !newSpacePricePlanIds?.includes(id));
+
     const prevNearestStationIds = space.nearestStations?.map(({ stationId }) => stationId);
     const newNearestStationIds = nearestStations?.map(({ stationId }) => stationId);
-    const nearestStationToAdd = nearestStations?.filter(
-        (station) => !prevNearestStationIds?.includes(station.stationId)
-    );
-    const nearestStationTpDelete =
+    const nearestStationToAdd = nearestStations?.filter(({ stationId }) => !prevNearestStationIds?.includes(stationId));
+    const nearestStationToDelete =
         nearestStations && prevNearestStationIds?.filter((stationId) => !newNearestStationIds?.includes(stationId));
 
     const prevSpaceTypeIds = space.spaceTypes?.map(({ spaceTypeId }) => spaceTypeId);
@@ -55,11 +60,17 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
     const spaceTypesToDelete =
         spaceTypes && prevSpaceTypeIds?.filter((spaceTypeId) => !spaceTypes?.includes(spaceTypeId));
 
-    await store.space.update({
+    const newSpace = await store.space.update({
         where: { id },
         data: {
             ...spaceData,
-            spacePricePlans: spacePricePlans && { update: spacePricePlans },
+            spacePricePlans: {
+                deleteMany:
+                    spacePricePlanToDelete?.length > 0
+                        ? { id: { in: spacePricePlanToDelete }, spaceId: id }
+                        : undefined,
+                createMany: spacePricePlanToAdd?.length > 0 ? { data: spacePricePlanToAdd } : undefined,
+            },
             spaceTypes: {
                 deleteMany:
                     spaceTypesToDelete?.length > 0
@@ -69,8 +80,8 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
             },
             nearestStations: {
                 deleteMany:
-                    nearestStationTpDelete?.length > 0
-                        ? { stationId: { in: nearestStationTpDelete }, spaceId: id }
+                    nearestStationToDelete?.length > 0
+                        ? { stationId: { in: nearestStationToDelete }, spaceId: id }
                         : undefined,
                 createMany: nearestStationToAdd?.length > 0 ? { data: nearestStationToAdd } : undefined,
             },
@@ -81,6 +92,24 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store }) =
                 },
             },
         },
+        include: {
+            address: { include: { prefecture: true } },
+            nearestStations: true,
+            spaceTypes: { include: { spaceType: true } },
+        },
+    });
+
+    await dataSources.spaceAlgolia.partialUpdateObject({
+        ...spaceData,
+        objectID: id,
+        nearestStations: newSpace?.nearestStations?.map(({ stationId }) => stationId),
+        prefecture: newSpace?.address?.prefecture?.name,
+        price: spacePricePlans?.map(({ type, amount }) => ({ type, amount })),
+        rating: 0,
+        spaceTypes: newSpace?.spaceTypes?.map(({ spaceType }) => spaceType.title),
+        thumbnail: "",
+        updatedAt: newSpace?.updatedAt.getTime(),
+        viewCount: 0,
     });
 
     return { message: `Successfully updated space` };
@@ -94,7 +123,7 @@ export const updateMySpaceTypeDefs = gql`
         numberOfSeats: Int
         spaceSize: Float
         nearestStations: [NearestStationsInput]
-        spacePricePlans: UpdateSpacePricePlanInput
+        spacePricePlans: [UpdateSpacePricePlanInput]
         spaceTypes: [ID]
         address: AddressInput
     }

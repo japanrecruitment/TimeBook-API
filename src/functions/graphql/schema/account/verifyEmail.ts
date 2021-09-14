@@ -17,13 +17,13 @@ const verifyEmail: VerifyEmail = async (_, { input }, { store, dataSources }) =>
 
     email = email.toLocaleLowerCase(); // change email to lowercase
 
-    const cacheCode = await dataSources.redisDS.fetch(`email-verification-code-${email}`);
+    const cacheCode = await dataSources.redis.fetch(`email-verification-code-${email}`);
     if (cacheCode !== code) throw new GqlError({ code: "FORBIDDEN", message: "Verificaiton code expired" });
 
     const account = await store.account.update({ where: { email }, data: { emailVerified: true } });
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "Account with the given email not found" });
 
-    dataSources.redisDS.delete(`email-verification-code-${email}`);
+    dataSources.redis.delete(`email-verification-code-${email}`);
 
     Log(account);
 

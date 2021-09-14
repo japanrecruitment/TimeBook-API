@@ -6,7 +6,7 @@ import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { photoSelect } from "../media";
+import { mapPhotoSelection } from "../media";
 import { Profile } from "./profile";
 
 type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<Profile>>;
@@ -17,19 +17,27 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
 
     const userProfileSelect =
         profileType === "UserProfile"
-            ? toPrismaSelect({
-                  ...omit(UserProfile, "email", "phoneNumber", "profilePhoto"),
-                  profilePhoto: photoSelect,
-              })
+            ? toPrismaSelect(
+                  omit(
+                      merge(UserProfile, { profilePhoto: mapPhotoSelection(UserProfile.profilePhoto) }),
+                      "email",
+                      "phoneNumber",
+                      "roles"
+                  )
+              )
             : false;
     const companyProfileSelect =
         profileType === "CompanyProfile"
-            ? toPrismaSelect({
-                  ...omit(CompanyProfile, "email", "phoneNumber", "profilePhoto"),
-                  profilePhoto: photoSelect,
-              })
+            ? toPrismaSelect(
+                  omit(
+                      merge(CompanyProfile, { profilePhoto: mapPhotoSelection(CompanyProfile.profilePhoto) }),
+                      "email",
+                      "phoneNumber",
+                      "roles"
+                  )
+              )
             : false;
-    const hostSelect = toPrismaSelect(Host);
+    const hostSelect = toPrismaSelect(Host) || false;
 
     const account = await store.account.findUnique({
         where: { id: accountId },
@@ -37,6 +45,7 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
             email: true,
             phoneNumber: true,
             profileType: true,
+            roles: true,
             userProfile: userProfileSelect,
             companyProfile: companyProfileSelect,
             host: hostSelect,
@@ -46,7 +55,10 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
     Log(account);
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
 
-    return merge(pick(account, "email", "phoneNumber", "profileType"), account.userProfile || account.companyProfile);
+    return merge(
+        pick(account, "email", "phoneNumber", "profileType", "roles"),
+        account.userProfile || account.companyProfile
+    );
 };
 
 export const myProfileTypeDefs = gql`

@@ -15,7 +15,7 @@ const forgotPassword: ForgotPassword = async (_, { email }, { store, dataSources
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User with the given email not found" });
 
     const verificationCode = randomNumberOfNDigits(6);
-    dataSources.redisDS.store(`reset-password-verification-code-${email}`, verificationCode, 600);
+    dataSources.redis.store(`reset-password-verification-code-${email}`, verificationCode, 600);
     await addEmailToQueue<ResetPasswordData>({
         template: "reset-password",
         recipientEmail: email,
