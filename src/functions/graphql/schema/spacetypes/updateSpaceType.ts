@@ -31,7 +31,7 @@ const updateSpaceType: UpdateSpaceType = async (_, { input }, { store, dataSourc
             description: description,
         },
     });
-    dataSources.redisDS.deleteMany("space-types:*");
+    dataSources.redis.deleteMany("space-types:*");
     return updatedSpaceType;
 };
 export const updateSpaceTypeTypeDefs = gql`

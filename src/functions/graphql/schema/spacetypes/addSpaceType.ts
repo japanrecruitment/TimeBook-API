@@ -32,7 +32,7 @@ const addSpaceType: SpaceType = async (_, { input }, { store, dataSources }) => 
             },
         },
     });
-    dataSources.redisDS.deleteMany("space-types:*");
+    dataSources.redis.deleteMany("space-types:*");
     return { message: `Successfully registered space type` };
 };
 

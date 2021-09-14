@@ -7,17 +7,17 @@ type AllLines = IFieldResolver<any, Context, any, Promise<TrainLine[]>>;
 type LinesByPrefecture = IFieldResolver<any, Context, any, Promise<TrainLine[]>>;
 
 const allLines: AllLines = async (_, __, { store, dataSources }) => {
-    const cacheDoc = await dataSources.redisDS.fetch("all-lines");
+    const cacheDoc = await dataSources.redis.fetch("all-lines");
     if (cacheDoc) return cacheDoc;
     const allStations = await store.trainLine.findMany({ where: { status: 0 }, include: { stations: true } });
-    dataSources.redisDS.store("all-lines", allStations, 600);
+    dataSources.redis.store("all-lines", allStations, 600);
     return allStations;
 };
 const linesByPrefecture: LinesByPrefecture = async (_, __, { store, dataSources }) => {
-    const cacheDoc = await dataSources.redisDS.fetch("lines-");
+    const cacheDoc = await dataSources.redis.fetch("lines-");
     if (cacheDoc) return cacheDoc;
     const allStations = await store.trainLine.findMany({ where: { status: 0 }, include: { stations: true } });
-    dataSources.redisDS.store("all-lines", allStations, 600);
+    dataSources.redis.store("all-lines", allStations, 600);
     return allStations;
 };
 

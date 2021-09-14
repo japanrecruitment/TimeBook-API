@@ -6,10 +6,10 @@ import { Context } from "../../context";
 type AllStations = IFieldResolver<any, Context, any, Promise<Station[]>>;
 
 const allStations: AllStations = async (_, __, { store, dataSources }) => {
-    const cacheDoc = await dataSources.redisDS.fetch("all-stations");
+    const cacheDoc = await dataSources.redis.fetch("all-stations");
     if (cacheDoc) return cacheDoc;
     const allStations = await store.station.findMany({ where: { prefecture: { available: true } } });
-    dataSources.redisDS.store("all-stations", allStations, 600);
+    dataSources.redis.store("all-stations", allStations, 600);
     return allStations;
 };
 

@@ -13,7 +13,7 @@ const resendVerificationCode: ResendVerificationCode = async (_, { email }, { st
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User with the given email not found" });
 
     const verificationCode = randomNumberOfNDigits(6);
-    dataSources.redisDS.store(`email-verification-code-${email}`, verificationCode, 600);
+    dataSources.redis.store(`email-verification-code-${email}`, verificationCode, 600);
     await addEmailToQueue<EmailVerificationData>({
         template: "email-verification",
         recipientEmail: email,
