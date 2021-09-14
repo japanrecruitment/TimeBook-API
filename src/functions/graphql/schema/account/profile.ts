@@ -36,6 +36,7 @@ export const profileTypeDefs = gql`
         phoneNumber: String
         roles: [Role]
         address: Address
+        profilePhoto: Photo
     }
 
     type CompanyProfile {
@@ -47,6 +48,7 @@ export const profileTypeDefs = gql`
         registrationNumber: String!
         roles: [Role]
         address: Address
+        profilePhoto: Photo
     }
 
     union Profile = UserProfile | CompanyProfile

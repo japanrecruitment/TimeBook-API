@@ -6,6 +6,7 @@ import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
+import { mapPhotoSelection } from "../media";
 import { Profile } from "./profile";
 
 type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<Profile>>;
@@ -15,12 +16,28 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
     const { accountId, profileType } = authData;
 
     const userProfileSelect =
-        profileType === "UserProfile" ? toPrismaSelect(omit(UserProfile, "email", "phoneNumber", "roles")) : false;
+        profileType === "UserProfile"
+            ? toPrismaSelect(
+                  omit(
+                      merge(UserProfile, { profilePhoto: mapPhotoSelection(UserProfile.profilePhoto) }),
+                      "email",
+                      "phoneNumber",
+                      "roles"
+                  )
+              )
+            : false;
     const companyProfileSelect =
         profileType === "CompanyProfile"
-            ? toPrismaSelect(omit(CompanyProfile, "email", "phoneNumber", "roles"))
+            ? toPrismaSelect(
+                  omit(
+                      merge(CompanyProfile, { profilePhoto: mapPhotoSelection(CompanyProfile.profilePhoto) }),
+                      "email",
+                      "phoneNumber",
+                      "roles"
+                  )
+              )
             : false;
-    const hostSelect = toPrismaSelect(Host);
+    const hostSelect = toPrismaSelect(Host) || false;
 
     const account = await store.account.findUnique({
         where: { id: accountId },

@@ -29,6 +29,7 @@ const registerCompany: RegisterCompany = async (_, { input }, { store, dataSourc
     if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
 
     password = encodePassword(password);
+    email = email.toLocaleLowerCase(); // change email to lowercase
 
     const newAccount = await store.account.create({
         data: {

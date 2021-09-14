@@ -1,13 +1,16 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { Address, ProfileType } from "@prisma/client";
 import { Log } from "@utils/logger";
-import { omit } from "@utils/object-helper";
+import { omit, pick } from "@utils/object-helper";
+import { S3Lib } from "@libs/index";
+import { merge } from "lodash";
 import { gql } from "apollo-server-core";
 import { GraphQLResolveInfo } from "graphql";
 import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Profile } from "./profile";
+import { ImageUploadInput, ImageUploadResult, mapPhotoSelection } from "../media";
 
 type UpdateProfileStrategy<T> = (input: T, context: Context, info: GraphQLResolveInfo) => Promise<Partial<Profile>>;
 
@@ -38,12 +41,11 @@ type UpdateMyProfile = IFieldResolver<any, Context, Record<"input", UpdateMyProf
 const updateMyProfile: UpdateMyProfile = async (_, { input }, context, info) => {
     const { id, email, phoneNumber, profileType } = context.authData;
 
+    Log(id, context.authData);
     if (id !== input.id)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this profile" });
 
     const updatedProfile = await updateProfileStrategies[profileType](input, context, info);
-
-    Log(updatedProfile);
 
     if (!updatedProfile) throw new GqlError({ code: "NOT_FOUND", message: "Profile not found" });
 
@@ -51,7 +53,8 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, context, info) => 
 };
 
 const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (input, { store }, info) => {
-    const select = toPrismaSelect(omit(mapSelections(info).UserProfile, "email", "phoneNumber"));
+    const { profilePhoto, ...selections } = omit(mapSelections(info).UserProfile, "email", "phoneNumber", "roles");
+    const select = toPrismaSelect(merge(selections, { profilePhoto: mapPhotoSelection(profilePhoto) }));
     const { id, address, dob, firstName, firstNameKana, lastName, lastNameKana } = input;
     return await store.user.update({
         where: { id },
@@ -78,7 +81,8 @@ const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (
 };
 
 const updateCompanyProfile: UpdateProfileStrategy<UpdateCompanyProfileInput> = async (input, { store }, info) => {
-    const select = toPrismaSelect(omit(mapSelections(info).CompanyProfile, "email", "phoneNumber"));
+    const { profilePhoto, ...selections } = omit(mapSelections(info).CompanyProfile, "email", "phoneNumber", "roles");
+    const select = toPrismaSelect(merge(selections, { profilePhoto: mapPhotoSelection(profilePhoto) }));
     const { id, address, name, nameKana, registrationNumber } = input;
     return await store.company.update({
         where: { id },
@@ -107,6 +111,41 @@ const updateProfileStrategies: UpdateProfileStrategies = {
     UserProfile: updateUserProfile,
 };
 
+type AddProfile = IFieldResolver<any, Context, Record<"input", ImageUploadInput>, Promise<ImageUploadResult>>;
+const addProfilePhoto: AddProfile = async (_, { input }, { authData, store }, info) => {
+    // check input
+    const type = "Profile";
+    const mime = input.mime || "image/jpeg";
+
+    const { id, profileType } = authData;
+
+    // add record in DB
+    let updatedProfile;
+    if (profileType === "UserProfile") {
+        updatedProfile = await store.user.update({
+            where: { id },
+            data: { profilePhoto: { create: { mime, type } } },
+            select: { profilePhoto: true },
+        });
+    } else {
+        updatedProfile = await store.user.update({
+            where: { id },
+            data: { profilePhoto: { create: { mime, type } } },
+            select: { profilePhoto: true },
+        });
+    }
+
+    const { profilePhoto } = updatedProfile;
+
+    const key = `${profilePhoto.id}.${profilePhoto.mime.split("/")[1]}`;
+
+    // get signedURL
+    const S3 = new S3Lib("upload");
+    const signedURL = S3.getUploadUrl(key, mime, 60 * 10);
+
+    return { type, mime, url: signedURL, key };
+};
+
 export const updateMyProfileTypeDefs = gql`
     input UpdateMyProfileInput {
         id: ID!
@@ -123,9 +162,10 @@ export const updateMyProfileTypeDefs = gql`
 
     type Mutation {
         updateMyProfile(input: UpdateMyProfileInput!): Profile @auth(requires: [user, host])
+        addProfilePhoto(input: ImageUploadInput!): ImageUploadResult
     }
 `;
 
 export const updateMyProfileResolvers = {
-    Mutation: { updateMyProfile },
+    Mutation: { updateMyProfile, addProfilePhoto },
 };

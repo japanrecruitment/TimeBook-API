@@ -13,7 +13,9 @@ type VerifyEmailInput = {
 type VerifyEmail = IFieldResolver<any, Context, Record<"input", VerifyEmailInput>, Promise<Result>>;
 
 const verifyEmail: VerifyEmail = async (_, { input }, { store, dataSources }) => {
-    const { email, code } = input;
+    let { email, code } = input;
+
+    email = email.toLocaleLowerCase(); // change email to lowercase
 
     const cacheCode = await dataSources.redis.fetch(`email-verification-code-${email}`);
     if (cacheCode !== code) throw new GqlError({ code: "FORBIDDEN", message: "Verificaiton code expired" });

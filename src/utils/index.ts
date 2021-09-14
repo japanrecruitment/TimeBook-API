@@ -8,3 +8,5 @@ export * from "./message";
 export * from "./object-helper";
 export * from "./store";
 export * from "./token-helper";
+export * from "./image-processor";
+export * from "./email-helper";

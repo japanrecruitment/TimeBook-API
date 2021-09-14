@@ -62,13 +62,13 @@ const addSpace: AddSpace = async (_, { input }, { authData, store, dataSources }
         include: { address: { include: { prefecture: true } }, spaceTypes: { include: { spaceType: true } } },
     });
 
-    dataSources.spaceAlgolia.saveObject({
+    await dataSources.spaceAlgolia.saveObject({
         maximumCapacity,
         objectID: space.id,
         name,
         nearestStations: nearestStations.map(({ stationId }) => stationId),
         prefecture: space?.address?.prefecture?.name,
-        price: [],
+        price: spacePricePlans.map(({ type, amount }) => ({ type, amount })),
         rating: 0,
         spaceSize,
         spaceTypes: space?.spaceTypes?.map(({ spaceType }) => spaceType.title),

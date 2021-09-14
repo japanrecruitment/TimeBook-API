@@ -4,9 +4,8 @@ datasource db {
 }
 
 generator client {
-    provider        = "prisma-client-js"
-    binaryTargets   = ["native", "rhel-openssl-1.0.x", "debian-openssl-1.1.x"]
-    previewFeatures = ["referentialActions"]
+    provider      = "prisma-client-js"
+    binaryTargets = ["native", "rhel-openssl-1.0.x", "debian-openssl-1.1.x"]
 }
 
 enum Role {
@@ -37,10 +36,10 @@ enum ReservationStatus {
     Pending
 }
 
-enum DocumentType {
+enum PhotoType {
     Profile
-    Space
-    OtherDocuments
+    Cover
+    General
 }
 
 enum SpacePricePlanType {
@@ -72,7 +71,6 @@ model Account {
     mySpace        Space[]
     Credit         Credit[]
     paymentSource  PaymentSource[]
-    media          Media?
     host           Host?
 }
 
@@ -105,7 +103,7 @@ model User {
     accountId     String
     account       Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
     address       Address?
-    medias        Media[]
+    profilePhoto  Photo?
 }
 
 model Company {
@@ -118,6 +116,7 @@ model Company {
     accountId          String
     account            Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
     address            Address?
+    profilePhoto       Photo?
 }
 
 model Host {
@@ -131,7 +130,8 @@ model Host {
     updatedAt       DateTime @updatedAt
     accountId       String   @unique
     account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    // Default Settings for host goes below
+    profilePhoto    Photo?   @relation(name: "hostProfilePhoto")
+    photoId         Photo?   @relation(name: "photoId")
 }
 
 model Session {
@@ -168,9 +168,9 @@ model Address {
     postalCode   String     @db.VarChar(8)
     createdAt    DateTime   @default(now()) @db.Timestamp(6)
     updatedAt    DateTime   @updatedAt
-    userId       String?
     prefectureId Int
     prefecture   Prefecture @relation(fields: [prefectureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    userId       String?
     user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
     companyId    String?
     company      Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -194,14 +194,14 @@ model Space {
     nearestStations NearestStation[]
     spaceTypes      Space_To_SpaceType[]
     address         Address?
-    medias          Media[]
+    photos          Photo[]
 }
 
 model SpacePricePlan {
     id                 String             @id @default(cuid())
     title              String             @db.VarChar(255)
     type               SpacePricePlanType
-    price              Float              @default(0)
+    amount             Float              @default(0)
     maintenanceFee     Float              @default(0)
     lastMinuteDiscount Float              @default(0)
     cooldownTime       Int                @default(0)
@@ -281,7 +281,7 @@ model SpaceType {
     title             String               @db.VarChar(100)
     description       String               @db.VarChar(100)
     spaceToSpaceTypes Space_To_SpaceType[]
-    Media             Media?
+    photo             Photo?
 }
 
 model Space_To_SpaceType {
@@ -315,28 +315,26 @@ model SubscriptionPlan {
     updatedAt   DateTime @updatedAt
 }
 
-model PhotoGallery {
-    id        String   @id @default(cuid())
-    original  String   @db.VarChar(255)
-    medium    String   @db.VarChar(255)
-    small     String   @db.VarChar(255)
-    large     String   @db.VarChar(255)
-    createdAt DateTime @default(now()) @db.Timestamp(6)
-    updatedAt DateTime @updatedAt
-    media     Media?
-}
-
-model Media {
-    id             String       @id @default(cuid())
-    account        Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    accountId      String
-    documentType   DocumentType
-    photoGallery   PhotoGallery @relation(fields: [photoGalleryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    photoGalleryId String
-    space          Space?       @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spaceId        String?
-    spaceType      SpaceType?   @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spaceTypeId    String?
-    user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    userId         String?
+model Photo {
+    id          String     @id @default(cuid())
+    mime        String     @db.VarChar(15)
+    type        PhotoType
+    thumbnail   Json?
+    medium      Json?
+    small       Json?
+    large       Json?
+    createdAt   DateTime   @default(now()) @db.Timestamp(6)
+    updatedAt   DateTime   @updatedAt
+    space       Space?     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    spaceId     String?
+    spaceType   SpaceType? @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    spaceTypeId String?
+    user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    userId      String?
+    company     Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    companyId   String?
+    host        Host?      @relation(name: "hostProfilePhoto", fields: [hostId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    hostId      String?
+    photo       Host?      @relation(name: "photoId", fields: [photoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    photoId     String?
 }

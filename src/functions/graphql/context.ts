@@ -18,9 +18,12 @@ const getAuthData = (event) => {
     try {
         return decodeToken(event.headers.Authorization, "access") || { roles: ["unknown"] };
     } catch (error) {
+        console.log(event);
         const code = "FORBIDDEN";
         const message = error.name === "TokenExpiredError" ? "Token expired" : "Invalid token";
         const action = error.name === "TokenExpiredError" ? "refresh-token" : "logout";
+
+        console.log({ code, message, action });
         throw new GqlError({ code, message, action });
     }
 };

@@ -35,6 +35,7 @@ export const allSpaceTypesTypeDefs = gql`
         allSpaceTypes: [SpaceType]
     }
 `;
+
 export const allSpaceTypesResolvers = {
     Query: { allSpaceTypes },
 };

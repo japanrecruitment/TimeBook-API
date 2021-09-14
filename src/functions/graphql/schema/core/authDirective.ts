@@ -43,14 +43,13 @@ class AuthDirective extends SchemaDirectiveVisitor {
                     throw new GqlError({ code: "UNAUTHORIZED", message: "Not authorized" });
 
                 await executeStrategy(requiredRoles, authData);
-
                 return await resolve.apply(this, args);
             };
         });
     }
 
     private async executeStrategy(requiredRoles, requestData) {
-        console.log(requiredRoles, requestData.roles);
+        Log("Required", requiredRoles, "Current role", requestData.roles);
 
         for (let role of requiredRoles) {
             const strategyResult = await authStrategies[role.toLowerCase()](requestData);
@@ -62,7 +61,7 @@ class AuthDirective extends SchemaDirectiveVisitor {
 }
 
 export const authDirectiveTypeDefs = gql`
-    directive @auth(requires: [Role] = [user]) on OBJECT | FIELD_DEFINITION
+    directive @auth(requires: [Role] = [unknown]) on OBJECT | FIELD_DEFINITION
 
     enum Role {
         user
