@@ -16,6 +16,7 @@ export type SpaceIndexRecord = AlgoliaRecord & {
     price?: number;
     priceType?: string;
     rating?: number;
+    spaceId: string;
     spaceSize?: number;
     spaceTypes: string[];
     thumbnail?: string;
@@ -25,16 +26,18 @@ export type SpaceIndexRecord = AlgoliaRecord & {
 
 export const spaceIndex = algoliaClient.initIndex(environment.isDev() ? `space_dev` : `space_prod`);
 
-const attributesForFaceting = ["searchable(spaceTypes)", "filterOnly(nearestStations)", "filterOnly(prefecture)"];
-const customRanking = ["desc(rating)", "desc(viewCount)"];
-const ranking = ["desc(updatedAt)", "typo", "geo", "words", "filters", "proximity", "attribute", "exact", "custom"];
-const searchableAttributes = ["name", "spaceTypes"];
-
 const settings: Settings = {
-    attributesForFaceting,
-    customRanking,
-    ranking,
-    searchableAttributes,
+    attributesForFaceting: [
+        "searchable(spaceTypes)",
+        "filterOnly(nearestStations)",
+        "filterOnly(prefecture)",
+        "filterOnly(priceType)",
+    ],
+    customRanking: ["desc(rating)", "desc(viewCount)"],
+    ranking: ["desc(updatedAt)", "typo", "geo", "words", "filters", "proximity", "attribute", "exact", "custom"],
+    searchableAttributes: ["name", "spaceTypes"],
+    attributeForDistinct: "spaceId",
+    distinct: true,
 };
 
 spaceIndex.setSettings(settings).catch((error) => Log("[FAILED]: setting space index", error));

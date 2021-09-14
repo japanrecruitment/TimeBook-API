@@ -24,6 +24,14 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
         }
     }
 
+    async addMany(objects: Array<R>) {
+        try {
+            await this.index.saveObjects(objects);
+        } catch (error) {
+            Log("[FAILED]: adding records in algolia", error);
+        }
+    }
+
     async update(object: Partial<R> & Required<Pick<R, "objectID">>) {
         try {
             await this.index.partialUpdateObject(object);
@@ -32,11 +40,27 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
         }
     }
 
+    async updateMany(objects: Array<Partial<R> & Required<Pick<R, "objectID">>>) {
+        try {
+            await this.index.partialUpdateObjects(objects);
+        } catch (error) {
+            Log("[FAILED]: updating records in algolia", error);
+        }
+    }
+
     async remove(objectID: string) {
         try {
             this.index.deleteObject(objectID);
         } catch (error) {
             Log("[FAILED]: removing record in algolia", error);
+        }
+    }
+
+    async removeMany(objectIDs: Array<string>) {
+        try {
+            this.index.deleteObjects(objectIDs);
+        } catch (error) {
+            Log("[FAILED]: removing records in algolia", error);
         }
     }
 }
