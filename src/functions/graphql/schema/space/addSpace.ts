@@ -69,22 +69,6 @@ const addSpace: AddSpace = async (_, { input }, { authData, store, dataSources }
         include: { address: { include: { prefecture: true } }, spaceTypes: { include: { spaceType: true } } },
     });
 
-    await dataSources.spaceAlgoliaDS.add({
-        objectID: space.id,
-        name,
-        maximumCapacity,
-        nearestStations: nearestStations.map(({ stationId }) => stationId),
-        prefecture: space?.address?.prefecture?.name,
-        price,
-        priceType: type,
-        rating: 0,
-        spaceSize,
-        spaceTypes: space?.spaceTypes?.map(({ spaceType }) => spaceType.title),
-        thumbnail: "",
-        updatedAt: space?.updatedAt.getTime(),
-        viewCount: 0,
-    });
-
     return { message: `Successfully added space` };
 };
 
