@@ -75,7 +75,7 @@ export const allSpacesTypeDefs = gql`
         spaceSize: Float
         needApproval: Boolean
         nearestStations: [NearestStation]
-        spacePricePlans: SpacePricePlan
+        spacePricePlans: [SpacePricePlan]
         spaceTypes: [SpaceType]
         address: Address
     }

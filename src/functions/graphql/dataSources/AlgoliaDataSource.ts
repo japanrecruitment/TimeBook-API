@@ -16,7 +16,7 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
         this.index = context.algolia[this.indexName];
     }
 
-    async add(object: R) {
+    async saveObject(object: R) {
         try {
             await this.index.saveObject(object);
         } catch (error) {
@@ -24,7 +24,7 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
         }
     }
 
-    async addMany(objects: Array<R>) {
+    async saveObjects(objects: Array<R>) {
         try {
             await this.index.saveObjects(objects);
         } catch (error) {
@@ -32,7 +32,7 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
         }
     }
 
-    async update(object: Partial<R> & Required<Pick<R, "objectID">>) {
+    async partialUpdateObject(object: Partial<R> & Required<Pick<R, "objectID">>) {
         try {
             await this.index.partialUpdateObject(object);
         } catch (error) {
@@ -40,7 +40,7 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
         }
     }
 
-    async updateMany(objects: Array<Partial<R> & Required<Pick<R, "objectID">>>) {
+    async partialUpdateObjects(objects: Array<Partial<R> & Required<Pick<R, "objectID">>>) {
         try {
             await this.index.partialUpdateObjects(objects);
         } catch (error) {
@@ -48,7 +48,7 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
         }
     }
 
-    async remove(objectID: string) {
+    async deleteObject(objectID: string) {
         try {
             this.index.deleteObject(objectID);
         } catch (error) {
@@ -56,7 +56,7 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
         }
     }
 
-    async removeMany(objectIDs: Array<string>) {
+    async deleteObjects(objectIDs: Array<string>) {
         try {
             this.index.deleteObjects(objectIDs);
         } catch (error) {

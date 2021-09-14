@@ -1,22 +1,20 @@
 import { Settings } from "@algolia/client-search";
+import { AlgoliaRecord } from "../algoliaRecord";
 import { environment } from "../../environment";
 import { Log } from "../../logger";
 import { algoliaClient } from "../algoliaClient";
-import { AlgoliaRecord } from "../algoliaRecord";
 
 export type SpaceIndexRecord = AlgoliaRecord & {
     _geoloc?: {
         lat: number;
         lng: number;
     };
-    name: string;
     maximumCapacity?: number;
+    name: string;
     nearestStations?: number[];
     prefecture?: string;
-    price?: number;
-    priceType?: string;
+    price?: { amount: number; type: string }[];
     rating?: number;
-    spaceId: string;
     spaceSize?: number;
     spaceTypes: string[];
     thumbnail?: string;
@@ -31,13 +29,11 @@ const settings: Settings = {
         "searchable(spaceTypes)",
         "filterOnly(nearestStations)",
         "filterOnly(prefecture)",
-        "filterOnly(priceType)",
+        "filterOnly(price.type)",
     ],
     customRanking: ["desc(rating)", "desc(viewCount)"],
     ranking: ["desc(updatedAt)", "typo", "geo", "words", "filters", "proximity", "attribute", "exact", "custom"],
     searchableAttributes: ["name", "spaceTypes"],
-    attributeForDistinct: "spaceId",
-    distinct: true,
 };
 
 spaceIndex.setSettings(settings).catch((error) => Log("[FAILED]: setting space index", error));
