@@ -14,9 +14,9 @@ export type Context = {
 
 const getAuthData = (event) => {
     try {
-        return decodeToken(event.headers.Authorization, "access") || { roles: ["unknown"] };
+        const token = event.headers.Authorization || event.headers.authorization;
+        return decodeToken(token, "access") || { roles: ["unknown"] };
     } catch (error) {
-        console.log(event);
         const code = "FORBIDDEN";
         const message = error.name === "TokenExpiredError" ? "Token expired" : "Invalid token";
         const action = error.name === "TokenExpiredError" ? "refresh-token" : "logout";

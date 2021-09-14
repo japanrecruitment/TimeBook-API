@@ -33,7 +33,7 @@ export const MediaTypeDefs = gql`
     type Image {
         width: Int
         height: Int
-        url: String @signMediaRead(ttl: 600)
+        url: String @signMediaRead
     }
 
     type Photo {
@@ -46,5 +46,15 @@ export const MediaTypeDefs = gql`
         large: Image
     }
 `;
+
+export const photoSelect = {
+    id: true,
+    type: true,
+    mime: true,
+    thumbnail: true,
+    small: true,
+    medium: true,
+    large: true,
+};
 
 export const MediaResolvers = {};

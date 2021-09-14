@@ -1,11 +1,9 @@
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { IFieldResolver } from "@graphql-tools/utils";
-import { PhotoGallery, SpaceType } from "@prisma/client";
-import { getUrlGenerator } from "../../../../utils/imageUrlGenerator";
-export type SpaceTypeResult = Partial<SpaceType> & {
-    photoGallery?: Partial<PhotoGallery>;
-};
+import { SpaceType } from "@prisma/client";
+
+export type SpaceTypeResult = Partial<SpaceType>;
 
 type AllSpaceTypes = IFieldResolver<any, Context, Record<string, any>, Promise<SpaceTypeResult[]>>;
 
