@@ -99,6 +99,19 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
         },
     });
 
+    await dataSources.spaceAlgolia.partialUpdateObject({
+        ...spaceData,
+        objectID: id,
+        nearestStations: newSpace?.nearestStations?.map(({ stationId }) => stationId),
+        prefecture: newSpace?.address?.prefecture?.name,
+        price: spacePricePlans.map(({ type, amount }) => ({ type, amount })),
+        rating: 0,
+        spaceTypes: newSpace?.spaceTypes?.map(({ spaceType }) => spaceType.title),
+        thumbnail: "",
+        updatedAt: newSpace?.updatedAt.getTime(),
+        viewCount: 0,
+    });
+
     return { message: `Successfully updated space` };
 };
 
