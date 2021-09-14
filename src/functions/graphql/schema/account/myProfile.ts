@@ -6,6 +6,7 @@ import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
+import { photoSelect } from "../media";
 import { Profile } from "./profile";
 
 type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<Profile>>;
@@ -18,30 +19,14 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
         profileType === "UserProfile"
             ? toPrismaSelect({
                   ...omit(UserProfile, "email", "phoneNumber", "profilePhoto"),
-                  profilePhoto: {
-                      id: true,
-                      mime: true,
-                      type: true,
-                      thumbnail: true,
-                      medium: true,
-                      small: true,
-                      large: true,
-                  },
+                  profilePhoto: photoSelect,
               })
             : false;
     const companyProfileSelect =
         profileType === "CompanyProfile"
             ? toPrismaSelect({
                   ...omit(CompanyProfile, "email", "phoneNumber", "profilePhoto"),
-                  profilePhoto: {
-                      id: true,
-                      mime: true,
-                      type: true,
-                      thumbnail: true,
-                      medium: true,
-                      small: true,
-                      large: true,
-                  },
+                  profilePhoto: photoSelect,
               })
             : false;
     const hostSelect = toPrismaSelect(Host);

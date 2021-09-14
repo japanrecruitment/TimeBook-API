@@ -13,6 +13,7 @@ class SignMediaReadDirective extends SchemaDirectiveVisitor {
             const result = await resolve.apply(this, args);
 
             if (typeof result === "string") {
+                console.log("signing url for ", this.args.ttl);
                 return await S3.getDownloadUrl(result, this.args.ttl);
             }
             return result;

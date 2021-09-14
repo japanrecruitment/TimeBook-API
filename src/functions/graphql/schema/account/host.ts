@@ -1,29 +1,36 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { Host, ProfileType, Role } from "@prisma/client";
-import { Log } from "@utils/logger";
+import { Host as IHost, ProfileType, Role, HostType, Photo } from "@prisma/client";
+
 import { gql } from "apollo-server-core";
 import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { Result } from "../core/result";
 import { GqlError } from "../../error";
 
-import { HostType } from "@prisma/client";
 import { AccountLink, StripeLib } from "@libs/index";
-import { omit } from "@utils/object-helper";
+import { Log, omit } from "@utils/index";
+import { photoSelect } from "../media";
 
-type THost = IFieldResolver<any, Context, Record<string, any>, Promise<Partial<Host>>>;
+type THost = IFieldResolver<any, Context, Record<string, any>, Promise<Partial<IHost>>>;
 
 const host: THost = async (_, __, { authData, store }, info) => {
     const { accountId } = authData;
+    const Host = mapSelections(info);
 
-    const { Host } = mapSelections(info);
-
-    const select = toPrismaSelect(omit(Host, "account"));
-
-    const hostAccount: Partial<Host & { account: AccountLink }> = await store.host.findUnique({
-        where: { accountId },
-        ...select,
+    const select = toPrismaSelect({
+        ...omit(Host, "account", "photoId", "profilePhoto"),
+        suspended: true,
+        approved: true,
+        stripeAccountId: true,
+        photoId: Host.photoId ? photoSelect : false,
+        profilePhoto: Host.profilePhoto ? photoSelect : false,
     });
+
+    const hostAccount: Partial<IHost & { account: AccountLink; profilePhot: Photo; photoId: Photo }> =
+        await store.host.findUnique({
+            where: { accountId },
+            ...select,
+        });
 
     Log(hostAccount);
     if (!hostAccount) return null;
@@ -169,6 +176,9 @@ export const hostTypeDefs = gql`
         id: ID!
         type: HostType
         name: String
+        approved: Boolean
+        photoId: Photo
+        profilePhoto: Photo
         stripeAccountId: String
         account: StripeAccount
         createdAt: Date
