@@ -36,4 +36,4 @@ const settings: Settings = {
     searchableAttributes: ["name", "spaceTypes"],
 };
 
-spaceIndex.setSettings(settings).catch((error) => Log("[FAILED]: setting space index", error));
+// spaceIndex.setSettings(settings).catch((error) => Log("[FAILED]: setting space index", error));
