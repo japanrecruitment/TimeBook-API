@@ -16,8 +16,10 @@ import { verifyEmailResolvers, verifyEmailTypeDefs } from "./verifyEmail";
 import { verifyResetPasswordRequestResolvers, verifyResetPasswordRequestTypeDefs } from "./verifyResetPasswordRequest";
 import { hostResolvers, hostTypeDefs } from "./host";
 import { registerHostResolvers, registerHostTypeDefs } from "./registerHost";
+import { allAccountsResolvers, allAccountsTypeDefs } from "./allAccounts";
 
 export const accountTypeDefs = mergeTypeDefs([
+    allAccountsTypeDefs,
     forgotPasswordTypeDefs,
     loginTypeDefs,
     myProfileTypeDefs,
@@ -37,6 +39,7 @@ export const accountTypeDefs = mergeTypeDefs([
 ]);
 
 export const accountResolvers = mergeResolvers([
+    allAccountsResolvers,
     forgotPasswordResolvers,
     loginResolvers,
     myProfileResolvers,
