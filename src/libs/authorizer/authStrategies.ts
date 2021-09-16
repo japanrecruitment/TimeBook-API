@@ -1,3 +1,4 @@
+import { Log } from "@utils/logger";
 import { UserRole } from "./UserRole";
 
 export type AuthData = { roles: string[] | undefined };
@@ -10,7 +11,7 @@ type AuthStrategies = {
 
 const adminStrategy: AuthStrategy = (authData) => {
     const { roles } = authData;
-    return roles !== undefined && roles.includes["admin"];
+    return roles !== undefined && roles.includes("admin");
 };
 
 const userStrategy: AuthStrategy = (authData) => {
