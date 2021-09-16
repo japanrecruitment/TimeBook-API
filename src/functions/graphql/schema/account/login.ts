@@ -27,11 +27,13 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) 
     const gqlSelect = mapSelections(info);
     const { UserProfile, CompanyProfile } = gqlSelect.profile || {};
     const userProfileSelect =
-        toPrismaSelect({ ...omit(UserProfile, "email", "phoneNumber", "profilePhoto"), profilePhoto: photoSelect }) ||
-        true;
+        toPrismaSelect({
+            ...omit(UserProfile, "email", "phoneNumber", "profilePhoto", "roles"),
+            profilePhoto: photoSelect,
+        }) || true;
     const companyProfileSelect =
         toPrismaSelect({
-            ...omit(CompanyProfile, "email", "phoneNumber", "profilePhoto"),
+            ...omit(CompanyProfile, "email", "phoneNumber", "profilePhoto", "roles"),
             profilePhoto: photoSelect,
         }) || true;
 
