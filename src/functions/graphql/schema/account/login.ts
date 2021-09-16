@@ -79,7 +79,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) 
     const accessToken = encodeToken({ accountId: account.id, ...profile }, "access", { jwtid: account.id });
     const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
 
-    return { profile, accessToken, refreshToken, roles: account.roles };
+    return { profile, accessToken, refreshToken };
 };
 
 export const loginTypeDefs = gql`
@@ -90,7 +90,6 @@ export const loginTypeDefs = gql`
 
     type LoginResult {
         profile: Profile!
-        roles: [String]!
         accessToken: String!
         refreshToken: String!
     }
