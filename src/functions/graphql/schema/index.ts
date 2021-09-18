@@ -4,7 +4,6 @@ import { merge } from "lodash";
 import { accountDirectives, accountResolvers, accountTypeDefs } from "./account";
 import { addressTypeDefs } from "./address";
 import { spaceTypeDefs, spaceResolvers } from "./space";
-import { spaceTypesTypeDefs, spaceTypesResolvers } from "./spacetypes";
 import { coreDirectives, coreResolvers, coreTypeDefs } from "./core";
 import { prefectureResolvers, prefectureTypeDefs } from "./prefectures";
 import { stationsResolvers, stationsTypeDefs } from "./stations";
@@ -19,7 +18,6 @@ const typeDefs = mergeTypeDefs([
     prefectureTypeDefs,
     stationsTypeDefs,
     spaceTypeDefs,
-    spaceTypesTypeDefs,
     mediaTypeDefs,
 ]);
 
@@ -30,7 +28,6 @@ const resolvers = mergeResolvers([
     prefectureResolvers,
     stationsResolvers,
     spaceResolvers,
-    spaceTypesResolvers,
     mediaResolvers,
 ]);
 
