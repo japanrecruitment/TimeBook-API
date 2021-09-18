@@ -45,7 +45,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
         space.numberOfSeats === numberOfSeats &&
         space.spaceSize === spaceSize;
 
-    if (isIdentical) return { message: `No changes made in space` };
+    if (isIdentical) return { message: `No changes found in submited space` };
 
     const updatedSpace = await store.space.update({ where: { id }, data: { ...input, name: name?.trim() } });
 

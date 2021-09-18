@@ -23,7 +23,7 @@ const updateNearestStation: UpdateNearestStation = async (_, { input }, { authDa
 
     const nearestStation = await store.nearestStation.findUnique({
         where: { spaceId_stationId: { spaceId, stationId } },
-        select: { space: { select: { accountId: true } } },
+        include: { space: { select: { accountId: true } } },
     });
 
     if (!nearestStation) throw new GqlError({ code: "NOT_FOUND", message: "Nearest station not found" });
@@ -31,9 +31,13 @@ const updateNearestStation: UpdateNearestStation = async (_, { input }, { authDa
     if (accountId !== nearestStation.space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    if (!time || time < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid time" });
+    if (time && time < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid time" });
 
-    if (!via || !via.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid via" });
+    if (via && !via.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid via" });
+
+    const isIdentical = time === nearestStation.time && via === nearestStation.via;
+
+    if (isIdentical) return { message: `No changes found in submited nearest station` };
 
     await store.nearestStation.update({
         where: { spaceId_stationId: { spaceId, stationId } },
