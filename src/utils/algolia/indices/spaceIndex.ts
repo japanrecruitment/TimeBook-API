@@ -12,11 +12,12 @@ export type SpaceIndexRecord = AlgoliaRecord & {
     maximumCapacity?: number;
     name: string;
     nearestStations?: number[];
+    numberOfSeats?: number;
     prefecture?: string;
     price?: { amount: number; type: string }[];
     rating?: number;
     spaceSize?: number;
-    spaceTypes: string[];
+    spaceTypes?: string[];
     thumbnail?: string;
     updatedAt?: number;
     viewCount?: number;

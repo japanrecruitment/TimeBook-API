@@ -43,7 +43,7 @@
         "bcryptjs": "^2.4.3",
         "dotenv": "^10.0.0",
         "graphql": "^15.5.1",
-        "graphql-map-selections": "^1.1.2",
+        "graphql-map-selections": "^1.1.6",
         "handlebars": "^4.7.7",
         "ioredis": "^4.27.8",
         "jsonwebtoken": "^8.5.1",
