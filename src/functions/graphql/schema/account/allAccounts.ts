@@ -8,6 +8,7 @@ import { ProfileType, Role } from ".prisma/client";
 import { omit, pick } from "@utils/object-helper";
 import { mapPhotoSelection } from "../media";
 import { merge } from "lodash";
+import { Log } from "@utils/logger";
 
 type AccountFilterOptions = {
     approved?: boolean;
@@ -50,7 +51,7 @@ const allAccounts: AllAccounts = async (_, { filters, paginate }, { store }, inf
         where: {
             approved,
             profileType: profileTypes?.length > 0 ? { in: profileTypes } : undefined,
-            roles: roles?.length > 0 ? { hasSome: roles.filter((r) => !r.endsWith("unknown")) } : undefined,
+            roles: roles?.length > 0 ? { hasEvery: roles.filter((r) => !r.endsWith("unknown")) } : undefined,
             suspended,
         },
         select: {
@@ -64,6 +65,8 @@ const allAccounts: AllAccounts = async (_, { filters, paginate }, { store }, inf
         take,
         skip,
     });
+
+    Log(`Found ${allAccounts.length} records: `, allAccounts);
 
     const result = allAccounts.map((account) => {
         return merge(
