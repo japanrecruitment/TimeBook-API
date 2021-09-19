@@ -21,9 +21,12 @@ const updateNearestStation: UpdateNearestStation = async (_, { input }, { authDa
     const { accountId } = authData;
     const { spaceId, stationId, time, via } = input;
 
+    if (!time && !via)
+        throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited nearest station are empty" });
+
     const nearestStation = await store.nearestStation.findUnique({
         where: { spaceId_stationId: { spaceId, stationId } },
-        include: { space: { select: { accountId: true } } },
+        select: { space: { select: { accountId: true } } },
     });
 
     if (!nearestStation) throw new GqlError({ code: "NOT_FOUND", message: "Nearest station not found" });
@@ -33,15 +36,11 @@ const updateNearestStation: UpdateNearestStation = async (_, { input }, { authDa
 
     if (time && time < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid time" });
 
-    if (via && !via.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid via" });
-
-    const isIdentical = time === nearestStation.time && via === nearestStation.via;
-
-    if (isIdentical) return { message: `No changes found in submited nearest station` };
+    if (via?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid via" });
 
     await store.nearestStation.update({
         where: { spaceId_stationId: { spaceId, stationId } },
-        data: { time, via },
+        data: { time, via: via?.trim() },
     });
 
     return { message: `Successfully updated nearest station` };

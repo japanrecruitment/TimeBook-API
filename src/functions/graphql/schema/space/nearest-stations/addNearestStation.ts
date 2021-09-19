@@ -44,7 +44,7 @@ const addNearestStation: AddNearestStation = async (_, { input }, { authData, da
 
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
-        data: { nearestStations: { create: { station: { connect: { id: stationId } }, time, via } } },
+        data: { nearestStations: { create: { station: { connect: { id: stationId } }, time, via: via?.trim() } } },
         select: { id: true, nearestStations: { select: { stationId: true } } },
     });
 

@@ -21,7 +21,3 @@ export const spaceTypesResolvers = mergeResolvers([
 ]);
 
 export * from "./SpaceTypeObject";
-export * from "./addSpaceType";
-export * from "./allSpaceTypes";
-export * from "./removeSpaceType";
-export * from "./updateSpaceType";

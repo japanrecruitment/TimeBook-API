@@ -27,9 +27,12 @@ const updateSpacePricePlan: UpdateSpacePricePlan = async (_, { input }, { authDa
     const { accountId } = authData;
     const { id, spaceId, amount, duration, cooldownTime, lastMinuteDiscount, maintenanceFee, title, type } = input;
 
+    if (!amount && !duration && !cooldownTime && !lastMinuteDiscount && !maintenanceFee && !title && !type)
+        throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited price plan are empty" });
+
     const spacePricePlan = await store.spacePricePlan.findFirst({
         where: { id, spaceId },
-        include: { space: { select: { accountId: true } } },
+        select: { amount: true, duration: true, type: true, space: { select: { accountId: true } } },
     });
 
     if (!spacePricePlan) throw new GqlError({ code: "NOT_FOUND", message: "Space price not found" });
@@ -50,21 +53,10 @@ const updateSpacePricePlan: UpdateSpacePricePlan = async (_, { input }, { authDa
     if (maintenanceFee && maintenanceFee < 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maintenance fee" });
 
-    if (title && !title.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid title" });
+    if (title?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid title" });
 
-    if (!Object.values(SpacePricePlanType).includes(type))
+    if (type && !Object.values(SpacePricePlanType).includes(type))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space type" });
-
-    const isIdentical =
-        amount === spacePricePlan.amount &&
-        duration === spacePricePlan.duration &&
-        cooldownTime === spacePricePlan.cooldownTime &&
-        lastMinuteDiscount === spacePricePlan.lastMinuteDiscount &&
-        maintenanceFee === spacePricePlan.maintenanceFee &&
-        title === spacePricePlan.title &&
-        type === spacePricePlan.type;
-
-    if (isIdentical) return { message: `No changes found in submited space price plan` };
 
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
@@ -84,7 +76,7 @@ const updateSpacePricePlan: UpdateSpacePricePlan = async (_, { input }, { authDa
         price: updatedSpace.spacePricePlans?.map(({ amount, duration, type }) => ({ amount, duration, type })),
     });
 
-    return { message: `Successfully updated ${title} plan in your space` };
+    return { message: `Successfully updated price plan named ${title} in your space` };
 };
 
 export const updateSpacePricePlanTypeDefs = gql`

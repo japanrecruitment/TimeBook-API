@@ -33,6 +33,9 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
 
     const prevTypeIds = space.spaceTypes?.map(({ spaceTypeId }) => spaceTypeId);
     const currTypeIds = types?.map(({ id }) => id);
+
+    if (prevTypeIds === currTypeIds) return { message: "No changes found in the selected space types" };
+
     const typesToAdd = currTypeIds?.filter((id) => !prevTypeIds?.includes(id)).map((spaceTypeId) => ({ spaceTypeId }));
     const typesToDelete = prevTypeIds?.filter((id) => !currTypeIds?.includes(id));
 
@@ -46,7 +49,7 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
         data: {
             spaceTypes: {
                 deleteMany: toDeleteLength > 0 ? { spaceTypeId: { in: typesToDelete } } : undefined,
-                createMany: toAddLength > 0 ? { data: typesToAdd } : undefined,
+                createMany: toAddLength > 0 ? { data: typesToAdd, skipDuplicates: true } : undefined,
             },
         },
         select: { id: true, spaceTypes: { select: { spaceType: { select: { title: true } } } } },
@@ -57,7 +60,7 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
         spaceTypes: updatedSpace.spaceTypes?.map(({ spaceType }) => spaceType.title),
     });
 
-    return { message: `Successfull added ${toAddLength} types and removed ${toAddLength} types from your space` };
+    return { message: `Successfull added ${toAddLength} types and removed ${toDeleteLength} types from your space` };
 };
 
 export const updateTypesInSpaceTypeDefs = gql`

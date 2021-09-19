@@ -18,6 +18,3 @@ export const spacePricePlanResolvers = mergeResolvers([
 ]);
 
 export * from "./SpacePricePlanObject";
-export * from "./addSpacePricePlan";
-export * from "./removeSpacePricePlan";
-export * from "./updateSpacePricePlan";

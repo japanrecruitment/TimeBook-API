@@ -49,7 +49,7 @@ const addSpacePricePlan: AddSpacePricePlan = async (_, { input }, { authData, da
     if (maintenanceFee && maintenanceFee < 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maintenance fee" });
 
-    if (!title || !title.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid title" });
+    if (!title || title?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid title" });
 
     if (!Object.values(SpacePricePlanType).includes(type))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space type" });
@@ -69,7 +69,7 @@ const addSpacePricePlan: AddSpacePricePlan = async (_, { input }, { authData, da
         price: updatedSpace.spacePricePlans.map(({ amount, duration, type }) => ({ amount, duration, type })),
     });
 
-    return { message: `Successfully added ${title} plan in your space` };
+    return { message: `Successfully added price plan with title ${title} in your space` };
 };
 
 export const addSpacePricePlanTypeDefs = gql`

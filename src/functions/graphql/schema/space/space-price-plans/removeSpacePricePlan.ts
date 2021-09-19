@@ -25,7 +25,7 @@ const removeSpacePricePlan: RemoveSpacePricePlan = async (_, { input }, { authDa
         select: { title: true, space: { select: { accountId: true } } },
     });
 
-    if (!spacePricePlan) throw new GqlError({ code: "NOT_FOUND", message: "Space price not found" });
+    if (!spacePricePlan) throw new GqlError({ code: "NOT_FOUND", message: "Space price plan not found" });
 
     if (accountId !== spacePricePlan.space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
@@ -41,7 +41,7 @@ const removeSpacePricePlan: RemoveSpacePricePlan = async (_, { input }, { authDa
         price: updatedSpace.spacePricePlans?.map(({ amount, duration, type }) => ({ amount, duration, type })),
     });
 
-    return { message: `Successfully remove ${spacePricePlan.title} plan from your space` };
+    return { message: `Successfully removed price plan named ${spacePricePlan.title} from your space` };
 };
 
 export const removeSpacePricePlanTypeDefs = gql`

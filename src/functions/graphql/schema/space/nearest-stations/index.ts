@@ -18,6 +18,3 @@ export const nearestStationResolvers = mergeResolvers([
 ]);
 
 export * from "./NearestStationObject";
-export * from "./addNearestStation";
-export * from "./removeNearestStation";
-export * from "./updateNearestStaion";

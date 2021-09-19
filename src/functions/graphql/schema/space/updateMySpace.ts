@@ -22,14 +22,17 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
     const { accountId } = authData;
     const { id, name, maximumCapacity, numberOfSeats, spaceSize } = input;
 
-    const space = await store.space.findUnique({ where: { id } });
+    if (!name && !maximumCapacity && !numberOfSeats && !spaceSize)
+        throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited space are empty" });
+
+    const space = await store.space.findUnique({ where: { id }, select: { accountId: true } });
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    if (name && !name.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
+    if (name?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
 
     if (maximumCapacity && maximumCapacity < 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum capacity" });
@@ -38,14 +41,6 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of seats" });
 
     if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
-
-    const isIdentical =
-        space.name === name.trim() &&
-        space.maximumCapacity === maximumCapacity &&
-        space.numberOfSeats === numberOfSeats &&
-        space.spaceSize === spaceSize;
-
-    if (isIdentical) return { message: `No changes found in submited space` };
 
     const updatedSpace = await store.space.update({ where: { id }, data: { ...input, name: name?.trim() } });
 

@@ -32,8 +32,6 @@ const removeNearestStation: RemoveNearestStation = async (_, { input }, { authDa
     if (accountId !== nearestStation.space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    await store.nearestStation.delete({ where: { spaceId_stationId: { spaceId, stationId } } });
-
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
         data: { nearestStations: { delete: { spaceId_stationId: { spaceId, stationId } } } },

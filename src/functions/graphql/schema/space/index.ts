@@ -8,6 +8,7 @@ import { spacePricePlanTypeDefs, spacePricePlanResolvers } from "./space-price-p
 import { updateMySpaceResolvers, updateMySpaceTypeDefs } from "./updateMySpace";
 import { spaceTypesResolvers, spaceTypesTypeDefs } from "./space-types";
 import { spaceObjectResolvers, spaceObjectTypeDefs } from "./SpaceObject";
+import { spaceToSpaceTypeResolvers, spaceToSpaceTypeTypeDefs } from "./space-to-space-type";
 
 export const spaceTypeDefs = mergeTypeDefs([
     spaceObjectTypeDefs,
@@ -19,6 +20,7 @@ export const spaceTypeDefs = mergeTypeDefs([
     spacePricePlanTypeDefs,
     spaceTypesTypeDefs,
     updateMySpaceTypeDefs,
+    spaceToSpaceTypeTypeDefs,
 ]);
 
 export const spaceResolvers = mergeResolvers([
@@ -31,4 +33,5 @@ export const spaceResolvers = mergeResolvers([
     spacePricePlanResolvers,
     spaceTypesResolvers,
     updateMySpaceResolvers,
+    spaceToSpaceTypeResolvers,
 ]);
