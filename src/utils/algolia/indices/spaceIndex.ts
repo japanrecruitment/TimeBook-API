@@ -28,8 +28,8 @@ export const spaceIndex = algoliaClient.initIndex(environment.isDev() ? `space_d
 const settings: Settings = {
     attributesForFaceting: [
         "searchable(spaceTypes)",
+        "searchable(prefecture)",
         "filterOnly(nearestStations)",
-        "filterOnly(prefecture)",
         "filterOnly(price.type)",
     ],
     customRanking: ["desc(rating)", "desc(viewCount)"],

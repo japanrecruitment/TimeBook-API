@@ -1,7 +1,16 @@
 import { Address } from ".prisma/client";
 import { gql } from "apollo-server-express";
 
-export type UpdateAddressInput = Partial<Address> & { id: string };
+export type UpdateAddressInput = {
+    id: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    longitude?: number;
+    latitude?: number;
+    postalCode?: string;
+    prefectureId?: number;
+};
 
 export const updateAddressInputTypeDefs = gql`
     input UpdateAddressInput {
