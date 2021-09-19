@@ -5,12 +5,14 @@ import { PrismaSelect, toPrismaSelect } from "graphql-map-selections";
 import { omit } from "@utils/object-helper";
 import { NearestStationObject, NearestStationSelect, toNearestStationSelect } from "./nearest-stations";
 import { SpacePricePlanObject, SpacePricePlanSelect, toSpacePricePlanSelect } from "./space-price-plans";
-import { SpaceTypeObject, SpaceTypeSelect, toSpaceTypeSelect } from "./space-types";
+import { SpaceToSpaceTypeObject, SpaceToSpaceTypeSelect, toSpaceToSpaceTypeSelect } from "./space-to-space-type";
+import { IObjectTypeResolver } from "@graphql-tools/utils";
+import { Context } from "../../context";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
     spacePricePlan?: Partial<SpacePricePlanObject>[];
-    spaceTypes?: Partial<SpaceTypeObject>[];
+    spaceTypes?: Partial<SpaceToSpaceTypeObject>[];
     address?: Partial<AddressResult>;
 };
 
@@ -23,14 +25,14 @@ type SpaceSelect = {
     needApproval: true;
     nearestStations: PrismaSelect<NearestStationSelect>;
     spacePricePlans: PrismaSelect<SpacePricePlanSelect>;
-    spaceTypes: PrismaSelect<Record<"spaceType", PrismaSelect<SpaceTypeSelect>>>;
+    spaceTypes: PrismaSelect<SpaceToSpaceTypeSelect>;
     address: any;
 };
 
 export const toSpaceSelect = (selections): PrismaSelect<SpaceSelect> => {
     const nearestStationsSelect = toNearestStationSelect(selections.nearestStations);
     const spacePricePlansSelect = toSpacePricePlanSelect(selections.spacePricePlans);
-    const spaceTypesSelect = toSpaceTypeSelect(selections.spaceTypes);
+    const spaceToSpaceTypesSelect = toSpaceToSpaceTypeSelect(selections.spaceTypes);
     const addressSelect = toPrismaSelect(selections.address);
     const spaceSelect = omit(selections, "nearestStations", "spacePricePlan", "spaceTypes", "address");
 
@@ -39,10 +41,14 @@ export const toSpaceSelect = (selections): PrismaSelect<SpaceSelect> => {
             ...spaceSelect,
             nearestStations: nearestStationsSelect,
             spacePricePlans: spacePricePlansSelect,
-            spaceTypes: spaceTypesSelect ? { select: { spaceType: spaceTypesSelect } } : undefined,
+            spaceTypes: spaceToSpaceTypesSelect,
             address: addressSelect,
         } as unknown as SpaceSelect,
     };
+};
+
+const spaceObjectResolver: IObjectTypeResolver<SpaceObject, Context> = {
+    spaceTypes: ({ spaceTypes }) => spaceTypes.map((spaceType) => spaceType.spaceType),
 };
 
 export const spaceObjectTypeDefs = gql`
@@ -59,3 +65,7 @@ export const spaceObjectTypeDefs = gql`
         address: Address
     }
 `;
+
+export const spaceObjectResolvers = {
+    SpaceObject: spaceObjectResolver,
+};

@@ -18,12 +18,7 @@ const mySpaces: MySpaces = async (_, __, { store, authData }, info) => {
         ...toSpaceSelect(mapSelections(info)),
     });
 
-    const result = mySpaces.map((space) => {
-        const spaceTypes = space.spaceTypes.map((spaceType) => spaceType.spaceType);
-        return { ...space, spaceTypes };
-    });
-
-    return result || [];
+    return mySpaces || [];
 };
 
 export const mySpacesTypeDefs = gql`

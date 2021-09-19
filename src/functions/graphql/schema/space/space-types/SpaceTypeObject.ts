@@ -7,7 +7,7 @@ export type SpaceTypeObject = Partial<SpaceType>;
 export type SpaceTypeSelect = {
     id: true;
     title: true;
-    descript: true;
+    description: true;
 };
 
 export const toSpaceTypeSelect = (selection) => toPrismaSelect<SpaceTypeSelect>(selection);

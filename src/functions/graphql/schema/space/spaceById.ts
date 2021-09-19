@@ -16,13 +16,9 @@ const spaceById: SpaceById = async (_, { id }, { store }, info) => {
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 
-    const spaceTypes = space.spaceTypes.map((spaceType) => spaceType.spaceType);
+    Log(space);
 
-    const result = { ...space, spaceTypes };
-
-    Log(result);
-
-    return result;
+    return space;
 };
 
 export const spaceByIdTypeDefs = gql`

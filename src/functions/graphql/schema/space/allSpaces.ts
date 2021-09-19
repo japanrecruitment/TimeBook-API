@@ -23,14 +23,9 @@ const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
         skip,
     });
 
-    const result = allSpaces.map((space) => {
-        const spaceTypes = space.spaceTypes.map((spaceType) => spaceType.spaceType);
-        return { ...space, spaceTypes };
-    });
+    Log(allSpaces);
 
-    Log(result);
-
-    return result || [];
+    return allSpaces || [];
 };
 
 export const allSpacesTypeDefs = gql`
