@@ -9,6 +9,7 @@ export type SpacePricePlanSelect = {
     title: true;
     type: true;
     amount: true;
+    duration: true;
     maintenanceFee: true;
     lastMinuteDiscount: true;
     cooldownTime: true;
@@ -27,6 +28,7 @@ export const spacePricePlanObjectTypeDefs = gql`
         title: String
         type: SpacePricePlanType
         amount: Float
+        duration: Float
         maintenanceFee: Float
         lastMinuteDiscount: Float
         cooldownTime: Int

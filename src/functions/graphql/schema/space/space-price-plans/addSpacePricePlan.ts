@@ -7,6 +7,7 @@ import { Result } from "../../core/result";
 
 type AddSpacePricePlanInput = {
     amount: number;
+    duration: number;
     spaceId: string;
     title: string;
     type: SpacePricePlanType;
@@ -23,7 +24,7 @@ type AddSpacePricePlan = IFieldResolver<any, Context, AddSpacePricePlanArgs, Add
 
 const addSpacePricePlan: AddSpacePricePlan = async (_, { input }, { authData, dataSources, store }) => {
     const { accountId } = authData;
-    const { amount, cooldownTime, lastMinuteDiscount, maintenanceFee, spaceId, title, type } = input;
+    const { amount, duration, cooldownTime, lastMinuteDiscount, maintenanceFee, spaceId, title, type } = input;
 
     const space = await store.space.findUnique({
         where: { id: spaceId },
@@ -36,6 +37,8 @@ const addSpacePricePlan: AddSpacePricePlan = async (_, { input }, { authData, da
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
     if (!amount || amount < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
+
+    if (!duration || duration < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration" });
 
     if (cooldownTime && cooldownTime < 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cooldown time" });
@@ -54,14 +57,16 @@ const addSpacePricePlan: AddSpacePricePlan = async (_, { input }, { authData, da
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
         data: {
-            spacePricePlans: { create: { title, type, amount, cooldownTime, lastMinuteDiscount, maintenanceFee } },
+            spacePricePlans: {
+                create: { title, type, duration, amount, cooldownTime, lastMinuteDiscount, maintenanceFee },
+            },
         },
-        select: { id: true, spacePricePlans: { select: { amount: true, type: true } } },
+        select: { id: true, spacePricePlans: { select: { amount: true, duration: true, type: true } } },
     });
 
     await dataSources.spaceAlgolia.partialUpdateObject({
         objectID: updatedSpace.id,
-        price: updatedSpace.spacePricePlans.map(({ amount, type }) => ({ amount, type })),
+        price: updatedSpace.spacePricePlans.map(({ amount, duration, type }) => ({ amount, duration, type })),
     });
 
     return { message: `Successfully added ${title} plan in your space` };
@@ -70,6 +75,7 @@ const addSpacePricePlan: AddSpacePricePlan = async (_, { input }, { authData, da
 export const addSpacePricePlanTypeDefs = gql`
     input AddSpacePricePlanInput {
         amount: Float!
+        duration: Float!
         spaceId: ID!
         title: String!
         type: SpacePricePlanType!
@@ -79,7 +85,7 @@ export const addSpacePricePlanTypeDefs = gql`
     }
 
     type Mutation {
-        addSpacePricePlan(input: AddSpacePricePlanInput!) Result! @auth(requires: [user, host])
+        addSpacePricePlan(input: AddSpacePricePlanInput!): Result! @auth(requires: [user, host])
     }
 `;
 

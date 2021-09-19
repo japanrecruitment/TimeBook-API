@@ -23,7 +23,7 @@ const spaceById: SpaceById = async (_, { id }, { store }, info) => {
 
 export const spaceByIdTypeDefs = gql`
     type Query {
-        spaceById(id: ID!): Space
+        spaceById(id: ID!): SpaceObject
     }
 `;
 

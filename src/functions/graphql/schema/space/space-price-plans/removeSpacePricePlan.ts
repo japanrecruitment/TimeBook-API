@@ -33,12 +33,12 @@ const removeSpacePricePlan: RemoveSpacePricePlan = async (_, { input }, { authDa
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
         data: { spacePricePlans: { delete: { id } } },
-        select: { id: true, spacePricePlans: { select: { amount: true, type: true } } },
+        select: { id: true, spacePricePlans: { select: { amount: true, duration: true, type: true } } },
     });
 
     await dataSources.spaceAlgolia.partialUpdateObject({
         objectID: updatedSpace.id,
-        price: updatedSpace.spacePricePlans?.map(({ amount, type }) => ({ amount, type })),
+        price: updatedSpace.spacePricePlans?.map(({ amount, duration, type }) => ({ amount, duration, type })),
     });
 
     return { message: `Successfully remove ${spacePricePlan.title} plan from your space` };
@@ -51,7 +51,7 @@ export const removeSpacePricePlanTypeDefs = gql`
     }
 
     type Mutation {
-        removeSpacePricePlan(input: RemoveSpacePricePlanInput!) Result! @auth(requires: [user, host])
+        removeSpacePricePlan(input: RemoveSpacePricePlanInput!): Result! @auth(requires: [user, host])
     }
 `;
 

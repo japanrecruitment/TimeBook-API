@@ -52,7 +52,7 @@ export const addSpaceTypeDefs = gql`
     }
 
     type Mutation {
-        addSpace(input: AddSpaceInput!): SpaceObject! @auth(requires: [user, host])
+        addSpace(input: AddSpaceInput!): Result! @auth(requires: [user, host])
     }
 `;
 
