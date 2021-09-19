@@ -1,7 +1,7 @@
 import { gql } from "apollo-server-express";
 import { Space } from "@prisma/client";
-import { AddressResult } from "../address";
-import { PrismaSelect, toPrismaSelect } from "graphql-map-selections";
+import { AddressObject, AddressSelect, toAddressSelect } from "../address";
+import { PrismaSelect } from "graphql-map-selections";
 import { omit } from "@utils/object-helper";
 import { NearestStationObject, NearestStationSelect, toNearestStationSelect } from "./nearest-stations";
 import { SpacePricePlanObject, SpacePricePlanSelect, toSpacePricePlanSelect } from "./space-price-plans";
@@ -13,7 +13,7 @@ export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
     spacePricePlan?: Partial<SpacePricePlanObject>[];
     spaceTypes?: Partial<SpaceToSpaceTypeObject>[];
-    address?: Partial<AddressResult>;
+    address?: Partial<AddressObject>;
 };
 
 type SpaceSelect = {
@@ -26,14 +26,14 @@ type SpaceSelect = {
     nearestStations: PrismaSelect<NearestStationSelect>;
     spacePricePlans: PrismaSelect<SpacePricePlanSelect>;
     spaceTypes: PrismaSelect<SpaceToSpaceTypeSelect>;
-    address: any;
+    address: PrismaSelect<AddressSelect>;
 };
 
 export const toSpaceSelect = (selections): PrismaSelect<SpaceSelect> => {
     const nearestStationsSelect = toNearestStationSelect(selections.nearestStations);
     const spacePricePlansSelect = toSpacePricePlanSelect(selections.spacePricePlans);
     const spaceToSpaceTypesSelect = toSpaceToSpaceTypeSelect(selections.spaceTypes);
-    const addressSelect = toPrismaSelect(selections.address);
+    const addressSelect = toAddressSelect(selections.address);
     const spaceSelect = omit(selections, "nearestStations", "spacePricePlan", "spaceTypes", "address");
 
     return {
@@ -62,7 +62,7 @@ export const spaceObjectTypeDefs = gql`
         nearestStations: [NearestStationObject]
         spacePricePlans: [SpacePricePlanObject]
         spaceTypes: [SpaceTypeObject]
-        address: Address
+        address: AddressObject
     }
 `;
 
