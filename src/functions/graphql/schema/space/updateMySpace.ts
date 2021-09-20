@@ -3,10 +3,6 @@ import { Context } from "../../context";
 import { IFieldResolver } from "@graphql-tools/utils";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
-import { UpdateSpacePricePlanInput } from "./spacePricePlan";
-import { NearestStationsInput } from "./nearestStation";
-import { AddressInput } from "../address";
-import { omit } from "@utils/object-helper";
 
 type UpdateMySpaceInput = {
     id: string;
@@ -14,102 +10,46 @@ type UpdateMySpaceInput = {
     maximumCapacity?: number;
     numberOfSeats?: number;
     spaceSize?: number;
-    nearestStations?: NearestStationsInput[];
-    spacePricePlans?: UpdateSpacePricePlanInput[];
-    spaceTypes?: string[];
-    address?: AddressInput;
 };
 
-type UpdateMySpace = IFieldResolver<any, Context, Record<"input", UpdateMySpaceInput>, Promise<Result>>;
+type UpdateMySpaceArgs = { input: UpdateMySpaceInput };
+
+type UpdateMySpaceResult = Promise<Result>;
+
+type UpdateMySpace = IFieldResolver<any, Context, UpdateMySpaceArgs, UpdateMySpaceResult>;
 
 const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dataSources }) => {
     const { accountId } = authData;
-    const { id, nearestStations, spacePricePlans, spaceTypes, address, ...spaceData } = input;
+    const { id, name, maximumCapacity, numberOfSeats, spaceSize } = input;
 
-    const space = await store.space.findUnique({
-        where: { id },
-        select: {
-            accountId: true,
-            nearestStations: { select: { stationId: true } },
-            spacePricePlans: { select: { id: true } },
-            spaceTypes: { select: { spaceTypeId: true } },
-        },
-    });
+    if (!name && !maximumCapacity && !numberOfSeats && !spaceSize)
+        throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited space are empty" });
+
+    const space = await store.space.findUnique({ where: { id }, select: { accountId: true } });
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    const prevSpacePricePlanIds = space.spacePricePlans?.map(({ id }) => id);
-    const newSpacePricePlanIds = spacePricePlans?.map(({ id }) => id);
-    const spacePricePlanToAdd = spacePricePlans?.filter(({ id }) => prevSpacePricePlanIds?.includes(id));
-    const spacePricePlanToDelete =
-        spacePricePlans && prevSpacePricePlanIds?.filter((id) => !newSpacePricePlanIds?.includes(id));
+    if (name?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
 
-    const prevNearestStationIds = space.nearestStations?.map(({ stationId }) => stationId);
-    const newNearestStationIds = nearestStations?.map(({ stationId }) => stationId);
-    const nearestStationToAdd = nearestStations?.filter(({ stationId }) => !prevNearestStationIds?.includes(stationId));
-    const nearestStationToDelete =
-        nearestStations && prevNearestStationIds?.filter((stationId) => !newNearestStationIds?.includes(stationId));
+    if (maximumCapacity && maximumCapacity < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum capacity" });
 
-    const prevSpaceTypeIds = space.spaceTypes?.map(({ spaceTypeId }) => spaceTypeId);
-    const spaceTypesToAdd = spaceTypes
-        ?.filter((spaceTypeId) => !prevSpaceTypeIds?.includes(spaceTypeId))
-        .map((spaceTypeId) => ({ spaceTypeId }));
-    const spaceTypesToDelete =
-        spaceTypes && prevSpaceTypeIds?.filter((spaceTypeId) => !spaceTypes?.includes(spaceTypeId));
+    if (numberOfSeats && numberOfSeats < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of seats" });
 
-    const newSpace = await store.space.update({
-        where: { id },
-        data: {
-            ...spaceData,
-            spacePricePlans: {
-                deleteMany:
-                    spacePricePlanToDelete?.length > 0
-                        ? { id: { in: spacePricePlanToDelete }, spaceId: id }
-                        : undefined,
-                createMany: spacePricePlanToAdd?.length > 0 ? { data: spacePricePlanToAdd } : undefined,
-            },
-            spaceTypes: {
-                deleteMany:
-                    spaceTypesToDelete?.length > 0
-                        ? { spaceTypeId: { in: spaceTypesToDelete }, spaceId: id }
-                        : undefined,
-                createMany: spaceTypesToAdd?.length > 0 ? { data: spaceTypesToAdd } : undefined,
-            },
-            nearestStations: {
-                deleteMany:
-                    nearestStationToDelete?.length > 0
-                        ? { stationId: { in: nearestStationToDelete }, spaceId: id }
-                        : undefined,
-                createMany: nearestStationToAdd?.length > 0 ? { data: nearestStationToAdd } : undefined,
-            },
-            address: address && {
-                update: {
-                    ...omit(address, "userId", "companyId", "prefectureId"),
-                    prefecture: address.prefectureId && { connect: { id: address.prefectureId } },
-                },
-            },
-        },
-        include: {
-            address: { include: { prefecture: true } },
-            nearestStations: true,
-            spaceTypes: { include: { spaceType: true } },
-        },
-    });
+    if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
+
+    const updatedSpace = await store.space.update({ where: { id }, data: { ...input, name: name?.trim() } });
 
     await dataSources.spaceAlgolia.partialUpdateObject({
-        ...spaceData,
         objectID: id,
-        nearestStations: newSpace?.nearestStations?.map(({ stationId }) => stationId),
-        prefecture: newSpace?.address?.prefecture?.name,
-        price: spacePricePlans?.map(({ type, amount }) => ({ type, amount })),
-        rating: 0,
-        spaceTypes: newSpace?.spaceTypes?.map(({ spaceType }) => spaceType.title),
-        thumbnail: "",
-        updatedAt: newSpace?.updatedAt.getTime(),
-        viewCount: 0,
+        name: updatedSpace.name,
+        maximumCapacity: updatedSpace.maximumCapacity,
+        numberOfSeats: updatedSpace.numberOfSeats,
+        spaceSize: updatedSpace.spaceSize,
     });
 
     return { message: `Successfully updated space` };
@@ -122,10 +62,6 @@ export const updateMySpaceTypeDefs = gql`
         maximumCapacity: Int
         numberOfSeats: Int
         spaceSize: Float
-        nearestStations: [NearestStationsInput]
-        spacePricePlans: [UpdateSpacePricePlanInput]
-        spaceTypes: [ID]
-        address: AddressInput
     }
 
     type Mutation {

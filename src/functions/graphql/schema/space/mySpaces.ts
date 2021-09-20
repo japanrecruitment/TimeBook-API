@@ -1,44 +1,29 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
-import { mapSelections, toPrismaSelect } from "graphql-map-selections";
+import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../context";
-import { SpaceResult } from "./allSpaces";
+import { SpaceObject, toSpaceSelect } from "./SpaceObject";
 
-type MySpaces = IFieldResolver<any, Context, Record<string, any>, Promise<SpaceResult[]>>;
+type MySpacesArgs = any;
+
+type MySpacesResult = Promise<Array<SpaceObject>>;
+
+type MySpaces = IFieldResolver<any, Context, MySpacesArgs, MySpacesResult>;
 
 const mySpaces: MySpaces = async (_, __, { store, authData }, info) => {
-    const gqlSelect = mapSelections(info);
-    const nearestStationsSelect = toPrismaSelect(gqlSelect.nearestStations);
-    const spacePricePlansSelect = toPrismaSelect(gqlSelect.spacePricePlans);
-    const spaceTypesSelect = toPrismaSelect(gqlSelect.spaceTypes);
-    const addressSelect = toPrismaSelect(gqlSelect.address);
-    const spaceSelect = omit(gqlSelect, "nearestStations", "spacePricePlan", "spaceTypes", "address");
-
     const { accountId } = authData;
 
     const mySpaces = await store.space.findMany({
         where: { accountId: accountId },
-        select: {
-            ...spaceSelect,
-            nearestStations: nearestStationsSelect,
-            spacePricePlans: spacePricePlansSelect,
-            spaceTypes: spaceTypesSelect ? { select: { spaceType: spaceTypesSelect } } : undefined,
-            address: addressSelect,
-        },
+        ...toSpaceSelect(mapSelections(info)),
     });
 
-    const result = mySpaces.map((space) => {
-        const spaceTypes = space.spaceTypes.map((spaceType) => spaceType.spaceType);
-        return { ...space, spaceTypes };
-    });
-
-    return result || [];
+    return mySpaces || [];
 };
 
 export const mySpacesTypeDefs = gql`
     type Query {
-        mySpaces: [Space] @auth(requires: [user, host])
+        mySpaces: [SpaceObject] @auth(requires: [user, host])
     }
 `;
 

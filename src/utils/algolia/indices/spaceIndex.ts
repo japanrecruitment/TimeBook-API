@@ -12,11 +12,12 @@ export type SpaceIndexRecord = AlgoliaRecord & {
     maximumCapacity?: number;
     name: string;
     nearestStations?: number[];
+    numberOfSeats?: number;
     prefecture?: string;
-    price?: { amount: number; type: string }[];
+    price?: { amount: number; duration: number; type: string }[];
     rating?: number;
     spaceSize?: number;
-    spaceTypes: string[];
+    spaceTypes?: string[];
     thumbnail?: string;
     updatedAt?: number;
     viewCount?: number;
@@ -27,8 +28,8 @@ export const spaceIndex = algoliaClient.initIndex(environment.isDev() ? `space_d
 const settings: Settings = {
     attributesForFaceting: [
         "searchable(spaceTypes)",
+        "searchable(prefecture)",
         "filterOnly(nearestStations)",
-        "filterOnly(prefecture)",
         "filterOnly(price.type)",
     ],
     customRanking: ["desc(rating)", "desc(viewCount)"],

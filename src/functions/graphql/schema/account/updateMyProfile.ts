@@ -1,7 +1,7 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { Address, ProfileType } from "@prisma/client";
+import { ProfileType } from "@prisma/client";
 import { Log } from "@utils/logger";
-import { omit, pick } from "@utils/object-helper";
+import { omit } from "@utils/object-helper";
 import { S3Lib } from "@libs/index";
 import { merge } from "lodash";
 import { gql } from "apollo-server-core";
@@ -23,7 +23,6 @@ type UpdateUserProfileInput = {
     dob?: Date;
     firstNameKana?: string;
     lastNameKana?: string;
-    address?: Partial<Address>;
 };
 
 type UpdateCompanyProfileInput = {
@@ -31,7 +30,6 @@ type UpdateCompanyProfileInput = {
     name?: string;
     nameKana?: string;
     registrationNumber?: string;
-    address?: Partial<Address>;
 };
 
 type UpdateMyProfileInput = UpdateUserProfileInput & UpdateCompanyProfileInput;
@@ -55,27 +53,10 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, context, info) => 
 const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (input, { store }, info) => {
     const { profilePhoto, ...selections } = omit(mapSelections(info).UserProfile, "email", "phoneNumber", "roles");
     const select = toPrismaSelect(merge(selections, { profilePhoto: mapPhotoSelection(profilePhoto) }));
-    const { id, address, dob, firstName, firstNameKana, lastName, lastNameKana } = input;
+    const { id, dob, firstName, firstNameKana, lastName, lastNameKana } = input;
     return await store.user.update({
         where: { id },
-        data: {
-            dob,
-            firstName,
-            firstNameKana,
-            lastName,
-            lastNameKana,
-            address: address
-                ? {
-                      upsert: {
-                          create: {
-                              ...omit(address, "companyId", "prefectureId", "spaceId"),
-                              prefecture: { connect: { id: address.prefectureId } },
-                          },
-                          update: address,
-                      },
-                  }
-                : undefined,
-        },
+        data: { dob, firstName, firstNameKana, lastName, lastNameKana },
         ...select,
     });
 };
@@ -83,24 +64,13 @@ const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (
 const updateCompanyProfile: UpdateProfileStrategy<UpdateCompanyProfileInput> = async (input, { store }, info) => {
     const { profilePhoto, ...selections } = omit(mapSelections(info).CompanyProfile, "email", "phoneNumber", "roles");
     const select = toPrismaSelect(merge(selections, { profilePhoto: mapPhotoSelection(profilePhoto) }));
-    const { id, address, name, nameKana, registrationNumber } = input;
+    const { id, name, nameKana, registrationNumber } = input;
     return await store.company.update({
         where: { id },
         data: {
             name,
             nameKana,
             registrationNumber,
-            address: address
-                ? {
-                      upsert: {
-                          create: {
-                              ...omit(address, "userId", "prefectureId", "spaceId"),
-                              prefecture: { connect: { id: address.prefectureId } },
-                          },
-                          update: address,
-                      },
-                  }
-                : undefined,
         },
         ...select,
     });
@@ -157,7 +127,6 @@ export const updateMyProfileTypeDefs = gql`
         name: String
         nameKana: String
         registrationNumber: String
-        address: AddressInput
     }
 
     type Mutation {
