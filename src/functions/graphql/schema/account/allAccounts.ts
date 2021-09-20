@@ -1,6 +1,6 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
-import { mapSelections, toPrismaSelect } from "@libs/graphql-map-selections";
+import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { Profile } from "./profile";
 import { PaginationOption } from "../core/paginationOption";

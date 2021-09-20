@@ -1,7 +1,7 @@
 import { gql } from "apollo-server-express";
 import { Space } from "@prisma/client";
 import { AddressObject, AddressSelect, toAddressSelect } from "../address";
-import { PrismaSelect } from "@libs/graphql-map-selections";
+import { PrismaSelect } from "graphql-map-selections";
 import { omit } from "@utils/object-helper";
 import { NearestStationObject, NearestStationSelect, toNearestStationSelect } from "./nearest-stations";
 import { SpacePricePlanObject, SpacePricePlanSelect, toSpacePricePlanSelect } from "./space-price-plans";

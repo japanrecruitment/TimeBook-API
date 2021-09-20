@@ -1,3 +1,4 @@
+import { Address } from ".prisma/client";
 import { gql } from "apollo-server-express";
 
 export type UpdateAddressInput = {
