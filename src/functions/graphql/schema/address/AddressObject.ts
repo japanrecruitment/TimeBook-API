@@ -1,6 +1,6 @@
 import { Address, Prefecture } from ".prisma/client";
 import { gql } from "apollo-server-express";
-import { toPrismaSelect } from "graphql-map-selections";
+import { toPrismaSelect } from "@libs/graphql-map-selections";
 
 export type AddressObject = Partial<Address> & {
     prefecture: Partial<Prefecture>;

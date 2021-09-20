@@ -1,4 +1,4 @@
-import { PrismaSelect } from "graphql-map-selections";
+import { PrismaSelect } from "@libs/graphql-map-selections";
 import { SpaceTypeObject, SpaceTypeSelect, toSpaceTypeSelect } from "../space-types";
 
 export type SpaceToSpaceTypeObject = {

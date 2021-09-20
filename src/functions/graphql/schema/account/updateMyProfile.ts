@@ -6,7 +6,7 @@ import { S3Lib } from "@libs/index";
 import { merge } from "lodash";
 import { gql } from "apollo-server-core";
 import { GraphQLResolveInfo } from "graphql";
-import { mapSelections, toPrismaSelect } from "graphql-map-selections";
+import { mapSelections, toPrismaSelect } from "@libs/graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Profile } from "./profile";
