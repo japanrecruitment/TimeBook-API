@@ -1,5 +1,5 @@
-import { SpacePricePlan } from ".prisma/client";
-import { gql } from "apollo-server-express";
+import { SpacePricePlan } from "@prisma/client";
+import { gql } from "apollo-server-core";
 import { toPrismaSelect } from "graphql-map-selections";
 
 export type SpacePricePlanObject = Partial<SpacePricePlan>;

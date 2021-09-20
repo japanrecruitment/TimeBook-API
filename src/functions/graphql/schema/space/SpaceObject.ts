@@ -1,4 +1,4 @@
-import { gql } from "apollo-server-express";
+import { gql } from "apollo-server-core";
 import { Space } from "@prisma/client";
 import { AddressObject, AddressSelect, toAddressSelect } from "../address";
 import { PrismaSelect } from "graphql-map-selections";

@@ -4,7 +4,7 @@ import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { Profile } from "./profile";
 import { PaginationOption } from "../core/paginationOption";
-import { ProfileType, Role } from ".prisma/client";
+import { ProfileType, Role } from "@prisma/client";
 import { omit, pick } from "@utils/object-helper";
 import { mapPhotoSelection } from "../media";
 import { merge } from "lodash";
