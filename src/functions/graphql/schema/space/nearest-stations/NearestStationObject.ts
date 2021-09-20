@@ -1,5 +1,5 @@
 import { Station, NearestStation } from "@prisma/client";
-import { gql } from "apollo-server-express";
+import { gql } from "apollo-server-core";
 import { toPrismaSelect } from "graphql-map-selections";
 
 export type NearestStationObject = Partial<NearestStation> & {

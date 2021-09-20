@@ -1,4 +1,4 @@
-import { gql } from "apollo-server-express";
+import { gql } from "apollo-server-core";
 
 export type AddAddressInput = {
     addressLine1: string;

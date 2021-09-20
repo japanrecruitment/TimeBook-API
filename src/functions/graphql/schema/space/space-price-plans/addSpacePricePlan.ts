@@ -1,6 +1,6 @@
-import { SpacePricePlanType } from ".prisma/client";
+import { SpacePricePlanType } from "@prisma/client";
 import { IFieldResolver } from "@graphql-tools/utils";
-import { gql } from "apollo-server-express";
+import { gql } from "apollo-server-core";
 import { GqlError } from "src/functions/graphql/error";
 import { Context } from "../../../context";
 import { Result } from "../../core/result";
