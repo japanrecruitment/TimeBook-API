@@ -7,17 +7,13 @@ type AllLines = IFieldResolver<any, Context, any, Promise<TrainLine[]>>;
 type LinesByPrefecture = IFieldResolver<any, Context, any, Promise<TrainLine[]>>;
 
 const allLines: AllLines = async (_, __, { store, dataSources }) => {
-    const cacheDoc = await dataSources.redis.fetch("all-lines");
+    const cacheDoc = await dataSources.redis.fetch("line:all");
     if (cacheDoc) return cacheDoc;
-    const allStations = await store.trainLine.findMany({ where: { status: 0 }, include: { stations: true } });
-    dataSources.redis.store("all-lines", allStations, 600);
-    return allStations;
-};
-const linesByPrefecture: LinesByPrefecture = async (_, __, { store, dataSources }) => {
-    const cacheDoc = await dataSources.redis.fetch("lines-");
-    if (cacheDoc) return cacheDoc;
-    const allStations = await store.trainLine.findMany({ where: { status: 0 }, include: { stations: true } });
-    dataSources.redis.store("all-lines", allStations, 600);
+    const allStations = await store.trainLine.findMany({
+        where: { status: 0 },
+        include: { stations: { include: { prefecture: true } } },
+    });
+    dataSources.redis.store("line:all", allStations, 600);
     return allStations;
 };
 
@@ -31,15 +27,13 @@ export const allLinesTypeDefs = gql`
         longitude: Float
         latitude: Float
         zoom: Int
-        stations: [Station]
     }
 
     type Query {
         allLines: [Line] @auth(requires: [admin])
-        linesByPrefecture: [Line]
     }
 `;
 
 export const allLinesResolvers = {
-    Query: { allLines, linesByPrefecture },
+    Query: { allLines },
 };
