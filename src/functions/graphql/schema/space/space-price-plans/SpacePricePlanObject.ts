@@ -1,6 +1,7 @@
 import { SpacePricePlan } from ".prisma/client";
+import { PrismaSelect } from "@libs/prisma-select";
 import { gql } from "apollo-server-express";
-import { toPrismaSelect } from "@libs/graphql-map-selections";
+import { toPrismaSelect } from "graphql-map-selections";
 
 export type SpacePricePlanObject = Partial<SpacePricePlan>;
 
@@ -15,7 +16,7 @@ export type SpacePricePlanSelect = {
     cooldownTime: true;
 };
 
-export const toSpacePricePlanSelect = (selection) => toPrismaSelect<SpacePricePlanSelect>(selection);
+export const toSpacePricePlanSelect = (selection) => toPrismaSelect(selection) as PrismaSelect<SpacePricePlanSelect>;
 
 export const spacePricePlanObjectTypeDefs = gql`
     enum SpacePricePlanType {

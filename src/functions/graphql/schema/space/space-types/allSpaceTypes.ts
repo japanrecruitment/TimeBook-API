@@ -2,6 +2,7 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-express";
 import { Context } from "../../../context";
 import { SpaceTypeObject } from ".";
+import { PaginationOption } from "../../core/paginationOption";
 
 type AllSpaceTypeArgs = any;
 

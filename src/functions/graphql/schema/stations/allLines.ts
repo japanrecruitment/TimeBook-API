@@ -4,6 +4,7 @@ import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 
 type AllLines = IFieldResolver<any, Context, any, Promise<TrainLine[]>>;
+type LinesByPrefecture = IFieldResolver<any, Context, any, Promise<TrainLine[]>>;
 
 const allLines: AllLines = async (_, __, { store, dataSources }) => {
     const cacheDoc = await dataSources.redis.fetch("line:all");
