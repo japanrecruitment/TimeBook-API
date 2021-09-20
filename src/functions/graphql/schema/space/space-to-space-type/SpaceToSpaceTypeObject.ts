@@ -1,4 +1,4 @@
-import { PrismaSelect } from "@libs/prisma-select";
+import { PrismaSelect } from "graphql-map-selections";
 import { SpaceTypeObject, SpaceTypeSelect, toSpaceTypeSelect } from "../space-types";
 
 export type SpaceToSpaceTypeObject = {
@@ -12,5 +12,5 @@ export type SpaceToSpaceTypeSelect = {
 export const toSpaceToSpaceTypeSelect = (selections): PrismaSelect<SpaceToSpaceTypeSelect> => {
     const spaceTypeSelect = toSpaceTypeSelect(selections);
     if (!spaceTypeSelect) return;
-    return { select: { spaceType: spaceTypeSelect } } as PrismaSelect<SpaceToSpaceTypeSelect>;
+    return { select: { spaceType: spaceTypeSelect } };
 };
