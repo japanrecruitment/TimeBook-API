@@ -1,7 +1,7 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { getIpData, Log, matchPassword, omit, pick, encodeToken } from "@utils/index";
 import { gql } from "apollo-server-core";
-import { mapSelections, toPrismaSelect } from "graphql-map-selections";
+import { mapSelections, toPrismaSelect } from "@libs/graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";

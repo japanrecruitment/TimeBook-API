@@ -1,6 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-express";
-import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";

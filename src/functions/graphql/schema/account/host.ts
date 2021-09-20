@@ -2,7 +2,7 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { Host as IHost, ProfileType, Role, HostType, Photo } from "@prisma/client";
 
 import { gql } from "apollo-server-core";
-import { mapSelections, toPrismaSelect } from "graphql-map-selections";
+import { mapSelections, toPrismaSelect } from "@libs/graphql-map-selections";
 import { Context } from "../../context";
 import { Result } from "../core/result";
 import { GqlError } from "../../error";

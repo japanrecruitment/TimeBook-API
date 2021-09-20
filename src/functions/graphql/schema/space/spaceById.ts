@@ -1,7 +1,7 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
-import { mapSelections } from "graphql-map-selections";
+import { mapSelections } from "@libs/graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { SpaceObject, toSpaceSelect } from "./SpaceObject";
