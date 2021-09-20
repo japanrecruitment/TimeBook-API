@@ -1,6 +1,7 @@
 import { SpaceType } from ".prisma/client";
 import { gql } from "apollo-server-express";
 import { toPrismaSelect } from "graphql-map-selections";
+import { PrismaSelect } from "@libs/prisma-select";
 
 export type SpaceTypeObject = Partial<SpaceType>;
 
@@ -10,7 +11,7 @@ export type SpaceTypeSelect = {
     description: true;
 };
 
-export const toSpaceTypeSelect = (selection) => toPrismaSelect<SpaceTypeSelect>(selection);
+export const toSpaceTypeSelect = (selection) => toPrismaSelect(selection) as PrismaSelect<SpaceTypeSelect>;
 
 export const spaceTypeObjectTypeDefs = gql`
     type SpaceTypeObject {

@@ -1,3 +1,4 @@
+import { PrismaSelect } from "@libs/prisma-select";
 import { Station, NearestStation } from "@prisma/client";
 import { gql } from "apollo-server-express";
 import { toPrismaSelect } from "graphql-map-selections";
@@ -12,9 +13,9 @@ export type NearestStationSelect = {
     time: true;
 };
 
-export const toNearestStationSelect = (selection) => {
-    const nearestStationSelect = toPrismaSelect<NearestStationSelect>(selection);
-    return nearestStationSelect;
+export const toNearestStationSelect = (selection): PrismaSelect<NearestStationSelect> => {
+    const nearestStationSelect = toPrismaSelect(selection);
+    return nearestStationSelect as PrismaSelect<NearestStationSelect>;
 };
 
 export const nearestStationObjectTypeDefs = gql`
