@@ -1,15 +1,15 @@
 import { IUnionTypeResolver } from "@graphql-tools/utils";
 import { Account, Company, ProfileType, User } from "@prisma/client";
 import { gql } from "apollo-server-core";
-import { AddressResult } from "../address";
+import { AddressObject } from "../address";
 
 export type UserProfile = User &
     Partial<Pick<Account, "email" | "password">> &
-    Partial<Record<"address", AddressResult>>;
+    Partial<Record<"address", AddressObject>>;
 
 export type CompanyProfile = Company &
     Partial<Pick<Account, "email" | "password">> &
-    Partial<Record<"address", AddressResult>>;
+    Partial<Record<"address", AddressObject>>;
 
 export type Profile = UserProfile | CompanyProfile;
 
