@@ -6,7 +6,6 @@ import { myProfileResolvers, myProfileTypeDefs } from "./myProfile";
 import { mySessionsResolvers, mySessionsTypeDefs } from "./mySessions";
 import { profileResolvers, profileTypeDefs } from "./profile";
 import { refreshTokenResolvers, refreshTokenTypeDefs } from "./refreshToken";
-import { registerCompanyResolvers, registerCompanyTypeDefs } from "./registerCompany";
 import { registerUserResolvers, registerUserTypeDefs } from "./registerUser";
 import { resendVerificationCodeResolvers, resendVerificationCodeTypeDefs } from "./resendVerificationCode";
 import { resetPasswordResolvers, resetPasswordTypeDefs } from "./resetPassword";
@@ -26,7 +25,6 @@ export const accountTypeDefs = mergeTypeDefs([
     mySessionsTypeDefs,
     profileTypeDefs,
     refreshTokenTypeDefs,
-    registerCompanyTypeDefs,
     registerHostTypeDefs,
     registerUserTypeDefs,
     resendVerificationCodeTypeDefs,
@@ -46,7 +44,6 @@ export const accountResolvers = mergeResolvers([
     mySessionsResolvers,
     profileResolvers,
     refreshTokenResolvers,
-    registerCompanyResolvers,
     registerHostResolvers,
     registerUserResolvers,
     resendVerificationCodeResolvers,
