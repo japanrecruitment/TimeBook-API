@@ -1,15 +1,66 @@
 import { IUnionTypeResolver } from "@graphql-tools/utils";
 import { Account, Company, ProfileType, User } from "@prisma/client";
+import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
-import { AddressObject } from "../address";
+import { PrismaSelect } from "graphql-map-selections";
+import { AddressObject, AddressSelect, toAddressSelect } from "../address";
+import { PhotoSelect, toPhotoSelect } from "../media";
 
-export type UserProfile = User &
+export type UserProfile = Partial<User> &
     Partial<Pick<Account, "email" | "password">> &
     Partial<Record<"address", AddressObject>>;
 
-export type CompanyProfile = Company &
+export type UserProfileSelect = {
+    id: boolean;
+    firstName: boolean;
+    lastName: boolean;
+    firstNameKana: boolean;
+    lastNameKana: boolean;
+    address: PrismaSelect<AddressSelect>;
+    profilePhoto: PrismaSelect<PhotoSelect>;
+};
+
+export const toUserProfileSelect = (selections): PrismaSelect<UserProfileSelect> => {
+    if (!selections) return;
+    const addressSelect = toAddressSelect(selections.address);
+    const profilePhotoSelect = toPhotoSelect(selections.profilePhoto);
+    const userProfileSelect = omit(selections, "email", "phoneNumber", "roles", "address", "profilePhoto");
+
+    return {
+        select: {
+            ...userProfileSelect,
+            address: addressSelect,
+            profilePhoto: profilePhotoSelect,
+        } as UserProfileSelect,
+    };
+};
+
+export type CompanyProfile = Partial<Company> &
     Partial<Pick<Account, "email" | "password">> &
     Partial<Record<"address", AddressObject>>;
+
+export type CompanyProfileSelect = {
+    id: boolean;
+    name: boolean;
+    nameKana: boolean;
+    registrationNumber: boolean;
+    address: PrismaSelect<AddressSelect>;
+    profilePhoto: PrismaSelect<PhotoSelect>;
+};
+
+export const toCompanyProfileSelect = (selections): PrismaSelect<CompanyProfileSelect> => {
+    const addressSelect = toAddressSelect(selections.address);
+    const profilePhotoSelect = toPhotoSelect(selections.profilePhoto);
+    const companyProfileSelect = omit(selections, "email", "phoneNumber", "roles", "address", "profilePhoto");
+
+    return {
+        select: {
+            ...companyProfileSelect,
+            address: addressSelect,
+            profilePhoto: profilePhotoSelect,
+        } as CompanyProfileSelect,
+    };
+};
 
 export type Profile = UserProfile | CompanyProfile;
 

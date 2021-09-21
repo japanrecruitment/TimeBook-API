@@ -2,11 +2,11 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
 import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
-import { Profile } from "./profile";
+import { Profile, toCompanyProfileSelect, toUserProfileSelect } from "./profile";
 import { PaginationOption } from "../core/paginationOption";
 import { ProfileType, Role } from "@prisma/client";
 import { omit, pick } from "@utils/object-helper";
-import { mapPhotoSelection } from "../media";
+import { toPhotoSelect } from "../media";
 import { merge } from "lodash";
 import { Log } from "@utils/logger";
 
@@ -27,22 +27,8 @@ type AllAccounts = IFieldResolver<any, Context, AllAccountsArgs, Promise<Array<P
 const allAccounts: AllAccounts = async (_, { filters, paginate }, { store }, info) => {
     const { UserProfile, CompanyProfile } = mapSelections(info);
 
-    const userProfileSelect = toPrismaSelect(
-        omit(
-            merge(UserProfile, { profilePhoto: mapPhotoSelection(UserProfile.profilePhoto) }),
-            "email",
-            "phoneNumber",
-            "roles"
-        )
-    );
-    const companyProfileSelect = toPrismaSelect(
-        omit(
-            merge(CompanyProfile, { profilePhoto: mapPhotoSelection(CompanyProfile.profilePhoto) }),
-            "email",
-            "phoneNumber",
-            "roles"
-        )
-    );
+    const userProfileSelect = toUserProfileSelect(UserProfile);
+    const companyProfileSelect = toCompanyProfileSelect(CompanyProfile);
 
     const { approved, profileTypes, roles, suspended } = filters || {};
     const { take, skip } = paginate || {};

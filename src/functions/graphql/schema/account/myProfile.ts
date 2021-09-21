@@ -1,43 +1,21 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { Log } from "@utils/logger";
-import { omit, pick } from "@utils/object-helper";
+import { pick } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
-import { mapSelections, toPrismaSelect } from "graphql-map-selections";
+import { mapSelections } from "graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { mapPhotoSelection } from "../media";
-import { Profile } from "./profile";
+import { Profile, toCompanyProfileSelect, toUserProfileSelect } from "./profile";
 
 type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<Profile>>;
 
 const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
-    const { UserProfile, CompanyProfile, Host } = mapSelections(info);
+    const { UserProfile, CompanyProfile } = mapSelections(info);
     const { accountId, profileType } = authData;
 
-    const userProfileSelect =
-        profileType === "UserProfile"
-            ? toPrismaSelect(
-                  omit(
-                      merge(UserProfile, { profilePhoto: mapPhotoSelection(UserProfile.profilePhoto) }),
-                      "email",
-                      "phoneNumber",
-                      "roles"
-                  )
-              )
-            : false;
-    const companyProfileSelect =
-        profileType === "CompanyProfile"
-            ? toPrismaSelect(
-                  omit(
-                      merge(CompanyProfile, { profilePhoto: mapPhotoSelection(CompanyProfile.profilePhoto) }),
-                      "email",
-                      "phoneNumber",
-                      "roles"
-                  )
-              )
-            : false;
-    const hostSelect = toPrismaSelect(Host) || false;
+    const userProfileSelect = profileType === "UserProfile" && toUserProfileSelect(UserProfile);
+    const companyProfileSelect = profileType === "CompanyProfile" && toCompanyProfileSelect(CompanyProfile);
 
     const account = await store.account.findUnique({
         where: { id: accountId },
@@ -48,7 +26,6 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
             roles: true,
             userProfile: userProfileSelect,
             companyProfile: companyProfileSelect,
-            host: hostSelect,
         },
     });
 

@@ -7,9 +7,9 @@ export type NearestStationObject = Partial<NearestStation> & {
 };
 
 export type NearestStationSelect = {
-    station: true;
-    via: true;
-    time: true;
+    station: boolean;
+    via: boolean;
+    time: boolean;
 };
 
 export const toNearestStationSelect = (selection) => {

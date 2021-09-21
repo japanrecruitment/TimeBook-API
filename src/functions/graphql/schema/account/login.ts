@@ -1,12 +1,11 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { getIpData, Log, matchPassword, omit, pick, encodeToken } from "@utils/index";
 import { gql } from "apollo-server-core";
-import { mapSelections, toPrismaSelect } from "graphql-map-selections";
+import { mapSelections } from "graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { Profile } from "./profile";
-import { photoSelect } from "../media";
+import { Profile, toCompanyProfileSelect, toUserProfileSelect } from "./profile";
 
 type LoginInput = {
     email: string;
@@ -26,16 +25,8 @@ type Login = IFieldResolver<any, Context, LoginArgs, Promise<LoginResult>>;
 const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) => {
     const gqlSelect = mapSelections(info);
     const { UserProfile, CompanyProfile } = gqlSelect.profile || {};
-    const userProfileSelect =
-        toPrismaSelect({
-            ...omit(UserProfile, "email", "phoneNumber", "profilePhoto", "roles"),
-            profilePhoto: photoSelect,
-        }) || true;
-    const companyProfileSelect =
-        toPrismaSelect({
-            ...omit(CompanyProfile, "email", "phoneNumber", "profilePhoto", "roles"),
-            profilePhoto: photoSelect,
-        }) || true;
+    const userProfileSelect = toUserProfileSelect(UserProfile) || true;
+    const companyProfileSelect = toCompanyProfileSelect(CompanyProfile) || true;
 
     let { email, password } = input;
 

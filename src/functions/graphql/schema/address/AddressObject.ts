@@ -7,14 +7,14 @@ export type AddressObject = Partial<Address> & {
 };
 
 export type AddressSelect = {
-    id: true;
-    addressLine1: true;
-    addressLine2: true;
-    city: true;
-    longitude: true;
-    latitude: true;
-    postalCode: true;
-    prefecture: true;
+    id: boolean;
+    addressLine1: boolean;
+    addressLine2: boolean;
+    city: boolean;
+    longitude: boolean;
+    latitude: boolean;
+    postalCode: boolean;
+    prefecture: boolean;
 };
 
 export const toAddressSelect = (selections) => toPrismaSelect<AddressSelect>(selections);

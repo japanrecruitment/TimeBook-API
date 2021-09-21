@@ -9,8 +9,8 @@ import { GraphQLResolveInfo } from "graphql";
 import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { Profile } from "./profile";
-import { ImageUploadInput, ImageUploadResult, mapPhotoSelection } from "../media";
+import { Profile, toCompanyProfileSelect, toUserProfileSelect } from "./profile";
+import { ImageUploadInput, ImageUploadResult, toPhotoSelect } from "../media";
 
 type UpdateProfileStrategy<T> = (input: T, context: Context, info: GraphQLResolveInfo) => Promise<Partial<Profile>>;
 
@@ -51,8 +51,8 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, context, info) => 
 };
 
 const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (input, { store }, info) => {
-    const { profilePhoto, ...selections } = omit(mapSelections(info).UserProfile, "email", "phoneNumber", "roles");
-    const select = toPrismaSelect(merge(selections, { profilePhoto: mapPhotoSelection(profilePhoto) }));
+    const { UserProfile } = mapSelections(info);
+    const select = toUserProfileSelect(UserProfile);
     const { id, dob, firstName, firstNameKana, lastName, lastNameKana } = input;
     return await store.user.update({
         where: { id },
@@ -62,8 +62,8 @@ const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (
 };
 
 const updateCompanyProfile: UpdateProfileStrategy<UpdateCompanyProfileInput> = async (input, { store }, info) => {
-    const { profilePhoto, ...selections } = omit(mapSelections(info).CompanyProfile, "email", "phoneNumber", "roles");
-    const select = toPrismaSelect(merge(selections, { profilePhoto: mapPhotoSelection(profilePhoto) }));
+    const { CompanyProfile } = mapSelections(info);
+    const select = toCompanyProfileSelect(CompanyProfile);
     const { id, name, nameKana, registrationNumber } = input;
     return await store.company.update({
         where: { id },

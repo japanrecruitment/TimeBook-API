@@ -17,12 +17,12 @@ export type SpaceObject = Partial<Space> & {
 };
 
 type SpaceSelect = {
-    id: true;
-    name: true;
-    maximumCapacity: true;
-    numberOfSeats: true;
-    spaceSize: true;
-    needApproval: true;
+    id: boolean;
+    name: boolean;
+    maximumCapacity: boolean;
+    numberOfSeats: boolean;
+    spaceSize: boolean;
+    needApproval: boolean;
     nearestStations: PrismaSelect<NearestStationSelect>;
     spacePricePlans: PrismaSelect<SpacePricePlanSelect>;
     spaceTypes: PrismaSelect<SpaceToSpaceTypeSelect>;
@@ -30,6 +30,8 @@ type SpaceSelect = {
 };
 
 export const toSpaceSelect = (selections): PrismaSelect<SpaceSelect> => {
+    if (!selections) return;
+
     const nearestStationsSelect = toNearestStationSelect(selections.nearestStations);
     const spacePricePlansSelect = toSpacePricePlanSelect(selections.spacePricePlans);
     const spaceToSpaceTypesSelect = toSpaceToSpaceTypeSelect(selections.spaceTypes);
