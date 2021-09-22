@@ -186,6 +186,7 @@ model Space {
     spaceSize       Float                @default(0)
     needApproval    Boolean              @default(false)
     createdAt       DateTime             @default(now()) @db.Timestamp(6)
+    isDeleted       Boolean
     updatedAt       DateTime             @updatedAt
     accountId       String
     account         Account              @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)

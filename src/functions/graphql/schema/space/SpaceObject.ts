@@ -31,7 +31,6 @@ type SpaceSelect = {
 
 export const toSpaceSelect = (selections): PrismaSelect<SpaceSelect> => {
     if (!selections) return;
-
     const nearestStationsSelect = toNearestStationSelect(selections.nearestStations);
     const spacePricePlansSelect = toSpacePricePlanSelect(selections.spacePricePlans);
     const spaceToSpaceTypesSelect = toSpaceToSpaceTypeSelect(selections.spaceTypes);

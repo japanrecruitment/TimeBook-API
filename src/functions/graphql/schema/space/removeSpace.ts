@@ -20,7 +20,7 @@ const removeSpace: RemoveSpace = async (_, { id }, { authData, dataSources, stor
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    await store.space.delete({ where: { id } });
+    await store.space.update({ where: { id }, data: { isDeleted: true } });
 
     await dataSources.spaceAlgolia.deleteObject(id);
 
