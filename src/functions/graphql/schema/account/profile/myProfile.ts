@@ -4,18 +4,23 @@ import { pick } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { merge } from "lodash";
-import { Context } from "../../context";
-import { GqlError } from "../../error";
-import { Profile, toCompanyProfileSelect, toUserProfileSelect } from "./profile";
+import { Context } from "../../../context";
+import { GqlError } from "../../../error";
+import { ProfileObject } from "./ProfileObject";
+import { toCompanyProfileSelect } from "./CompanyProfile";
+import { toUserProfileSelect } from "./UserProfileObject";
+import { toHostSelect } from "../host/HostObject";
 
-type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<Profile>>;
+type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<ProfileObject>>;
 
 const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
-    const { UserProfile, CompanyProfile } = mapSelections(info);
-    const { accountId, profileType } = authData;
+    const gqlSelect = mapSelections(info) || {};
+    const { UserProfile, CompanyProfile } = gqlSelect;
+    const { accountId, profileType, roles } = authData;
 
     const userProfileSelect = profileType === "UserProfile" && toUserProfileSelect(UserProfile);
     const companyProfileSelect = profileType === "CompanyProfile" && toCompanyProfileSelect(CompanyProfile);
+    const hostSelect = roles.includes("host") && toHostSelect(gqlSelect[profileType]?.host);
 
     const account = await store.account.findUnique({
         where: { id: accountId },
@@ -24,16 +29,18 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
             phoneNumber: true,
             profileType: true,
             roles: true,
+            host: hostSelect,
             userProfile: userProfileSelect,
             companyProfile: companyProfileSelect,
         },
     });
 
     Log(account);
+
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
 
     return merge(
-        pick(account, "email", "phoneNumber", "profileType", "roles"),
+        pick(account, "email", "phoneNumber", "profileType", "roles", "host"),
         account.userProfile || account.companyProfile
     );
 };

@@ -5,7 +5,8 @@ import { mapSelections } from "graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { Profile, toCompanyProfileSelect, toUserProfileSelect } from "./profile";
+import { toHostSelect } from "./host/HostObject";
+import { ProfileObject, toCompanyProfileSelect, toUserProfileSelect } from "./profile";
 
 type LoginInput = {
     email: string;
@@ -13,7 +14,7 @@ type LoginInput = {
 };
 
 type LoginResult = {
-    profile: Profile;
+    profile: ProfileObject;
     accessToken: string;
     refreshToken: string;
 };
@@ -22,12 +23,7 @@ type LoginArgs = { input: LoginInput };
 
 type Login = IFieldResolver<any, Context, LoginArgs, Promise<LoginResult>>;
 
-const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) => {
-    const gqlSelect = mapSelections(info);
-    const { UserProfile, CompanyProfile } = gqlSelect.profile || {};
-    const userProfileSelect = toUserProfileSelect(UserProfile) || true;
-    const companyProfileSelect = toCompanyProfileSelect(CompanyProfile) || true;
-
+const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     let { email, password } = input;
 
     email = email.toLocaleLowerCase(); // change email to lowercase
@@ -37,8 +33,9 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) 
 
     const account = await store.account.findUnique({
         where: { email },
-        include: { userProfile: userProfileSelect, companyProfile: companyProfileSelect },
+        include: { userProfile: true, companyProfile: true, host: true },
     });
+
     Log(account);
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
 
@@ -65,13 +62,14 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }, info) 
         },
     });
 
-    const profile = merge(
+    let profile: ProfileObject = merge(
         pick(account, "email", "phoneNumber", "profileType", "roles"),
         account.userProfile || account.companyProfile
     );
     const accessToken = encodeToken({ accountId: account.id, ...profile }, "access", { jwtid: account.id });
     const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
 
+    profile = { ...profile, host: account.host };
     return { profile, accessToken, refreshToken };
 };
 

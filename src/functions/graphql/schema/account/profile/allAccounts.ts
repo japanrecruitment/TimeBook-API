@@ -1,14 +1,15 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
-import { mapSelections, toPrismaSelect } from "graphql-map-selections";
-import { Context } from "../../context";
-import { Profile, toCompanyProfileSelect, toUserProfileSelect } from "./profile";
-import { PaginationOption } from "../core/paginationOption";
+import { mapSelections } from "graphql-map-selections";
+import { Context } from "../../../context";
+import { PaginationOption } from "../../core/paginationOption";
 import { ProfileType, Role } from "@prisma/client";
-import { omit, pick } from "@utils/object-helper";
-import { toPhotoSelect } from "../media";
+import { pick } from "@utils/object-helper";
 import { merge } from "lodash";
 import { Log } from "@utils/logger";
+import { ProfileObject } from "./ProfileObject";
+import { toUserProfileSelect } from "./UserProfileObject";
+import { toCompanyProfileSelect } from "./CompanyProfile";
 
 type AccountFilterOptions = {
     approved?: boolean;
@@ -22,7 +23,7 @@ type AllAccountsArgs = {
     paginate: PaginationOption;
 };
 
-type AllAccounts = IFieldResolver<any, Context, AllAccountsArgs, Promise<Array<Partial<Profile>>>>;
+type AllAccounts = IFieldResolver<any, Context, AllAccountsArgs, Promise<Array<Partial<ProfileObject>>>>;
 
 const allAccounts: AllAccounts = async (_, { filters, paginate }, { store }, info) => {
     const { UserProfile, CompanyProfile } = mapSelections(info);

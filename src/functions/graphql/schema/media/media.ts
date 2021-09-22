@@ -1,4 +1,7 @@
+import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
+import { PrismaSelect } from "graphql-map-selections";
+import { isEmpty } from "lodash";
 
 export type ImageTypes = "Profile" | "Cover" | "General";
 
@@ -11,6 +14,54 @@ export type ImageUploadResult = {
     url: string;
     mime: string;
     key: string;
+};
+
+export type Image = {
+    width: number;
+    height: number;
+    url: string;
+};
+
+export type Photo = {
+    id: string;
+    mime: string;
+    type: ImageTypes;
+    thumbnail: Image | any;
+    small: Image | any;
+    medium: Image | any;
+    large: Image | any;
+};
+
+export type PhotoSelect = {
+    id: boolean;
+    mime: boolean;
+    type: boolean;
+    thumbnail: boolean;
+    small: boolean;
+    medium: boolean;
+    large: boolean;
+};
+
+export const toPhotoSelect = (selections: any, defaultValue: any = false): PrismaSelect<PhotoSelect> => {
+    if (!selections || isEmpty(selections)) return defaultValue;
+
+    const thumbnailSelect = selections.thumbnail !== undefined;
+    const mediumSelect = selections.medium !== undefined;
+    const smallSelect = selections.small !== undefined;
+    const largeSelect = selections.large !== undefined;
+    const photoSelect = omit(selections, "thumbnail", "small", "medium", "large");
+
+    if (isEmpty(photoSelect) && !thumbnailSelect && !mediumSelect && !smallSelect && !largeSelect) return defaultValue;
+
+    return {
+        select: {
+            ...photoSelect,
+            thumbnail: thumbnailSelect,
+            medium: mediumSelect,
+            small: smallSelect,
+            large: largeSelect,
+        } as PhotoSelect,
+    };
 };
 
 export const MediaTypeDefs = gql`
@@ -46,15 +97,5 @@ export const MediaTypeDefs = gql`
         large: Image
     }
 `;
-
-export const photoSelect = {
-    id: true,
-    type: true,
-    mime: true,
-    thumbnail: true,
-    small: true,
-    medium: true,
-    large: true,
-};
 
 export const MediaResolvers = {};

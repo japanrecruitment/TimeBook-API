@@ -1,9 +1,9 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { Host as IHost, ProfileType, Role, HostType, Photo } from "@prisma/client";
 import { gql } from "apollo-server-core";
-import { Context } from "../../context";
-import { Result } from "../core/result";
-import { GqlError } from "../../error";
+import { Context } from "../../../context";
+import { Result } from "../../core/result";
+import { GqlError } from "../../../error";
 
 import { StripeLib } from "@libs/index";
 
@@ -96,7 +96,7 @@ const beAHost: BeAHost = async (_, { input }, { store, authData }) => {
     };
 };
 
-export const hostTypeDefs = gql`
+export const beAHostTypeDefs = gql`
     input BeAHostInput {
         type: HostType
         name: String
@@ -112,6 +112,6 @@ export const hostTypeDefs = gql`
     }
 `;
 
-export const hostResolvers = {
+export const beAHostResolvers = {
     Mutation: { beAHost },
 };
