@@ -15,7 +15,10 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
     const { accountId } = authData;
     const { addressLine1, addressLine2, city, latitude, longitude, postalCode, prefectureId } = address;
 
-    const space = await store.space.findUnique({ where: { id: spaceId }, select: { accountId: true } });
+    const space = await store.space.findFirst({
+        where: { id: spaceId, isDeleted: false },
+        select: { accountId: true },
+    });
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 

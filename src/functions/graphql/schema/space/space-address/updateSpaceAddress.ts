@@ -17,7 +17,7 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
     const { id, addressLine1, addressLine2, city, latitude, longitude, postalCode, prefectureId } = address;
 
     const space = await store.space.findFirst({
-        where: { id: spaceId, address: { id } },
+        where: { id: spaceId, isDeleted: false, address: { id } },
         select: { accountId: true, address: { select: { prefectureId: true } } },
     });
 

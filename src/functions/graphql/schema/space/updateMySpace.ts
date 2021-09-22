@@ -25,7 +25,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
     if (!name && !maximumCapacity && !numberOfSeats && !spaceSize)
         throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited space are empty" });
 
-    const space = await store.space.findUnique({ where: { id }, select: { accountId: true } });
+    const space = await store.space.findFirst({ where: { id, isDeleted: false }, select: { accountId: true } });
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 

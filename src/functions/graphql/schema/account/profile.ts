@@ -49,6 +49,7 @@ export type CompanyProfileSelect = {
 };
 
 export const toCompanyProfileSelect = (selections): PrismaSelect<CompanyProfileSelect> => {
+    if (!selections) return;
     const addressSelect = toAddressSelect(selections.address);
     const profilePhotoSelect = toPhotoSelect(selections.profilePhoto);
     const companyProfileSelect = omit(selections, "email", "phoneNumber", "roles", "address", "profilePhoto");
