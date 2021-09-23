@@ -2,6 +2,7 @@ import { gql } from "apollo-server-core";
 import { Space } from "@prisma/client";
 import { AddressObject, AddressSelect, toAddressSelect } from "../address";
 import { PrismaSelect } from "graphql-map-selections";
+import { isEmpty } from "lodash";
 import { omit } from "@utils/object-helper";
 import { NearestStationObject, NearestStationSelect, toNearestStationSelect } from "./nearest-stations";
 import { SpacePricePlanObject, SpacePricePlanSelect, toSpacePricePlanSelect } from "./space-price-plans";
@@ -17,24 +18,34 @@ export type SpaceObject = Partial<Space> & {
 };
 
 type SpaceSelect = {
-    id: true;
-    name: true;
-    maximumCapacity: true;
-    numberOfSeats: true;
-    spaceSize: true;
-    needApproval: true;
+    id: boolean;
+    name: boolean;
+    maximumCapacity: boolean;
+    numberOfSeats: boolean;
+    spaceSize: boolean;
+    needApproval: boolean;
     nearestStations: PrismaSelect<NearestStationSelect>;
     spacePricePlans: PrismaSelect<SpacePricePlanSelect>;
     spaceTypes: PrismaSelect<SpaceToSpaceTypeSelect>;
     address: PrismaSelect<AddressSelect>;
 };
 
-export const toSpaceSelect = (selections): PrismaSelect<SpaceSelect> => {
+export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSelect<SpaceSelect> => {
+    if (!selections || isEmpty(selections)) return defaultValue;
     const nearestStationsSelect = toNearestStationSelect(selections.nearestStations);
     const spacePricePlansSelect = toSpacePricePlanSelect(selections.spacePricePlans);
     const spaceToSpaceTypesSelect = toSpaceToSpaceTypeSelect(selections.spaceTypes);
     const addressSelect = toAddressSelect(selections.address);
     const spaceSelect = omit(selections, "nearestStations", "spacePricePlan", "spaceTypes", "address");
+
+    if (
+        isEmpty(spaceSelect) &&
+        !nearestStationsSelect &&
+        !spacePricePlansSelect &&
+        !spaceToSpaceTypesSelect &&
+        !addressSelect
+    )
+        return defaultValue;
 
     return {
         select: {

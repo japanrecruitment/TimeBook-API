@@ -5,9 +5,9 @@ import { toPrismaSelect } from "graphql-map-selections";
 export type SpaceTypeObject = Partial<SpaceType>;
 
 export type SpaceTypeSelect = {
-    id: true;
-    title: true;
-    description: true;
+    id: boolean;
+    title: boolean;
+    description: boolean;
 };
 
 export const toSpaceTypeSelect = (selection) => toPrismaSelect<SpaceTypeSelect>(selection);

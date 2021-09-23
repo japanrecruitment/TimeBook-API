@@ -5,14 +5,14 @@ import { toPrismaSelect } from "graphql-map-selections";
 export type SpacePricePlanObject = Partial<SpacePricePlan>;
 
 export type SpacePricePlanSelect = {
-    id: true;
-    title: true;
-    type: true;
-    amount: true;
-    duration: true;
-    maintenanceFee: true;
-    lastMinuteDiscount: true;
-    cooldownTime: true;
+    id: boolean;
+    title: boolean;
+    type: boolean;
+    amount: boolean;
+    duration: boolean;
+    maintenanceFee: boolean;
+    lastMinuteDiscount: boolean;
+    cooldownTime: boolean;
 };
 
 export const toSpacePricePlanSelect = (selection) => toPrismaSelect<SpacePricePlanSelect>(selection);

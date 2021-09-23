@@ -21,8 +21,8 @@ const addNearestStation: AddNearestStation = async (_, { input }, { authData, da
     const { accountId } = authData;
     const { spaceId, stationId, time, via } = input;
 
-    const space = await store.space.findUnique({
-        where: { id: spaceId },
+    const space = await store.space.findFirst({
+        where: { id: spaceId, isDeleted: false },
         select: { accountId: true, nearestStations: { select: { stationId: true } } },
     });
 

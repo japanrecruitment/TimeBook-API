@@ -1,7 +1,7 @@
 import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { merge } from "lodash";
-import { accountDirectives, accountResolvers, accountTypeDefs } from "./account";
+import { accountResolvers, accountTypeDefs } from "./account";
 import { addressTypeDefs } from "./address";
 import { spaceTypeDefs, spaceResolvers } from "./space";
 import { coreDirectives, coreResolvers, coreTypeDefs } from "./core";
@@ -31,7 +31,7 @@ const resolvers = mergeResolvers([
     mediaResolvers,
 ]);
 
-const schemaDirectives = merge(coreDirectives, accountDirectives);
+const schemaDirectives = merge(coreDirectives);
 
 export default makeExecutableSchema({
     typeDefs,

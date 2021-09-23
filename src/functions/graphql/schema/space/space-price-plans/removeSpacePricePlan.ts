@@ -21,10 +21,11 @@ const removeSpacePricePlan: RemoveSpacePricePlan = async (_, { input }, { authDa
 
     const spacePricePlan = await store.spacePricePlan.findFirst({
         where: { id, spaceId },
-        select: { title: true, space: { select: { accountId: true } } },
+        select: { title: true, space: { select: { accountId: true, isDeleted: true } } },
     });
 
-    if (!spacePricePlan) throw new GqlError({ code: "NOT_FOUND", message: "Space price plan not found" });
+    if (!spacePricePlan || spacePricePlan.space.isDeleted)
+        throw new GqlError({ code: "NOT_FOUND", message: "Space price plan not found" });
 
     if (accountId !== spacePricePlan.space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });

@@ -9,10 +9,7 @@ type LinesByPrefecture = IFieldResolver<any, Context, any, Promise<TrainLine[]>>
 const allLines: AllLines = async (_, __, { store, dataSources }) => {
     const cacheDoc = await dataSources.redis.fetch("line:all");
     if (cacheDoc) return cacheDoc;
-    const allStations = await store.trainLine.findMany({
-        where: { status: 0 },
-        include: { stations: { include: { prefecture: true } } },
-    });
+    const allStations = await store.trainLine.findMany({ where: { status: 0 } });
     dataSources.redis.store("line:all", allStations, 600);
     return allStations;
 };

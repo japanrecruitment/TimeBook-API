@@ -14,7 +14,7 @@ const mySpaces: MySpaces = async (_, __, { store, authData }, info) => {
     const { accountId } = authData;
 
     const mySpaces = await store.space.findMany({
-        where: { accountId: accountId },
+        where: { accountId, isDeleted: false },
         ...toSpaceSelect(mapSelections(info)),
     });
 

@@ -9,8 +9,11 @@ export type SpaceToSpaceTypeSelect = {
     spaceType: PrismaSelect<SpaceTypeSelect>;
 };
 
-export const toSpaceToSpaceTypeSelect = (selections): PrismaSelect<SpaceToSpaceTypeSelect> => {
+export const toSpaceToSpaceTypeSelect = (
+    selections,
+    defaultValue: any = false
+): PrismaSelect<SpaceToSpaceTypeSelect> => {
     const spaceTypeSelect = toSpaceTypeSelect(selections);
-    if (!spaceTypeSelect) return;
+    if (!spaceTypeSelect) return defaultValue;
     return { select: { spaceType: spaceTypeSelect } };
 };

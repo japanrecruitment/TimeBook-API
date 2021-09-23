@@ -19,8 +19,8 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
     const { accountId } = authData;
     const { spaceId, spaceTypeIds } = input;
 
-    const space = await store.space.findUnique({
-        where: { id: spaceId },
+    const space = await store.space.findFirst({
+        where: { id: spaceId, isDeleted: false },
         select: { id: true, accountId: true, spaceTypes: { select: { spaceTypeId: true } } },
     });
 

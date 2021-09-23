@@ -32,10 +32,11 @@ const updateSpacePricePlan: UpdateSpacePricePlan = async (_, { input }, { authDa
 
     const spacePricePlan = await store.spacePricePlan.findFirst({
         where: { id, spaceId },
-        select: { amount: true, duration: true, type: true, space: { select: { accountId: true } } },
+        select: { amount: true, duration: true, type: true, space: { select: { accountId: true, isDeleted: true } } },
     });
 
-    if (!spacePricePlan) throw new GqlError({ code: "NOT_FOUND", message: "Space price not found" });
+    if (!spacePricePlan || spacePricePlan.space.isDeleted)
+        throw new GqlError({ code: "NOT_FOUND", message: "Space price not found" });
 
     if (accountId !== spacePricePlan.space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });

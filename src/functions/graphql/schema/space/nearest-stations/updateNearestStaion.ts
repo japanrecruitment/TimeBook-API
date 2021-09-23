@@ -26,10 +26,11 @@ const updateNearestStation: UpdateNearestStation = async (_, { input }, { authDa
 
     const nearestStation = await store.nearestStation.findUnique({
         where: { spaceId_stationId: { spaceId, stationId } },
-        select: { space: { select: { accountId: true } } },
+        select: { space: { select: { accountId: true, isDeleted: true } } },
     });
 
-    if (!nearestStation) throw new GqlError({ code: "NOT_FOUND", message: "Nearest station not found" });
+    if (!nearestStation || nearestStation.space.isDeleted)
+        throw new GqlError({ code: "NOT_FOUND", message: "Nearest station not found" });
 
     if (accountId !== nearestStation.space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });

@@ -26,8 +26,8 @@ const addSpacePricePlan: AddSpacePricePlan = async (_, { input }, { authData, da
     const { accountId } = authData;
     const { amount, duration, cooldownTime, lastMinuteDiscount, maintenanceFee, spaceId, title, type } = input;
 
-    const space = await store.space.findUnique({
-        where: { id: spaceId },
+    const space = await store.space.findFirst({
+        where: { id: spaceId, isDeleted: false },
         select: { accountId: true, spacePricePlans: { select: { id: true } } },
     });
 

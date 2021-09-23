@@ -10,6 +10,7 @@ import { spaceTypesResolvers, spaceTypesTypeDefs } from "./space-types";
 import { spaceObjectResolvers, spaceObjectTypeDefs } from "./SpaceObject";
 import { spaceToSpaceTypeResolvers, spaceToSpaceTypeTypeDefs } from "./space-to-space-type";
 import { spaceAddressResolvers, spaceAddressTypeDefs } from "./space-address";
+import { removeSpaceResolvers, removeSpaceTypeDefs } from "./removeSpace";
 
 export const spaceTypeDefs = mergeTypeDefs([
     spaceObjectTypeDefs,
@@ -23,6 +24,7 @@ export const spaceTypeDefs = mergeTypeDefs([
     updateMySpaceTypeDefs,
     spaceToSpaceTypeTypeDefs,
     spaceAddressTypeDefs,
+    removeSpaceTypeDefs,
 ]);
 
 export const spaceResolvers = mergeResolvers([
@@ -37,4 +39,5 @@ export const spaceResolvers = mergeResolvers([
     updateMySpaceResolvers,
     spaceToSpaceTypeResolvers,
     spaceAddressResolvers,
+    removeSpaceResolvers,
 ]);
