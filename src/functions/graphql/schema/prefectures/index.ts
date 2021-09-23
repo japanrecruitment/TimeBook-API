@@ -3,11 +3,11 @@ import { allPrefecturesResolvers, allPrefecturesTypeDefs } from "./allPrefecture
 import { disablePrefectureResolvers, disablePrefectureTypeDefs } from "./disablePrefecture";
 import { enablePrefectureResolvers, enablePrefectureTypeDefs } from "./enablePrefecture";
 import { prefectureByIdResolvers, prefectureByIdTypeDefs } from "./prefectureById";
-import { prefecturesResolvers, prefecturesTypeDefs } from "./prefectures";
+import { availablePrefecturesResolvers, availablePrefecturesTypeDefs } from "./availablePrefectures";
 import { updatePrefectureResolvers, updatePrefectureTypeDefs } from "./updatePrefecture";
 
 export const prefectureTypeDefs = mergeTypeDefs([
-    prefecturesTypeDefs,
+    availablePrefecturesTypeDefs,
     allPrefecturesTypeDefs,
     updatePrefectureTypeDefs,
     prefectureByIdTypeDefs,
@@ -16,7 +16,7 @@ export const prefectureTypeDefs = mergeTypeDefs([
 ]);
 
 export const prefectureResolvers = mergeResolvers([
-    prefecturesResolvers,
+    availablePrefecturesResolvers,
     allPrefecturesResolvers,
     updatePrefectureResolvers,
     prefectureByIdResolvers,
