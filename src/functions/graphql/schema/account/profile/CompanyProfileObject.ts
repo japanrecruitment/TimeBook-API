@@ -50,7 +50,7 @@ export const companyProfileObjectTypeDefs = gql`
         nameKana: String!
         phoneNumber: String
         registrationNumber: String!
-        roles: [Role]
+        roles: [Role] @auth(requires: [admin], allowSelf: true)
         address: AddressObject
         profilePhoto: Photo
         host: Host @auth(requires: [host])

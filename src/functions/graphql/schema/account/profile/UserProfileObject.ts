@@ -52,7 +52,7 @@ export const userProfileObjectTypeDefs = gql`
         firstNameKana: String!
         lastNameKana: String!
         phoneNumber: String
-        roles: [Role] @auth(requires: [user, host], allowSelf: true)
+        roles: [Role] @auth(requires: [admin], allowSelf: true)
         address: AddressObject
         profilePhoto: Photo
         host: Host @auth(requires: [host])
