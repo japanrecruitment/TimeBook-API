@@ -3,7 +3,7 @@ import { Account, User } from "@prisma/client";
 import { PrismaSelect } from "graphql-map-selections";
 import { AddressObject, AddressSelect, toAddressSelect } from "../../address";
 import { PhotoSelect, toPhotoSelect } from "../../media";
-import { omit } from "@utils/object-helper";
+import { omit, pick } from "@utils/object-helper";
 import { HostObject } from "../host/HostObject";
 import { isEmpty } from "lodash";
 
@@ -18,6 +18,7 @@ export type UserProfileSelect = {
     lastName: boolean;
     firstNameKana: boolean;
     lastNameKana: boolean;
+    accountId: true;
     address: PrismaSelect<AddressSelect>;
     profilePhoto: PrismaSelect<PhotoSelect>;
 };
@@ -27,13 +28,12 @@ export const toUserProfileSelect = (selections, defaultValue: any = false): Pris
 
     const addressSelect = toAddressSelect(selections.address);
     const profilePhotoSelect = toPhotoSelect(selections.profilePhoto);
-    const userProfileSelect = omit(selections, "email", "phoneNumber", "roles", "host", "address", "profilePhoto");
-
-    if (isEmpty(userProfileSelect) && !addressSelect && !profilePhotoSelect) return defaultValue;
+    const userProfileSelect = pick(selections, "id", "firstName", "lastName", "firstNameKana", "lastNameKana");
 
     return {
         select: {
             ...userProfileSelect,
+            accountId: true,
             address: addressSelect,
             profilePhoto: profilePhotoSelect,
         } as UserProfileSelect,
@@ -43,15 +43,21 @@ export const toUserProfileSelect = (selections, defaultValue: any = false): Pris
 export const userProfileObjectTypeDefs = gql`
     type UserProfile {
         id: ID!
+        accountId: ID!
         email: String
+        emailVerified: Boolean @auth(requires: [admin], allowSelf: true)
         firstName: String!
         lastName: String!
         firstNameKana: String!
         lastNameKana: String!
         phoneNumber: String
-        roles: [Role]
+        roles: [Role] @auth(requires: [user, host])
         address: AddressObject
         profilePhoto: Photo
-        host: Host
+        host: Host @auth(requires: [host])
+        approved: Boolean @auth(requires: [admin], allowSelf: true)
+        suspended: Boolean @auth(requires: [admin], allowSelf: true)
+        createdAt: Boolean @auth(requires: [admin], allowSelf: true)
+        updatedAt: Boolean @auth(requires: [admin], allowSelf: true)
     }
 `;

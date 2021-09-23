@@ -2,7 +2,7 @@ import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { AccountLink, StripeLib } from "@libs/paymentProvider";
 import { Host } from "@prisma/client";
 import { Log } from "@utils/logger";
-import { omit } from "@utils/object-helper";
+import { omit, pick } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
 import { isEmpty } from "lodash";
@@ -21,6 +21,7 @@ export type HostSelect = {
     name: boolean;
     approved: true;
     suspended: true;
+    accountId: true;
     photoId: PrismaSelect<PhotoSelect>;
     profilePhoto: PrismaSelect<PhotoSelect>;
     stripeAccountId: boolean;
@@ -30,7 +31,7 @@ export const toHostSelect = (selections, defaultValue: any = false): PrismaSelec
     if (!selections || isEmpty(selections)) return defaultValue;
     const photoIdSelect = toPhotoSelect(selections?.photoId);
     const profilePhotoSelect = toPhotoSelect(selections?.profilePhoto);
-    const hostSelect = omit(selections, "stripeAccount", "photoId", "profilePhoto");
+    const hostSelect = pick(selections, "id", "type", "name", "stripeAccountId");
 
     if (isEmpty(hostSelect) && !photoIdSelect && !profilePhotoSelect && !selections.stripeAccount) return defaultValue;
 
@@ -40,7 +41,9 @@ export const toHostSelect = (selections, defaultValue: any = false): PrismaSelec
             id: true,
             approved: true,
             suspended: true,
-            stripeAccountId: selections?.stripeAccount || hostSelect?.stripeAccountId ? true : false,
+            accountId: true,
+            stripeAccountId:
+                selections?.stripeAccount || selections?.account || hostSelect?.stripeAccountId ? true : false,
             photoId: photoIdSelect,
             profilePhoto: profilePhotoSelect,
         } as HostSelect,

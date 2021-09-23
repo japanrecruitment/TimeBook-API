@@ -8,7 +8,6 @@ import { refreshTokenResolvers, refreshTokenTypeDefs } from "./refreshToken";
 import { registerUserResolvers, registerUserTypeDefs } from "./registerUser";
 import { resendVerificationCodeResolvers, resendVerificationCodeTypeDefs } from "./resendVerificationCode";
 import { resetPasswordResolvers, resetPasswordTypeDefs } from "./resetPassword";
-import { selfDirectives, selfDirectiveTypeDefs } from "./selfDirective";
 import { verifyEmailResolvers, verifyEmailTypeDefs } from "./verifyEmail";
 import { verifyResetPasswordRequestResolvers, verifyResetPasswordRequestTypeDefs } from "./verifyResetPasswordRequest";
 import { hostResolvers, hostTypeDefs } from "./host";
@@ -26,7 +25,6 @@ export const accountTypeDefs = mergeTypeDefs([
     registerCompanyTypeDefs,
     resendVerificationCodeTypeDefs,
     resetPasswordTypeDefs,
-    selfDirectiveTypeDefs,
     verifyEmailTypeDefs,
     verifyResetPasswordRequestTypeDefs,
     hostTypeDefs,
@@ -47,5 +45,3 @@ export const accountResolvers = mergeResolvers([
     verifyResetPasswordRequestResolvers,
     hostResolvers,
 ]);
-
-export const accountDirectives = merge(selfDirectives);

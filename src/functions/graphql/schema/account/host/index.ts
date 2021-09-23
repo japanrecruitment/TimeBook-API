@@ -6,3 +6,5 @@ import { myHostInfoResolvers, myHostInfoTypeDefs } from "./myHostInfo";
 export const hostTypeDefs = mergeTypeDefs([hostObjectTypeDefs, beAHostTypeDefs, myHostInfoTypeDefs]);
 
 export const hostResolvers = mergeResolvers([hostObjectResolvers, beAHostResolvers, myHostInfoResolvers]);
+
+export * from "./HostObject";

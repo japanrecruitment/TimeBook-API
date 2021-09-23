@@ -7,7 +7,7 @@ import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { ProfileObject } from "./ProfileObject";
-import { toCompanyProfileSelect } from "./CompanyProfile";
+import { toCompanyProfileSelect } from "./CompanyProfileObject";
 import { toUserProfileSelect } from "./UserProfileObject";
 
 type UpdateProfileStrategy<T> = (

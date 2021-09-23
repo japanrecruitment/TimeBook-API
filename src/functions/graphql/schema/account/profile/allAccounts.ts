@@ -4,12 +4,11 @@ import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../../context";
 import { PaginationOption } from "../../core/paginationOption";
 import { ProfileType, Role } from "@prisma/client";
-import { pick } from "@utils/object-helper";
+import { omit } from "@utils/object-helper";
 import { merge } from "lodash";
 import { Log } from "@utils/logger";
 import { ProfileObject } from "./ProfileObject";
-import { toUserProfileSelect } from "./UserProfileObject";
-import { toCompanyProfileSelect } from "./CompanyProfile";
+import { toProfileSelect } from ".";
 
 type AccountFilterOptions = {
     approved?: boolean;
@@ -25,14 +24,11 @@ type AllAccountsArgs = {
 
 type AllAccounts = IFieldResolver<any, Context, AllAccountsArgs, Promise<Array<Partial<ProfileObject>>>>;
 
-const allAccounts: AllAccounts = async (_, { filters, paginate }, { store }, info) => {
-    const { UserProfile, CompanyProfile } = mapSelections(info);
-
-    const userProfileSelect = toUserProfileSelect(UserProfile);
-    const companyProfileSelect = toCompanyProfileSelect(CompanyProfile);
-
+const allAccounts: AllAccounts = async (_, { filters, paginate }, { authData, store }, info) => {
     const { approved, profileTypes, roles, suspended } = filters || {};
     const { take, skip } = paginate || {};
+
+    const profileSelect = toProfileSelect(mapSelections(info), authData);
 
     const allAccounts = await store.account.findMany({
         where: {
@@ -41,14 +37,7 @@ const allAccounts: AllAccounts = async (_, { filters, paginate }, { store }, inf
             roles: roles?.length > 0 ? { hasEvery: roles.filter((r) => !r.endsWith("unknown")) } : undefined,
             suspended,
         },
-        select: {
-            email: true,
-            phoneNumber: true,
-            profileType: true,
-            roles: true,
-            userProfile: userProfileSelect,
-            companyProfile: companyProfileSelect,
-        },
+        ...profileSelect,
         take,
         skip,
     });
@@ -56,10 +45,7 @@ const allAccounts: AllAccounts = async (_, { filters, paginate }, { store }, inf
     Log(`Found ${allAccounts.length} records: `, allAccounts);
 
     const result = allAccounts.map((account) => {
-        return merge(
-            pick(account, "email", "phoneNumber", "profileType", "roles"),
-            account.userProfile || account.companyProfile
-        );
+        return merge(omit(account, "userProfile", "companyProfile"), account.userProfile || account.companyProfile);
     });
 
     return result;
@@ -74,7 +60,7 @@ export const allAccountsTypeDefs = gql`
     }
 
     type Query {
-        allAccounts(filters: AccountFilterOptions, paginate: PaginationOption): [Profile]! @auth(requires: [admin])
+        allAccounts(filters: AccountFilterOptions, paginate: PaginationOption): [Profile]! @auth(requires: [host])
     }
 `;
 

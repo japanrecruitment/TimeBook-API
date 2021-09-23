@@ -42,7 +42,11 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     const passwordMatched = matchPassword(password, account.password);
     if (!passwordMatched) throw new GqlError({ code: "FORBIDDEN", message: "Incorrect email or password" });
 
-    if (account.suspended) throw new GqlError({ code: "FORBIDDEN", message: "Please contact support team" });
+    if (account.suspended)
+        throw new GqlError({
+            code: "FORBIDDEN",
+            message: "Your account has been suspended. Please contact support team",
+        });
 
     if (!account.emailVerified)
         throw new GqlError({ code: "FORBIDDEN", message: "Please verify email first", action: "verify-email" });
@@ -69,7 +73,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     const accessToken = encodeToken({ accountId: account.id, ...profile }, "access", { jwtid: account.id });
     const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
 
-    profile = { ...profile, host: account.host };
+    profile = merge(profile, omit(account, "userProfile", "companyProfile"));
     return { profile, accessToken, refreshToken };
 };
 
