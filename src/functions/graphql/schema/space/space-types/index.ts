@@ -5,6 +5,8 @@ import { allSpaceTypesResolvers, allSpaceTypesTypeDefs } from "./allSpaceTypes";
 import { removeSpaceTypeResolvers, removeSpaceTypeTypeDefs } from "./removeSpaceType";
 import { updateSpaceTypeResolvers, updateSpaceTypeTypeDefs } from "./updateSpaceType";
 import { spaceTypeByIdResolvers, spaceTypeByIdTypeDefs } from "./spaceTypeById";
+import { enableSpaceTypeResolvers, enableSpaceTypeTypeDefs } from "./enableSpaceType";
+import { disableSpaceTypeResolvers, disableSpaceTypeTypeDefs } from "./disableSpaceType";
 
 export const spaceTypesTypeDefs = mergeTypeDefs([
     spaceTypeObjectTypeDefs,
@@ -13,6 +15,8 @@ export const spaceTypesTypeDefs = mergeTypeDefs([
     removeSpaceTypeTypeDefs,
     updateSpaceTypeTypeDefs,
     spaceTypeByIdTypeDefs,
+    enableSpaceTypeTypeDefs,
+    disableSpaceTypeTypeDefs,
 ]);
 
 export const spaceTypesResolvers = mergeResolvers([
@@ -21,6 +25,8 @@ export const spaceTypesResolvers = mergeResolvers([
     removeSpaceTypeResolvers,
     updateSpaceTypeResolvers,
     spaceTypeByIdResolvers,
+    enableSpaceTypeResolvers,
+    disableSpaceTypeResolvers,
 ]);
 
 export * from "./SpaceTypeObject";
