@@ -30,6 +30,8 @@ export const toUserProfileSelect = (selections, defaultValue: any = false): Pris
     const profilePhotoSelect = toPhotoSelect(selections.profilePhoto);
     const userProfileSelect = pick(selections, "id", "firstName", "lastName", "firstNameKana", "lastNameKana");
 
+    if (isEmpty(userProfileSelect) && !addressSelect && !profilePhotoSelect) return defaultValue;
+
     return {
         select: {
             ...userProfileSelect,
@@ -43,7 +45,6 @@ export const toUserProfileSelect = (selections, defaultValue: any = false): Pris
 export const userProfileObjectTypeDefs = gql`
     type UserProfile {
         id: ID!
-        accountId: ID!
         email: String
         emailVerified: Boolean @auth(requires: [admin], allowSelf: true)
         firstName: String!
@@ -51,7 +52,7 @@ export const userProfileObjectTypeDefs = gql`
         firstNameKana: String!
         lastNameKana: String!
         phoneNumber: String
-        roles: [Role] @auth(requires: [user, host], allowSelf: true)
+        roles: [Role] @auth(requires: [admin], allowSelf: true)
         address: AddressObject
         profilePhoto: Photo
         host: Host @auth(requires: [host])

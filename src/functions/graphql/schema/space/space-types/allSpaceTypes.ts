@@ -24,7 +24,7 @@ const allSpaceTypes: AllSpaceType = async (_, __, { dataSources, store }) => {
 
 export const allSpaceTypesTypeDefs = gql`
     type Query {
-        allSpaceTypes: [SpaceTypeObject]!
+        allSpaceTypes: [SpaceTypeObject]! @auth(requires: [admin])
     }
 `;
 

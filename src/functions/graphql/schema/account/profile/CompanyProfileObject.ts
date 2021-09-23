@@ -28,6 +28,8 @@ export const toCompanyProfileSelect = (selections, defaultValue: any = false): P
     const profilePhotoSelect = toPhotoSelect(selections.profilePhoto);
     const companyProfileSelect = pick(selections, "id", "name", "nameKana", "registrationNumber");
 
+    if (isEmpty(companyProfileSelect) && !addressSelect && !profilePhotoSelect) return defaultValue;
+
     return {
         select: {
             ...companyProfileSelect,
@@ -48,7 +50,7 @@ export const companyProfileObjectTypeDefs = gql`
         nameKana: String!
         phoneNumber: String
         registrationNumber: String!
-        roles: [Role]
+        roles: [Role] @auth(requires: [admin], allowSelf: true)
         address: AddressObject
         profilePhoto: Photo
         host: Host @auth(requires: [host])

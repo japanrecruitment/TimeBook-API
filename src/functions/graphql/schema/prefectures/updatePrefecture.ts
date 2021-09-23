@@ -20,7 +20,6 @@ export const updatePrefectureTypeDefs = gql`
         name: String
         nameKana: String
         nameRomaji: String
-        available: Boolean
     }
 
     type Mutation {

@@ -1,16 +1,25 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { allPrefecturesResolvers, allPrefecturesTypeDefs } from "./allPrefectures";
-import { prefecturesResolvers, prefecturesTypeDefs } from "./prefectures";
+import { disablePrefectureResolvers, disablePrefectureTypeDefs } from "./disablePrefecture";
+import { enablePrefectureResolvers, enablePrefectureTypeDefs } from "./enablePrefecture";
+import { prefectureByIdResolvers, prefectureByIdTypeDefs } from "./prefectureById";
+import { availablePrefecturesResolvers, availablePrefecturesTypeDefs } from "./availablePrefectures";
 import { updatePrefectureResolvers, updatePrefectureTypeDefs } from "./updatePrefecture";
 
 export const prefectureTypeDefs = mergeTypeDefs([
-    prefecturesTypeDefs,
+    availablePrefecturesTypeDefs,
     allPrefecturesTypeDefs,
     updatePrefectureTypeDefs,
+    prefectureByIdTypeDefs,
+    enablePrefectureTypeDefs,
+    disablePrefectureTypeDefs,
 ]);
 
 export const prefectureResolvers = mergeResolvers([
-    prefecturesResolvers,
+    availablePrefecturesResolvers,
     allPrefecturesResolvers,
     updatePrefectureResolvers,
+    prefectureByIdResolvers,
+    enablePrefectureResolvers,
+    disablePrefectureResolvers,
 ]);

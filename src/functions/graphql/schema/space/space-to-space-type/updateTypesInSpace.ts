@@ -29,7 +29,10 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    const types = await store.spaceType.findMany({ where: { id: { in: spaceTypeIds } }, select: { id: true } });
+    const types = await store.spaceType.findMany({
+        where: { id: { in: spaceTypeIds }, available: true },
+        select: { id: true },
+    });
 
     const prevTypeIds = space.spaceTypes?.map(({ spaceTypeId }) => spaceTypeId);
     const currTypeIds = types?.map(({ id }) => id);

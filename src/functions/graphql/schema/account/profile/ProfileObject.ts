@@ -13,6 +13,7 @@ import { omit, pick } from "@utils/object-helper";
 export type ProfileObject = UserProfileObject | CompanyProfileObject;
 
 export type ProfileSelect = {
+    id: true;
     email: boolean;
     emailVerified: boolean;
     phoneNumber: boolean;
@@ -52,6 +53,7 @@ export const toProfileSelect = (selections, authData, defaultValue: any = false)
     return {
         select: {
             ...profileSelect,
+            id: true,
             userProfile: userProfileSelect,
             companyProfile: companyProfileSelect,
             host: hostSelect,

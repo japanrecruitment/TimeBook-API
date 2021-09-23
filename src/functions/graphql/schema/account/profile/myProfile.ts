@@ -12,7 +12,7 @@ import { toProfileSelect } from ".";
 type MyProfile = IFieldResolver<any, Context, Record<string, any>, Promise<ProfileObject>>;
 
 const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
-    const { accountId, profileType, roles } = authData;
+    const { accountId } = authData;
 
     const profileSelect = toProfileSelect(mapSelections(info), authData);
 
@@ -25,7 +25,11 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
 
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
 
-    return merge(omit(account, "userProfile", "companyProfile"), account.userProfile || account.companyProfile);
+    return merge(
+        omit(account, "userProfile", "companyProfile"),
+        { accountId: account.id },
+        account.userProfile || account.companyProfile
+    );
 };
 
 export const myProfileTypeDefs = gql`

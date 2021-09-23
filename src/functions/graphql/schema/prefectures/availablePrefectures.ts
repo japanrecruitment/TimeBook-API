@@ -3,9 +3,9 @@ import { Prefecture } from "@prisma/client";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 
-type Prefectures = IFieldResolver<any, Context, Record<string, any>, Promise<Prefecture[]>>;
+type AvailablePrefectures = IFieldResolver<any, Context, Record<string, any>, Promise<Prefecture[]>>;
 
-const prefectures: Prefectures = async (_, __, { store, dataSources }) => {
+const availablePrefectures: AvailablePrefectures = async (_, __, { store, dataSources }) => {
     const cacheKey = "prefectures:available";
     const cacheDoc = await dataSources.redis.fetch(cacheKey);
     if (cacheDoc) return cacheDoc;
@@ -14,12 +14,12 @@ const prefectures: Prefectures = async (_, __, { store, dataSources }) => {
     return availablePrefectures;
 };
 
-export const prefecturesTypeDefs = gql`
+export const availablePrefecturesTypeDefs = gql`
     type Query {
-        prefectures: [Prefecture]
+        availablePrefectures: [Prefecture]
     }
 `;
 
-export const prefecturesResolvers = {
-    Query: { prefectures },
+export const availablePrefecturesResolvers = {
+    Query: { availablePrefectures },
 };
