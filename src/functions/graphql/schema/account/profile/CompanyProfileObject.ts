@@ -28,6 +28,8 @@ export const toCompanyProfileSelect = (selections, defaultValue: any = false): P
     const profilePhotoSelect = toPhotoSelect(selections.profilePhoto);
     const companyProfileSelect = pick(selections, "id", "name", "nameKana", "registrationNumber");
 
+    if (isEmpty(companyProfileSelect) && !addressSelect && !profilePhotoSelect) return defaultValue;
+
     return {
         select: {
             ...companyProfileSelect,

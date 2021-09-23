@@ -2,19 +2,12 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { ProfileType } from "@prisma/client";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
-import { GraphQLResolveInfo } from "graphql";
-import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
+import { Result } from "../../core/result";
 import { ProfileObject } from "./ProfileObject";
-import { toCompanyProfileSelect } from "./CompanyProfileObject";
-import { toUserProfileSelect } from "./UserProfileObject";
 
-type UpdateProfileStrategy<T> = (
-    input: T,
-    context: Context,
-    info: GraphQLResolveInfo
-) => Promise<Partial<ProfileObject>>;
+type UpdateProfileStrategy<T> = (input: T, context: Context) => Promise<Partial<ProfileObject>>;
 
 type UpdateProfileStrategies = { [T in ProfileType]: UpdateProfileStrategy<any> };
 
@@ -36,50 +29,35 @@ type UpdateCompanyProfileInput = {
 
 type UpdateMyProfileInput = UpdateUserProfileInput & UpdateCompanyProfileInput;
 
-type UpdateMyProfile = IFieldResolver<
-    any,
-    Context,
-    Record<"input", UpdateMyProfileInput>,
-    Promise<Partial<ProfileObject>>
->;
+type UpdateMyProfile = IFieldResolver<any, Context, Record<"input", UpdateMyProfileInput>, Promise<Partial<Result>>>;
 
-const updateMyProfile: UpdateMyProfile = async (_, { input }, context, info) => {
-    const { id, email, phoneNumber, profileType } = context.authData;
+const updateMyProfile: UpdateMyProfile = async (_, { input }, context) => {
+    const { id, profileType } = context.authData;
 
     Log(id, context.authData);
     if (id !== input.id)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this profile" });
 
-    const updatedProfile = await updateProfileStrategies[profileType](input, context, info);
+    const updatedProfile = await updateProfileStrategies[profileType](input, context);
 
     if (!updatedProfile) throw new GqlError({ code: "NOT_FOUND", message: "Profile not found" });
 
-    return { ...updatedProfile, email, phoneNumber };
+    return { message: `Successfully updated a profile` };
 };
 
-const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (input, { store }, info) => {
-    const { UserProfile } = mapSelections(info);
-    const select = toUserProfileSelect(UserProfile);
+const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (input, { store }) => {
     const { id, dob, firstName, firstNameKana, lastName, lastNameKana } = input;
     return await store.user.update({
         where: { id },
         data: { dob, firstName, firstNameKana, lastName, lastNameKana },
-        ...select,
     });
 };
 
-const updateCompanyProfile: UpdateProfileStrategy<UpdateCompanyProfileInput> = async (input, { store }, info) => {
-    const { CompanyProfile } = mapSelections(info);
-    const select = toCompanyProfileSelect(CompanyProfile);
+const updateCompanyProfile: UpdateProfileStrategy<UpdateCompanyProfileInput> = async (input, { store }) => {
     const { id, name, nameKana, registrationNumber } = input;
     return await store.company.update({
         where: { id },
-        data: {
-            name,
-            nameKana,
-            registrationNumber,
-        },
-        ...select,
+        data: { name, nameKana, registrationNumber },
     });
 };
 
@@ -102,7 +80,7 @@ export const updateMyProfileTypeDefs = gql`
     }
 
     type Mutation {
-        updateMyProfile(input: UpdateMyProfileInput!): Profile @auth(requires: [user, host])
+        updateMyProfile(input: UpdateMyProfileInput!): Result @auth(requires: [user, host])
     }
 `;
 

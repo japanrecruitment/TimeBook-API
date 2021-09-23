@@ -27,7 +27,11 @@ const accountById: AccountById = async (_, { accountId }, { authData, store }, i
 
     Log(`Found a record: `, account);
 
-    return merge(omit(account, "userProfile", "companyProfile"), account.userProfile || account.companyProfile);
+    return merge(
+        omit(account, "userProfile", "companyProfile"),
+        { accountId: account.id },
+        account.userProfile || account.companyProfile
+    );
 };
 
 export const accountByIdTypeDefs = gql`

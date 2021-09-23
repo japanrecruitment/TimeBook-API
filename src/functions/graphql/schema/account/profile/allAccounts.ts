@@ -45,7 +45,11 @@ const allAccounts: AllAccounts = async (_, { filters, paginate }, { authData, st
     Log(`Found ${allAccounts.length} records: `, allAccounts);
 
     const result = allAccounts.map((account) => {
-        return merge(omit(account, "userProfile", "companyProfile"), account.userProfile || account.companyProfile);
+        return merge(
+            omit(account, "userProfile", "companyProfile"),
+            { accountId: account.id },
+            account.userProfile || account.companyProfile
+        );
     });
 
     return result;
@@ -60,7 +64,7 @@ export const allAccountsTypeDefs = gql`
     }
 
     type Query {
-        allAccounts(filters: AccountFilterOptions, paginate: PaginationOption): [Profile]! @auth(requires: [host])
+        allAccounts(filters: AccountFilterOptions, paginate: PaginationOption): [Profile]! @auth(requires: [admin])
     }
 `;
 
