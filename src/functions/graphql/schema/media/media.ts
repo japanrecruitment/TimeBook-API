@@ -70,6 +70,7 @@ export const MediaTypeDefs = gql`
         Cover
         General
     }
+
     input ImageUploadInput {
         mime: String!
     }
