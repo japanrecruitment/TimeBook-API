@@ -13,6 +13,7 @@ export type SpaceTypeSelect = {
     id: boolean;
     title: boolean;
     description: boolean;
+    available: boolean;
     photo: PrismaSelect<PhotoSelect>;
 };
 
