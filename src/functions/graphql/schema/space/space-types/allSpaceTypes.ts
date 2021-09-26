@@ -14,7 +14,7 @@ const allSpaceTypes: AllSpaceType = async (_, __, { dataSources, store }) => {
     const cacheDoc = await dataSources.redis.fetch(cacheKey);
     if (cacheDoc) return cacheDoc;
 
-    const allSpaceTypes = await store.spaceType.findMany({ orderBy: { title: "asc" } });
+    const allSpaceTypes = await store.spaceType.findMany({ orderBy: { id: "asc" }, include: { photo: true } });
 
     if (!allSpaceTypes) return [];
 

@@ -4,6 +4,8 @@ import { RedisCache } from "apollo-server-cache-redis";
 const host = environment.REDIS_HOST !== "[object Object]" ? environment.REDIS_HOST : "localhost";
 const port = parseInt(environment.REDIS_PORT) || 6379;
 
+console.log(host, port);
+
 export default new RedisCache({
     host,
     port,

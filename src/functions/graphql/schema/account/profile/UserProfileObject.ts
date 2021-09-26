@@ -58,7 +58,7 @@ export const userProfileObjectTypeDefs = gql`
         host: Host @auth(requires: [host])
         approved: Boolean @auth(requires: [admin], allowSelf: true)
         suspended: Boolean @auth(requires: [admin], allowSelf: true)
-        createdAt: Boolean @auth(requires: [admin], allowSelf: true)
-        updatedAt: Boolean @auth(requires: [admin], allowSelf: true)
+        createdAt: Date @auth(requires: [admin], allowSelf: true)
+        updatedAt: Date @auth(requires: [admin], allowSelf: true)
     }
 `;

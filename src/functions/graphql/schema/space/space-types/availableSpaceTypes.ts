@@ -17,6 +17,7 @@ const availableSpaceTypes: AvailableSpaceTypes = async (_, __, { dataSources, st
     const availableSpaceTypes = await store.spaceType.findMany({
         where: { available: true },
         orderBy: { title: "asc" },
+        include: { photo: true },
     });
 
     if (!availableSpaceTypes) return [];
