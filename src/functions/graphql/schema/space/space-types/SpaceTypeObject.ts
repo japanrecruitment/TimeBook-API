@@ -1,19 +1,35 @@
 import { SpaceType } from "@prisma/client";
+import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
-import { toPrismaSelect } from "graphql-map-selections";
-import { Photo } from "../../media";
+import { PrismaSelect } from "graphql-map-selections";
+import { isEmpty } from "lodash";
+import { Photo, PhotoSelect, toPhotoSelect } from "../../media";
 
-export type SpaceTypeObject = Partial<SpaceType>;
+export type SpaceTypeObject = Partial<SpaceType> & {
+    photo: Photo;
+};
 
 export type SpaceTypeSelect = {
     id: boolean;
     title: boolean;
     description: boolean;
     available: boolean;
-    photo: Photo;
+    photo: PrismaSelect<PhotoSelect>;
 };
 
-export const toSpaceTypeSelect = (selection) => toPrismaSelect<SpaceTypeSelect>(selection);
+export const toSpaceTypeSelect = (selections: any, defaultValue: any = false): PrismaSelect<SpaceTypeSelect> => {
+    if (!selections || isEmpty(selections)) return defaultValue;
+
+    const photoSelect = toPhotoSelect(selections.photo);
+    const spaceTypeSelect = omit(selections, "photo");
+
+    return {
+        select: {
+            ...spaceTypeSelect,
+            photo: photoSelect,
+        } as SpaceTypeSelect,
+    };
+};
 
 export const spaceTypeObjectTypeDefs = gql`
     type SpaceTypeObject {

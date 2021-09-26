@@ -22,7 +22,7 @@ const enableSpaceType: EnableSpaceType = async (_, { id }, { dataSources, store 
 
 export const enableSpaceTypeTypeDefs = gql`
     type Mutation {
-        enableSpaceType(id: String!): Result! @auth(requires: [admin])
+        enableSpaceType(id: ID!): Result! @auth(requires: [admin])
     }
 `;
 
