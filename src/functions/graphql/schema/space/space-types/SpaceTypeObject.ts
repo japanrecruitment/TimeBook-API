@@ -26,6 +26,7 @@ export const toSpaceTypeSelect = (selections: any, defaultValue: any = false): P
     return {
         select: {
             ...spaceTypeSelect,
+            id: true,
             photo: photoSelect,
         } as SpaceTypeSelect,
     };
