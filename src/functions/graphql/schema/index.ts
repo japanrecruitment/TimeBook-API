@@ -9,9 +9,11 @@ import { prefectureResolvers, prefectureTypeDefs } from "./prefectures";
 import { stationsResolvers, stationsTypeDefs } from "./stations";
 import { paymentSourceResolvers, paymentSourceTypeDefs } from "./payment";
 import { mediaTypeDefs, mediaResolvers } from "./media";
+import { cacheResolvers, cacheTypeDefs } from "./cache";
 
 const typeDefs = mergeTypeDefs([
     coreTypeDefs,
+    cacheTypeDefs,
     accountTypeDefs,
     addressTypeDefs,
     paymentSourceTypeDefs,
@@ -23,6 +25,7 @@ const typeDefs = mergeTypeDefs([
 
 const resolvers = mergeResolvers([
     coreResolvers,
+    cacheResolvers,
     accountResolvers,
     paymentSourceResolvers,
     prefectureResolvers,
