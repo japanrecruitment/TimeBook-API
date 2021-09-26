@@ -9,7 +9,10 @@ const availablePrefectures: AvailablePrefectures = async (_, __, { store, dataSo
     const cacheKey = "prefectures:available";
     const cacheDoc = await dataSources.redis.fetch(cacheKey);
     if (cacheDoc) return cacheDoc;
-    const availablePrefectures = await store.prefecture.findMany({ where: { available: true } });
+    const availablePrefectures = await store.prefecture.findMany({
+        where: { available: true },
+        orderBy: { id: "asc" },
+    });
     dataSources.redis.store(cacheKey, availablePrefectures, 60 * 60 * 24 * 30 * 6); // sec * min * hrs * days * month
     return availablePrefectures;
 };

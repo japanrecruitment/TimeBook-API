@@ -8,7 +8,7 @@ type AllPrefectures = IFieldResolver<any, Context, Record<string, any>, Promise<
 const allPrefectures: AllPrefectures = async (_, __, { store, dataSources }) => {
     const cacheDoc = await dataSources.redis.fetch("prefectures:all");
     if (cacheDoc) return cacheDoc;
-    const allPrefectures = await store.prefecture.findMany();
+    const allPrefectures = await store.prefecture.findMany({ orderBy: { id: "asc" } });
     dataSources.redis.store("prefectures:all", allPrefectures, 600);
     return allPrefectures;
 };
