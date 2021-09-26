@@ -20,7 +20,6 @@ export const spaceTypesTypeDefs = mergeTypeDefs([
     enableSpaceTypeTypeDefs,
     disableSpaceTypeTypeDefs,
     availableSpaceTypesTypeDefs,
-    addSpaceTypePhotoTypeDefs,
 ]);
 
 export const spaceTypesResolvers = mergeResolvers([
@@ -32,7 +31,6 @@ export const spaceTypesResolvers = mergeResolvers([
     enableSpaceTypeResolvers,
     disableSpaceTypeResolvers,
     availableSpaceTypesResolvers,
-    addSpaceTypePhotoResolvers,
 ]);
 
 export * from "./SpaceTypeObject";
