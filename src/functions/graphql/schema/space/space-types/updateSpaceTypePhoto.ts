@@ -7,18 +7,18 @@ import { Context } from "../../../context";
 import { Result } from "../../core/result";
 import { ImageUploadInput, ImageUploadResult } from "../../media";
 
-type AddSpaceTypePhotoInput = {
+type UpdateSpaceTypePhotoInput = {
     spaceTypeId: string;
     mime: string;
 };
 
-type AddSpaceTypePhotoArgs = { input: AddSpaceTypePhotoInput };
+type UpdateSpaceTypePhotoArgs = { input: UpdateSpaceTypePhotoInput };
 
-type AddSpaceTypePhotoResult = Promise<ImageUploadResult>;
+type UpdateSpaceTypePhotoResult = Promise<ImageUploadResult>;
 
-type AddSpaceTypePhoto = IFieldResolver<any, Context, AddSpaceTypePhotoArgs, AddSpaceTypePhotoResult>;
+type UpdateSpaceTypePhoto = IFieldResolver<any, Context, UpdateSpaceTypePhotoArgs, UpdateSpaceTypePhotoResult>;
 
-const addSpaceTypePhoto: AddSpaceTypePhoto = async (_, { input }, { dataSources, store }) => {
+const updateSpaceTypePhoto: UpdateSpaceTypePhoto = async (_, { input }, { dataSources, store }) => {
     let { spaceTypeId, mime } = input;
     const type = "Cover";
     mime = mime || "image/jpeg";
@@ -50,17 +50,17 @@ const addSpaceTypePhoto: AddSpaceTypePhoto = async (_, { input }, { dataSources,
     return { type, mime, url: signedURL, key };
 };
 
-export const addSpaceTypePhotoTypeDefs = gql`
-    input AddSpaceTypePhotoInput {
+export const updateSpaceTypePhotoTypeDefs = gql`
+    input UpdateSpaceTypePhotoInput {
         spaceTypeId: String!
         mime: String!
     }
 
     type Mutation {
-        addSpaceTypePhoto(input: AddSpaceTypePhotoInput!): ImageUploadResult! @auth(requires: [admin])
+        updateSpaceTypePhoto(input: UpdateSpaceTypePhotoInput!): ImageUploadResult! @auth(requires: [admin])
     }
 `;
 
-export const addSpaceTypePhotoResolvers = {
-    Mutation: { addSpaceTypePhoto },
+export const updateSpaceTypePhotoResolvers = {
+    Mutation: { updateSpaceTypePhoto },
 };
