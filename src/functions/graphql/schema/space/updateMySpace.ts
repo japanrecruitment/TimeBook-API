@@ -6,6 +6,7 @@ import { Result } from "../core/result";
 
 type UpdateMySpaceInput = {
     id: string;
+    description?: string;
     name?: string;
     maximumCapacity?: number;
     numberOfSeats?: number;
@@ -20,9 +21,9 @@ type UpdateMySpace = IFieldResolver<any, Context, UpdateMySpaceArgs, UpdateMySpa
 
 const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dataSources }) => {
     const { accountId } = authData;
-    const { id, name, maximumCapacity, numberOfSeats, spaceSize } = input;
+    const { id, description, name, maximumCapacity, numberOfSeats, spaceSize } = input;
 
-    if (!name && !maximumCapacity && !numberOfSeats && !spaceSize)
+    if (!description && !name && !maximumCapacity && !numberOfSeats && !spaceSize)
         throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited space are empty" });
 
     const space = await store.space.findFirst({ where: { id, isDeleted: false }, select: { accountId: true } });
@@ -31,6 +32,9 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
 
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+
+    if (description?.trim() === "")
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
 
     if (name?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
 
@@ -42,7 +46,10 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
 
     if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
 
-    const updatedSpace = await store.space.update({ where: { id }, data: { ...input, name: name?.trim() } });
+    const updatedSpace = await store.space.update({
+        where: { id },
+        data: { ...input, name: name?.trim(), description: description?.trim() },
+    });
 
     await dataSources.spaceAlgolia.partialUpdateObject({
         objectID: id,
@@ -58,6 +65,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
 export const updateMySpaceTypeDefs = gql`
     input UpdateMySpaceInput {
         id: ID!
+        description: String
         name: String
         maximumCapacity: Int
         numberOfSeats: Int

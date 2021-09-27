@@ -19,6 +19,7 @@ export type SpaceObject = Partial<Space> & {
 
 type SpaceSelect = {
     id: boolean;
+    description: boolean;
     name: boolean;
     maximumCapacity: boolean;
     numberOfSeats: boolean;
@@ -65,6 +66,7 @@ const spaceObjectResolver: IObjectTypeResolver<SpaceObject, Context> = {
 export const spaceObjectTypeDefs = gql`
     type SpaceObject {
         id: ID!
+        description: String
         name: String
         maximumCapacity: String
         numberOfSeats: Int
