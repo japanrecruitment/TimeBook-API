@@ -35,8 +35,10 @@ const updateSpaceTypePhoto: UpdateSpaceTypePhoto = async (_, { input }, { dataSo
         where: { id: spaceTypeId },
         data: {
             photo: {
-                create: { mime, type: "Cover", postUploadInfo: { cacheKey: "space-types:*" } },
-                update: { mime, type: "Cover", postUploadInfo: { cacheKey: "space-types:*" } },
+                upsert: {
+                    create: { mime, type: "Cover", postUploadInfo: { cacheKey: "space-types:*" } },
+                    update: { mime, type: "Cover", postUploadInfo: { cacheKey: "space-types:*" } },
+                },
             },
         },
         select: { photo: true },
