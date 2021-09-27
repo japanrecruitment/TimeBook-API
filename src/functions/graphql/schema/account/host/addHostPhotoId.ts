@@ -31,12 +31,12 @@ const addPhotoId: AddPhotoId = async (_, { input }, { authData, store }, info) =
     return { type, mime, url: signedURL, key };
 };
 
-export const registerHostTypeDefs = gql`
+export const addHostPhotoIdTypeDefs = gql`
     type Mutation {
         addPhotoId(input: ImageUploadInput!): ImageUploadResult @auth(requires: [host])
     }
 `;
 
-export const registerHostResolvers = {
+export const addHostPhotoIdResolvers = {
     Mutation: { addPhotoId },
 };
