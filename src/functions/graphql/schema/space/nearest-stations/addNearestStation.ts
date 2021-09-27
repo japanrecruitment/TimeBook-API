@@ -5,21 +5,22 @@ import { Context } from "../../../context";
 import { Result } from "../../core/result";
 
 type AddNearestStationInput = {
-    spaceId: string;
     stationId: number;
     via: string;
     time: number;
 };
 
-type AddNearestStationArgs = { input: AddNearestStationInput };
+type AddNearestStationsArgs = { spaceId: string; stations: AddNearestStationInput[] };
 
-type AddNearestStationResult = Promise<Result>;
+type AddNearestStationsResult = Promise<Result>;
 
-type AddNearestStation = IFieldResolver<any, Context, AddNearestStationArgs, AddNearestStationResult>;
+type AddNearestStations = IFieldResolver<any, Context, AddNearestStationsArgs, AddNearestStationsResult>;
 
-const addNearestStation: AddNearestStation = async (_, { input }, { authData, dataSources, store }) => {
+const addNearestStations: AddNearestStations = async (_, { spaceId, stations }, { authData, dataSources, store }) => {
     const { accountId } = authData;
-    const { spaceId, stationId, time, via } = input;
+
+    if (!stations || stations.length <= 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Please select some stations to add" });
 
     const space = await store.space.findFirst({
         where: { id: spaceId, isDeleted: false },
@@ -31,20 +32,16 @@ const addNearestStation: AddNearestStation = async (_, { input }, { authData, da
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    if (space.nearestStations && space.nearestStations.map(({ stationId }) => stationId).includes(stationId))
-        throw new GqlError({ message: `Selected station is already listed as nearest station of this space` });
+    const nearestStationsIds = space?.nearestStations?.map(({ stationId }) => stationId);
+    const nearestStationToAdd = stations
+        .filter(({ stationId }) => !nearestStationsIds.includes(stationId))
+        .map(({ stationId, time, via }) => ({ stationId, time, via: via?.trim() }));
 
-    const station = await store.station.findUnique({ where: { id: stationId } });
-
-    if (!station) throw new GqlError({ code: "NOT_FOUND", message: "Station not found" });
-
-    if (!time || time < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid time" });
-
-    if (!via || !via.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid via" });
+    if (nearestStationToAdd.length <= 0) return { message: `No new station found from submitted station list to add` };
 
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
-        data: { nearestStations: { create: { station: { connect: { id: stationId } }, time, via: via?.trim() } } },
+        data: { nearestStations: { createMany: { data: nearestStationToAdd } } },
         select: { id: true, nearestStations: { select: { stationId: true } } },
     });
 
@@ -53,22 +50,21 @@ const addNearestStation: AddNearestStation = async (_, { input }, { authData, da
         nearestStations: updatedSpace.nearestStations.map(({ stationId }) => stationId),
     });
 
-    return { message: `Successfully added ${station.stationName} as nearest station in your space` };
+    return { message: `Successfully added ${nearestStationToAdd.length} new nearest station in your space` };
 };
 
-export const addNearestStationTypeDefs = gql`
+export const addNearestStationsTypeDefs = gql`
     input AddNearestStationInput {
-        spaceId: ID!
         stationId: IntID!
         via: String!
         time: Int!
     }
 
     type Mutation {
-        addNearestStation(input: AddNearestStationInput!): Result! @auth(requires: [user, host])
+        addNearestStations(spaceId: ID!, stations: [AddNearestStationInput]!): Result! @auth(requires: [user, host])
     }
 `;
 
-export const addNearestStationResolvers = {
-    Mutation: { addNearestStation },
+export const addNearestStationsResolvers = {
+    Mutation: { addNearestStations },
 };
