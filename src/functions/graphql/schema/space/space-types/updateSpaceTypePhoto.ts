@@ -1,11 +1,9 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { S3Lib } from "@libs/index";
 import { gql } from "apollo-server-core";
-import { create } from "domain";
 import { GqlError } from "src/functions/graphql/error";
 import { Context } from "../../../context";
-import { Result } from "../../core/result";
-import { ImageUploadInput, ImageUploadResult } from "../../media";
+import { ImageUploadResult } from "../../media";
 
 type UpdateSpaceTypePhotoInput = {
     spaceTypeId: string;
@@ -23,7 +21,7 @@ const updateSpaceTypePhoto: UpdateSpaceTypePhoto = async (_, { input }, { dataSo
     const type = "Cover";
     mime = mime || "image/jpeg";
 
-    if (!spaceTypeId) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid spaceTypeId" });
+    if (!spaceTypeId) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space type" });
 
     if (!mime) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid mime" });
 
