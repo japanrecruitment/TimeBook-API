@@ -5,9 +5,9 @@ import { randomNumberOfNDigits } from "@utils/compute";
 import { addEmailToQueue, EmailVerificationData } from "@utils/email-helper";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
-import { Context } from "../../context";
-import { GqlError } from "../../error";
-import { Result } from "../core/result";
+import { Context } from "../../../context";
+import { GqlError } from "../../../error";
+import { Result } from "../../core/result";
 
 export type RegisterUserInput = {
     email: string;
