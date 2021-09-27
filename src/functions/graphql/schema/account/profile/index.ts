@@ -9,6 +9,8 @@ import { profileObjectResolvers, profileObjectTypeDefs } from "./ProfileObject";
 import { suspendAccountResolvers, suspendAccountTypeDefs } from "./suspendAccount";
 import { updateMyProfileResolvers, updateMyProfileTypeDefs } from "./updateMyProfile";
 import { userProfileObjectTypeDefs } from "./UserProfileObject";
+import { registerUserResolvers, registerUserTypeDefs } from "./registerUser";
+import { registerCompanyResolvers, registerCompanyTypeDefs } from "./registerCompany";
 
 export const profileTypeDefs = mergeTypeDefs([
     userProfileObjectTypeDefs,
@@ -21,6 +23,8 @@ export const profileTypeDefs = mergeTypeDefs([
     suspendAccountTypeDefs,
     accountByIdTypeDefs,
     approveAccountTypeDefs,
+    registerUserTypeDefs,
+    registerCompanyTypeDefs,
 ]);
 
 export const profileResolvers = mergeResolvers([
@@ -32,6 +36,8 @@ export const profileResolvers = mergeResolvers([
     suspendAccountResolvers,
     accountByIdResolvers,
     approveAccountResolvers,
+    registerUserResolvers,
+    registerCompanyResolvers,
 ]);
 
 export * from "./UserProfileObject";
