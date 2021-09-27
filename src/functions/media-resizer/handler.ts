@@ -1,10 +1,9 @@
 import { S3Event, S3EventRecord, S3Handler } from "aws-lambda";
 import { middyfy } from "@middlewares/index";
-
-import { Log, ImageProcessor, store } from "@utils/index";
+import { Log, ImageProcessor, store, RedisClient } from "@utils/index";
 import { S3Lib } from "@libs/index";
 
-const emailQueueWorker: S3Handler = async (event: S3Event) => {
+const resizeMediaQueueWorker: S3Handler = async (event: S3Event) => {
     if (event.Records.length === 0) return;
 
     // get information about the image from DB
@@ -25,12 +24,20 @@ const readAndResize = async (key: string) => {
     // get key information from DB
     const photoId = key.split(".")[0];
     // get image ID
-    const { id, mime, type } = await store.photo.findUnique({
+    const { id, mime, type, postUploadInfo } = await store.photo.findUnique({
         where: { id: photoId },
-        select: { id: true, mime: true, type: true },
+        select: { id: true, mime: true, type: true, postUploadInfo: true },
     });
 
-    Log(id, mime, type);
+    Log(id, mime, type, postUploadInfo);
+
+    const { cacheKey } =
+        postUploadInfo && typeof postUploadInfo === "object" ? (postUploadInfo as any) : { cacheKey: undefined };
+
+    if (cacheKey) {
+        const cache = RedisClient.createInstance();
+        cache.deleteMany(cacheKey);
+    }
 
     const uploadedImage = await S3.getObject(key);
 
@@ -61,4 +68,4 @@ const readAndResize = async (key: string) => {
     return key;
 };
 
-export const main = middyfy(emailQueueWorker, true);
+export const main = middyfy(resizeMediaQueueWorker, true);
