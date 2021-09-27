@@ -320,25 +320,26 @@ model SubscriptionPlan {
 }
 
 model Photo {
-    id          String     @id @default(cuid())
-    mime        String     @db.VarChar(15)
-    type        PhotoType
-    thumbnail   Json?
-    medium      Json?
-    small       Json?
-    large       Json?
-    createdAt   DateTime   @default(now()) @db.Timestamp(6)
-    updatedAt   DateTime   @updatedAt
-    space       Space?     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spaceId     String?
-    spaceType   SpaceType? @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    spaceTypeId String?
-    user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    userId      String?
-    company     Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    companyId   String?
-    host        Host?      @relation(name: "hostProfilePhoto", fields: [hostId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    hostId      String?
-    photo       Host?      @relation(name: "photoId", fields: [photoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    photoId     String?
+    id             String     @id @default(cuid())
+    mime           String     @db.VarChar(15)
+    type           PhotoType
+    thumbnail      Json?
+    medium         Json?
+    small          Json?
+    large          Json?
+    postUploadInfo Json?
+    createdAt      DateTime   @default(now()) @db.Timestamp(6)
+    updatedAt      DateTime   @updatedAt
+    space          Space?     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    spaceId        String?
+    spaceType      SpaceType? @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    spaceTypeId    String?
+    user           User?      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    userId         String?
+    company        Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    companyId      String?
+    host           Host?      @relation(name: "hostProfilePhoto", fields: [hostId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    hostId         String?
+    photo          Host?      @relation(name: "photoId", fields: [photoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    photoId        String?
 }

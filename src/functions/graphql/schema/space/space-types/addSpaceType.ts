@@ -37,7 +37,11 @@ const addSpaceType: AddSpaceType = async (_, { input }, { dataSources, store }, 
     if (spaceType) throw new GqlError({ code: "BAD_REQUEST", message: "The title for space type is already in use" });
 
     const newSpaceType = await store.spaceType.create({
-        data: { title, description, photo: { create: { mime: coverPhotoMime, type: "Cover" } } },
+        data: {
+            title,
+            description,
+            photo: { create: { mime: coverPhotoMime, type: "Cover", postUploadInfo: { cacheKey: "space-types:*" } } },
+        },
         include: { photo: { select: { id: true, mime: true } } },
     });
 

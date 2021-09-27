@@ -1,4 +1,5 @@
 export const environment = {
+    APP_NAME: "timebook-api",
     NODE_ENV: process.env.NODE_ENV,
     DB_URL: process.env.DB_URL,
     EMAIL_QUEUE_URL: process.env.EMAIL_QUEUE_URL,
