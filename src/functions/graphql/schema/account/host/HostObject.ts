@@ -42,8 +42,7 @@ export const toHostSelect = (selections, defaultValue: any = false): PrismaSelec
             approved: true,
             suspended: true,
             accountId: true,
-            stripeAccountId:
-                selections?.stripeAccount || selections?.account || hostSelect?.stripeAccountId ? true : false,
+            stripeAccountId: true,
             photoId: photoIdSelect,
             profilePhoto: profilePhotoSelect,
         } as HostSelect,
