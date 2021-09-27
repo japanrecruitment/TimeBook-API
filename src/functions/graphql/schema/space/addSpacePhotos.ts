@@ -5,21 +5,21 @@ import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { ImageUploadInput, ImageUploadResult } from "../media";
 
-type AddSpacePhotosArgs = { id: string; imageInputs: ImageUploadInput[] };
+type AddSpacePhotosArgs = { spaceId: string; imageInputs: ImageUploadInput[] };
 
 type AddSpacePhotoResult = Promise<ImageUploadResult[]>;
 
 type AddSpacePhotos = IFieldResolver<any, Context, AddSpacePhotosArgs, AddSpacePhotoResult>;
 
-const addSpacePhotos: AddSpacePhotos = async (_, { id, imageInputs }, { store }) => {
+const addSpacePhotos: AddSpacePhotos = async (_, { spaceId, imageInputs }, { store }) => {
     if (imageInputs.length <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid image upload input" });
 
-    const space = await store.space.findUnique({ where: { id } });
+    const space = await store.space.findUnique({ where: { id: spaceId } });
 
     if (!space) throw new GqlError({ code: "BAD_REQUEST", message: "Space does not exists" });
 
     const { photos } = await store.space.update({
-        where: { id },
+        where: { id: spaceId },
         data: {
             photos: {
                 createMany: {
@@ -29,22 +29,25 @@ const addSpacePhotos: AddSpacePhotos = async (_, { id, imageInputs }, { store })
                 },
             },
         },
-        select: { photos: { select: { id: true, mime: true, type: true } } },
+        select: { photos: true },
     });
 
     const S3 = new S3Lib("upload");
-    const imageUploadResults = photos.map(({ id, mime, type }) => {
-        const key = `${id}.${mime.split("/")[1]}`;
-        const url = S3.getUploadUrl(key, mime, 60 * 10);
-        return { key, mime, type, url };
-    });
+    const imageUploadResults = photos
+        .filter(({ medium, small, large }) => !medium && !small && !large)
+        .map(({ id, mime, type }) => {
+            const key = `${id}.${mime.split("/")[1]}`;
+            const url = S3.getUploadUrl(key, mime, 60 * 10);
+            return { key, mime, type, url };
+        });
 
     return imageUploadResults;
 };
 
 export const addSpacePhotosTypeDefs = gql`
     type Mutation {
-        addSpacePhotos(id: ID!, imageInputs: [ImageUploadInput]!): [ImageUploadResult] @auth(requires: [user, host])
+        addSpacePhotos(spaceId: ID!, imageInputs: [ImageUploadInput]!): [ImageUploadResult]
+            @auth(requires: [user, host])
     }
 `;
 
