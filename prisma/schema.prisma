@@ -181,6 +181,7 @@ model Address {
 model Space {
     id              String               @id @default(cuid())
     name            String               @db.VarChar(255)
+    description     String               @db.Text
     maximumCapacity Int                  @default(0)
     numberOfSeats   Int                  @default(0)
     spaceSize       Float                @default(0)

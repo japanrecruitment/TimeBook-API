@@ -6,6 +6,7 @@ import { Result } from "../core/result";
 
 type AddSpaceInput = {
     name: string;
+    description: string;
     maximumCapacity?: number;
     numberOfSeats?: number;
     spaceSize?: number;
@@ -21,7 +22,10 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const { name, maximumCapacity, numberOfSeats, spaceSize } = input;
+    const { description, name, maximumCapacity, numberOfSeats, spaceSize } = input;
+
+    if (!description || !description.trim())
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
 
     if (!name || !name.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
 
@@ -34,7 +38,12 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
     if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
 
     const space = await store.space.create({
-        data: { ...input, name: name.trim(), account: { connect: { id: accountId } } },
+        data: {
+            ...input,
+            name: name.trim(),
+            description: description?.trim(),
+            account: { connect: { id: accountId } },
+        },
     });
 
     await dataSources.spaceAlgolia.saveObject({ objectID: space.id, name, maximumCapacity, numberOfSeats, spaceSize });
@@ -45,6 +54,7 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
 export const addSpaceTypeDefs = gql`
     input AddSpaceInput {
         name: String!
+        description: String!
         maximumCapacity: Int
         numberOfSeats: Int
         spaceSize: Float
