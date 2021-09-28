@@ -53,7 +53,7 @@ export const companyProfileObjectTypeDefs = gql`
         roles: [Role] @auth(requires: [admin], allowSelf: true)
         address: AddressObject
         profilePhoto: Photo
-        host: Host @auth(requires: [host])
+        host: Host @auth(requires: [admin], allowSelf: true)
         approved: Boolean @auth(requires: [admin], allowSelf: true)
         suspended: Boolean @auth(requires: [admin], allowSelf: true)
         createdAt: Date @auth(requires: [admin], allowSelf: true)
