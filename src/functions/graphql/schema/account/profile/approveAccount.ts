@@ -17,7 +17,10 @@ const approveAccount: ApproveAccount = async (_, { accountId }, { store }) => {
 
     if (account.approved) throw new GqlError({ code: "BAD_REQUEST", message: "Account already approved" });
 
-    await store.account.update({ where: { id: accountId }, data: { approved: true } });
+    await store.account.update({
+        where: { id: accountId },
+        data: { approved: true, host: { update: { approved: true } } },
+    });
 
     return { message: `Successfully suspended an account` };
 };
