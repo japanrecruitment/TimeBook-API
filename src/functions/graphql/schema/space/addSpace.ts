@@ -48,7 +48,7 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
 
     await dataSources.spaceAlgolia.saveObject({ objectID: space.id, name, maximumCapacity, numberOfSeats, spaceSize });
 
-    return { message: "Successfully added a new space" };
+    return { spaceId: space.id, result: { message: "Successfully added a new space" } };
 };
 
 export const addSpaceTypeDefs = gql`
@@ -60,8 +60,13 @@ export const addSpaceTypeDefs = gql`
         spaceSize: Float
     }
 
+    type AddSpaceResult {
+        result: Result
+        spaceId: ID!
+    }
+
     type Mutation {
-        addSpace(input: AddSpaceInput!): Result! @auth(requires: [user, host])
+        addSpace(input: AddSpaceInput!): AddSpaceResult! @auth(requires: [host])
     }
 `;
 
