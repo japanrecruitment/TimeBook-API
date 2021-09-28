@@ -97,13 +97,13 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
             profileType: ProfileType.UserProfile,
             roles: [Role.host],
             userProfile: { create: { firstName, lastName, firstNameKana, lastNameKana } },
-            approved: true,
+            approved: false,
             host: {
                 create: {
                     type: "Individual",
                     name: `${firstName} ${lastName}`,
                     stripeAccountId: connectId,
-                    approved: true,
+                    approved: false,
                 },
             },
         },
