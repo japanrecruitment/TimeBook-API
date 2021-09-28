@@ -45,6 +45,7 @@ export const toUserProfileSelect = (selections, defaultValue: any = false): Pris
 export const userProfileObjectTypeDefs = gql`
     type UserProfile {
         id: ID!
+        accountId: ID!
         email: String
         emailVerified: Boolean @auth(requires: [admin], allowSelf: true)
         firstName: String!
