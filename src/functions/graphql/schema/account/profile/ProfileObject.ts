@@ -35,7 +35,8 @@ export const toProfileSelect = (selections, authData, defaultValue: any = false)
     const { UserProfile, CompanyProfile } = selections;
     const userProfileSelect = profileType === "UserProfile" && toUserProfileSelect(UserProfile);
     const companyProfileSelect = profileType === "CompanyProfile" && toCompanyProfileSelect(CompanyProfile);
-    const hostSelect = roles?.includes("host") && toHostSelect(selections[profileType]?.host);
+    const hostSelect =
+        (roles?.includes("host") || roles?.includes("admin")) && toHostSelect(selections[profileType]?.host);
     const profileSelect = pick(
         selections[profileType],
         "email",

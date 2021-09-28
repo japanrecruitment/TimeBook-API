@@ -4,7 +4,7 @@ import { AddressObject, AddressSelect, toAddressSelect } from "../../address";
 import { PrismaSelect } from "graphql-map-selections";
 import { PhotoSelect, toPhotoSelect } from "../../media";
 import { omit, pick } from "@utils/object-helper";
-import { HostObject, toHostSelect } from "../host/HostObject";
+import { HostObject } from "../host/HostObject";
 import { isEmpty } from "lodash";
 
 export type CompanyProfileObject = Partial<Company> &
@@ -26,10 +26,9 @@ export const toCompanyProfileSelect = (selections, defaultValue: any = false): P
     if (!selections || isEmpty(selections)) return defaultValue;
     const addressSelect = toAddressSelect(selections.address);
     const profilePhotoSelect = toPhotoSelect(selections.profilePhoto);
-    const hostSelect = toHostSelect(selections.host);
     const companyProfileSelect = pick(selections, "id", "name", "nameKana", "registrationNumber");
 
-    if (isEmpty(companyProfileSelect) && !addressSelect && !profilePhotoSelect && !hostSelect) return defaultValue;
+    if (isEmpty(companyProfileSelect) && !addressSelect && !profilePhotoSelect) return defaultValue;
 
     return {
         select: {
@@ -37,7 +36,6 @@ export const toCompanyProfileSelect = (selections, defaultValue: any = false): P
             accountId: true,
             address: addressSelect,
             profilePhoto: profilePhotoSelect,
-            host: hostSelect,
         } as CompanyProfileSelect,
     };
 };
