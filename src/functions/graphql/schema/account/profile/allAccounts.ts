@@ -9,6 +9,7 @@ import { merge } from "lodash";
 import { Log } from "@utils/logger";
 import { ProfileObject } from "./ProfileObject";
 import { toProfileSelect } from ".";
+import { toHostSelect } from "../host";
 
 type AccountFilterOptions = {
     approved?: boolean;
@@ -28,7 +29,9 @@ const allAccounts: AllAccounts = async (_, { filters, paginate }, { authData, st
     const { approved, profileTypes, roles, suspended } = filters || {};
     const { take, skip } = paginate || {};
 
-    const profileSelect = toProfileSelect(mapSelections(info), authData);
+    const selections = mapSelections(info);
+
+    const profileSelect = toProfileSelect(selections, authData);
 
     const allAccounts = await store.account.findMany({
         where: {
