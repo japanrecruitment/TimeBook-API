@@ -4,7 +4,7 @@ import { PrismaSelect } from "graphql-map-selections";
 import { AddressObject, AddressSelect, toAddressSelect } from "../../address";
 import { PhotoSelect, toPhotoSelect } from "../../media";
 import { omit, pick } from "@utils/object-helper";
-import { HostObject } from "../host/HostObject";
+import { HostObject, toHostSelect } from "../host/HostObject";
 import { isEmpty } from "lodash";
 
 export type UserProfileObject = Partial<User> &
@@ -28,9 +28,10 @@ export const toUserProfileSelect = (selections, defaultValue: any = false): Pris
 
     const addressSelect = toAddressSelect(selections.address);
     const profilePhotoSelect = toPhotoSelect(selections.profilePhoto);
+    const hostSelect = toHostSelect(selections.host);
     const userProfileSelect = pick(selections, "id", "firstName", "lastName", "firstNameKana", "lastNameKana");
 
-    if (isEmpty(userProfileSelect) && !addressSelect && !profilePhotoSelect) return defaultValue;
+    if (isEmpty(userProfileSelect) && !addressSelect && !profilePhotoSelect && !hostSelect) return defaultValue;
 
     return {
         select: {
@@ -38,6 +39,7 @@ export const toUserProfileSelect = (selections, defaultValue: any = false): Pris
             accountId: true,
             address: addressSelect,
             profilePhoto: profilePhotoSelect,
+            host: hostSelect,
         } as UserProfileSelect,
     };
 };
