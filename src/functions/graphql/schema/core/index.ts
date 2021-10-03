@@ -8,6 +8,7 @@ import { paginationOptionTypeDefs } from "./paginationOption";
 import { resultTypeDefs } from "./result";
 import { upperFirstLetterDirective, upperFirstLetterDirectiveTypeDefs } from "./upperFirstLetterDirective";
 import { signMediaReadDirective, signMediaReadDirectiveTypeDefs } from "./signMediaReadDirective";
+import { paginationInfoTypeDefs } from "./paginationInfo";
 
 export const coreTypeDefs = mergeTypeDefs([
     authDirectiveTypeDefs,
@@ -15,6 +16,7 @@ export const coreTypeDefs = mergeTypeDefs([
     float100ScalarTypeDefs,
     intIDScalarTypeDefs,
     paginationOptionTypeDefs,
+    paginationInfoTypeDefs,
     resultTypeDefs,
     upperFirstLetterDirectiveTypeDefs,
     signMediaReadDirectiveTypeDefs,
