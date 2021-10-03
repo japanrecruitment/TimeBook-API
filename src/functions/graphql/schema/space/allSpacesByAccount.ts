@@ -25,7 +25,7 @@ const allSpacesByAccount: AllSpacesByAccount = async (_, { accountId, paginate }
 
     const allSpaces = await store.space.findMany({
         where: { isDeleted: false, accountId },
-        ...toSpaceSelect(mapSelections(info)),
+        ...toSpaceSelect(mapSelections(info).data),
         take: take && take + 1,
         skip,
     });

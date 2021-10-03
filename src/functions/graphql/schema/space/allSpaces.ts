@@ -24,7 +24,7 @@ const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
 
     const allSpaces = await store.space.findMany({
         where: { isDeleted: false },
-        ...toSpaceSelect(mapSelections(info).spaces),
+        ...toSpaceSelect(mapSelections(info).data),
         take: take && take + 1,
         skip,
     });
