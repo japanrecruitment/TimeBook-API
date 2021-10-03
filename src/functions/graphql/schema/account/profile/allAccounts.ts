@@ -2,14 +2,13 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../../context";
-import { PaginationOption } from "../../core/paginationOption";
 import { ProfileType, Role } from "@prisma/client";
 import { omit } from "@utils/object-helper";
 import { merge } from "lodash";
 import { Log } from "@utils/logger";
 import { ProfileObject } from "./ProfileObject";
 import { toProfileSelect } from ".";
-import { toHostSelect } from "../host";
+import { PaginationOption } from "../../core/pagination";
 
 type AccountFilterOptions = {
     approved?: boolean;

@@ -3,7 +3,7 @@ import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../context";
-import { PaginationOption } from "../core/paginationOption";
+import { PaginationOption } from "../core/pagination";
 import { SpaceObject, toSpaceSelect } from "./SpaceObject";
 
 type AllSpacesByAccountArgs = {
