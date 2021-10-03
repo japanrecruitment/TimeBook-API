@@ -14,9 +14,9 @@ type AddSpaceInput = {
 
 type AddSpaceArgs = { input: AddSpaceInput };
 
-type AddSpaceResult = Promise<Result>;
+type AddSpaceResult = { spaceId: string; result: Result };
 
-type AddSpace = IFieldResolver<any, Context, AddSpaceArgs, AddSpaceResult>;
+type AddSpace = IFieldResolver<any, Context, AddSpaceArgs, Promise<AddSpaceResult>>;
 
 const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }) => {
     const { accountId } = authData || {};

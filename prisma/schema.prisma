@@ -283,7 +283,7 @@ model Prefecture {
 model SpaceType {
     id                String               @id @default(cuid())
     title             String               @db.VarChar(100)
-    description       String               @db.VarChar(100)
+    description       String               @db.Text
     available         Boolean              @default(false)
     spaceToSpaceTypes Space_To_SpaceType[]
     photo             Photo?

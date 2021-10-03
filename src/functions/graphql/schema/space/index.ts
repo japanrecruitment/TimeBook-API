@@ -1,6 +1,5 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { addSpaceResolvers, addSpaceTypeDefs } from "./addSpace";
-import { allSpacesTypeDefs, allSpacesResolvers } from "./allSpaces";
 import { mySpacesResolvers, mySpacesTypeDefs } from "./mySpaces";
 import { nearestStationResolvers, nearestStationTypeDefs } from "./nearest-stations";
 import { spaceByIdResolvers, spaceByIdTypeDefs } from "./spaceById";
@@ -13,11 +12,12 @@ import { spaceAddressResolvers, spaceAddressTypeDefs } from "./space-address";
 import { removeSpaceResolvers, removeSpaceTypeDefs } from "./removeSpace";
 import { suspendSpaceResolvers, suspendSpaceTypeDefs } from "./suspendSpace";
 import { addSpacePhotosResolvers, addSpacePhotosTypeDefs } from "./addSpacePhotos";
+import { availableSpacesByAccountResolvers, availableSpacesByAccountTypeDefs } from "./availableSpacesByAccount";
+import { allSpacesByAccountResolvers, allSpacesByAccountTypeDefs } from "./allSpacesByAccount";
 
 export const spaceTypeDefs = mergeTypeDefs([
     spaceObjectTypeDefs,
     addSpaceTypeDefs,
-    allSpacesTypeDefs,
     mySpacesTypeDefs,
     nearestStationTypeDefs,
     spaceByIdTypeDefs,
@@ -29,12 +29,13 @@ export const spaceTypeDefs = mergeTypeDefs([
     removeSpaceTypeDefs,
     suspendSpaceTypeDefs,
     addSpacePhotosTypeDefs,
+    availableSpacesByAccountTypeDefs,
+    allSpacesByAccountTypeDefs,
 ]);
 
 export const spaceResolvers = mergeResolvers([
     spaceObjectResolvers,
     addSpaceResolvers,
-    allSpacesResolvers,
     mySpacesResolvers,
     nearestStationResolvers,
     spaceByIdResolvers,
@@ -46,4 +47,6 @@ export const spaceResolvers = mergeResolvers([
     removeSpaceResolvers,
     suspendSpaceResolvers,
     addSpacePhotosResolvers,
+    availableSpacesByAccountResolvers,
+    allSpacesByAccountResolvers,
 ]);
