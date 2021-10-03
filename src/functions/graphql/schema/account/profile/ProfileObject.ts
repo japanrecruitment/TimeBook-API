@@ -2,7 +2,7 @@ import { IUnionTypeResolver } from "@graphql-tools/utils";
 import { ProfileType } from "@prisma/client";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
-import { isEmpty } from "lodash";
+import { isEmpty, merge } from "lodash";
 import { CompanyProfileSelect, toCompanyProfileSelect } from "./CompanyProfileObject";
 import { UserProfileSelect, toUserProfileSelect } from "./UserProfileObject";
 import { HostSelect, toHostSelect } from "../host";
@@ -29,16 +29,14 @@ export type ProfileSelect = {
     host: PrismaSelect<HostSelect>;
 };
 
-export const toProfileSelect = (selections, authData, defaultValue: any = false): PrismaSelect<ProfileSelect> => {
+export const toProfileSelect = (selections, defaultValue: any = false): PrismaSelect<ProfileSelect> => {
     if (!selections || isEmpty(selections)) return defaultValue;
-    const { profileType, roles } = authData || {};
     const { UserProfile, CompanyProfile } = selections;
-    const userProfileSelect = profileType === "UserProfile" && toUserProfileSelect(UserProfile);
-    const companyProfileSelect = profileType === "CompanyProfile" && toCompanyProfileSelect(CompanyProfile);
-    const hostSelect =
-        (roles?.includes("host") || roles?.includes("admin")) && toHostSelect(selections[profileType]?.host);
+    const userProfileSelect = toUserProfileSelect(UserProfile);
+    const companyProfileSelect = toCompanyProfileSelect(CompanyProfile);
+    const hostSelect = toHostSelect(merge(UserProfile?.host, CompanyProfile?.host));
     const profileSelect = pick(
-        selections[profileType],
+        merge(UserProfile, CompanyProfile),
         "email",
         "emailVerified",
         "phoneNumber",
