@@ -3,16 +3,21 @@ import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../context";
-import { PaginationInfo, PaginationOption } from "../core/pagination";
+import {
+    createPaginationResult,
+    createPaginationResultType,
+    PaginationOption,
+    PaginationResult,
+} from "../core/pagination";
 import { SpaceObject, toSpaceSelect } from "./SpaceObject";
 
 type AllSpaceArgs = {
     paginate: PaginationOption;
 };
 
-type AllSpaceResult = { spaces: SpaceObject[]; paginationInfo: PaginationInfo };
+type AllSpaceResult = Promise<PaginationResult<SpaceObject>>;
 
-type AllSpaces = IFieldResolver<any, Context, AllSpaceArgs, Promise<AllSpaceResult>>;
+type AllSpaces = IFieldResolver<any, Context, AllSpaceArgs, AllSpaceResult>;
 
 const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
     const { take, skip } = paginate || {};
@@ -26,20 +31,11 @@ const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
 
     Log(allSpaces);
 
-    return {
-        spaces: allSpaces.slice(0, take),
-        paginationInfo: {
-            hasNext: take ? allSpaces.length > take : false,
-            hasPrevious: skip ? skip > 0 : false,
-        },
-    };
+    return createPaginationResult(allSpaces, take, skip);
 };
 
 export const allSpacesTypeDefs = gql`
-    type AllSpaceResult {
-        spaces: [SpaceObject]
-        paginationInfo: PaginationInfo
-    }
+    ${createPaginationResultType("AllSpaceResult", "SpaceObject")}
 
     type Query {
         allSpaces(paginate: PaginationOption): AllSpaceResult
