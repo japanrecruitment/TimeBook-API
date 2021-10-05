@@ -3,7 +3,12 @@ import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../context";
-import { PaginationOption } from "../core/paginationOption";
+import {
+    createPaginationResult,
+    createPaginationResultType,
+    PaginationOption,
+    PaginationResult,
+} from "../core/pagination";
 import { SpaceObject, toSpaceSelect } from "./SpaceObject";
 
 type AllSpacesByAccountArgs = {
@@ -11,7 +16,7 @@ type AllSpacesByAccountArgs = {
     paginate: PaginationOption;
 };
 
-type AllSpacesByAccountResult = Promise<Array<SpaceObject>>;
+type AllSpacesByAccountResult = Promise<PaginationResult<SpaceObject>>;
 
 type AllSpacesByAccount = IFieldResolver<any, Context, AllSpacesByAccountArgs, AllSpacesByAccountResult>;
 
@@ -20,19 +25,21 @@ const allSpacesByAccount: AllSpacesByAccount = async (_, { accountId, paginate }
 
     const allSpaces = await store.space.findMany({
         where: { isDeleted: false, accountId },
-        ...toSpaceSelect(mapSelections(info)),
-        take,
+        ...toSpaceSelect(mapSelections(info).data),
+        take: take && take + 1,
         skip,
     });
 
     Log(allSpaces);
 
-    return allSpaces || [];
+    return createPaginationResult(allSpaces, take, skip);
 };
 
 export const allSpacesByAccountTypeDefs = gql`
+    ${createPaginationResultType("AllSpaceByAccountResult", "SpaceObject")}
+
     type Query {
-        allSpacesByAccount(accountId: ID!, paginate: PaginationOption): [SpaceObject] @auth(requires: [admin])
+        allSpacesByAccount(accountId: ID!, paginate: PaginationOption): AllSpaceByAccountResult @auth(requires: [admin])
     }
 `;
 

@@ -3,14 +3,19 @@ import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../context";
-import { PaginationOption } from "../core/paginationOption";
+import {
+    createPaginationResult,
+    createPaginationResultType,
+    PaginationOption,
+    PaginationResult,
+} from "../core/pagination";
 import { SpaceObject, toSpaceSelect } from "./SpaceObject";
 
 type AllSpaceArgs = {
     paginate: PaginationOption;
 };
 
-type AllSpaceResult = Promise<Array<SpaceObject>>;
+type AllSpaceResult = Promise<PaginationResult<SpaceObject>>;
 
 type AllSpaces = IFieldResolver<any, Context, AllSpaceArgs, AllSpaceResult>;
 
@@ -19,19 +24,21 @@ const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
 
     const allSpaces = await store.space.findMany({
         where: { isDeleted: false },
-        ...toSpaceSelect(mapSelections(info)),
-        take,
+        ...toSpaceSelect(mapSelections(info).data),
+        take: take && take + 1,
         skip,
     });
 
     Log(allSpaces);
 
-    return allSpaces || [];
+    return createPaginationResult(allSpaces, take, skip);
 };
 
 export const allSpacesTypeDefs = gql`
+    ${createPaginationResultType("AllSpaceResult", "SpaceObject")}
+
     type Query {
-        allSpaces(paginate: PaginationOption): [SpaceObject]
+        allSpaces(paginate: PaginationOption): AllSpaceResult
     }
 `;
 

@@ -1,17 +1,19 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
+import { mapSelections } from "graphql-map-selections";
+import { merge } from "lodash";
 import { GqlError } from "src/functions/graphql/error";
 import { Context } from "../../../context";
-import { AddAddressInput } from "../../address";
+import { AddAddressInput, AddressObject, toAddressSelect } from "../../address";
 import { Result } from "../../core/result";
 
 type AddSpaceAddressArgs = { spaceId: string; address: AddAddressInput };
 
-type AddSpaceAddressResult = Promise<Result>;
+type AddSpaceAddressResult = { address: AddressObject; result: Result };
 
-type AddSpaceAddress = IFieldResolver<any, Context, AddSpaceAddressArgs, AddSpaceAddressResult>;
+type AddSpaceAddress = IFieldResolver<any, Context, AddSpaceAddressArgs, Promise<AddSpaceAddressResult>>;
 
-const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authData, dataSources, store }) => {
+const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authData, dataSources, store }, info) => {
     const { accountId } = authData;
     const { addressLine1, addressLine2, city, latitude, longitude, postalCode, prefectureId } = address;
 
@@ -50,7 +52,9 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
             prefecture: { connect: { id: prefectureId } },
             space: { connect: { id: spaceId } },
         },
-        select: { prefecture: { select: { name: true } }, spaceId: true },
+        ...merge(toAddressSelect(mapSelections(info).address), {
+            select: { id: true, prefecture: { select: { name: true } }, spaceId: true },
+        }),
     });
 
     await dataSources.spaceAlgolia.partialUpdateObject({
@@ -58,12 +62,17 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
         prefecture: newAddress.prefecture.name,
     });
 
-    return { message: `Successfully added address in your space` };
+    return { address: newAddress, result: { message: `Successfully added address in your space` } };
 };
 
 export const addSpaceAddressTypeDefs = gql`
+    type AddSpaceAddressResult {
+        result: Result
+        address: AddressObject
+    }
+
     type Mutation {
-        addSpaceAddress(spaceId: ID!, address: AddAddressInput!): Result! @auth(requires: [user, host])
+        addSpaceAddress(spaceId: ID!, address: AddAddressInput!): AddSpaceAddressResult! @auth(requires: [user, host])
     }
 `;
 

@@ -2,14 +2,18 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../../context";
-import { PaginationOption } from "../../core/paginationOption";
 import { ProfileType, Role } from "@prisma/client";
 import { omit } from "@utils/object-helper";
 import { merge } from "lodash";
 import { Log } from "@utils/logger";
 import { ProfileObject } from "./ProfileObject";
 import { toProfileSelect } from ".";
-import { toHostSelect } from "../host";
+import {
+    createPaginationResult,
+    createPaginationResultType,
+    PaginationOption,
+    PaginationResult,
+} from "../../core/pagination";
 
 type AccountFilterOptions = {
     approved?: boolean;
@@ -23,13 +27,15 @@ type AllAccountsArgs = {
     paginate: PaginationOption;
 };
 
-type AllAccounts = IFieldResolver<any, Context, AllAccountsArgs, Promise<Array<Partial<ProfileObject>>>>;
+type AllAccountsResult = Promise<PaginationResult<ProfileObject>>;
+
+type AllAccounts = IFieldResolver<any, Context, AllAccountsArgs, AllAccountsResult>;
 
 const allAccounts: AllAccounts = async (_, { filters, paginate }, { authData, store }, info) => {
     const { approved, profileTypes, roles, suspended } = filters || {};
     const { take, skip } = paginate || {};
 
-    const selections = mapSelections(info);
+    const selections = mapSelections(info).data;
 
     const profileSelect = toProfileSelect(selections, authData);
 
@@ -41,7 +47,7 @@ const allAccounts: AllAccounts = async (_, { filters, paginate }, { authData, st
             suspended,
         },
         ...profileSelect,
-        take,
+        take: take && take + 1,
         skip,
     });
 
@@ -55,7 +61,7 @@ const allAccounts: AllAccounts = async (_, { filters, paginate }, { authData, st
         );
     });
 
-    return result;
+    return createPaginationResult(result, take, skip);
 };
 
 export const allAccountsTypeDefs = gql`
@@ -66,8 +72,11 @@ export const allAccountsTypeDefs = gql`
         roles: [Role]
     }
 
+    ${createPaginationResultType("AllAccountsResult", "Profile")}
+
     type Query {
-        allAccounts(filters: AccountFilterOptions, paginate: PaginationOption): [Profile]! @auth(requires: [admin])
+        allAccounts(filters: AccountFilterOptions, paginate: PaginationOption): AllAccountsResult
+            @auth(requires: [admin])
     }
 `;
 
