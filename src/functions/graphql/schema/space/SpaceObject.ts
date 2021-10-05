@@ -74,7 +74,7 @@ export const spaceObjectTypeDefs = gql`
         id: ID!
         description: String
         name: String
-        maximumCapacity: String
+        maximumCapacity: Int
         numberOfSeats: Int
         spaceSize: Float
         needApproval: Boolean
