@@ -1,9 +1,7 @@
-import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { omit, pick } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
 import { isEmpty, merge } from "lodash";
-import { Context } from "../../context";
 import { ProfileObject, ProfileSelect, toProfileSelect } from "../account/profile";
 import { ChatType } from "./ChatType";
 import { MessageObject, MessageSelect, toMessageSelect } from "./MessageObject";
