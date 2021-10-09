@@ -8,9 +8,11 @@ import { resultTypeDefs } from "./result";
 import { upperFirstLetterDirective, upperFirstLetterDirectiveTypeDefs } from "./upperFirstLetterDirective";
 import { signMediaReadDirective, signMediaReadDirectiveTypeDefs } from "./signMediaReadDirective";
 import { paginationTypeDefs } from "./pagination";
+import { base64ScalarReolvers, base64ScalarTypeDefs } from "./base64Scalar";
 
 export const coreTypeDefs = mergeTypeDefs([
     authDirectiveTypeDefs,
+    base64ScalarTypeDefs,
     dateScalarTypeDefs,
     float100ScalarTypeDefs,
     intIDScalarTypeDefs,
@@ -20,6 +22,11 @@ export const coreTypeDefs = mergeTypeDefs([
     signMediaReadDirectiveTypeDefs,
 ]);
 
-export const coreResolvers = mergeResolvers([dateScalarResolvers, float100ScalarResolvers, intIDScalarResolvers]);
+export const coreResolvers = mergeResolvers([
+    base64ScalarReolvers,
+    dateScalarResolvers,
+    float100ScalarResolvers,
+    intIDScalarResolvers,
+]);
 
 export const coreDirectives = merge(authDirectives, upperFirstLetterDirective, signMediaReadDirective);
