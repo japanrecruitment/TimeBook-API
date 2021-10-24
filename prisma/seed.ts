@@ -1,10 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { Account, PrismaClient } from "@prisma/client";
 import { environment, Log } from "../src/utils";
 
 import { users, userProcessor } from "./seeds/users";
 import { prefectures } from "./seeds/prefecture";
 import { trainLines } from "./seeds/trainLines";
 import { stations, stationProcessor } from "./seeds/trainStations";
+import { request } from "http";
 
 const prisma = new PrismaClient();
 
@@ -13,7 +14,7 @@ const main = async () => {
     if (environment.isDev()) {
         Log("Running on dev environment");
         // Call seedTable function for each schema
-        // await seedTable("user", users, userProcessor);
+        await seedTable("account", users, userProcessor, true);
         await seedTable("prefecture", prefectures, null);
         await seedTable("trainLine", trainLines, null);
         await seedTable("station", stations, stationProcessor);
@@ -25,7 +26,7 @@ const main = async () => {
 
 type DataProcessor<T> = (T) => T;
 
-const seedTable = async <T>(schema: string, data: T[], dataProcessor: DataProcessor<T> | null): Promise<void> => {
+const seedTable = async <T>(schema: string, data: T[], dataProcessor: DataProcessor<T> | null, update: boolean = false ): Promise<void> => {
     try {
         if (dataProcessor) {
             Log(`${schema}: Processing data...`);
@@ -37,7 +38,14 @@ const seedTable = async <T>(schema: string, data: T[], dataProcessor: DataProces
         Log(`${schema}: Finish clearing data`);
 
         Log(`${schema}: Seeding new data...`);
-        await prisma[schema].createMany({ data });
+        if(update){
+            const requests = data.map(async (record: T, index: number) => {
+                return await prisma[schema].upsert({update: {}, create: record, where: {email: index.toString()}});
+            });
+            await Promise.all(requests);
+        }else{
+            await prisma[schema].createMany({ data });
+        }
         Log(`${schema}: Seeding complete`);
         Log(`...........................`);
     } catch (error) {

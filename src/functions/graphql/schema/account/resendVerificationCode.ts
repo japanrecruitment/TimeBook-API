@@ -9,11 +9,13 @@ import { Result } from "../core/result";
 type ResendVerificationCode = IFieldResolver<any, Context, Record<"email", string>, Promise<Result>>;
 
 const resendVerificationCode: ResendVerificationCode = async (_, { email }, { store, dataSources }) => {
+    email = email.toLocaleLowerCase(); // change email to lower case
+
     const account = await store.account.findUnique({ where: { email } });
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User with the given email not found" });
 
     const verificationCode = randomNumberOfNDigits(6);
-    dataSources.cacheDS.storeInCache(`email-verification-code-${email}`, verificationCode, 600);
+    dataSources.redis.store(`email-verification-code-${email}`, verificationCode, 600);
     await addEmailToQueue<EmailVerificationData>({
         template: "email-verification",
         recipientEmail: email,

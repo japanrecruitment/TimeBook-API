@@ -6,101 +6,67 @@ import { Result } from "../core/result";
 
 type AddSpaceInput = {
     name: string;
-    maximumCapacity: number;
-    numberOfSeats: number;
-    spaceSize: number;
-    spacePricePlan: SpacePricePlan;
-    nearestStations: NearestStation[];
-    space_To_Space_Types: Space_to_Space_Types[];
+    description: string;
+    maximumCapacity?: number;
+    numberOfSeats?: number;
+    spaceSize?: number;
 };
 
-type SpacePricePlan = {
-    planTitle: string;
-    hourlyPrice: number;
-    dailyPrice: number;
-    maintenanceFee: number;
-    lastMinuteDiscount: number;
-    cooldownTime: number;
-};
+type AddSpaceArgs = { input: AddSpaceInput };
 
-type NearestStation = {
-    stationId: number;
-    via: string;
-    time: number;
-};
+type AddSpaceResult = Promise<Result>;
 
-type Space_to_Space_Types = {
-    spaceTypeId: string;
-};
+type AddSpace = IFieldResolver<any, Context, AddSpaceArgs, AddSpaceResult>;
 
-type AddSpace = IFieldResolver<any, Context, Record<"input", AddSpaceInput>, Promise<Result>>;
+const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }) => {
+    const { accountId } = authData || {};
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-const addSpace: AddSpace = async (_, { input }, { authData, store }) => {
-    const { accountId } = authData;
-    const { name, maximumCapacity, numberOfSeats, spaceSize, spacePricePlan, nearestStations, space_To_Space_Types } =
-        input;
-    const { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime } = spacePricePlan;
-    const isValid =
-        name.trim() &&
-        planTitle.trim() &&
-        maximumCapacity != 0 &&
-        numberOfSeats != 0 &&
-        spaceSize != 0 &&
-        hourlyPrice != 0 &&
-        dailyPrice != 0 &&
-        maintenanceFee != 0 &&
-        cooldownTime != 0;
-    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
-    await store.space.create({
+    const { description, name, maximumCapacity, numberOfSeats, spaceSize } = input;
+
+    if (!description || !description.trim())
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
+
+    if (!name || !name.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
+
+    if (maximumCapacity && maximumCapacity < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum capacity" });
+
+    if (numberOfSeats && numberOfSeats < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of seats" });
+
+    if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
+
+    const space = await store.space.create({
         data: {
-            name,
-            maximumCapacity,
-            numberOfSeats,
-            spaceSize,
+            ...input,
+            name: name.trim(),
+            description: description?.trim(),
             account: { connect: { id: accountId } },
-            spacePricePlans: {
-                create: { planTitle, hourlyPrice, dailyPrice, maintenanceFee, lastMinuteDiscount, cooldownTime },
-            },
-            nearestStations: { createMany: { data: nearestStations } },
-            spaceTypes: { createMany: { data: space_To_Space_Types } },
         },
     });
 
-    return { message: `Successfully added space` };
+    await dataSources.spaceAlgolia.saveObject({ objectID: space.id, name, maximumCapacity, numberOfSeats, spaceSize });
+
+    return { spaceId: space.id, result: { message: "Successfully added a new space" } };
 };
 
 export const addSpaceTypeDefs = gql`
     input AddSpaceInput {
         name: String!
-        maximumCapacity: Int!
-        numberOfSeats: Int!
+        description: String!
+        maximumCapacity: Int
+        numberOfSeats: Int
         spaceSize: Float
-        spacePricePlan: SpacePricePlan
-        nearestStations: [NearestStations]
-        space_To_Space_Types: [Space_to_Space_Types]
     }
 
-    input SpacePricePlan {
-        planTitle: String
-        hourlyPrice: Float
-        dailyPrice: Float
-        maintenanceFee: Float
-        lastMinuteDiscount: Float
-        cooldownTime: Int
-    }
-
-    input NearestStations {
-        stationId: Int!
-        via: String
-        time: Int
-    }
-
-    input Space_to_Space_Types {
-        spaceTypeId: String!
+    type AddSpaceResult {
+        result: Result
+        spaceId: ID!
     }
 
     type Mutation {
-        addSpace(input: AddSpaceInput!): Result! @auth(requires: [host])
+        addSpace(input: AddSpaceInput!): AddSpaceResult! @auth(requires: [host])
     }
 `;
 

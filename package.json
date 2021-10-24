@@ -10,7 +10,7 @@
         "postinstall": "npm run schema:generate",
         "schema:migrate": "npx prisma migrate dev --skip-seed",
         "schema:reset": "npx prisma migrate reset --skip-seed",
-        "schema:seed": "npx prisma db seed --preview-feature",
+        "schema:seed": "npx prisma db seed",
         "schema:generate": "npx prisma generate",
         "schema:format": "npx prisma format",
         "test": "echo \"Error: no test specified\" && exit 1",
@@ -20,6 +20,9 @@
     "pre-commit": [
         "lint"
     ],
+    "prisma": {
+        "seed": "ts-node prisma/seed.ts"
+    },
     "dependencies": {
         "@graphql-tools/merge": "^6.2.14",
         "@graphql-tools/schema": "^7.1.5",
@@ -27,7 +30,7 @@
         "@middy/core": "^2.0.0-alpha.3",
         "@middy/do-not-wait-for-empty-event-loop": "^2.0.0-alpha.3",
         "@middy/http-json-body-parser": "^2.0.0-alpha.3",
-        "@prisma/client": "^2.26.0",
+        "@prisma/client": "^3.0.2",
         "algoliasearch": "^4.10.3",
         "apollo-datasource": "^3.0.0",
         "apollo-datasource-rest": "^3.0.0",
@@ -40,20 +43,25 @@
         "bcryptjs": "^2.4.3",
         "dotenv": "^10.0.0",
         "graphql": "^15.5.1",
-        "graphql-map-selections": "^1.0.7",
+        "graphql-map-selections": "^1.1.8",
         "handlebars": "^4.7.7",
+        "ioredis": "^4.27.8",
         "jsonwebtoken": "^8.5.1",
+        "sharp": "^0.29.1",
         "stripe": "^8.157.0",
-        "zb-email-verifier": "^0.6.2"
+        "uuid": "^8.3.2",
+        "zb-email-verifier": "^0.6.5"
     },
     "devDependencies": {
         "@serverless/typescript": "2.29.0",
         "@types/aws-lambda": "^8.10.51",
         "@types/chai": "^4.2.11",
+        "@types/ioredis": "^4.26.7",
         "@types/jsonwebtoken": "^8.5.4",
         "@types/lambda-tester": "^3.6.0",
         "@types/mocha": "^7.0.2",
         "@types/node": "^14.14.6",
+        "@types/sharp": "^0.29.1",
         "@types/sinon": "^9.0.0",
         "@types/supertest": "^2.0.8",
         "aws-sdk": "^2.839.0",
@@ -65,7 +73,7 @@
         "lambda-tester": "^4.0.1",
         "mocha": "^7.1.2",
         "nyc": "^15.0.1",
-        "prisma": "^2.26.0",
+        "prisma": "^3.0.2",
         "serverless": "^2.29.0",
         "serverless-domain-manager": "^5.1.0",
         "serverless-offline": "^6.8.0",

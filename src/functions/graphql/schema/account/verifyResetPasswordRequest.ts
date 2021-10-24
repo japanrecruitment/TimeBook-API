@@ -12,14 +12,16 @@ type ResetPasswordInput = {
 type VerifyResetPasswordRequest = IFieldResolver<any, Context, Record<"input", ResetPasswordInput>, Promise<Result>>;
 
 const verifyResetPasswordRequest: VerifyResetPasswordRequest = async (_, { input }, { dataSources }) => {
-    const { email, code } = input;
+    let { email, code } = input;
 
-    const cacheCode = await dataSources.cacheDS.fetchFromCache(`reset-password-verification-code-${email}`);
+    email = email.toLocaleLowerCase(); // change email to lower case
+
+    const cacheCode = await dataSources.redis.fetch(`reset-password-verification-code-${email}`);
     if (cacheCode !== code) throw new GqlError({ code: "FORBIDDEN", message: "Reset password code expired" });
 
     return {
-        message: `Your password has been changed successfully. You can use your new password to login.`,
-        action: "login",
+        message: `Request for reset password has been verified.`,
+        action: "reset-password",
     };
 };
 

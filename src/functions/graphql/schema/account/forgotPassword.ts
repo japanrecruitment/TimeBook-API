@@ -9,11 +9,13 @@ import { Result } from "../core/result";
 type ForgotPassword = IFieldResolver<any, Context, Record<"email", string>, Promise<Result>>;
 
 const forgotPassword: ForgotPassword = async (_, { email }, { store, dataSources }) => {
+    email = email.toLocaleLowerCase(); // change email to lowercase
+
     const account = await store.account.findUnique({ where: { email } });
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User with the given email not found" });
 
     const verificationCode = randomNumberOfNDigits(6);
-    dataSources.cacheDS.storeInCache(`reset-password-verification-code-${email}`, verificationCode, 600);
+    dataSources.redis.store(`reset-password-verification-code-${email}`, verificationCode, 600);
     await addEmailToQueue<ResetPasswordData>({
         template: "reset-password",
         recipientEmail: email,
@@ -23,7 +25,7 @@ const forgotPassword: ForgotPassword = async (_, { email }, { store, dataSources
 
     return {
         message: `Verificaiton code sent successfully to ${email}. Please check your email.`,
-        action: "reset-password",
+        action: "veriy-reset-password-code",
     };
 };
 

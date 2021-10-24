@@ -1,5 +1,5 @@
 import { ApolloServer } from "apollo-server-lambda";
-import { environment, Log } from "@utils/index";
+import { environment } from "@utils/index";
 import cache from "./cache";
 import context from "./context";
 import dataSources from "./dataSources";

@@ -1,23 +1,14 @@
-import { gql } from "apollo-server-core";
+import { mergeTypeDefs } from "@graphql-tools/merge";
+import { addressObjectTypeDefs } from "./AddressObject";
+import { addAddressInputTypeDefs } from "./AddAddressInput";
+import { updateAddressInputTypeDefs } from "./UpdateAddressInput";
 
-export const addressTypeDefs = gql`
-    type Address {
-        id: ID!
-        addressLine1: String
-        addressLine2: String
-        city: String
-        longitude: Float
-        latitude: Float
-        postalCode: String
-    }
+export const addressTypeDefs = mergeTypeDefs([
+    addressObjectTypeDefs,
+    addAddressInputTypeDefs,
+    updateAddressInputTypeDefs,
+]);
 
-    input AddressInput {
-        id: ID
-        addressLine1: String
-        addressLine2: String
-        city: String
-        longitude: Float
-        latitude: Float
-        postalCode: String
-    }
-`;
+export * from "./AddressObject";
+export * from "./AddAddressInput";
+export * from "./UpdateAddressInput";
