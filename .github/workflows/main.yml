@@ -19,8 +19,9 @@ jobs:
               with:
                   node-version: ${{ matrix.node-version }}
             - run: npm ci
+            - run: SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm install --arch=x64 --platform=linux sharp
             - name: Serverless Deploy
-              uses: serverless/github-action@master
+              uses: vnshgrg/github-action-amazon-lambda-serverless@nodejs
               with:
                   args: deploy --stage prod
               env:
@@ -31,4 +32,11 @@ jobs:
                   REFRESH_TOKEN_SECRET: ${{ secrets.REFRESH_TOKEN_SECRET }}
                   STRIPE_PK: ${{ secrets.STRIPE_PK }}
                   STRIPE_SK: ${{ secrets.STRIPE_SK }}
+                  STRIPE_CONNECT_CLIENT_ID: ${{ secrets.STRIPE_CONNECT_CLIENT_ID }}
+                  STRIPE_CONNECT_ACCOUNT_RETURN_URL: ${{ secrets.STRIPE_CONNECT_ACCOUNT_RETURN_URL }}
+                  STRIPE_CONNECT_ACCOUNT_REFRESH_URL: ${{ secrets.STRIPE_CONNECT_ACCOUNT_REFRESH_URL }}
                   IP_STACK_KEY: ${{ secrets.IP_STACK_KEY }}
+                  ALGOLIA_APP_ID: "${{ secrets.ALGOLIA_APP_ID }}"
+                  ALGOLIA_ADMIN_API_KEY: "${{ secrets.ALGOLIA_ADMIN_API_KEY }}"
+                  ALGOLIA_SEARCH_API_KEY: "${{ secrets.ALGOLIA_SEARCH_API_KEY }}"
+                  FRONTEND_BASE_URL: "${{ secrets.FRONTEND_BASE_URL }}"
