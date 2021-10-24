@@ -14,21 +14,7 @@ export default `<tr class="email-wrapper">
           &copy; 2020 All rights reserved.
         </p>
         <p class="f-fallback sub align-center">
-          <!-- <img
-            src="https://asset.japanrecruitment.co.jp/logo/jrg.png"
-            alt="ジャパンリクルートメントグループ株式会社"
-            height="55"
-            width="250"
-            class="email-masthead_logo colorScheme-light"
-          />
-          <img
-            src="https://asset.japanrecruitment.co.jp/logo/jrg-light.png"
-            alt="ジャパンリクルートメントグループ株式会社"
-            height="55"
-            width="250"
-            class="email-masthead_logo colorScheme-dark"
-          /> -->
-          <strong>Timebook</strong>
+          <strong>time book</strong>
         </p>
         <p class="f-fallback sub align-center">
           <strong
