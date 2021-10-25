@@ -23,7 +23,7 @@ const mySpaces: MySpaces = async (_, __, { store, authData }, info) => {
 
 export const mySpacesTypeDefs = gql`
     type Query {
-        mySpaces: [SpaceObject] @auth(requires: [user, host])
+        mySpaces: [SpaceObject] @auth(requires: [host])
     }
 `;
 

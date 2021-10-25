@@ -11,19 +11,20 @@ import {
 } from "../core/pagination";
 import { SpaceObject, toSpaceSelect } from "./SpaceObject";
 
-type AllSpaceArgs = {
+type AllSpacesByAccountArgs = {
+    accountId: string;
     paginate: PaginationOption;
 };
 
-type AllSpaceResult = Promise<PaginationResult<SpaceObject>>;
+type AllSpacesByAccountResult = Promise<PaginationResult<SpaceObject>>;
 
-type AllSpaces = IFieldResolver<any, Context, AllSpaceArgs, AllSpaceResult>;
+type AllSpacesByAccount = IFieldResolver<any, Context, AllSpacesByAccountArgs, AllSpacesByAccountResult>;
 
-const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
+const allSpacesByAccount: AllSpacesByAccount = async (_, { accountId, paginate }, { store }, info) => {
     const { take, skip } = paginate || {};
 
     const allSpaces = await store.space.findMany({
-        where: { isDeleted: false },
+        where: { isDeleted: false, accountId },
         ...toSpaceSelect(mapSelections(info).data),
         take: take && take + 1,
         skip,
@@ -34,14 +35,14 @@ const allSpaces: AllSpaces = async (_, { paginate }, { store }, info) => {
     return createPaginationResult(allSpaces, take, skip);
 };
 
-export const allSpacesTypeDefs = gql`
-    ${createPaginationResultType("AllSpaceResult", "SpaceObject")}
+export const allSpacesByAccountTypeDefs = gql`
+    ${createPaginationResultType("AllSpaceByAccountResult", "SpaceObject")}
 
     type Query {
-        allSpaces(paginate: PaginationOption): AllSpaceResult
+        allSpacesByAccount(accountId: ID!, paginate: PaginationOption): AllSpaceByAccountResult @auth(requires: [admin])
     }
 `;
 
-export const allSpacesResolvers = {
-    Query: { allSpaces },
+export const allSpacesByAccountResolvers = {
+    Query: { allSpacesByAccount },
 };

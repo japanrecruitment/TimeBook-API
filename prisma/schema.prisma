@@ -51,6 +51,11 @@ enum PaymentSourceType {
     Card
 }
 
+enum ChatType {
+    SINGLE
+    GROUP
+}
+
 model Account {
     id             String          @id @default(cuid())
     approved       Boolean         @default(false)
@@ -72,6 +77,8 @@ model Account {
     Credit         Credit[]
     paymentSource  PaymentSource[]
     host           Host?
+    chats          Chat[]          @relation("_AccountsChat")
+    sentMessages   Message[]
 }
 
 model PaymentSource {
@@ -283,7 +290,7 @@ model Prefecture {
 model SpaceType {
     id                String               @id @default(cuid())
     title             String               @db.VarChar(100)
-    description       String               @db.VarChar(100)
+    description       String               @db.Text
     available         Boolean              @default(false)
     spaceToSpaceTypes Space_To_SpaceType[]
     photo             Photo?
@@ -343,4 +350,24 @@ model Photo {
     hostId         String?
     photo          Host?      @relation(name: "photoId", fields: [photoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
     photoId        String?
+}
+
+model Chat {
+    createdAt DateTime  @default(now()) @db.Timestamp(6)
+    id        String    @id @default(cuid())
+    members   Account[] @relation("_AccountsChat")
+    messages  Message[]
+    type      ChatType
+    updatedAt DateTime  @updatedAt
+}
+
+model Message {
+    createdAt DateTime @default(now()) @db.Timestamp(6)
+    chatId    String
+    chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    id        String   @id @default(cuid())
+    message   String   @db.Text
+    senderId  String
+    sender    Account  @relation(fields: [senderId], references: [id])
+    updatedAt DateTime @updatedAt
 }

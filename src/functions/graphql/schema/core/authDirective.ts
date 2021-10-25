@@ -41,7 +41,7 @@ const executeStrategy = async (requiredRoles, requestData, throwError = true): P
 };
 
 const executeSelfStrategy = async (path, allowedRoles, account, authData): Promise<boolean> => {
-    if (allowedPath.map((p) => p.toLocaleLowerCase()).includes(path.toLowerCase())) return true;
+    if (path && allowedPath.map((p) => p.toLowerCase()).includes(path.toLowerCase())) return true;
     if (account?.accountId === authData?.accountId) return true;
     return await executeStrategy(allowedRoles, authData, false);
 };
@@ -70,7 +70,6 @@ class AuthDirective extends SchemaDirectiveVisitor {
             const { resolve = defaultFieldResolver } = field;
             field.resolve = async function (...args) {
                 const path = args[3]?.operation?.name?.value;
-                Log({ path });
 
                 const allowSelf = field._allowSelf;
 
@@ -79,19 +78,17 @@ class AuthDirective extends SchemaDirectiveVisitor {
                 const requiredRoles = field._requiredAuthRole || objectType._requiredAuthRole;
 
                 if (!requiredRoles) return resolve.apply(this, args);
-                Log({ fieldName });
 
                 const authData = await getAuthData(args[2]?.event);
 
                 if (allowSelf) {
                     const result = await executeSelfStrategy(path, requiredRoles, args[0], authData);
-                    Log("checkself", result);
+                    Log("self", { path, fieldName, result });
                     if (!result) return null;
                 } else {
-                    await executeStrategy(requiredRoles, authData);
+                    const result = await executeStrategy(requiredRoles, authData);
+                    Log("auth", { path, fieldName, result });
                 }
-
-                console.log(args[0]);
 
                 // Assign the value of authData in the context
                 const argsWithAuthData = args.map((arg, index) => (index === 2 ? { ...arg, authData } : arg));

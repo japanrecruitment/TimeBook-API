@@ -1,9 +1,12 @@
 import { SpacePricePlanType } from "@prisma/client";
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
+import { merge } from "lodash";
 import { GqlError } from "src/functions/graphql/error";
 import { Context } from "../../../context";
 import { Result } from "../../core/result";
+import { SpacePricePlanObject, toSpacePricePlanSelect } from "./SpacePricePlanObject";
+import { mapSelections } from "graphql-map-selections";
 
 type AddSpacePricePlanInput = {
     amount: number;
@@ -17,11 +20,19 @@ type AddSpacePricePlanInput = {
 
 type AddSpacePricePlansArgs = { spaceId: string; pricePlans: AddSpacePricePlanInput[] };
 
-type AddSpacePricePlansResult = Promise<Result>;
+type AddSpacePricePlansResult = {
+    result: Result;
+    spacePricePlans: SpacePricePlanObject[];
+};
 
-type AddSpacePricePlans = IFieldResolver<any, Context, AddSpacePricePlansArgs, AddSpacePricePlansResult>;
+type AddSpacePricePlans = IFieldResolver<any, Context, AddSpacePricePlansArgs, Promise<AddSpacePricePlansResult>>;
 
-const addSpacePricePlans: AddSpacePricePlans = async (_, { spaceId, pricePlans }, { authData, dataSources, store }) => {
+const addSpacePricePlans: AddSpacePricePlans = async (
+    _,
+    { spaceId, pricePlans },
+    { authData, dataSources, store },
+    info
+) => {
     const { accountId } = authData;
 
     const space = await store.space.findFirst({
@@ -62,7 +73,12 @@ const addSpacePricePlans: AddSpacePricePlans = async (_, { spaceId, pricePlans }
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
         data: { spacePricePlans: { createMany: { data: pricePlansToAdd } } },
-        select: { id: true, spacePricePlans: { select: { amount: true, duration: true, type: true } } },
+        select: {
+            id: true,
+            spacePricePlans: merge(toSpacePricePlanSelect(mapSelections(info).spacePricePlans), {
+                select: { amount: true, duration: true, type: true },
+            }),
+        },
     });
 
     await dataSources.spaceAlgolia.partialUpdateObject({
@@ -70,7 +86,10 @@ const addSpacePricePlans: AddSpacePricePlans = async (_, { spaceId, pricePlans }
         price: updatedSpace.spacePricePlans.map(({ amount, duration, type }) => ({ amount, duration, type })),
     });
 
-    return { message: `Successfully ${pricePlansToAdd.length} added price plan in your space` };
+    return {
+        spacePricePlans: updatedSpace.spacePricePlans,
+        result: { message: `Successfully ${pricePlansToAdd.length} added price plan in your space` },
+    };
 };
 
 export const addSpacePricePlansTypeDefs = gql`
@@ -84,8 +103,14 @@ export const addSpacePricePlansTypeDefs = gql`
         maintenanceFee: Float
     }
 
+    type AddSpacePricePlansResult {
+        result: Result
+        spacePricePlans: [SpacePricePlanObject]
+    }
+
     type Mutation {
-        addSpacePricePlans(spaceId: ID!, pricePlans: [AddSpacePricePlanInput]!): Result! @auth(requires: [user, host])
+        addSpacePricePlans(spaceId: ID!, pricePlans: [AddSpacePricePlanInput]!): AddSpacePricePlansResult!
+            @auth(requires: [user, host])
     }
 `;
 

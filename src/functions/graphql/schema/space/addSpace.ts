@@ -3,6 +3,7 @@ import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
+import { SpaceObject } from "./SpaceObject";
 
 type AddSpaceInput = {
     name: string;
@@ -14,9 +15,9 @@ type AddSpaceInput = {
 
 type AddSpaceArgs = { input: AddSpaceInput };
 
-type AddSpaceResult = Promise<Result>;
+type AddSpaceResult = { space: SpaceObject; result: Result };
 
-type AddSpace = IFieldResolver<any, Context, AddSpaceArgs, AddSpaceResult>;
+type AddSpace = IFieldResolver<any, Context, AddSpaceArgs, Promise<AddSpaceResult>>;
 
 const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }) => {
     const { accountId } = authData || {};
@@ -48,7 +49,7 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
 
     await dataSources.spaceAlgolia.saveObject({ objectID: space.id, name, maximumCapacity, numberOfSeats, spaceSize });
 
-    return { spaceId: space.id, result: { message: "Successfully added a new space" } };
+    return { space, result: { message: "Successfully added a new space" } };
 };
 
 export const addSpaceTypeDefs = gql`
@@ -62,7 +63,7 @@ export const addSpaceTypeDefs = gql`
 
     type AddSpaceResult {
         result: Result
-        spaceId: ID!
+        space: SpaceObject
     }
 
     type Mutation {
