@@ -15,8 +15,8 @@ const template = `
         <tr>
           <td class="content-cell">
             <div class="f-fallback">
-              <h1>Hi, {{recipientName}}</h1>
-              <p>You recently requested to reset your password for your eLearning account. Use the code below to reset it.</p>
+              <h1>{{recipientName}}様、</h1>
+              <p>パスワードリセットとために下記の確認コードを利用してください。</p>
               <p class="verificationCode">{{verificationCode}}</p>
               <p>
                 If you did not requset to reset your password, please ignore this email.
@@ -30,4 +30,4 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<ResetPasswordData>(template, "Reset password");
+export default generateTemplate<ResetPasswordData>(template, "【time book】パスワードリセットの確認");

@@ -15,18 +15,16 @@ const template = `
         <tr>
           <td class="content-cell">
             <div class="f-fallback">
-              <h1>Hi, {{recipientName}}</h1>
-              <p>Thank you for choosing Timebook.</p>
+              <h1>{{recipientName}}様、</h1>
+              <p>time bookへようこそ！</p>
               <p>
-                Please confirm that
-                <strong>{{recipientEmail}}</strong> is your e-mail address by completing the email verification process.
-              </p>
-              <p>
-                To complete email verification, please use the code below.
+                time bookにご登録頂きまして、誠にありがとうございます。
+                本登録を完了するには下記の確認番号を利用してください。
               </p>
               <p class="verificationCode">{{verificationCode}}</p>
               <p>
-                If you did not create an account using this address, please ignore this email.
+                本メールは仮登録情報をお知らせするものです。特に返信の必要はございません。
+万一このメールにお心当たりの無い場合は削除してくださいますようお願い致します。
               </p>
             </div>
           </td>
@@ -37,4 +35,4 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<EmailVerificationData>(template, "Please verify your email address");
+export default generateTemplate<EmailVerificationData>(template, "【time book】ご登録メールアドレスの確認");
