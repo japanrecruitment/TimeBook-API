@@ -8,7 +8,7 @@ const Base64Scalar = new GraphQLScalarType({
         return Buffer.from(value).toString("base64");
     },
     parseValue(value) {
-        if (typeof value !== "string") return value;
+        if (typeof value !== "string") return null;
         return Buffer.from(value, "base64").toString();
     },
     parseLiteral(ast) {

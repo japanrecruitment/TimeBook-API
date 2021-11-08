@@ -4,22 +4,29 @@ import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
+import { PaginationOption } from "../core/pagination";
 import { MessageObject, toMessageSelect } from "./MessageObject";
 
-type MessagesByChatArgs = { chatId: string };
+type MessagesByChatArgs = { chatId: string; paginate?: PaginationOption };
 
 type MessagesByChatResult = Partial<MessageObject>[];
 
 type MessagesByChat = IFieldResolver<any, Context, MessagesByChatArgs, Promise<MessagesByChatResult>>;
 
-const messagesByChat: MessagesByChat = async (_, { chatId }, { authData, store }, info) => {
+const messagesByChat: MessagesByChat = async (_, { chatId, paginate }, { authData, store }, info) => {
     const { accountId } = authData;
+    const { take, after } = paginate || { take: 10 };
 
     const chat = await store.chat.findUnique({
         where: { id: chatId },
         select: {
             members: { select: { id: true } },
-            messages: { ...toMessageSelect(mapSelections(info)) },
+            messages: {
+                ...toMessageSelect(mapSelections(info)),
+                take,
+                cursor: after && typeof after === "string" ? { id: after } : undefined,
+                orderBy: { updatedAt: "desc" },
+            },
         },
     });
 
@@ -33,7 +40,7 @@ const messagesByChat: MessagesByChat = async (_, { chatId }, { authData, store }
 
 export const messagesByChatTypeDef = gql`
     type Query {
-        messagesByChat(chatId: ID!): [MessageObject] @auth(requires: [user, host])
+        messagesByChat(chatId: ID!, paginate: PaginationOption): [MessageObject] @auth(requires: [user, host])
     }
 `;
 
