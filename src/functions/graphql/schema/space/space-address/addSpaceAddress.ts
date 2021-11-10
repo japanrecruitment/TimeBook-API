@@ -60,6 +60,7 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
     await dataSources.spaceAlgolia.partialUpdateObject({
         objectID: newAddress.spaceId,
         prefecture: newAddress.prefecture.name,
+        _geoloc: latitude && longitude ? { lat: latitude, lng: longitude } : undefined,
     });
 
     return { address: newAddress, result: { message: `Successfully added address in your space` } };
