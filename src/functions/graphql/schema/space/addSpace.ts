@@ -9,6 +9,7 @@ type AddSpaceInput = {
     name: string;
     description: string;
     maximumCapacity?: number;
+    needApproval?: boolean;
     numberOfSeats?: number;
     spaceSize?: number;
 };
@@ -57,6 +58,7 @@ export const addSpaceTypeDefs = gql`
         name: String!
         description: String!
         maximumCapacity: Int
+        needApproval: Boolean
         numberOfSeats: Int
         spaceSize: Float
     }

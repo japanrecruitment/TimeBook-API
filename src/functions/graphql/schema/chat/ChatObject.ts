@@ -1,9 +1,7 @@
-import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { omit, pick } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
 import { isEmpty, merge } from "lodash";
-import { Context } from "../../context";
 import { ProfileObject, ProfileSelect, toProfileSelect } from "../account/profile";
 import { ChatType } from "./ChatType";
 import { MessageObject, MessageSelect, toMessageSelect } from "./MessageObject";
@@ -20,9 +18,11 @@ export type ChatSelect = {
     type: boolean;
     members: PrismaSelect<ProfileSelect>;
     messages: PrismaSelect<MessageSelect>;
+    createdAt: boolean;
+    updatedAt: boolean;
 };
 
-export const toChatSelect = (selections, defaultValue: any = false): PrismaSelect<ChatSelect> => {
+export const toChatSelect = (selections, defaultValue: any = false) => {
     if (!selections) return defaultValue;
     const membersSelect = toProfileSelect(selections.members);
     const messagesSelect = toMessageSelect(selections.messages);
@@ -32,7 +32,7 @@ export const toChatSelect = (selections, defaultValue: any = false): PrismaSelec
         select: {
             ...chatSelect,
             members: membersSelect,
-            messages: messagesSelect,
+            messages: { ...messagesSelect, take: 10, orderBy: { updatedAt: "desc" } },
         },
     };
 };
