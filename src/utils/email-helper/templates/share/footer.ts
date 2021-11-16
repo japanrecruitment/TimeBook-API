@@ -20,7 +20,7 @@ export default `<tr class="email-wrapper">
           <strong
             >株式会社 シークエンス</strong
           >
-          <br />〒143-0016 東京都大田区大森北 4－12－3 CASA K 2C<br />お問い合わせ:　03-6404-8046
+          <br />〒143-0016 東京都大田区大森北 4－12－3 CASA K 2C<br />メール:　info@timebook.jp<br />お問い合わせ:　03-6404-8046
         </p>
       </td>
     </tr>

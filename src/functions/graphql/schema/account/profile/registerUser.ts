@@ -51,7 +51,7 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
         addEmailToQueue<EmailVerificationData>({
             template: "email-verification",
             recipientEmail: email,
-            recipientName: `${firstName} ${lastName}`,
+            recipientName: `${lastName} ${firstName}`,
             verificationCode,
         }),
     ]);
