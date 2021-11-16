@@ -2,3 +2,8 @@ export * from "./generateTemplate";
 export * from "./emailTemplates";
 export * from "./email-verification";
 export * from "./reset-password";
+export * from "./password-changed";
+export * from "./profile-updated";
+export * from "./host-application-received";
+export * from "./host-application-approved";
+export * from "./host-application-rejected";
