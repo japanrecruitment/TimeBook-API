@@ -74,7 +74,7 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
         });
     }
 
-    return { message: `Successfully added address in your space` };
+    return { message: `Successfully updated address in your space` };
 };
 
 export const updateSpaceAddressTypeDefs = gql`
