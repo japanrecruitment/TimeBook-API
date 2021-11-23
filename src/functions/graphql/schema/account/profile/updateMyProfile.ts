@@ -6,7 +6,6 @@ import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
 import { ProfileObject } from "./ProfileObject";
-import { addEmailToQueue, ProfileUpdateEmailData } from "@utils/email-helper";
 
 type UpdateProfileStrategy<T> = (input: T, context: Context) => Promise<Partial<ProfileObject>>;
 
@@ -33,22 +32,15 @@ type UpdateMyProfileInput = UpdateUserProfileInput & UpdateCompanyProfileInput;
 type UpdateMyProfile = IFieldResolver<any, Context, Record<"input", UpdateMyProfileInput>, Promise<Partial<Result>>>;
 
 const updateMyProfile: UpdateMyProfile = async (_, { input }, context) => {
-    const { id, profileType, email } = context.authData;
+    const { id, profileType } = context.authData;
 
     Log(id, context.authData);
-
     if (id !== input.id)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this profile" });
 
     const updatedProfile = await updateProfileStrategies[profileType](input, context);
 
     if (!updatedProfile) throw new GqlError({ code: "NOT_FOUND", message: "Profile not found" });
-
-    await addEmailToQueue<ProfileUpdateEmailData>({
-        template: "profile-updated",
-        recipientEmail: email,
-        recipientName: "",
-    });
 
     return { message: `Successfully updated a profile` };
 };

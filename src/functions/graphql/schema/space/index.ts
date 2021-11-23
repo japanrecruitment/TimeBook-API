@@ -14,7 +14,6 @@ import { suspendSpaceResolvers, suspendSpaceTypeDefs } from "./suspendSpace";
 import { addSpacePhotosResolvers, addSpacePhotosTypeDefs } from "./addSpacePhotos";
 import { availableSpacesByAccountResolvers, availableSpacesByAccountTypeDefs } from "./availableSpacesByAccount";
 import { allSpacesByAccountResolvers, allSpacesByAccountTypeDefs } from "./allSpacesByAccount";
-import { allSpacesResolvers, allSpacesTypeDefs } from "./allSpaces";
 
 export const spaceTypeDefs = mergeTypeDefs([
     spaceObjectTypeDefs,
@@ -32,7 +31,6 @@ export const spaceTypeDefs = mergeTypeDefs([
     addSpacePhotosTypeDefs,
     availableSpacesByAccountTypeDefs,
     allSpacesByAccountTypeDefs,
-    allSpacesTypeDefs,
 ]);
 
 export const spaceResolvers = mergeResolvers([
@@ -51,5 +49,4 @@ export const spaceResolvers = mergeResolvers([
     addSpacePhotosResolvers,
     availableSpacesByAccountResolvers,
     allSpacesByAccountResolvers,
-    allSpacesResolvers,
 ]);

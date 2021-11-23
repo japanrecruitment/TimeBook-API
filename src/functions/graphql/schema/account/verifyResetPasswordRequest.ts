@@ -31,11 +31,11 @@ export const verifyResetPasswordRequestTypeDefs = gql`
         code: Int!
     }
 
-    type Mutation {
+    type Query {
         verifyResetPasswordRequest(input: VerifyResetPasswordRequestInput!): Result!
     }
 `;
 
 export const verifyResetPasswordRequestResolvers = {
-    Mutation: { verifyResetPasswordRequest },
+    Query: { verifyResetPasswordRequest },
 };
