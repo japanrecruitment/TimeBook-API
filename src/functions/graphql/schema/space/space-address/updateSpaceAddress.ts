@@ -50,7 +50,13 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
             postalCode: postalCode?.trim(),
             prefecture: prefectureId ? { connect: { id: prefectureId } } : undefined,
         },
-        select: { latitude: true, longitude: true, prefecture: { select: { id: true, name: true } }, spaceId: true },
+        select: {
+            city: true,
+            latitude: true,
+            longitude: true,
+            prefecture: { select: { id: true, name: true } },
+            spaceId: true,
+        },
     });
 
     Log(updatedAddress);
@@ -63,11 +69,12 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
         await dataSources.spaceAlgolia.partialUpdateObject({
             objectID: updatedAddress.spaceId,
             prefecture: updatedAddress.prefecture.name,
+            city: updatedAddress.city,
             _geoloc: { lat: updatedAddress.latitude, lng: updatedAddress.longitude },
         });
     }
 
-    return { message: `Successfully added address in your space` };
+    return { message: `Successfully updated address in your space` };
 };
 
 export const updateSpaceAddressTypeDefs = gql`
