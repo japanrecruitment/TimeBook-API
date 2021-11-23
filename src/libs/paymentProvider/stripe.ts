@@ -16,6 +16,9 @@ interface IStripeUtil {
     createConnectAccount: (CreateConnectAccountInput) => Promise<Stripe.Account>;
     createAccountLinks: (params: Stripe.AccountLinkCreateParams) => Promise<Stripe.AccountLink>;
     getConnectAccount: (accountId: string) => Promise<Stripe.Account>;
+    createCustomer: (customerId: string, email: string) => any;
+    getCustomer: (customerId: string) => any;
+    attachPaymentMethodToCustomer: (customerId: string, paymentMethodId: string) => any;
 }
 
 export type AccountLink = {
@@ -109,6 +112,38 @@ export class StripeLib implements IStripeUtil {
                     pending,
                 },
             };
+        }
+    }
+
+    async createCustomer(accountId: string, email: string) {
+        try {
+            const customer = await stripe.customers.create({
+                email,
+                metadata: {
+                    accountId,
+                },
+            });
+            return customer.id;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+    async getCustomer(customerId: string) {
+        try {
+            const customer = await stripe.customers.retrieve(customerId);
+            return customer;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+    async attachPaymentMethodToCustomer(customerId: string, paymentMethodId: string) {
+        try {
+            const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
+                customer: customerId,
+            });
+            return paymentMethod;
+        } catch (error) {
+            console.log(error);
         }
     }
 }
