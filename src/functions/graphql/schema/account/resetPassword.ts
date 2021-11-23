@@ -4,7 +4,6 @@ import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
-import { addEmailToQueue, PasswordChangeEmailData } from "@utils/email-helper";
 
 type ResetPasswordInput = {
     email: string;
@@ -26,12 +25,6 @@ const resetPassword: ResetPassword = async (_, { input }, { store, dataSources }
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User with the given email not found" });
 
     dataSources.redis.delete(`reset-password-verification-code-${email}`);
-
-    await addEmailToQueue<PasswordChangeEmailData>({
-        template: "password-changed",
-        recipientEmail: email,
-        recipientName: "",
-    });
 
     return {
         message: `Your password has been changed successfully. You can use your new password to login.`,

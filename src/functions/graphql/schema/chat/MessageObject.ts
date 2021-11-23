@@ -14,8 +14,6 @@ export type MessageSelect = {
     id: boolean;
     message: boolean;
     sender: PrismaSelect<ProfileSelect>;
-    createdAt: boolean;
-    updatedAt: boolean;
 };
 
 export const toMessageSelect = (selections, defaultValue: any = false): PrismaSelect<MessageSelect> => {

@@ -14,16 +14,13 @@ CREATE TYPE "Gender" AS ENUM ('Male', 'Female', 'Other');
 CREATE TYPE "ReservationStatus" AS ENUM ('Reserved', 'Hold', 'Pending');
 
 -- CreateEnum
+CREATE TYPE "MediaType" AS ENUM ('Profile', 'Space', 'PhotoId');
+
+-- CreateEnum
 CREATE TYPE "PhotoType" AS ENUM ('Profile', 'Cover', 'General');
 
 -- CreateEnum
-CREATE TYPE "SpacePricePlanType" AS ENUM ('DAILY', 'HOURLY');
-
--- CreateEnum
 CREATE TYPE "PaymentSourceType" AS ENUM ('Card');
-
--- CreateEnum
-CREATE TYPE "ChatType" AS ENUM ('SINGLE', 'GROUP');
 
 -- CreateTable
 CREATE TABLE "Account" (
@@ -155,15 +152,11 @@ CREATE TABLE "Address" (
 CREATE TABLE "Space" (
     "id" TEXT NOT NULL,
     "name" VARCHAR(255) NOT NULL,
-    "description" TEXT NOT NULL,
     "maximumCapacity" INTEGER NOT NULL DEFAULT 0,
     "numberOfSeats" INTEGER NOT NULL DEFAULT 0,
     "spaceSize" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "needApproval" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
-    "suspended" BOOLEAN NOT NULL DEFAULT false,
-    "published" BOOLEAN NOT NULL DEFAULT true,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "accountId" TEXT NOT NULL,
 
@@ -173,10 +166,9 @@ CREATE TABLE "Space" (
 -- CreateTable
 CREATE TABLE "SpacePricePlan" (
     "id" TEXT NOT NULL,
-    "title" VARCHAR(255) NOT NULL,
-    "type" "SpacePricePlanType" NOT NULL,
-    "duration" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "amount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "planTitle" VARCHAR(255) NOT NULL,
+    "hourlyPrice" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "dailyPrice" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "maintenanceFee" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "lastMinuteDiscount" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "cooldownTime" INTEGER NOT NULL DEFAULT 0,
@@ -259,8 +251,7 @@ CREATE TABLE "Prefecture" (
 CREATE TABLE "SpaceType" (
     "id" TEXT NOT NULL,
     "title" VARCHAR(100) NOT NULL,
-    "description" TEXT NOT NULL,
-    "available" BOOLEAN NOT NULL DEFAULT false,
+    "description" VARCHAR(100) NOT NULL,
 
     CONSTRAINT "SpaceType_pkey" PRIMARY KEY ("id")
 );
@@ -302,60 +293,37 @@ CREATE TABLE "SubscriptionPlan" (
 CREATE TABLE "Photo" (
     "id" TEXT NOT NULL,
     "mime" VARCHAR(15) NOT NULL,
-    "type" "PhotoType" NOT NULL,
-    "thumbnail" JSONB,
-    "medium" JSONB,
-    "small" JSONB,
-    "large" JSONB,
-    "postUploadInfo" JSONB,
+    "thumbnail" VARCHAR(255),
+    "medium" VARCHAR(255),
+    "small" VARCHAR(255),
+    "large" VARCHAR(255),
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "spaceId" TEXT,
-    "spaceTypeId" TEXT,
-    "userId" TEXT,
-    "companyId" TEXT,
-    "hostId" TEXT,
-    "photoId" TEXT,
 
     CONSTRAINT "Photo_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Chat" (
-    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE "Media" (
     "id" TEXT NOT NULL,
-    "type" "ChatType" NOT NULL,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "accountId" TEXT NOT NULL,
+    "photoId" TEXT NOT NULL,
+    "spaceId" TEXT,
+    "spaceTypeId" TEXT,
+    "userId" TEXT,
+    "companyId" TEXT,
 
-    CONSTRAINT "Chat_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Message" (
-    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "chatId" TEXT NOT NULL,
-    "id" TEXT NOT NULL,
-    "message" TEXT NOT NULL,
-    "senderId" TEXT NOT NULL,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "__AccountsChat" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
+    CONSTRAINT "Media_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Account_email_key" ON "Account"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_accountId_key" ON "User"("accountId");
+CREATE UNIQUE INDEX "User_accountId_unique" ON "User"("accountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Company_accountId_key" ON "Company"("accountId");
+CREATE UNIQUE INDEX "Company_accountId_unique" ON "Company"("accountId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Host_accountId_key" ON "Host"("accountId");
@@ -364,37 +332,34 @@ CREATE UNIQUE INDEX "Host_accountId_key" ON "Host"("accountId");
 CREATE UNIQUE INDEX "IpData_ipAddress_key" ON "IpData"("ipAddress");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Address_userId_key" ON "Address"("userId");
+CREATE UNIQUE INDEX "Address_userId_unique" ON "Address"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Address_companyId_key" ON "Address"("companyId");
+CREATE UNIQUE INDEX "Address_companyId_unique" ON "Address"("companyId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Address_spaceId_key" ON "Address"("spaceId");
+CREATE UNIQUE INDEX "Address_spaceId_unique" ON "Address"("spaceId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SpacePricePlan_spaceId_unique" ON "SpacePricePlan"("spaceId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Credit_accountId_key" ON "Credit"("accountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Photo_spaceTypeId_key" ON "Photo"("spaceTypeId");
+CREATE UNIQUE INDEX "Media_accountId_unique" ON "Media"("accountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Photo_userId_key" ON "Photo"("userId");
+CREATE UNIQUE INDEX "Media_photoId_unique" ON "Media"("photoId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Photo_companyId_key" ON "Photo"("companyId");
+CREATE UNIQUE INDEX "Media_spaceTypeId_unique" ON "Media"("spaceTypeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Photo_hostId_key" ON "Photo"("hostId");
+CREATE UNIQUE INDEX "Media_userId_unique" ON "Media"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Photo_photoId_key" ON "Photo"("photoId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "__AccountsChat_AB_unique" ON "__AccountsChat"("A", "B");
-
--- CreateIndex
-CREATE INDEX "__AccountsChat_B_index" ON "__AccountsChat"("B");
+CREATE UNIQUE INDEX "Media_companyId_unique" ON "Media"("companyId");
 
 -- AddForeignKey
 ALTER TABLE "PaymentSource" ADD CONSTRAINT "PaymentSource_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -460,31 +425,19 @@ ALTER TABLE "Space_To_SpaceType" ADD CONSTRAINT "Space_To_SpaceType_spaceTypeId_
 ALTER TABLE "Credit" ADD CONSTRAINT "Credit_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Photo" ADD CONSTRAINT "Photo_spaceId_fkey" FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Photo" ADD CONSTRAINT "Photo_spaceTypeId_fkey" FOREIGN KEY ("spaceTypeId") REFERENCES "SpaceType"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_photoId_fkey" FOREIGN KEY ("photoId") REFERENCES "Photo"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Photo" ADD CONSTRAINT "Photo_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_spaceId_fkey" FOREIGN KEY ("spaceId") REFERENCES "Space"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Photo" ADD CONSTRAINT "Photo_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_spaceTypeId_fkey" FOREIGN KEY ("spaceTypeId") REFERENCES "SpaceType"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Photo" ADD CONSTRAINT "Photo_hostId_fkey" FOREIGN KEY ("hostId") REFERENCES "Host"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Photo" ADD CONSTRAINT "Photo_photoId_fkey" FOREIGN KEY ("photoId") REFERENCES "Host"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Message" ADD CONSTRAINT "Message_chatId_fkey" FOREIGN KEY ("chatId") REFERENCES "Chat"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "Account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "__AccountsChat" ADD FOREIGN KEY ("A") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "__AccountsChat" ADD FOREIGN KEY ("B") REFERENCES "Chat"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
