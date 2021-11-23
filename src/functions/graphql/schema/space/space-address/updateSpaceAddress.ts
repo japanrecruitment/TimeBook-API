@@ -18,7 +18,10 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
 
     const space = await store.space.findFirst({
         where: { id: spaceId, isDeleted: false, address: { id } },
-        select: { accountId: true, address: { select: { latitude: true, longitude: true, prefectureId: true } } },
+        select: {
+            accountId: true,
+            address: { select: { city: true, latitude: true, longitude: true, prefectureId: true } },
+        },
     });
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space with the given address not found" });
@@ -63,6 +66,7 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
 
     if (
         updatedAddress.prefecture.id !== space.address.prefectureId ||
+        updatedAddress.city !== space.address.city ||
         updatedAddress.latitude !== space.address.latitude ||
         updatedAddress.longitude !== space.address.longitude
     ) {
