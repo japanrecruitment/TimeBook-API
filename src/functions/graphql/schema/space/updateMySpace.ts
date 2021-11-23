@@ -9,6 +9,7 @@ type UpdateMySpaceInput = {
     description?: string;
     name?: string;
     maximumCapacity?: number;
+    needApproval?: boolean;
     numberOfSeats?: number;
     spaceSize?: number;
 };
@@ -68,6 +69,7 @@ export const updateMySpaceTypeDefs = gql`
         description: String
         name: String
         maximumCapacity: Int
+        needApproval: Boolean
         numberOfSeats: Int
         spaceSize: Float
     }
