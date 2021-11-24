@@ -18,7 +18,10 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
 
     const space = await store.space.findFirst({
         where: { id: spaceId, isDeleted: false, address: { id } },
-        select: { accountId: true, address: { select: { latitude: true, longitude: true, prefectureId: true } } },
+        select: {
+            accountId: true,
+            address: { select: { city: true, latitude: true, longitude: true, prefectureId: true } },
+        },
     });
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space with the given address not found" });
@@ -50,24 +53,32 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
             postalCode: postalCode?.trim(),
             prefecture: prefectureId ? { connect: { id: prefectureId } } : undefined,
         },
-        select: { latitude: true, longitude: true, prefecture: { select: { id: true, name: true } }, spaceId: true },
+        select: {
+            city: true,
+            latitude: true,
+            longitude: true,
+            prefecture: { select: { id: true, name: true } },
+            spaceId: true,
+        },
     });
 
     Log(updatedAddress);
 
     if (
         updatedAddress.prefecture.id !== space.address.prefectureId ||
+        updatedAddress.city !== space.address.city ||
         updatedAddress.latitude !== space.address.latitude ||
         updatedAddress.longitude !== space.address.longitude
     ) {
         await dataSources.spaceAlgolia.partialUpdateObject({
             objectID: updatedAddress.spaceId,
             prefecture: updatedAddress.prefecture.name,
+            city: updatedAddress.city,
             _geoloc: { lat: updatedAddress.latitude, lng: updatedAddress.longitude },
         });
     }
 
-    return { message: `Successfully added address in your space` };
+    return { message: `Successfully updated address in your space` };
 };
 
 export const updateSpaceAddressTypeDefs = gql`
