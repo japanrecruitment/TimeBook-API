@@ -85,7 +85,6 @@ export class StripeLib implements IStripeUtil {
     async getStripeAccount(accountId: string): Promise<AccountLink> {
         // Check stripe account requirement hash
         const stripeAccount = await this.getConnectAccount(accountId);
-
         if (!stripeAccount.details_submitted) {
             // detail submission isn't completed yet
             const accountLink = await this.createAccountLinks({
