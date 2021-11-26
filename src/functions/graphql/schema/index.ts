@@ -5,9 +5,9 @@ import { accountResolvers, accountTypeDefs } from "./account";
 import { addressTypeDefs } from "./address";
 import { spaceTypeDefs, spaceResolvers } from "./space";
 import { coreDirectives, coreResolvers, coreTypeDefs } from "./core";
+import * as payment from "./payment";
 import { prefectureResolvers, prefectureTypeDefs } from "./prefectures";
 import { stationsResolvers, stationsTypeDefs } from "./stations";
-import { paymentSourceResolvers, paymentSourceTypeDefs } from "./payment";
 import { mediaTypeDefs, mediaResolvers } from "./media";
 import { cacheResolvers, cacheTypeDefs } from "./cache";
 import * as chat from "./chat";
@@ -17,7 +17,7 @@ const typeDefs = mergeTypeDefs([
     cacheTypeDefs,
     accountTypeDefs,
     addressTypeDefs,
-    paymentSourceTypeDefs,
+    payment.typeDefs,
     prefectureTypeDefs,
     stationsTypeDefs,
     spaceTypeDefs,
@@ -29,7 +29,7 @@ const resolvers = mergeResolvers([
     coreResolvers,
     cacheResolvers,
     accountResolvers,
-    paymentSourceResolvers,
+    payment.resolvers,
     prefectureResolvers,
     stationsResolvers,
     spaceResolvers,

@@ -19,7 +19,7 @@ export type SpaceObject = Partial<Space> & {
     photos?: Partial<Photo>[];
 };
 
-type SpaceSelect = {
+export type SpaceSelect = {
     id: boolean;
     description: boolean;
     name: boolean;

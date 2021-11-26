@@ -12,3 +12,4 @@ export * from "./image-processor";
 export * from "./email-helper";
 export * from "./ip-helper";
 export * from "./redis";
+export * from "./stringHelper";
