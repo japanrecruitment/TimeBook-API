@@ -1,4 +1,5 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
+import { apporveReservationResolvers, approveReservationTypeDefs } from "./approveReservation";
 import { myReservationsResolvers, myReservationsTypeDefs } from "./myReservations";
 import { reservationObjectTypeDefs } from "./ReservationObject";
 import { reservationStatusResolver, reservationStatusTypeDef } from "./ReservationStatus";
@@ -9,6 +10,12 @@ export const typeDefs = mergeTypeDefs([
     reservationObjectTypeDefs,
     reserveSpaceTypeDefs,
     myReservationsTypeDefs,
+    approveReservationTypeDefs,
 ]);
 
-export const resolvers = mergeResolvers([reservationStatusResolver, reserveSpaceResolvers, myReservationsResolvers]);
+export const resolvers = mergeResolvers([
+    reservationStatusResolver,
+    reserveSpaceResolvers,
+    myReservationsResolvers,
+    apporveReservationResolvers,
+]);

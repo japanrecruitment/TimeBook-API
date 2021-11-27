@@ -10,6 +10,7 @@ import { SpaceToSpaceTypeObject, SpaceToSpaceTypeSelect, toSpaceToSpaceTypeSelec
 import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { Context } from "../../context";
 import { Photo, PhotoSelect, toPhotoSelect } from "../media";
+import { toHostSelect, HostSelect } from "../account/host/HostObject";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
@@ -32,6 +33,7 @@ export type SpaceSelect = {
     spaceTypes: PrismaSelect<SpaceToSpaceTypeSelect>;
     address: PrismaSelect<AddressSelect>;
     photos: PrismaSelect<PhotoSelect>;
+    account: { select: { host: PrismaSelect<HostSelect> } };
 };
 
 export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSelect<SpaceSelect> => {
@@ -41,7 +43,8 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
     const spaceToSpaceTypesSelect = toSpaceToSpaceTypeSelect(selections.spaceTypes);
     const addressSelect = toAddressSelect(selections.address);
     const photosSelect = toPhotoSelect(selections.photos);
-    const spaceSelect = omit(selections, "nearestStations", "spacePricePlan", "spaceTypes", "address", "photo");
+    const hostSelect = toHostSelect(selections.host);
+    const spaceSelect = omit(selections, "nearestStations", "spacePricePlan", "spaceTypes", "address", "photo", "host");
 
     if (
         isEmpty(spaceSelect) &&
@@ -49,7 +52,8 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         !spacePricePlansSelect &&
         !spaceToSpaceTypesSelect &&
         !addressSelect &&
-        !photosSelect
+        !photosSelect &&
+        !hostSelect
     )
         return defaultValue;
 
@@ -61,6 +65,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
             spaceTypes: spaceToSpaceTypesSelect,
             address: addressSelect,
             photos: photosSelect,
+            account: hostSelect ? { select: { host: hostSelect } } : false,
         } as SpaceSelect,
     };
 };
@@ -83,6 +88,7 @@ export const spaceObjectTypeDefs = gql`
         spaceTypes: [SpaceTypeObject]
         address: AddressObject
         photos: [Photo]
+        host: Host
     }
 `;
 

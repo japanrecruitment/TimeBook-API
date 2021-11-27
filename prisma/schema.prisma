@@ -257,6 +257,7 @@ model Reservation {
   reserveeId   String
   approved     Boolean
   approvedOn   DateTime?         @db.Timestamp(6)
+  transaction  Transaction?
 }
 
 model Transaction {
@@ -268,6 +269,7 @@ model Transaction {
   amount              Float
   currency            String
   status              TransactionStatus
+  paymentIntentId     String?
   requestedLog        Json?
   responseReceivedLog Json?
   webhookReceivedLog  Json?
@@ -278,6 +280,8 @@ model Transaction {
   updatedAt           DateTime             @updatedAt
   accountId           String
   account             Account              @relation(fields: [accountId], references: [id])
+  reservationId       String               @unique
+  reservation         Reservation          @relation(fields: [reservationId], references: [id])
 }
 
 model TrainLine {
