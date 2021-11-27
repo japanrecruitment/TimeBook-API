@@ -10,7 +10,7 @@ import { SpaceToSpaceTypeObject, SpaceToSpaceTypeSelect, toSpaceToSpaceTypeSelec
 import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { Context } from "../../context";
 import { Photo, PhotoSelect, toPhotoSelect } from "../media";
-import { toHostSelect, HostSelect } from "../account/host/HostObject";
+import { toHostSelect, HostSelect, HostObject } from "../account/host/HostObject";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
@@ -18,6 +18,7 @@ export type SpaceObject = Partial<Space> & {
     spaceTypes?: Partial<SpaceToSpaceTypeObject>[];
     address?: Partial<AddressObject>;
     photos?: Partial<Photo>[];
+    account?: { host?: Partial<HostObject> };
 };
 
 export type SpaceSelect = {
@@ -72,6 +73,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
 
 const spaceObjectResolver: IObjectTypeResolver<SpaceObject, Context> = {
     spaceTypes: ({ spaceTypes }) => spaceTypes.map((spaceType) => spaceType.spaceType),
+    host: ({ account }) => account?.host,
 };
 
 export const spaceObjectTypeDefs = gql`
