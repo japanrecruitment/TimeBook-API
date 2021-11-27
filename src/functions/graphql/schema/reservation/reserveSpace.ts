@@ -71,17 +71,6 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
     Log(amount, applicationFeeAmount, transferAmount);
 
-    const reservation = await store.reservation.create({
-        data: {
-            approved: !space.needApproval,
-            fromDateTime,
-            toDateTime,
-            status: "PENDING",
-            space: { connect: { id: spaceId } },
-            reservee: { connect: { id: accountId } },
-        },
-    });
-
     const transaction = await store.transaction.create({
         data: {
             amount,
@@ -92,6 +81,16 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             description: `Reservation of ${space.name}`,
             status: "CREATED",
             account: { connect: { id: accountId } },
+            reservation: {
+                create: {
+                    approved: !space.needApproval,
+                    fromDateTime,
+                    toDateTime,
+                    status: "PENDING",
+                    space: { connect: { id: spaceId } },
+                    reservee: { connect: { id: accountId } },
+                },
+            },
         },
     });
 
@@ -107,7 +106,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         capture_method: space.needApproval ? "manual" : "automatic",
         metadata: {
             transactionId: transaction.id,
-            reservationId: reservation.id,
+            reservationId: transaction.reservationId,
             userId: accountId,
             spaceId: spaceId,
         },
@@ -122,7 +121,11 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
     await store.transaction.update({
         where: { id: transaction.id },
-        data: { requestedLog: paymentIntentParams as any, responseReceivedLog: paymentIntent as any },
+        data: {
+            paymentIntentId: paymentIntent.id,
+            requestedLog: paymentIntentParams as any,
+            responseReceivedLog: paymentIntent as any,
+        },
     });
 
     return {

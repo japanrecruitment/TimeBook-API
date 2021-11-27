@@ -13,6 +13,11 @@ export type PaginationInfo = {
 };
 
 export const paginationTypeDefs = gql`
+    enum SortOrder {
+        ASC
+        DESC
+    }
+
     input PaginationOption {
         take: Int
         skip: Int

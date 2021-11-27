@@ -167,7 +167,7 @@ export class StripeLib implements IStripeUtil {
 
     async retrieveCard(customerId: string) {
         try {
-            const cards = await (await this.listSources(customerId, "card")).data as Array<Stripe.PaymentMethod>;
+            const cards = (await (await this.listSources(customerId, "card")).data) as Array<Stripe.PaymentMethod>;
             Log("retriveCard cards", cards);
             return cards;
         } catch (error) {
@@ -201,6 +201,18 @@ export class StripeLib implements IStripeUtil {
             return intent;
         } catch (error) {
             Log("[FAILED]: Creating stripe setup payment intent", error);
+            return error;
+        }
+    }
+
+    async capturePayment(paymentIntentId: string) {
+        try {
+            Log("[STARTED]: Capturing stripe payment intent", paymentIntentId);
+            const intent = await stripe.paymentIntents.capture(paymentIntentId);
+            Log("[COMPLETED]: Capturing stripe payment intent", intent);
+            return intent;
+        } catch (error) {
+            Log("[FAILED]: Capturing stripe payment intent", error);
             return error;
         }
     }
