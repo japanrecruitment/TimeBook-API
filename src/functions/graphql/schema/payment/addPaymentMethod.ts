@@ -15,7 +15,7 @@ const addPaymentMethod: TPaymentSource = async (_, { paymentMethodId }, { authDa
     // get current customer ID
     let account = await store.account.findUnique({
         where: { id: accountId },
-        select: { id: true, paymentSource: true, email: true },
+        select: { id: true, paymentSource: true, email: true, userProfile: true },
     });
 
     Log("addPaymentMethod account:", account);
@@ -23,7 +23,7 @@ const addPaymentMethod: TPaymentSource = async (_, { paymentMethodId }, { authDa
     const stripe = new StripeLib();
 
     let customerId = null;
-    if (account.paymentSource.length > 0) {
+    if (account.userProfile.stripeCustomerId) {
         // stripe customer already exists for that user
         customerId = account.paymentSource[0].customer;
     } else {
