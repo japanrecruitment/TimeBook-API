@@ -12,22 +12,22 @@ const setupIntent: SetupIntent = async (_, __, { authData, store }) => {
     // get current customer ID
     let account = await store.account.findUnique({
         where: { id: accountId },
-        select: { id: true, paymentSource: true, email: true },
+        select: { id: true, email: true, userProfile: true },
     });
-
-    Log("addPaymentMethod account:", account);
 
     const stripe = new StripeLib();
 
-    let customerId = null;
-    if (account.paymentSource.length > 0) {
-        // stripe customer already exists for that user
-        customerId = account.paymentSource[0].customer;
+    let customerId: string = null;
+    if (account.userProfile.stripeCustomerId !== "") {
+        customerId = account.userProfile.stripeCustomerId;
     } else {
-        // stripe customer does not exists so we will make one
         customerId = await stripe.createCustomer(accountId, account.email);
+        // store customerId to user
+        await store.account.update({
+            where: { id: account.id },
+            data: { userProfile: { update: { stripeCustomerId: customerId } } },
+        });
     }
-
     const intent = await stripe.setupPaymentIntent({
         payment_method_types: ["card"],
         customer: customerId,

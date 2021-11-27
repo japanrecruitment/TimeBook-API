@@ -151,24 +151,25 @@ export class StripeLib implements IStripeUtil {
 
     async listSources(
         customerId: string,
-        paymentSourceType: string
-    ): Promise<Stripe.ApiListPromise<Stripe.CustomerSource>> {
+        paymentSourceType: Stripe.PaymentMethodListParams.Type
+    ): Promise<Stripe.ApiList<Stripe.PaymentMethod>> {
         try {
-            const sources = await stripe.customers.listSources(customerId, { object: paymentSourceType.toLowerCase() });
-            Log("listsources sources:", sources);
+            const sources = await stripe.paymentMethods.list({
+                customer: customerId,
+                type: paymentSourceType,
+            });
+            Log("payment methods:", sources);
             return sources;
         } catch (error) {
             Log(error);
         }
     }
 
-    async retrieveCard(customerId: string, cardFingerprint: string) {
+    async retrieveCard(customerId: string) {
         try {
-            const cards = (await this.listSources(customerId, "card")).data as Array<Stripe.Card>;
+            const cards = await (await this.listSources(customerId, "card")).data as Array<Stripe.PaymentMethod>;
             Log("retriveCard cards", cards);
-            const card = cards.find((value) => value.fingerprint === cardFingerprint);
-            Log("retriveCard card", card);
-            return card;
+            return cards;
         } catch (error) {
             Log(error);
         }
