@@ -1,13 +1,13 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { StripeLib } from "@libs/paymentProvider";
 import { appConfig } from "@utils/appConfig";
+import { Log } from "@utils/logger";
 import { omit } from "@utils/object-helper";
 import { formatPrice } from "@utils/stringHelper";
 import { gql } from "apollo-server-core";
 import Stripe from "stripe";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { Result } from "../core/result";
 
 type ReserveSpaceInput = {
     fromDateTime: Date;
@@ -39,6 +39,8 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
     const hourDuration = Math.ceil(Math.abs(toDateTime.getTime() - fromDateTime.getTime()) / (1000 * 60 * 60));
 
+    Log("hour duration", hourDuration);
+
     if (hourDuration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selection" });
 
     const space = await store.space.findUnique({
@@ -64,6 +66,10 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
     const price = formatPrice("HOURLY", space.spacePricePlans, true, true);
 
     const amount = hourDuration * price;
+    const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+    const transferAmount = amount - applicationFeeAmount;
+
+    Log(amount, applicationFeeAmount, transferAmount);
 
     const reservation = await store.reservation.create({
         data: {
@@ -93,7 +99,9 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
         amount,
         currency: "JPY",
-        payment_method_types: [paymentSource.type],
+        customer: paymentSource.customer,
+        payment_method: paymentSource.token,
+        payment_method_types: [paymentSource.type.toLowerCase()],
         description: transaction.description,
         receipt_email: email,
         capture_method: space.needApproval ? "manual" : "automatic",
@@ -103,11 +111,14 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             userId: accountId,
             spaceId: spaceId,
         },
-        application_fee_amount: parseInt((amount * (appConfig.platformFeePercent / 100) * 100).toString()),
+        application_fee_amount: applicationFeeAmount,
+        transfer_data: {
+            destination: space.account.host.stripeAccountId,
+        },
+        confirm: true,
     };
-    const paymentIntent = await stripe.createPaymentIntent(paymentIntentParams, {
-        stripeAccount: space.account.host.stripeAccountId,
-    });
+
+    const paymentIntent = await stripe.createPaymentIntent(paymentIntentParams);
 
     await store.transaction.update({
         where: { id: transaction.id },

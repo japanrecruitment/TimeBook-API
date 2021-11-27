@@ -6,6 +6,8 @@ export const reservationStatusTypeDef = gql`
         RESERVED
         HOLD
         PENDING
+        FAILED
+        DISAPPROVED
     }
 `;
 

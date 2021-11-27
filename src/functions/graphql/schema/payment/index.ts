@@ -1,7 +1,8 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
-import { paymentProviderResolver, paymentProviderTypeDef } from "./PaymentProvider";
-import { paymentSourceTypeDefs, paymentSourceResolvers } from "./paymentSource";
+import { paymentSourceResolvers, paymentSourceTypeDefs } from "./paymentSource";
+import { addPaymentMethodResolvers, addPaymentMethodTypeDefs } from "./addPaymentMethod";
+import { setupIntentResolvers, setupIntentTypedefs } from "./setupIntent";
 
-export const typeDefs = mergeTypeDefs([paymentProviderTypeDef, paymentSourceTypeDefs]);
+export const typeDefs = mergeTypeDefs([paymentSourceTypeDefs, addPaymentMethodTypeDefs, setupIntentTypedefs]);
 
-export const resolvers = mergeResolvers([paymentProviderResolver, paymentSourceResolvers]);
+export const resolvers = mergeResolvers([paymentSourceResolvers, addPaymentMethodResolvers, setupIntentResolvers]);

@@ -11,8 +11,6 @@ import { updateMyProfileResolvers, updateMyProfileTypeDefs } from "./updateMyPro
 import { userProfileObjectTypeDefs } from "./UserProfileObject";
 import { registerUserResolvers, registerUserTypeDefs } from "./registerUser";
 import { registerCompanyResolvers, registerCompanyTypeDefs } from "./registerCompany";
-import { paymentSourceResolvers, paymentSourceTypeDefs } from "./paymentSource";
-import { addPaymentMethodResolvers, addPaymentMethodTypeDefs } from "./addPaymentMethod";
 
 export const profileTypeDefs = mergeTypeDefs([
     userProfileObjectTypeDefs,
@@ -27,8 +25,6 @@ export const profileTypeDefs = mergeTypeDefs([
     approveAccountTypeDefs,
     registerUserTypeDefs,
     registerCompanyTypeDefs,
-    paymentSourceTypeDefs,
-    addPaymentMethodTypeDefs,
 ]);
 
 export const profileResolvers = mergeResolvers([
@@ -42,8 +38,6 @@ export const profileResolvers = mergeResolvers([
     approveAccountResolvers,
     registerUserResolvers,
     registerCompanyResolvers,
-    paymentSourceResolvers,
-    addPaymentMethodResolvers,
 ]);
 
 export * from "./UserProfileObject";

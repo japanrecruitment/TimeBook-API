@@ -1,10 +1,8 @@
-import { PaymentSource } from ".prisma/client";
 import { IFieldResolver } from "@graphql-tools/utils";
-import { S3Lib, StripeLib } from "@libs/index";
+import { StripeLib } from "@libs/index";
 import { gql } from "apollo-server-core";
-import { Context } from "../../../context";
+import { Context } from "../../context";
 import { Log } from "@utils/logger";
-import Stripe from "stripe";
 import { PaymentMethod } from "./paymentSource";
 
 type AddPaymentMethodArgs = { paymentMethodId: string };
@@ -20,7 +18,7 @@ const addPaymentMethod: TPaymentSource = async (_, { paymentMethodId }, { authDa
         select: { id: true, paymentSource: true, email: true },
     });
 
-    Log(account);
+    Log("addPaymentMethod account:", account);
 
     const stripe = new StripeLib();
 

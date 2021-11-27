@@ -32,12 +32,16 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
                 reservationId = intent?.metadata?.reservationId;
                 userId = intent?.metadata?.userId;
                 spaceId = intent?.metadata?.spaceId;
+                transactionStatus = TransactionStatus.FAILED;
                 webhookStatusLog = intent;
             },
-            onError() {
-                return formatJSONResponse(404, { message: "Signature verification failed." });
-            },
+            onError() {},
         });
+
+        if (!transactionStatus) return formatJSONResponse(404, { message: "Signature verification failed." });
+
+        if (transactionStatus === TransactionStatus.FAILED)
+            return formatJSONResponse(200, { message: "Signature verification failed." });
 
         if (!transactionId || !reservationId || !userId || !spaceId)
             return formatJSONResponse(500, { message: "Could not validate transaction on our end." });

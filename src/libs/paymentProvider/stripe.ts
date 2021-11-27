@@ -123,6 +123,7 @@ export class StripeLib implements IStripeUtil {
                     accountId,
                 },
             });
+            Log(customer);
             return customer.id;
         } catch (error) {
             console.log(error);
@@ -149,6 +150,31 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
+    async listSources(
+        customerId: string,
+        paymentSourceType: string
+    ): Promise<Stripe.ApiListPromise<Stripe.CustomerSource>> {
+        try {
+            const sources = await stripe.customers.listSources(customerId, { object: paymentSourceType.toLowerCase() });
+            Log("listsources sources:", sources);
+            return sources;
+        } catch (error) {
+            Log(error);
+        }
+    }
+
+    async retrieveCard(customerId: string, cardFingerprint: string) {
+        try {
+            const cards = (await this.listSources(customerId, "card")).data as Array<Stripe.Card>;
+            Log("retriveCard cards", cards);
+            const card = cards.find((value) => value.fingerprint === cardFingerprint);
+            Log("retriveCard card", card);
+            return card;
+        } catch (error) {
+            Log(error);
+        }
+    }
+
     async createPaymentIntent(
         params: Stripe.PaymentIntentCreateParams,
         options?: Stripe.RequestOptions
@@ -164,6 +190,21 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
+    async setupPaymentIntent(
+        params: Stripe.SetupIntentCreateParams,
+        options?: Stripe.RequestOptions
+    ): Promise<Stripe.Response<Stripe.SetupIntent>> {
+        try {
+            Log("[STARTED]: Creating stripe setup payment intent", params, options);
+            const intent = await stripe.setupIntents.create(params, options);
+            Log("[COMPLETED]: Creating stripe setup payment intent", intent);
+            return intent;
+        } catch (error) {
+            Log("[FAILED]: Creating stripe setup payment intent", error);
+            return error;
+        }
+    }
+
     validateWebhook(
         event,
         callbacks: {
@@ -175,9 +216,9 @@ export class StripeLib implements IStripeUtil {
         } = { onUnhandledWebhook: () => {} }
     ) {
         const { onSuccess, onFailed, onCanceled, onError, onUnhandledWebhook } = callbacks;
-        Log("[STARTED]: Validating webhook.", event);
-        const endpointSecret = process.env.STRIPE_WH_KEY;
-        const signature = event.headers["stripe-signature"];
+        Log("[STARTED]: Validating webhook.");
+        const endpointSecret = environment.STRIPE_WEBHOOK_SECRET;
+        const signature = event.headers["Stripe-Signature"];
         try {
             const hook: Stripe.Event = stripe.webhooks.constructEvent(event.body, signature, endpointSecret);
             const intent = hook.data?.object as Stripe.PaymentIntent;

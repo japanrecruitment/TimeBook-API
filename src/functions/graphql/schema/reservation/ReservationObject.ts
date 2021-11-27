@@ -36,14 +36,14 @@ export const toReservationSelect = (selections, defaultValue: any = false): Pris
 
 export const reservationObjectTypeDefs = gql`
     type ReservationObject {
-        id ID
-        fromDateTime Date
-        toDateTime Date
-        status ReservationStatus
-        createdAt Date
-        updatedAt Date
-        approved Boolean
-        approvedOn Date
-        space SpaceObject
+        id: ID
+        fromDateTime: Date
+        toDateTime: Date
+        status: ReservationStatus
+        createdAt: Date
+        updatedAt: Date
+        approved: Boolean
+        approvedOn: Date
+        space: SpaceObject
     }
 `;
