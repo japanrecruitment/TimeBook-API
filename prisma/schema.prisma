@@ -31,9 +31,11 @@ enum Gender {
 }
 
 enum ReservationStatus {
-  Reserved
-  Hold
-  Pending
+  RESERVED
+  HOLD
+  PENDING
+  FAILED
+  DISAPPROVED
 }
 
 enum PhotoType {
@@ -49,6 +51,23 @@ enum SpacePricePlanType {
 
 enum PaymentSourceType {
   Card
+}
+
+enum PaymentProvider {
+  STRIPE
+}
+
+enum TransactionAssetType {
+  SPACE
+}
+
+enum TransactionStatus {
+  CREATED
+  REQUESTED
+  REQUEST_SUCCESSFULL
+  WEBHOOK_RECEIVED
+  SUCCESSFULL
+  FAILED
 }
 
 enum ChatType {
@@ -79,6 +98,7 @@ model Account {
   host           Host?
   chats          Chat[]          @relation("_AccountsChat")
   sentMessages   Message[]
+  myTransaction  Transaction[]
 }
 
 model PaymentSource {
@@ -227,14 +247,36 @@ model Reservation {
   id           String            @id @default(cuid())
   fromDateTime DateTime          @default(now()) @db.Timestamp(6)
   toDateTime   DateTime
-  status       ReservationStatus @default(Pending)
+  status       ReservationStatus @default(PENDING)
   createdAt    DateTime          @default(now()) @db.Timestamp(6)
   updatedAt    DateTime          @updatedAt
   space        Space             @relation(fields: [spaceId], references: [id])
   spaceId      String
   reservee     Account           @relation(fields: [reserveeId], references: [id])
   reserveeId   String
-  approvedOn   DateTime          @db.Timestamp(6)
+  approved     Boolean
+  approvedOn   DateTime?         @db.Timestamp(6)
+}
+
+model Transaction {
+  id                  String               @id @default(cuid())
+  provider            PaymentProvider      @default(STRIPE)
+  assetType           TransactionAssetType @default(SPACE)
+  assetData           Json
+  description         String               @db.Text
+  amount              Float
+  currency            String
+  status              TransactionStatus
+  requestedLog        Json?
+  responseReceivedLog Json?
+  webhookReceivedLog  Json?
+  webhookRespondedLog Json?
+  resultedLog         Json?
+  failedLog           Json?
+  createdAt           DateTime             @default(now()) @db.Timestamp(6)
+  updatedAt           DateTime             @updatedAt
+  accountId           String
+  account             Account              @relation(fields: [accountId], references: [id])
 }
 
 model TrainLine {

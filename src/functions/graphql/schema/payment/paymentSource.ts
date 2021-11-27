@@ -1,45 +1,61 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { PaymentSource } from "@prisma/client";
+import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
+import { mapSelections, toPrismaSelect } from "graphql-map-selections";
 import { Context } from "../../context";
 
-type PaymentSources = IFieldResolver<any, Context, Record<string, any>, Promise<PaymentSource[]>>;
+type TPaymentSource = IFieldResolver<any, Context, Record<string, any>, Promise<Partial<PaymentSource>[]>>;
 
-const paymentSources: PaymentSources = async (_, __, { store, dataSources, authData }) => {
-    console.log("Auth data", authData);
-    // return null;
+const paymentSource: TPaymentSource = async (_, __, { authData, store }, info) => {
+    const select = toPrismaSelect(mapSelections(info));
     const { accountId } = authData;
-    const cacheKey = `payment-source:${accountId}`;
-    const cacheDoc = await dataSources.redis.fetch(cacheKey);
-    if (cacheDoc) return cacheDoc;
-    const { paymentSource } = await store.account.findUnique({
-        where: { id: accountId },
-        include: { paymentSource: true },
+
+    let paymentSources = await store.paymentSource.findMany({
+        where: { accountId },
+        ...select,
     });
-    dataSources.redis.store(cacheKey, paymentSource, 600);
-    return paymentSource;
+
+    Log("PAYMENT SOURCE", paymentSources);
+    if (!paymentSources) return [];
+
+    return paymentSources;
 };
 
 export const paymentSourceTypeDefs = gql`
     type PaymentSource {
         id: ID!
-        token: String!
-        type: String!
-        expMonth: Int!
-        expYear: Int!
-        last4: String!
-        brand: String!
-        country: String!
-        customer: String! # Customer ID from Stripe
-        createdAt: String!
-        updatedAt: String!
+        customer: String
+        token: String
+        type: String
+        expMonth: Int
+        expYear: Int
+        last4: String
+        brand: String
+        country: String
     }
 
     type Query {
-        paymentSources: [PaymentSource] @auth(requires: [user])
+        paymentSource: [PaymentSource] @auth(requires: [user], allowSelf: true)
     }
 `;
 
 export const paymentSourceResolvers = {
-    Query: { paymentSources },
+    Query: { paymentSource },
+};
+
+export type PaymentMethod = {
+    id: string | number;
+    customer: string;
+    token: string;
+    type: string;
+    expMonth: number;
+    expYear: number;
+    last4: string;
+    brand: string;
+    country: string;
+};
+
+export type PaymentMethodInput = {
+    paymentMethodId: string;
 };
