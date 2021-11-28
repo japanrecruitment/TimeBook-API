@@ -241,7 +241,6 @@ export class StripeLib implements IStripeUtil {
         const endpointSecret = environment.STRIPE_WEBHOOK_SECRET;
         const signature = event.headers["Stripe-Signature"] || event.headers["stripe-signature"];
         try {
-            Log("[CHECKING]: endpointSecret:", endpointSecret);
             const hook: Stripe.Event = stripe.webhooks.constructEvent(event.body, signature, endpointSecret);
             const intent = hook.data?.object as Stripe.PaymentIntent;
             switch (hook.type) {
