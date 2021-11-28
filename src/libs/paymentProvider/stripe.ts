@@ -239,7 +239,7 @@ export class StripeLib implements IStripeUtil {
         const { onSuccess, onFailed, onCanceled, onError, onUnhandledWebhook } = callbacks;
         Log("[STARTED]: Validating webhook.");
         const endpointSecret = environment.STRIPE_WEBHOOK_SECRET;
-        const signature = event.headers["Stripe-Signature"];
+        const signature = event.headers["Stripe-Signature"] || event.headers["stripe-signature"];
         try {
             const hook: Stripe.Event = stripe.webhooks.constructEvent(event.body, signature, endpointSecret);
             const intent = hook.data?.object as Stripe.PaymentIntent;
