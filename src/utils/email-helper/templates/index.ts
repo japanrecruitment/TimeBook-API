@@ -7,3 +7,7 @@ export * from "./profile-updated";
 export * from "./host-application-received";
 export * from "./host-application-approved";
 export * from "./host-application-rejected";
+export * from "./reservation-completed";
+export * from "./reservation-failed";
+export * from "./reservation-received";
+export * from "./reservation-pending";
