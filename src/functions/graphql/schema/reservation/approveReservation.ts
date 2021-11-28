@@ -1,5 +1,6 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { StripeLib } from "@libs/paymentProvider";
+import { addEmailToQueue, ReservationCompletedData } from "@utils/email-helper";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
@@ -18,7 +19,11 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
 
     const reservation = await store.reservation.findFirst({
         where: { id: reservationId },
-        select: { space: { select: { accountId: true } }, transaction: { select: { paymentIntentId: true } } },
+        select: {
+            reservee: { select: { email: true } },
+            space: { select: { id: true, accountId: true } },
+            transaction: { select: { paymentIntentId: true } },
+        },
     });
 
     if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "Reservation doesn't exist" });
@@ -35,6 +40,13 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
     await store.reservation.update({
         where: { id: reservationId },
         data: { status: "RESERVED", approved: true, approvedOn: new Date() },
+    });
+
+    await addEmailToQueue<ReservationCompletedData>({
+        template: "reservation-completed",
+        recipientEmail: reservation.reservee.email,
+        recipientName: "",
+        spaceId: reservation.space.id,
     });
 
     return {
