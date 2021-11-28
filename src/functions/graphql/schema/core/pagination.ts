@@ -14,8 +14,8 @@ export type PaginationInfo = {
 
 export const paginationTypeDefs = gql`
     enum SortOrder {
-        ASC
-        DESC
+        asc
+        desc
     }
 
     input PaginationOption {
