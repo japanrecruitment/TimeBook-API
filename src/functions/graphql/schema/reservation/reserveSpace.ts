@@ -31,7 +31,7 @@ type ReserveSpaceResult = {
 type ReserveSpace = IFieldResolver<any, Context, ReserveSpaceArgs, Promise<ReserveSpaceResult>>;
 
 const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => {
-    const { accountId, email } = authData;
+    const { id: userId, accountId, email } = authData;
     const { fromDateTime, paymentSourceId, spaceId, toDateTime } = input;
 
     if (fromDateTime.getTime() < Date.now() || toDateTime.getTime() < Date.now())
@@ -59,12 +59,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             message: "Selected time frame doesn't satisfy the minimum required duration to book this space.",
         });
 
-    const paymentSource = await store.paymentSource.findUnique({ where: { id: paymentSourceId } });
-
-    if (!paymentSource) throw new GqlError({ code: "NOT_FOUND", message: "Payment source not found" });
-
     const price = formatPrice("HOURLY", space.spacePricePlans, true, true);
-
     const amount = hourDuration * price;
     const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
     const transferAmount = amount - applicationFeeAmount;
@@ -95,12 +90,19 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
     });
 
     const stripe = new StripeLib();
+    const paymentMethod = await stripe.retrievePaymentMethod(paymentSourceId);
+    const customerId = (await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } }))
+        ?.stripeCustomerId;
+
+    if (paymentMethod.customer !== customerId)
+        throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
+
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
         amount,
         currency: "JPY",
-        customer: paymentSource.customer,
-        payment_method: paymentSource.token,
-        payment_method_types: [paymentSource.type.toLowerCase()],
+        customer: paymentMethod.customer,
+        payment_method: paymentMethod.id,
+        payment_method_types: [paymentMethod.type],
         description: transaction.description,
         receipt_email: email,
         capture_method: space.needApproval ? "manual" : "automatic",
