@@ -35,6 +35,7 @@ jobs:
                   STRIPE_CONNECT_CLIENT_ID: ${{ secrets.STRIPE_CONNECT_CLIENT_ID }}
                   STRIPE_CONNECT_ACCOUNT_RETURN_URL: ${{ secrets.STRIPE_CONNECT_ACCOUNT_RETURN_URL }}
                   STRIPE_CONNECT_ACCOUNT_REFRESH_URL: ${{ secrets.STRIPE_CONNECT_ACCOUNT_REFRESH_URL }}
+                  STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
                   IP_STACK_KEY: ${{ secrets.IP_STACK_KEY }}
                   ALGOLIA_APP_ID: "${{ secrets.ALGOLIA_APP_ID }}"
                   ALGOLIA_ADMIN_API_KEY: "${{ secrets.ALGOLIA_ADMIN_API_KEY }}"
