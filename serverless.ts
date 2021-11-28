@@ -40,6 +40,7 @@ const serverlessConfiguration: AWS = {
             STRIPE_CONNECT_CLIENT_ID: "${env:STRIPE_CONNECT_CLIENT_ID}",
             STRIPE_CONNECT_ACCOUNT_RETURN_URL: "${env:STRIPE_CONNECT_ACCOUNT_RETURN_URL}",
             STRIPE_CONNECT_ACCOUNT_REFRESH_URL: "${env:STRIPE_CONNECT_ACCOUNT_REFRESH_URL}",
+            STRIPE_WEBHOOK_SECRET: "${env:STRIPE_WEBHOOK_SECRET}",
             REDIS_HOST: { "Fn::GetAtt": ["ElastiCacheCluster", "RedisEndpoint.Address"] },
             REDIS_PORT: { "Fn::GetAtt": ["ElastiCacheCluster", "RedisEndpoint.Port"] },
             IP_STACK_KEY: "${env:IP_STACK_KEY}",
