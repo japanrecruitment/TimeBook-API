@@ -59,6 +59,14 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             message: "Selected time frame doesn't satisfy the minimum required duration to book this space.",
         });
 
+    const stripe = new StripeLib();
+    const paymentMethod = await stripe.retrievePaymentMethod(paymentSourceId);
+    const customerId = (await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } }))
+        ?.stripeCustomerId;
+
+    if (paymentMethod.customer !== customerId)
+        throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
+
     const price = formatPrice("HOURLY", space.spacePricePlans, true, true);
     const amount = hourDuration * price;
     const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
@@ -88,14 +96,6 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             },
         },
     });
-
-    const stripe = new StripeLib();
-    const paymentMethod = await stripe.retrievePaymentMethod(paymentSourceId);
-    const customerId = (await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } }))
-        ?.stripeCustomerId;
-
-    if (paymentMethod.customer !== customerId)
-        throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
 
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
         amount,
