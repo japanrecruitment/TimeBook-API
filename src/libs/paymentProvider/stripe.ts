@@ -175,6 +175,15 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
+    async retrievePaymentMethod(paymentMethodId: string) {
+        try {
+            const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+            Log("retrivePaymentMethod paymentMethod:", paymentMethod);
+            return paymentMethod;
+        } catch (error) {
+            Log(error);
+        }
+    }
     async createPaymentIntent(
         params: Stripe.PaymentIntentCreateParams,
         options?: Stripe.RequestOptions
