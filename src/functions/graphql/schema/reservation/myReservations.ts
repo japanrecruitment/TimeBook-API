@@ -28,7 +28,7 @@ const myReservations: MyReservations = async (_, { paginate, filter }, { authDat
 
     const { take, skip } = paginate || {};
 
-    const { sortOrder, status } = filter || {};
+    const { sortOrder, status } = filter || { sortOrder: "desc" };
 
     const myReservations = await store.reservation.findMany({
         where: { reserveeId: accountId, status },
