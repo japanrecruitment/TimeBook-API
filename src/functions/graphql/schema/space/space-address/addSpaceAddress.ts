@@ -15,7 +15,7 @@ type AddSpaceAddress = IFieldResolver<any, Context, AddSpaceAddressArgs, Promise
 
 const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authData, dataSources, store }, info) => {
     const { accountId } = authData;
-    const { addressLine1, addressLine2, city, latitude, longitude, postalCode, prefectureId } = address;
+    const { addressLine1, addressLine2, city, postalCode, prefectureId } = address;
 
     const space = await store.space.findFirst({
         where: { id: spaceId, isDeleted: false },
@@ -40,6 +40,14 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
     const prefecture = await store.prefecture.findUnique({ where: { id: prefectureId } });
 
     if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
+
+    let latitude = address.latitude;
+    let longitude = address.longitude;
+    if (!latitude || !longitude) {
+        const location = await dataSources.googleMap.getLatLng(prefecture.name, city, addressLine1);
+        latitude = location?.lat;
+        longitude = location?.lng;
+    }
 
     const newAddress = await store.address.create({
         data: {
