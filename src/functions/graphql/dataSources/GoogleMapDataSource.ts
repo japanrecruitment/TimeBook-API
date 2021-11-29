@@ -10,13 +10,17 @@ export class GoogleMapDataSource extends RESTDataSource {
 
     constructor() {
         super();
-        this.baseURL = `https://maps.googleapis.com/maps/api/`;
+        this.baseURL = `https://maps.googleapis.com/maps/api`;
+    }
+
+    willSendRequest(request: RequestOptions) {
+        Log(request);
     }
 
     async getLatLng(prefecture: string, city: string, addressLine: string): Promise<{ lat: number; lng: number }> {
         try {
             Log("[STARTED]: fetching latitude and longitude.", prefecture, city, addressLine);
-            const response = await this.get(`geocode/${this.outputFormat}`, {
+            const response = await this.get(`/geocode/${this.outputFormat}`, {
                 address: prefecture + city + addressLine,
                 key: this.apiKey,
                 language: this.language,
