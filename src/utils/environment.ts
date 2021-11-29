@@ -26,4 +26,5 @@ export const environment = {
     BUCKET_URL: process.env.BUCKET_URL,
     S3_SECRET_KEY: process.env.S3_SECRET_KEY,
     S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
+    GOOGLE_MAP_API_KEY: process.env.GOOGLE_MAP_API_KEY,
 };
