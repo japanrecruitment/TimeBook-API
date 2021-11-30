@@ -20,7 +20,16 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
         where: { id: spaceId, isDeleted: false, address: { id } },
         select: {
             accountId: true,
-            address: { select: { city: true, latitude: true, longitude: true, prefectureId: true, prefecture: true } },
+            address: {
+                select: {
+                    addressLine1: true,
+                    city: true,
+                    latitude: true,
+                    longitude: true,
+                    prefectureId: true,
+                    prefecture: true,
+                },
+            },
         },
     });
 
@@ -44,12 +53,14 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
         mPrefecture = prefecture;
     }
 
-    let latitude = address.latitude;
-    let longitude = address.longitude;
-    if (!latitude || !longitude) {
-        const location = await dataSources.googleMap.getLatLng(mPrefecture.name, city, addressLine1);
-        latitude = location?.lat;
-        longitude = location?.lng;
+    let geoloc: { lat: number; lng: number };
+    if (
+        (addressLine1 && space.address.addressLine1 !== addressLine1) ||
+        (city && space.address.city !== city) ||
+        (prefectureId && space.address.prefectureId !== prefectureId)
+    ) {
+        geoloc = await dataSources.googleMap.getLatLng(mPrefecture.name, city, addressLine1);
+        if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid address" });
     }
 
     const updatedAddress = await store.address.update({
@@ -58,8 +69,8 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
             addressLine1: addressLine1?.trim(),
             addressLine2: addressLine2?.trim(),
             city: city?.trim(),
-            latitude,
-            longitude,
+            latitude: geoloc.lat,
+            longitude: geoloc.lng,
             postalCode: postalCode?.trim(),
             prefecture: prefectureId ? { connect: { id: prefectureId } } : undefined,
         },
