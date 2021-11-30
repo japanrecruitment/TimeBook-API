@@ -53,7 +53,7 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
         mPrefecture = prefecture;
     }
 
-    let geoloc: { lat: number; lng: number };
+    let geoloc: { lat: number; lng: number } = { lat: space.address.latitude, lng: space.address.longitude };
     if (
         (addressLine1 && space.address.addressLine1 !== addressLine1) ||
         (city && space.address.city !== city) ||
