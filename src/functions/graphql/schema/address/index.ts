@@ -8,10 +8,9 @@ export const addressTypeDefs = mergeTypeDefs([
     addressObjectTypeDefs,
     addAddressInputTypeDefs,
     updateAddressInputTypeDefs,
-    getLatLngTypeDefs,
 ]);
 
-export const addressResolvers = mergeResolvers([getLatLngResolvers]);
+export const addressResolvers = mergeResolvers([]);
 
 export * from "./AddressObject";
 export * from "./AddAddressInput";
