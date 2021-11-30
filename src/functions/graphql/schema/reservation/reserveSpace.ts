@@ -41,6 +41,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
     const { id: userId, accountId, email } = authData;
     const { fromDateTime, paymentSourceId, spaceId, toDateTime } = input;
     try {
+        Log(fromDateTime, toDateTime);
         if (fromDateTime.getTime() < Date.now() || toDateTime.getTime() < Date.now())
             throw new GqlError({ code: "BAD_USER_INPUT", message: "Selected time frame is invalid" });
 
@@ -55,12 +56,37 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             include: {
                 account: { include: { host: true } },
                 spacePricePlans: { where: { type: "HOURLY", duration: { lte: hourDuration } } },
+                reservations: {
+                    where: {
+                        AND: [
+                            { fromDateTime: { lt: toDateTime } },
+                            { OR: [{ fromDateTime: { gte: fromDateTime } }, { toDateTime: { gte: fromDateTime } }] },
+                        ],
+                    },
+                },
             },
         });
 
         if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 
-        if (!space.spacePricePlans || space.spacePricePlans.length <= 0)
+        Log("reserveSpace: space:", space);
+
+        const reservations = space.reservations?.filter((r) => {
+            return (
+                (fromDateTime >= r.fromDateTime && fromDateTime <= r.toDateTime) ||
+                (toDateTime >= r.fromDateTime && toDateTime <= r.toDateTime)
+            );
+        });
+
+        Log("reserveSpace: reservations:", reservations);
+
+        if (reservations && reservations.length > 0)
+            throw new GqlError({
+                code: "BAD_USER_INPUT",
+                message: "Reservation is not available for this space in the selected time frame",
+            });
+
+        if (!space.spacePricePlans || space.spacePricePlans?.length <= 0)
             throw new GqlError({
                 code: "BAD_USER_INPUT",
                 message: "Selected time frame doesn't satisfy the minimum required duration to book this space.",
@@ -101,7 +127,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 amount,
                 provider: "STRIPE",
                 assetType: "SPACE",
-                assetData: omit(space, "createdAt", "account", "spacePricePlans", "updatedAt"),
+                assetData: omit(space, "createdAt", "account", "spacePricePlans", "updatedAt", "reservations"),
                 currency: "JPY",
                 description: `Reservation of ${space.name}`,
                 status: "CREATED",
@@ -109,6 +135,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 reservation: {
                     create: {
                         approved: !space.needApproval,
+                        approvedOn: !space.needApproval ? new Date() : null,
                         fromDateTime,
                         toDateTime,
                         status: "PENDING",

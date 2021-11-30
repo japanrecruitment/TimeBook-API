@@ -14,13 +14,13 @@ type UpdateSpaceAddress = IFieldResolver<any, Context, UpdateSpaceAddressArgs, U
 
 const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, { authData, dataSources, store }) => {
     const { accountId } = authData;
-    const { id, addressLine1, addressLine2, city, latitude, longitude, postalCode, prefectureId } = address;
+    const { id, addressLine1, addressLine2, city, postalCode, prefectureId } = address;
 
     const space = await store.space.findFirst({
         where: { id: spaceId, isDeleted: false, address: { id } },
         select: {
             accountId: true,
-            address: { select: { city: true, latitude: true, longitude: true, prefectureId: true } },
+            address: { select: { city: true, latitude: true, longitude: true, prefectureId: true, prefecture: true } },
         },
     });
 
@@ -37,9 +37,19 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
     if (postalCode?.trim() === "")
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Postal code cannot be empty" });
 
+    let mPrefecture = space.address.prefecture;
     if (prefectureId) {
         const prefecture = await store.prefecture.findUnique({ where: { id: prefectureId } });
         if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
+        mPrefecture = prefecture;
+    }
+
+    let latitude = address.latitude;
+    let longitude = address.longitude;
+    if (!latitude || !longitude) {
+        const location = await dataSources.googleMap.getLatLng(mPrefecture.name, city, addressLine1);
+        latitude = location?.lat;
+        longitude = location?.lng;
     }
 
     const updatedAddress = await store.address.update({

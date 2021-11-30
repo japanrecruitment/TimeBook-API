@@ -2,7 +2,7 @@ import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { merge } from "lodash";
 import { accountResolvers, accountTypeDefs } from "./account";
-import { addressTypeDefs } from "./address";
+import { addressResolvers, addressTypeDefs } from "./address";
 import { spaceTypeDefs, spaceResolvers } from "./space";
 import { coreDirectives, coreResolvers, coreTypeDefs } from "./core";
 import * as payment from "./payment";
@@ -31,6 +31,7 @@ const resolvers = mergeResolvers([
     coreResolvers,
     cacheResolvers,
     accountResolvers,
+    addressResolvers,
     payment.resolvers,
     prefectureResolvers,
     stationsResolvers,
