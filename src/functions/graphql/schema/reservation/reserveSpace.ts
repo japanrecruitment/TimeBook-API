@@ -213,12 +213,12 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             paymentMethodTypes: paymentIntent.payment_method_types,
         };
     } catch (error) {
-        // await addEmailToQueue<ReservationFailedData>({
-        //     template: "reservation-failed",
-        //     recipientEmail: email,
-        //     recipientName: "",
-        //     spaceId,
-        // });
+        await addEmailToQueue<ReservationFailedData>({
+            template: "reservation-failed",
+            recipientEmail: email,
+            recipientName: "",
+            spaceId,
+        });
         throw error;
     }
 };

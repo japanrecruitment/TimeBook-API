@@ -11,6 +11,7 @@ import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { Context } from "../../context";
 import { Photo, PhotoSelect, toPhotoSelect } from "../media";
 import { toHostSelect, HostSelect, HostObject } from "../account/host/HostObject";
+import { ReservationObject } from "../reservation/ReservationObject";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
@@ -19,6 +20,7 @@ export type SpaceObject = Partial<Space> & {
     address?: Partial<AddressObject>;
     photos?: Partial<Photo>[];
     account?: { host?: Partial<HostObject> };
+    reservations?: Partial<ReservationObject>[];
 };
 
 export type SpaceSelect = {
@@ -35,6 +37,7 @@ export type SpaceSelect = {
     address: PrismaSelect<AddressSelect>;
     photos: PrismaSelect<PhotoSelect>;
     account: { select: { host: PrismaSelect<HostSelect> } };
+    reservations: { where: any; select: { fromDateTime: boolean; toDateTime: boolean } };
 };
 
 export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSelect<SpaceSelect> => {
@@ -45,7 +48,19 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
     const addressSelect = toAddressSelect(selections.address);
     const photosSelect = toPhotoSelect(selections.photos);
     const hostSelect = toHostSelect(selections.host);
-    const spaceSelect = omit(selections, "nearestStations", "spacePricePlan", "spaceTypes", "address", "photo", "host");
+    const reservationsSelect = selections.reservedDates
+        ? { where: { fromDateTime: { gte: new Date() } }, select: { fromDateTime: true, toDateTime: true } }
+        : false;
+    const spaceSelect = omit(
+        selections,
+        "nearestStations",
+        "spacePricePlan",
+        "spaceTypes",
+        "address",
+        "photo",
+        "host",
+        "reservedDates"
+    );
 
     if (
         isEmpty(spaceSelect) &&
@@ -54,7 +69,8 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         !spaceToSpaceTypesSelect &&
         !addressSelect &&
         !photosSelect &&
-        !hostSelect
+        !hostSelect &&
+        !reservationsSelect
     )
         return defaultValue;
 
@@ -67,6 +83,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
             address: addressSelect,
             photos: photosSelect,
             account: hostSelect ? { select: { host: hostSelect } } : false,
+            reservations: reservationsSelect,
         } as SpaceSelect,
     };
 };
@@ -74,9 +91,15 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
 const spaceObjectResolver: IObjectTypeResolver<SpaceObject, Context> = {
     spaceTypes: ({ spaceTypes }) => spaceTypes.map((spaceType) => spaceType.spaceType),
     host: ({ account }) => account?.host,
+    reservedDates: ({ reservations }) => reservations,
 };
 
 export const spaceObjectTypeDefs = gql`
+    type ReservedDates {
+        fromDateTime: Date
+        toDateTime: Date
+    }
+
     type SpaceObject {
         id: ID!
         description: String
@@ -91,6 +114,7 @@ export const spaceObjectTypeDefs = gql`
         address: AddressObject
         photos: [Photo]
         host: Host
+        reservedDates: [ReservedDates]
     }
 `;
 
