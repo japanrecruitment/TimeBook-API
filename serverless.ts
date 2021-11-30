@@ -51,6 +51,7 @@ const serverlessConfiguration: AWS = {
             ALGOLIA_ADMIN_API_KEY: "${env:ALGOLIA_ADMIN_API_KEY}",
             ALGOLIA_SEARCH_API_KEY: "${env:ALGOLIA_SEARCH_API_KEY}",
             FRONTEND_BASE_URL: "${env:FRONTEND_BASE_URL}",
+            GOOGLE_MAP_API_KEY: "${env:GOOGLE_MAP_API_KEY}",
         },
         apiGateway: {
             shouldStartNameWithService: true,

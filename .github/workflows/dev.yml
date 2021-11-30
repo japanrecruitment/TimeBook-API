@@ -41,3 +41,4 @@ jobs:
                   ALGOLIA_ADMIN_API_KEY: "${{ secrets.ALGOLIA_ADMIN_API_KEY }}"
                   ALGOLIA_SEARCH_API_KEY: "${{ secrets.ALGOLIA_SEARCH_API_KEY }}"
                   FRONTEND_BASE_URL: "${{ secrets.FRONTEND_BASE_URL }}"
+                  GOOGLE_MAP_API_KEY: "${{ secrets.GOOGLE_MAP_API_KEY }}"
