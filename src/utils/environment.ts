@@ -11,6 +11,7 @@ export const environment = {
     FRONTEND_BASE_URL: process.env.FRONTEND_BASE_URL,
     MEDIA_BUCKET: process.env.MEDIA_BUCKET,
     MEDIA_UPLOAD_BUCKET: process.env.MEDIA_UPLOAD_BUCKET,
+    PUBLIC_MEDIA_BUCKET: process.env.PUBLIC_MEDIA_BUCKET,
     STRIPE_CONNECT_CLIENT_ID: process.env.STRIPE_CONNECT_CLIENT_ID,
     STRIPE_CONNECT_ACCOUNT_RETURN_URL:
         process.env.STRIPE_CONNECT_ACCOUNT_RETURN_URL || "http://localhost:3001/return-url",
