@@ -55,6 +55,8 @@ const readAndResize = async (key: string) => {
         )
     );
 
+    Log(isPrivate);
+
     // add small and thumbnail to public bucket
     // check if image is private
     if (!isPrivate) {
