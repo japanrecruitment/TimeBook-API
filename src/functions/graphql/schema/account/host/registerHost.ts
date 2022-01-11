@@ -101,7 +101,7 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
             host: {
                 create: {
                     type: "Individual",
-                    name: `${firstName} ${lastName}`,
+                    name: `${lastName} ${firstName}`,
                     stripeAccountId: connectId,
                     approved: false,
                 },
@@ -117,7 +117,7 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
         addEmailToQueue<EmailVerificationData>({
             template: "email-verification",
             recipientEmail: email,
-            recipientName: `${firstName} ${lastName}`,
+            recipientName: `${lastName} ${firstName}`,
             verificationCode,
         }),
     ]);
