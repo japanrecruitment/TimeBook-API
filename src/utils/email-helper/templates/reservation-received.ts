@@ -1,8 +1,10 @@
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
+import { store } from "@utils/store";
 
 export type ReservationReceivedData = EmailData & {
     spaceId: string;
+    reservationId: string;
 };
 
 const template = `
@@ -19,6 +21,10 @@ const template = `
               <p>いつもtime bookをご利用いただき、誠にありがとうございます。</p>
               <p>
                 スペース{{spaceId}}の予約リクエストを受け取りました。
+              </p>
+              <p>
+                スペース: {{spaceId}}<br />
+                予約番号: {{reservationId}}
               </p>
             </div>
           </td>

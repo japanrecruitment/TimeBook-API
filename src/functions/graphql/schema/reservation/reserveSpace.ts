@@ -105,6 +105,8 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
         const transferAmount = amount - applicationFeeAmount;
 
+        const reservationId = "TB" + Math.floor(100000 + Math.random() * 900000);
+
         Log(amount, applicationFeeAmount, transferAmount);
 
         await Promise.all([
@@ -113,12 +115,14 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 recipientEmail: email,
                 recipientName: "",
                 spaceId,
+                reservationId,
             }),
             addEmailToQueue<ReservationReceivedData>({
                 template: "reservation-received",
                 recipientEmail: space.account.email,
                 recipientName: "",
                 spaceId,
+                reservationId,
             }),
         ]);
 
@@ -141,6 +145,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                         status: "PENDING",
                         space: { connect: { id: spaceId } },
                         reservee: { connect: { id: accountId } },
+                        reservationId,
                     },
                 },
             },
@@ -185,6 +190,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 recipientEmail: email,
                 recipientName: "",
                 spaceId,
+                reservationId,
             });
         } else {
             await Promise.all([
@@ -193,12 +199,14 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     recipientEmail: email,
                     recipientName: "",
                     spaceId,
+                    reservationId,
                 }),
                 addEmailToQueue<ReservationPendingData>({
                     template: "reservation-pending",
                     recipientEmail: space.account.email,
                     recipientName: "",
                     spaceId,
+                    reservationId,
                 }),
             ]);
         }
@@ -211,6 +219,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             description: paymentIntent.description,
             currency: paymentIntent.currency,
             paymentMethodTypes: paymentIntent.payment_method_types,
+            reservationId,
         };
     } catch (error) {
         await addEmailToQueue<ReservationFailedData>({
@@ -239,6 +248,7 @@ export const reserveSpaceTypeDefs = gql`
         description: String
         currency: String
         paymentMethodTypes: [String]
+        reservationId: String
     }
 
     type Mutation {
