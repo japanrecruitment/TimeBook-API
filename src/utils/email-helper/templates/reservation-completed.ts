@@ -3,6 +3,7 @@ import { footer, header } from "./share";
 
 export type ReservationCompletedData = EmailData & {
     spaceId: string;
+    reservationId: string;
 };
 
 const template = `
@@ -19,6 +20,10 @@ const template = `
               <p>いつもtime bookをご利用いただき、誠にありがとうございます。</p>
               <p>
                 スペース{{spaceid}}のご予約が完了しましたことをお知らせいたします。
+              </p>
+              <p>
+                スペース: {{spaceId}}<br />
+                予約番号: {{reservationId}}
               </p>
             </div>
           </td>

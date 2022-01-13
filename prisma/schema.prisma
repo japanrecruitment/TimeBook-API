@@ -246,6 +246,7 @@ model SpacePricePlan {
 
 model Reservation {
   id           String            @id @default(cuid())
+  reservationId String           @default("TB")
   fromDateTime DateTime          @default(now()) @db.Timestamp(6)
   toDateTime   DateTime
   status       ReservationStatus @default(PENDING)
