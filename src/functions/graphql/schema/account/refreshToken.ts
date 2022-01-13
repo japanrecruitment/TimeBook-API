@@ -36,11 +36,11 @@ const refreshToken: RefreshToken = async (_, { token }, { store }) => {
 };
 
 export const refreshTokenTypeDefs = gql`
-    type Query {
+    type Mutation {
         refreshToken(token: String!): String!
     }
 `;
 
 export const refreshTokenResolvers = {
-    Query: { refreshToken },
+    Mutation: { refreshToken },
 };

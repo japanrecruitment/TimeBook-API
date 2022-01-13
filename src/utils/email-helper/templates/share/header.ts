@@ -9,7 +9,6 @@ export default `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "
     <title></title>
     <style type="text/css" rel="stylesheet" media="all">
       /* Base ------------------------------ */
-
       body {
         width: 100% !important;
         height: 100%;
@@ -480,10 +479,6 @@ export default `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "
     <![endif]-->
   </head>
   <body>
-    <span class="preheader"
-      >This is an invoice for your purchase on {{ purchase_date }}. Please
-      submit payment by {{ due_date }}</span
-    >
     <table
       class="email-wrapper"
       width="100%"

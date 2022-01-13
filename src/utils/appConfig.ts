@@ -1,1 +1,3 @@
-export const appConfig = {};
+export const appConfig = {
+    platformFeePercent: 30,
+};

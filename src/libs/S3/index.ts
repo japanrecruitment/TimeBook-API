@@ -6,6 +6,7 @@ export class S3Lib {
     private _BUCKET;
     private _MEDIA_UPLOAD_BUCKET = environment.MEDIA_UPLOAD_BUCKET;
     private _MEDIA_BUCKET = environment.MEDIA_BUCKET;
+    private _PUBLIC_MEDIA_BUCKET = environment.PUBLIC_MEDIA_BUCKET;
 
     constructor(bucket: "media" | "upload") {
         this._BUCKET = bucket === "upload" ? this._MEDIA_UPLOAD_BUCKET : this._MEDIA_BUCKET;
@@ -51,7 +52,21 @@ export class S3Lib {
 
             return (await this._S3.putObject(params).promise()) as S3.PutObjectOutput;
         } catch (error) {
-            Log("Error at S3Lib.moveObject", error.message);
+            Log("Error at S3Lib.putObject", error.message);
+            throw new Error(error.message);
+        }
+    }
+
+    public async putPublicObject(data: Partial<S3.PutObjectRequest>): Promise<S3.PutObjectOutput> {
+        try {
+            const params: S3.PutObjectRequest = {
+                ...omit(data, "Bucket"),
+                Bucket: this._PUBLIC_MEDIA_BUCKET,
+            };
+
+            return (await this._S3.putObject(params).promise()) as S3.PutObjectOutput;
+        } catch (error) {
+            Log("Error at S3Lib.putPublicObject", error.message);
             throw new Error(error.message);
         }
     }

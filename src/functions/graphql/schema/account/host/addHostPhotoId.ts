@@ -10,13 +10,14 @@ const addPhotoId: AddPhotoId = async (_, { input }, { authData, store }, info) =
     // check input
     const type = "General";
     const mime = input.mime || "image/jpeg";
+    const postUploadInfo = { private: true };
 
     const { accountId } = authData;
 
     // add record in DB
     let updatedProfile = await store.host.update({
         where: { accountId },
-        data: { photoId: { create: { mime, type } } },
+        data: { photoId: { create: { mime, type, postUploadInfo: { isPrivate: true } } } },
         select: { photoId: true },
     });
 

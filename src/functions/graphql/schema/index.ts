@@ -2,39 +2,43 @@ import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { merge } from "lodash";
 import { accountResolvers, accountTypeDefs } from "./account";
-import { addressTypeDefs } from "./address";
+import { addressResolvers, addressTypeDefs } from "./address";
 import { spaceTypeDefs, spaceResolvers } from "./space";
 import { coreDirectives, coreResolvers, coreTypeDefs } from "./core";
+import * as payment from "./payment";
 import { prefectureResolvers, prefectureTypeDefs } from "./prefectures";
 import { stationsResolvers, stationsTypeDefs } from "./stations";
-import { paymentSourceResolvers, paymentSourceTypeDefs } from "./payment";
 import { mediaTypeDefs, mediaResolvers } from "./media";
 import { cacheResolvers, cacheTypeDefs } from "./cache";
 import * as chat from "./chat";
+import * as reservation from "./reservation";
 
 const typeDefs = mergeTypeDefs([
     coreTypeDefs,
     cacheTypeDefs,
     accountTypeDefs,
     addressTypeDefs,
-    paymentSourceTypeDefs,
+    payment.typeDefs,
     prefectureTypeDefs,
     stationsTypeDefs,
     spaceTypeDefs,
     mediaTypeDefs,
     chat.typeDefs,
+    reservation.typeDefs,
 ]);
 
 const resolvers = mergeResolvers([
     coreResolvers,
     cacheResolvers,
     accountResolvers,
-    paymentSourceResolvers,
+    addressResolvers,
+    payment.resolvers,
     prefectureResolvers,
     stationsResolvers,
     spaceResolvers,
     mediaResolvers,
     chat.resolvers,
+    reservation.resolvers,
 ]);
 
 const schemaDirectives = merge(coreDirectives);

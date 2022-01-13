@@ -33,6 +33,8 @@ const readAndResize = async (key: string) => {
 
     const { cacheKey } =
         postUploadInfo && typeof postUploadInfo === "object" ? (postUploadInfo as any) : { cacheKey: undefined };
+    const { isPrivate } =
+        postUploadInfo && typeof postUploadInfo === "object" ? (postUploadInfo as any) : { isPrivate: false };
 
     if (cacheKey) {
         const cache = RedisClient.createInstance();
@@ -52,6 +54,20 @@ const readAndResize = async (key: string) => {
             S3.putObject({ Key: `${type}/${size}/${key}`, Body: image, ContentType: uploadedImage.ContentType })
         )
     );
+
+    Log(isPrivate);
+
+    // add small and thumbnail to public bucket
+    // check if image is private
+    if (!isPrivate) {
+        await Promise.all(
+            processedImages.map(({ size, image }) => {
+                if (size === "small" || size === "thumbnail") {
+                    S3.putPublicObject({ Key: `${size}/${key}`, Body: image, ContentType: uploadedImage.ContentType });
+                }
+            })
+        );
+    }
 
     // Delete original from
     await S3.deleteObject(key);

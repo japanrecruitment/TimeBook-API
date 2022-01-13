@@ -15,7 +15,7 @@ type AddSpaceAddress = IFieldResolver<any, Context, AddSpaceAddressArgs, Promise
 
 const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authData, dataSources, store }, info) => {
     const { accountId } = authData;
-    const { addressLine1, addressLine2, city, latitude, longitude, postalCode, prefectureId } = address;
+    const { addressLine1, addressLine2, city, postalCode, prefectureId } = address;
 
     const space = await store.space.findFirst({
         where: { id: spaceId, isDeleted: false },
@@ -41,13 +41,16 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
 
     if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
 
+    const geoloc = await dataSources.googleMap.getLatLng(prefecture.name, city, addressLine1);
+    if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid address" });
+
     const newAddress = await store.address.create({
         data: {
             addressLine1: addressLine1?.trim(),
             addressLine2: addressLine2?.trim(),
             city: city?.trim(),
-            latitude,
-            longitude,
+            latitude: geoloc.lat,
+            longitude: geoloc.lng,
             postalCode: postalCode?.trim(),
             prefecture: { connect: { id: prefectureId } },
             space: { connect: { id: spaceId } },
@@ -60,6 +63,8 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
     await dataSources.spaceAlgolia.partialUpdateObject({
         objectID: newAddress.spaceId,
         prefecture: newAddress.prefecture.name,
+        city: newAddress.city,
+        _geoloc: { lat: newAddress.latitude, lng: newAddress.longitude },
     });
 
     return { address: newAddress, result: { message: `Successfully added address in your space` } };

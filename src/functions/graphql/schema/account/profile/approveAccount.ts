@@ -22,7 +22,7 @@ const approveAccount: ApproveAccount = async (_, { accountId }, { store }) => {
         data: { approved: true, host: { update: { approved: true } } },
     });
 
-    return { message: `Successfully suspended an account` };
+    return { message: `Successfully approved an account` };
 };
 
 export const approveAccountTypeDefs = gql`

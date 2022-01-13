@@ -11,11 +11,13 @@ export const environment = {
     FRONTEND_BASE_URL: process.env.FRONTEND_BASE_URL,
     MEDIA_BUCKET: process.env.MEDIA_BUCKET,
     MEDIA_UPLOAD_BUCKET: process.env.MEDIA_UPLOAD_BUCKET,
+    PUBLIC_MEDIA_BUCKET: process.env.PUBLIC_MEDIA_BUCKET,
     STRIPE_CONNECT_CLIENT_ID: process.env.STRIPE_CONNECT_CLIENT_ID,
     STRIPE_CONNECT_ACCOUNT_RETURN_URL:
         process.env.STRIPE_CONNECT_ACCOUNT_RETURN_URL || "http://localhost:3001/return-url",
     STRIPE_CONNECT_ACCOUNT_REFRESH_URL:
         process.env.STRIPE_CONNECT_ACCOUNT_REFRESH_URL || "http://localhost:3001/refresh-url",
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     ALGOLIA_APP_ID: process.env.ALGOLIA_APP_ID,
     ALGOLIA_ADMIN_API_KEY: process.env.ALGOLIA_ADMIN_API_KEY,
     ALGOLIA_SEARCH_API_KEY: process.env.ALGOLIA_SEARCH_API_KEY,
@@ -25,4 +27,5 @@ export const environment = {
     BUCKET_URL: process.env.BUCKET_URL,
     S3_SECRET_KEY: process.env.S3_SECRET_KEY,
     S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
+    GOOGLE_MAP_API_KEY: process.env.GOOGLE_MAP_API_KEY,
 };

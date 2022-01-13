@@ -31,13 +31,17 @@ const host: MyHostInfo = async (_, __, { authData, store }, info) => {
         });
 
     const hasPhotoId = hostAccount.photoId?.large || hostAccount.photoId?.medium || hostAccount.photoId?.small;
+
+    const stripe = new StripeLib();
+
     const hasStripeAccount =
-        hostAccount.stripeAccountId && (await new StripeLib().getAccountBalance(hostAccount.stripeAccountId));
+        hostAccount.stripeAccountId && (await stripe.getStripeAccount(hostAccount.stripeAccountId));
 
-    Log(hasPhotoId, hasStripeAccount);
-
-    if (hasPhotoId && hasStripeAccount && !hostAccount.approved)
-        throw new GqlError({ code: "PENDING_APPROVAL", message: "Your account is pending approval." });
+    if (!hostAccount.approved) {
+        if (hasPhotoId && hasStripeAccount.balance) {
+            throw new GqlError({ code: "PENDING_APPROVAL", message: "Your account is pending approval." });
+        }
+    }
 
     return hostAccount;
 };

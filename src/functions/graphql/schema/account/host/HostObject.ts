@@ -98,6 +98,7 @@ export const hostObjectTypeDefs = gql`
         stripeAccountId: String
         stripeAccount: StripeAccount
         account: StripeAccount
+        accountId: String
         createdAt: Date
         updatedAt: Date
     }
