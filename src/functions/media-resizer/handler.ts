@@ -68,8 +68,12 @@ const readAndResize = async (key: string) => {
             })
         );
         if (spaceId) {
-            const smallImage = processedImages.find(({ size }) => size === "small");
-            const smallImageUrl = `https://${environment.PUBLIC_MEDIA_BUCKET}.s3.ap-northeast-1.amazonaws.com/small/${key}`;
+            const publicBucketName = environment.PUBLIC_MEDIA_BUCKET;
+            const awsRegion = "ap-northeast-1";
+            const imageSize = "small";
+            const imageKey = key;
+            const smallImage = processedImages.find(({ size }) => size === imageSize);
+            const smallImageUrl = `https://${publicBucketName}.s3.${awsRegion}.amazonaws.com/${imageSize}/${imageKey}`;
             if (smallImage) await spaceIndex.partialUpdateObject({ objectID: spaceId, thumbnail: smallImageUrl });
         }
     }
