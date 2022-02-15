@@ -62,9 +62,7 @@ const readAndResize = async (key: string) => {
     if (!isPrivate) {
         await Promise.all(
             processedImages.map(({ size, image }) => {
-                if (size === "small" || size === "thumbnail") {
-                    S3.putPublicObject({ Key: `${size}/${key}`, Body: image, ContentType: uploadedImage.ContentType });
-                }
+                S3.putPublicObject({ Key: `${size}/${key}`, Body: image, ContentType: uploadedImage.ContentType });
             })
         );
     }
@@ -76,8 +74,6 @@ const readAndResize = async (key: string) => {
     processedImages.map(({ size, width, height }) => {
         imageUpdateData[size] = { width, height, url: `${type}/${size}/${key}` };
     });
-
-    Log(processedImages);
 
     await store.photo.update({ where: { id }, data: imageUpdateData });
 
