@@ -21,7 +21,7 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
 
     const space = await store.space.findFirst({
         where: { id: spaceId, isDeleted: false },
-        select: { id: true, accountId: true, spaceTypes: { select: { spaceTypeId: true } } },
+        select: { id: true, accountId: true, spaceTypes: { select: { id: true } } },
     });
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
@@ -34,36 +34,38 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
         select: { id: true },
     });
 
-    const prevTypeIds = space.spaceTypes?.map(({ spaceTypeId }) => spaceTypeId);
+    const prevTypeIds = space.spaceTypes?.map(({ id }) => id);
     const currTypeIds = types?.map(({ id }) => id);
 
     if (prevTypeIds === currTypeIds) return { message: "No changes found in the selected space types" };
 
-    const typesToAdd = currTypeIds?.filter((id) => !prevTypeIds?.includes(id)).map((spaceTypeId) => ({ spaceTypeId }));
-    const typesToDelete = prevTypeIds?.filter((id) => !currTypeIds?.includes(id));
+    const typesToConnect = currTypeIds?.filter((id) => !prevTypeIds?.includes(id)).map((id) => ({ id }));
+    const typesToDisconnect = prevTypeIds?.filter((id) => !currTypeIds?.includes(id)).map((id) => ({ id }));
 
-    const toAddLength = typesToAdd?.length;
-    const toDeleteLength = typesToDelete?.length;
+    const toConnectLength = typesToConnect?.length;
+    const toDisconnectLength = typesToDisconnect?.length;
 
-    if (toAddLength <= 0 && toDeleteLength <= 0) return { message: `No changes found in submited space types` };
+    if (toConnectLength <= 0 && toDisconnectLength <= 0) return { message: `No changes found in submited space types` };
 
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
         data: {
             spaceTypes: {
-                deleteMany: toDeleteLength > 0 ? { spaceTypeId: { in: typesToDelete } } : undefined,
-                createMany: toAddLength > 0 ? { data: typesToAdd, skipDuplicates: true } : undefined,
+                disconnect: toDisconnectLength > 0 ? typesToDisconnect : undefined,
+                connect: toConnectLength > 0 ? typesToConnect : undefined,
             },
         },
-        select: { id: true, spaceTypes: { select: { spaceType: { select: { title: true } } } } },
+        select: { id: true, spaceTypes: { select: { title: true } } },
     });
 
     await dataSources.spaceAlgolia.partialUpdateObject({
         objectID: updatedSpace.id,
-        spaceTypes: updatedSpace.spaceTypes?.map(({ spaceType }) => spaceType.title),
+        spaceTypes: updatedSpace.spaceTypes?.map(({ title }) => title),
     });
 
-    return { message: `Successfull added ${toAddLength} types and removed ${toDeleteLength} types from your space` };
+    return {
+        message: `Successfull added ${toConnectLength} types and removed ${toDisconnectLength} types from your space`,
+    };
 };
 
 export const updateTypesInSpaceTypeDefs = gql`

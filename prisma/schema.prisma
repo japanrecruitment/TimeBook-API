@@ -207,26 +207,35 @@ model Address {
 }
 
 model Space {
-  id              String               @id @default(cuid())
-  name            String               @db.VarChar(255)
-  description     String               @db.Text
-  maximumCapacity Int                  @default(0)
-  numberOfSeats   Int                  @default(0)
-  spaceSize       Float                @default(0)
-  needApproval    Boolean              @default(false)
-  createdAt       DateTime             @default(now()) @db.Timestamp(6)
-  isDeleted       Boolean              @default(false)
-  suspended       Boolean              @default(false)
-  published       Boolean              @default(true)
-  updatedAt       DateTime             @updatedAt
+  id              String           @id @default(cuid())
+  name            String           @db.VarChar(255)
+  description     String           @db.Text
+  maximumCapacity Int              @default(0)
+  numberOfSeats   Int              @default(0)
+  spaceSize       Float            @default(0)
+  needApproval    Boolean          @default(false)
+  createdAt       DateTime         @default(now()) @db.Timestamp(6)
+  isDeleted       Boolean          @default(false)
+  suspended       Boolean          @default(false)
+  published       Boolean          @default(true)
+  updatedAt       DateTime         @updatedAt
   accountId       String
-  account         Account              @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  account         Account          @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaceTypes      SpaceType[]      @relation("_SpaceTypes")
   spacePricePlans SpacePricePlan[]
   reservations    Reservation[]
   nearestStations NearestStation[]
-  spaceTypes      Space_To_SpaceType[]
   address         Address?
   photos          Photo[]
+}
+
+model SpaceType {
+  id          String  @id @default(cuid())
+  title       String  @db.VarChar(100)
+  description String  @db.Text
+  available   Boolean @default(false)
+  photo       Photo?
+  spaces      Space[] @relation("_SpaceTypes")
 }
 
 model SpacePricePlan {
@@ -245,20 +254,20 @@ model SpacePricePlan {
 }
 
 model Reservation {
-  id           String            @id @default(cuid())
-  reservationId String           @default("TB")
-  fromDateTime DateTime          @default(now()) @db.Timestamp(6)
-  toDateTime   DateTime
-  status       ReservationStatus @default(PENDING)
-  createdAt    DateTime          @default(now()) @db.Timestamp(6)
-  updatedAt    DateTime          @updatedAt
-  space        Space             @relation(fields: [spaceId], references: [id])
-  spaceId      String
-  reservee     Account           @relation(fields: [reserveeId], references: [id])
-  reserveeId   String
-  approved     Boolean
-  approvedOn   DateTime?         @db.Timestamp(6)
-  transaction  Transaction?
+  id            String            @id @default(cuid())
+  reservationId String            @default("TB")
+  fromDateTime  DateTime          @default(now()) @db.Timestamp(6)
+  toDateTime    DateTime
+  status        ReservationStatus @default(PENDING)
+  createdAt     DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime          @updatedAt
+  space         Space             @relation(fields: [spaceId], references: [id])
+  spaceId       String
+  reservee      Account           @relation(fields: [reserveeId], references: [id])
+  reserveeId    String
+  approved      Boolean
+  approvedOn    DateTime?         @db.Timestamp(6)
+  transaction   Transaction?
 }
 
 model Transaction {
@@ -334,24 +343,6 @@ model Prefecture {
   available  Boolean   @default(false)
   station    Station[]
   Address    Address[]
-}
-
-model SpaceType {
-  id                String               @id @default(cuid())
-  title             String               @db.VarChar(100)
-  description       String               @db.Text
-  available         Boolean              @default(false)
-  spaceToSpaceTypes Space_To_SpaceType[]
-  photo             Photo?
-}
-
-model Space_To_SpaceType {
-  space       Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  spaceId     String
-  spaceType   SpaceType @relation(fields: [spaceTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  spaceTypeId String
-
-  @@id([spaceId, spaceTypeId])
 }
 
 model Credit {

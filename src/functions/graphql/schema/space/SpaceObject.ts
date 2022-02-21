@@ -6,17 +6,17 @@ import { isEmpty } from "lodash";
 import { omit } from "@utils/object-helper";
 import { NearestStationObject, NearestStationSelect, toNearestStationSelect } from "./nearest-stations";
 import { SpacePricePlanObject, SpacePricePlanSelect, toSpacePricePlanSelect } from "./space-price-plans";
-import { SpaceToSpaceTypeObject, SpaceToSpaceTypeSelect, toSpaceToSpaceTypeSelect } from "./space-to-space-type";
 import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { Context } from "../../context";
 import { Photo, PhotoSelect, toPhotoSelect } from "../media";
 import { toHostSelect, HostSelect, HostObject } from "../account/host/HostObject";
 import { ReservationObject } from "../reservation/ReservationObject";
+import { SpaceTypeObject, SpaceTypeSelect, toSpaceTypeSelect } from "./space-types";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
     spacePricePlan?: Partial<SpacePricePlanObject>[];
-    spaceTypes?: Partial<SpaceToSpaceTypeObject>[];
+    spaceTypes?: Partial<SpaceTypeObject>[];
     address?: Partial<AddressObject>;
     photos?: Partial<Photo>[];
     account?: { host?: Partial<HostObject> };
@@ -33,7 +33,7 @@ export type SpaceSelect = {
     needApproval: boolean;
     nearestStations: PrismaSelect<NearestStationSelect>;
     spacePricePlans: PrismaSelect<SpacePricePlanSelect>;
-    spaceTypes: PrismaSelect<SpaceToSpaceTypeSelect>;
+    spaceTypes: PrismaSelect<SpaceTypeSelect>;
     address: PrismaSelect<AddressSelect>;
     photos: PrismaSelect<PhotoSelect>;
     account: { select: { host: PrismaSelect<HostSelect> } };
@@ -44,7 +44,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
     if (!selections || isEmpty(selections)) return defaultValue;
     const nearestStationsSelect = toNearestStationSelect(selections.nearestStations);
     const spacePricePlansSelect = toSpacePricePlanSelect(selections.spacePricePlans);
-    const spaceToSpaceTypesSelect = toSpaceToSpaceTypeSelect(selections.spaceTypes);
+    const spaceTypesSelect = toSpaceTypeSelect(selections.spaceTypes);
     const addressSelect = toAddressSelect(selections.address);
     const photosSelect = toPhotoSelect(selections.photos);
     const hostSelect = toHostSelect(selections.host);
@@ -66,7 +66,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         isEmpty(spaceSelect) &&
         !nearestStationsSelect &&
         !spacePricePlansSelect &&
-        !spaceToSpaceTypesSelect &&
+        !spaceTypesSelect &&
         !addressSelect &&
         !photosSelect &&
         !hostSelect &&
@@ -79,7 +79,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
             ...spaceSelect,
             nearestStations: nearestStationsSelect,
             spacePricePlans: spacePricePlansSelect,
-            spaceTypes: spaceToSpaceTypesSelect,
+            spaceTypes: spaceTypesSelect,
             address: addressSelect,
             photos: photosSelect,
             account: hostSelect ? { select: { host: hostSelect } } : false,
@@ -89,7 +89,6 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
 };
 
 const spaceObjectResolver: IObjectTypeResolver<SpaceObject, Context> = {
-    spaceTypes: ({ spaceTypes }) => spaceTypes.map((spaceType) => spaceType.spaceType),
     host: ({ account }) => account?.host,
     reservedDates: ({ reservations }) => reservations,
 };
