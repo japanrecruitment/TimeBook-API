@@ -55,7 +55,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             where: { id: spaceId },
             include: {
                 account: { include: { host: true } },
-                spacePricePlans: { where: { type: "HOURLY", duration: { lte: hourDuration } } },
+                pricePlans: { where: { type: "HOURLY", duration: { lte: hourDuration } } },
                 reservations: {
                     where: {
                         AND: [
@@ -86,7 +86,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 message: "Reservation is not available for this space in the selected time frame",
             });
 
-        if (!space.spacePricePlans || space.spacePricePlans?.length <= 0)
+        if (!space.pricePlans || space.pricePlans?.length <= 0)
             throw new GqlError({
                 code: "BAD_USER_INPUT",
                 message: "Selected time frame doesn't satisfy the minimum required duration to book this space.",
@@ -100,7 +100,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         if (paymentMethod.customer !== customerId)
             throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
 
-        const price = formatPrice("HOURLY", space.spacePricePlans, true, true);
+        const price = formatPrice("HOURLY", space.pricePlans, true, true);
         const amount = hourDuration * price;
         const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
         const transferAmount = amount - applicationFeeAmount;
@@ -131,7 +131,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 amount,
                 provider: "STRIPE",
                 assetType: "SPACE",
-                assetData: omit(space, "createdAt", "account", "spacePricePlans", "updatedAt", "reservations"),
+                assetData: omit(space, "createdAt", "account", "pricePlans", "updatedAt", "reservations"),
                 currency: "JPY",
                 description: `Reservation of ${space.name}`,
                 status: "CREATED",

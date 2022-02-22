@@ -1,7 +1,6 @@
 import { SpacePricePlanType } from "@prisma/client";
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
-import { merge } from "lodash";
 import { GqlError } from "src/functions/graphql/error";
 import { Context } from "../../../context";
 import { Result } from "../../core/result";
@@ -13,31 +12,28 @@ type AddSpacePricePlanInput = {
     duration: number;
     title: string;
     type: SpacePricePlanType;
+    fromDate: Date;
+    toDate: Date;
     cooldownTime?: number;
     lastMinuteDiscount?: number;
     maintenanceFee?: number;
 };
 
-type AddSpacePricePlansArgs = { spaceId: string; pricePlans: AddSpacePricePlanInput[] };
+type AddSpacePricePlanArgs = { spaceId: string; pricePlan: AddSpacePricePlanInput };
 
-type AddSpacePricePlansResult = {
+type AddSpacePricePlanResult = {
     result: Result;
-    spacePricePlans: SpacePricePlanObject[];
+    pricePlan: SpacePricePlanObject;
 };
 
-type AddSpacePricePlans = IFieldResolver<any, Context, AddSpacePricePlansArgs, Promise<AddSpacePricePlansResult>>;
+type AddSpacePricePlan = IFieldResolver<any, Context, AddSpacePricePlanArgs, Promise<AddSpacePricePlanResult>>;
 
-const addSpacePricePlans: AddSpacePricePlans = async (
-    _,
-    { spaceId, pricePlans },
-    { authData, dataSources, store },
-    info
-) => {
+const addSpacePricePlan: AddSpacePricePlan = async (_, { spaceId, pricePlan }, { authData, store }, info) => {
     const { accountId } = authData;
 
     const space = await store.space.findFirst({
         where: { id: spaceId, isDeleted: false },
-        select: { accountId: true, spacePricePlans: { select: { id: true } } },
+        select: { accountId: true },
     });
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
@@ -45,75 +41,69 @@ const addSpacePricePlans: AddSpacePricePlans = async (
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    const pricePlansToAdd = pricePlans.map(
-        ({ amount, duration, title, type, cooldownTime, lastMinuteDiscount, maintenanceFee }) => {
-            if (!amount || amount < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
+    let { amount, duration, title, type, cooldownTime, lastMinuteDiscount, maintenanceFee, fromDate, toDate } =
+        pricePlan;
 
-            if (!duration || duration < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration" });
+    if (!amount || amount < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
 
-            if (cooldownTime && cooldownTime < 0)
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cooldown time" });
+    if (!duration || duration < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration" });
 
-            if (lastMinuteDiscount && lastMinuteDiscount < 0)
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid last minute discount" });
+    if (cooldownTime && cooldownTime < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cooldown time" });
 
-            if (maintenanceFee && maintenanceFee < 0)
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maintenance fee" });
+    if (lastMinuteDiscount && lastMinuteDiscount < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid last minute discount" });
 
-            if (!title || title?.trim() === "")
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid title" });
+    if (maintenanceFee && maintenanceFee < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maintenance fee" });
 
-            if (!Object.values(SpacePricePlanType).includes(type))
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space type" });
+    if (!title || title?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid title" });
 
-            return { amount, duration, cooldownTime, lastMinuteDiscount, maintenanceFee, title: title.trim(), type };
-        }
-    );
+    if (!Object.values(SpacePricePlanType).includes(type))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space type" });
 
-    const updatedSpace = await store.space.update({
-        where: { id: spaceId },
-        data: { spacePricePlans: { createMany: { data: pricePlansToAdd } } },
-        select: {
-            id: true,
-            spacePricePlans: merge(toSpacePricePlanSelect(mapSelections(info).spacePricePlans), {
-                select: { amount: true, duration: true, type: true },
-            }),
-        },
-    });
+    if (fromDate.getTime() < Date.now() || fromDate.getTime() < toDate.getTime())
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid start date" });
 
-    await dataSources.spaceAlgolia.partialUpdateObject({
-        objectID: updatedSpace.id,
-        price: updatedSpace.spacePricePlans.map(({ amount, duration, type }) => ({ amount, duration, type })),
+    if (toDate.getTime() < Date.now() || toDate.getTime() > fromDate.getTime())
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid end date" });
+
+    const select = toSpacePricePlanSelect(mapSelections(info).pricePlans);
+    const newPricePlan = await store.spacePricePlan.create({
+        data: { ...pricePlan, title: title.trim(), space: { connect: { id: spaceId } } },
+        ...select,
     });
 
     return {
-        spacePricePlans: updatedSpace.spacePricePlans,
-        result: { message: `Successfully ${pricePlansToAdd.length} added price plan in your space` },
+        pricePlan: newPricePlan,
+        result: { message: `Successfully added new price plan with title ${title} in your space` },
     };
 };
 
-export const addSpacePricePlansTypeDefs = gql`
+export const addSpacePricePlanTypeDefs = gql`
     input AddSpacePricePlanInput {
         amount: Float!
         duration: Float!
         title: String!
+        fromDate: Date!
+        toDate: Date!
         type: SpacePricePlanType!
         cooldownTime: Int
         lastMinuteDiscount: Float
         maintenanceFee: Float
     }
 
-    type AddSpacePricePlansResult {
+    type AddSpacePricePlanResult {
         result: Result
-        spacePricePlans: [SpacePricePlanObject]
+        pricePlan: SpacePricePlanObject
     }
 
     type Mutation {
-        addSpacePricePlans(spaceId: ID!, pricePlans: [AddSpacePricePlanInput]!): AddSpacePricePlansResult!
+        addSpacePricePlan(spaceId: ID!, pricePlan: AddSpacePricePlanInpu!): AddSpacePricePlanResult!
             @auth(requires: [user, host])
     }
 `;
 
-export const addSpacePricePlansResolvers = {
-    Mutation: { addSpacePricePlans },
+export const addSpacePricePlanResolvers = {
+    Mutation: { addSpacePricePlan },
 };

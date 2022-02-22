@@ -1,18 +1,21 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { spacePricePlanObjectTypeDefs } from "./SpacePricePlanObject";
-import { addSpacePricePlansResolvers, addSpacePricePlansTypeDefs } from "./addSpacePricePlan";
 import { updateSpacePricePlanResolvers, updateSpacePricePlanTypeDefs } from "./updateSpacePricePlan";
 import { removeSpacePricePlanResolvers, removeSpacePricePlanTypeDefs } from "./removeSpacePricePlan";
+import { addDefaultSpacePricePlansResolvers, addDefaultSpacePricePlansTypeDefs } from "./addDefaultSpacePricePlan";
+import { addSpacePricePlanResolvers, addSpacePricePlanTypeDefs } from "./addSpacePricePlan";
 
 export const spacePricePlanTypeDefs = mergeTypeDefs([
     spacePricePlanObjectTypeDefs,
-    addSpacePricePlansTypeDefs,
+    addDefaultSpacePricePlansTypeDefs,
+    addSpacePricePlanTypeDefs,
     updateSpacePricePlanTypeDefs,
     removeSpacePricePlanTypeDefs,
 ]);
 
 export const spacePricePlanResolvers = mergeResolvers([
-    addSpacePricePlansResolvers,
+    addDefaultSpacePricePlansResolvers,
+    addSpacePricePlanResolvers,
     updateSpacePricePlanResolvers,
     removeSpacePricePlanResolvers,
 ]);

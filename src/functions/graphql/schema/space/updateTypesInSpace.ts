@@ -1,8 +1,8 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
 import { GqlError } from "src/functions/graphql/error";
-import { Context } from "../../../context";
-import { Result } from "../../core/result";
+import { Context } from "../../context";
+import { Result } from "../core/result";
 
 type UpdateTypesInSpaceInput = {
     spaceId: string;
@@ -55,13 +55,15 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
                 connect: toConnectLength > 0 ? typesToConnect : undefined,
             },
         },
-        select: { id: true, spaceTypes: { select: { title: true } } },
+        select: { id: true, published: true, spaceTypes: { select: { title: true } } },
     });
 
-    await dataSources.spaceAlgolia.partialUpdateObject({
-        objectID: updatedSpace.id,
-        spaceTypes: updatedSpace.spaceTypes?.map(({ title }) => title),
-    });
+    if (updatedSpace.published) {
+        await dataSources.spaceAlgolia.partialUpdateObject({
+            objectID: updatedSpace.id,
+            spaceTypes: updatedSpace.spaceTypes?.map(({ title }) => title),
+        });
+    }
 
     return {
         message: `Successfull added ${toConnectLength} types and removed ${toDisconnectLength} types from your space`,

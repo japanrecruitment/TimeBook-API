@@ -65,16 +65,19 @@ const addNearestStations: AddNearestStations = async (
         data: { nearestStations: { createMany: { data: nearestStationToAdd } } },
         select: {
             id: true,
+            published: true,
             nearestStations: merge(toNearestStationSelect(mapSelections(info).nearestStations), {
                 select: { stationId: true },
             }),
         },
     });
 
-    await dataSources.spaceAlgolia.partialUpdateObject({
-        objectID: updatedSpace.id,
-        nearestStations: updatedSpace.nearestStations.map(({ stationId }) => stationId),
-    });
+    if (updatedSpace.published) {
+        await dataSources.spaceAlgolia.partialUpdateObject({
+            objectID: updatedSpace.id,
+            nearestStations: updatedSpace.nearestStations.map(({ stationId }) => stationId),
+        });
+    }
 
     return {
         nearestStations: updatedSpace.nearestStations,
