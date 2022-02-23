@@ -256,10 +256,10 @@ model SpaceSetting {
   isDefault    Boolean   @default(false)
   closed       Boolean   @default(false)
   businessDays Int[]
-  openingHr    Int?
-  closingHr    Int?
-  breakFromHr  Int?
-  breakToHr    Int?
+  openingHr    Float?
+  closingHr    Float?
+  breakFromHr  Float?
+  breakToHr    Float?
   fromDate     DateTime?
   toDate       DateTime?
   createdAt    DateTime  @default(now()) @db.Timestamp(6)

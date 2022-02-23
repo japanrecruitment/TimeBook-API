@@ -29,7 +29,19 @@ const publishSpace: PublishSpace = async (_, { id }, { authData, store, dataSour
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    if (space.published) throw new GqlError({ code: "FORBIDDEN", message: "Space already published" });
+    if (space.published) throw new GqlError({ code: "BAD_REQUEST", message: "Space already published" });
+
+    if (!space.name) throw new GqlError({ code: "BAD_REQUEST", message: "Found empty space name" });
+
+    if (!space.address?.id) throw new GqlError({ code: "BAD_REQUEST", message: "Space address not provided yet" });
+
+    if (!space.pricePlans || space.pricePlans.length <= 0)
+        throw new GqlError({ code: "BAD_REQUEST", message: "A space must have atleast one price plan" });
+
+    if (!space.spaceTypes || space.spaceTypes.length <= 0)
+        throw new GqlError({ code: "BAD_REQUEST", message: "A space must have atleast one space type" });
+
+    await store.space.update({ where: { id }, data: { published: true } });
 
     await dataSources.spaceAlgolia.saveObject({
         objectID: id,

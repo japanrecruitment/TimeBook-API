@@ -21,9 +21,7 @@ const spaceSettingsBySpaceId: SpaceSettingsBySpaceId = async (_, { spaceId, filt
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 
-    let { fromDate, toDate } = filter || {};
-
-    fromDate = fromDate || new Date();
+    let { fromDate, toDate } = filter;
 
     const select = toSpaceSettingSelect(mapSelections(info));
     const spaceSettings = await store.spaceSetting.findMany({
@@ -33,7 +31,9 @@ const spaceSettingsBySpaceId: SpaceSettingsBySpaceId = async (_, { spaceId, filt
                 {
                     OR: [
                         { isDefault: true },
-                        { fromDate: { gte: fromDate }, toDate: toDate ? { lte: toDate } : undefined },
+                        { AND: [{ fromDate: { lte: fromDate } }, { toDate: { gte: toDate } }] },
+                        { AND: [{ fromDate: { gte: fromDate } }, { fromDate: { lte: toDate } }] },
+                        { AND: [{ toDate: { gte: fromDate } }, { fromDate: { lte: toDate } }] },
                     ],
                 },
             ],
@@ -48,7 +48,7 @@ const spaceSettingsBySpaceId: SpaceSettingsBySpaceId = async (_, { spaceId, filt
 
 export const spaceSettingsBySpaceIdTypeDefs = gql`
     type Query {
-        spaceSettingsBySpaceId(spaceId: ID!, filter: SpaceSettingFilterOptions): [SpaceSettingObject]
+        spaceSettingsBySpaceId(spaceId: ID!, filter: SpaceSettingFilterOptions!): [SpaceSettingObject]
     }
 `;
 

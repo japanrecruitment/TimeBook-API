@@ -76,10 +76,25 @@ const addDefaultSpacePricePlans: AddDefaultSpacePricePlans = async (
             if (space.pricePlans.some((p) => p.type === type && p.duration === duration))
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
-                    message: `This space already has price plan of type ${type} and duration ${duration}`,
+                    message: `This space already has default price plan of type ${type} and duration ${duration}`,
                 });
 
-            return { amount, duration, type, title: "Default", isDefault: true, spaceId };
+            if (pricePlans.filter((p) => p.type === type && p.duration === duration).length > 1)
+                throw new GqlError({
+                    code: "BAD_USER_INPUT",
+                    message: `Multiple price plans detected with same type ${type} and duration ${duration}`,
+                });
+
+            return {
+                amount,
+                duration,
+                type,
+                title: "Default",
+                isDefault: true,
+                cooldownTime,
+                lastMinuteDiscount,
+                maintenanceFee,
+            };
         }
     );
 
@@ -111,7 +126,7 @@ const addDefaultSpacePricePlans: AddDefaultSpacePricePlans = async (
 
     const newPricePlans = updatedSpace.pricePlans.filter(({ createdAt }) => createdAt.getTime() >= currDate);
     return {
-        result: { message: `Successfully added default price plans in your space` },
+        result: { message: `Successfully added ${pricePlans.length} new default price plans in your space` },
         pricePlans: newPricePlans,
     };
 };
@@ -134,7 +149,7 @@ export const addDefaultSpacePricePlansTypeDefs = gql`
     type Mutation {
         addDefaultSpacePricePlans(
             spaceId: ID!
-            pricePlans: [AddDefaultSpacePricePlanInput]!
+            pricePlans: [AddDefaultSpacePricePlanInput!]!
         ): AddDefaultSpacePricePlansResult! @auth(requires: [user, host])
     }
 `;

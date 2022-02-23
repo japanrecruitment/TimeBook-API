@@ -27,10 +27,10 @@ export const spaceSettingObjectTypeDefs = gql`
         isDefault: Boolean!
         closed: Boolean!
         businessDays: [Int]
-        openingHr: Int!
-        closingHr: Int!
-        breakFromHr: Int
-        breakToHr: Int
+        openingHr: Float!
+        closingHr: Float!
+        breakFromHr: Float
+        breakToHr: Float
         fromDate: Date
         toDate: Date
     }

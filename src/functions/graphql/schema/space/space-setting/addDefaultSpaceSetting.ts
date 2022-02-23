@@ -15,7 +15,7 @@ export type AddDefaultSpaceSettingInput = {
     totalStock?: number;
 };
 
-export type AddDefaultSpaceSettingArgs = { spaceId: string; input: AddDefaultSpaceSettingInput };
+export type AddDefaultSpaceSettingArgs = { spaceId: string; spaceSetting: AddDefaultSpaceSettingInput };
 
 export type AddDefaultSpaceSettingResult = {
     result?: Result;
@@ -29,14 +29,19 @@ export type AddDefaultSpaceSetting = IFieldResolver<
     Promise<AddDefaultSpaceSettingResult>
 >;
 
-const addDefaultSpaceSetting: AddDefaultSpaceSetting = async (_, { input, spaceId }, { authData, store }, info) => {
+const addDefaultSpaceSetting: AddDefaultSpaceSetting = async (
+    _,
+    { spaceSetting, spaceId },
+    { authData, store },
+    info
+) => {
     const { accountId } = authData;
 
     const space = await store.space.findFirst({
         where: { id: spaceId, isDeleted: false },
         select: {
             accountId: true,
-            settings: { where: { isDefault: true, isDeleted: false }, select: { id: true, isDefault: true } },
+            settings: { where: { isDefault: true }, select: { id: true, isDefault: true } },
         },
     });
 
@@ -48,7 +53,7 @@ const addDefaultSpaceSetting: AddDefaultSpaceSetting = async (_, { input, spaceI
     if (space.settings.some(({ isDefault }) => isDefault))
         throw new GqlError({ code: "BAD_REQUEST", message: "You already have an active default setting" });
 
-    let { closingHr, openingHr, breakFromHr, breakToHr, businessDays } = input;
+    let { closingHr, openingHr, breakFromHr, breakToHr, businessDays } = spaceSetting;
 
     if (closingHr && (closingHr < 0 || closingHr > 24 || (openingHr && closingHr < openingHr)))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid closing hour" });
@@ -56,10 +61,10 @@ const addDefaultSpaceSetting: AddDefaultSpaceSetting = async (_, { input, spaceI
     if (openingHr && (openingHr < 0 || openingHr > 24 || (closingHr && openingHr > closingHr)))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid opening hour" });
 
-    if ((breakFromHr && (breakFromHr > closingHr || breakFromHr < openingHr)) || (breakToHr && breakFromHr > breakToHr))
+    if (breakFromHr && (breakFromHr > closingHr || breakFromHr < openingHr || (breakToHr && breakFromHr > breakToHr)))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid break start hour" });
 
-    if ((breakToHr && (breakToHr > closingHr || breakToHr < openingHr)) || (breakFromHr && breakToHr < breakFromHr))
+    if (breakToHr && (breakToHr > closingHr || breakToHr < openingHr || (breakFromHr && breakToHr < breakFromHr)))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid break end hour" });
 
     if (businessDays) {
@@ -69,7 +74,7 @@ const addDefaultSpaceSetting: AddDefaultSpaceSetting = async (_, { input, spaceI
 
     const select = toSpaceSettingSelect(mapSelections(info).setting);
     const setting = await store.spaceSetting.create({
-        data: { ...input, isDefault: true, space: { connect: { id: spaceId } } },
+        data: { ...spaceSetting, isDefault: true, space: { connect: { id: spaceId } } },
         ...select,
     });
 
@@ -78,21 +83,21 @@ const addDefaultSpaceSetting: AddDefaultSpaceSetting = async (_, { input, spaceI
 
 export const addDefaultSpaceSettingTypeDefs = gql`
     type AddDefaultSpaceSettingResult {
-        message: Result
+        result: Result
         setting: SpaceSettingObject
     }
 
     input AddDefaultSpaceSettingInput {
-        closingHr: Int
-        openingHr: Int
-        breakFromHr: Int
-        breakToHr: Int
+        closingHr: Float
+        openingHr: Float
+        breakFromHr: Float
+        breakToHr: Float
         businessDays: [Int]
         totalStock: Int
     }
 
     type Mutation {
-        addDefaultSpaceSetting(spaceId: ID!, input: AddDefaultSpaceSettingInput): AddDefaultSpaceSettingResult!
+        addDefaultSpaceSetting(spaceId: ID!, spaceSetting: AddDefaultSpaceSettingInput!): AddDefaultSpaceSettingResult!
             @auth(requires: [user, host])
     }
 `;

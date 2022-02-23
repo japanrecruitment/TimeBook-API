@@ -17,6 +17,7 @@ import { allSpacesResolvers, allSpacesTypeDefs } from "./allSpaces";
 import { updateTypesInSpaceResolvers, updateTypesInSpaceTypeDefs } from "./updateTypesInSpace";
 import { spaceAmenitiesResolvers, spaceAmenitiesTypeDefs } from "./space-amenities";
 import { spaceSettingResolvers, spaceSettingTypeDefs } from "./space-setting";
+import { publishSpaceResolvers, publishSpaceTypeDefs } from "./publishSpace";
 
 export const spaceTypeDefs = mergeTypeDefs([
     spaceObjectTypeDefs,
@@ -37,6 +38,7 @@ export const spaceTypeDefs = mergeTypeDefs([
     updateTypesInSpaceTypeDefs,
     spaceAmenitiesTypeDefs,
     spaceSettingTypeDefs,
+    publishSpaceTypeDefs,
 ]);
 
 export const spaceResolvers = mergeResolvers([
@@ -58,4 +60,5 @@ export const spaceResolvers = mergeResolvers([
     updateTypesInSpaceResolvers,
     spaceAmenitiesResolvers,
     spaceSettingResolvers,
+    publishSpaceResolvers,
 ]);

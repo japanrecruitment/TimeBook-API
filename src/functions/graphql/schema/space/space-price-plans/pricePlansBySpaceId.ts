@@ -21,19 +21,21 @@ const pricePlanBySpaceId: PricePlanBySpaceId = async (_, { spaceId, filter }, { 
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 
-    let { fromDate, toDate } = filter || {};
+    let { fromDate, toDate, types } = filter;
 
-    fromDate = fromDate || new Date();
+    types = types && types.length > 0 ? types : ["DAILY", "HOURLY", "MINUTES"];
 
     const select = toSpacePricePlanSelect(mapSelections(info));
     const pricePlans = await store.spacePricePlan.findMany({
         where: {
             AND: [
-                { spaceId, isDeleted: false },
+                { spaceId, type: { in: types }, isDeleted: false },
                 {
                     OR: [
                         { isDefault: true },
-                        { fromDate: { gte: fromDate }, toDate: toDate ? { lte: toDate } : undefined },
+                        { AND: [{ fromDate: { lte: fromDate } }, { toDate: { gte: toDate } }] },
+                        { AND: [{ fromDate: { gte: fromDate } }, { fromDate: { lte: toDate } }] },
+                        { AND: [{ toDate: { gte: fromDate } }, { fromDate: { lte: toDate } }] },
                     ],
                 },
             ],
@@ -47,8 +49,8 @@ const pricePlanBySpaceId: PricePlanBySpaceId = async (_, { spaceId, filter }, { 
 };
 
 export const pricePlanBySpaceIdTypeDefs = gql`
-    type Ouery {
-        pricePlanBySpaceId(spaceId: ID!, filter: PricePlanFilterOptions): [SpacePricePlanObject]
+    type Query {
+        pricePlanBySpaceId(spaceId: ID!, filter: PricePlanFilterOptions!): [SpacePricePlanObject]
     }
 `;
 
