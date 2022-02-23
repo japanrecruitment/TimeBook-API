@@ -19,7 +19,7 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
 
     const space = await store.space.findFirst({
         where: { id: spaceId, isDeleted: false },
-        select: { accountId: true },
+        select: { accountId: true, published: true },
     });
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
@@ -60,12 +60,14 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
         }),
     });
 
-    await dataSources.spaceAlgolia.partialUpdateObject({
-        objectID: newAddress.spaceId,
-        prefecture: newAddress.prefecture.name,
-        city: newAddress.city,
-        _geoloc: { lat: newAddress.latitude, lng: newAddress.longitude },
-    });
+    if (space.published) {
+        await dataSources.spaceAlgolia.partialUpdateObject({
+            objectID: newAddress.spaceId,
+            prefecture: newAddress.prefecture.name,
+            city: newAddress.city,
+            _geoloc: { lat: newAddress.latitude, lng: newAddress.longitude },
+        });
+    }
 
     return { address: newAddress, result: { message: `Successfully added address in your space` } };
 };

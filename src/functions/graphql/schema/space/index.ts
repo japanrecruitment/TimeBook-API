@@ -7,7 +7,6 @@ import { spacePricePlanTypeDefs, spacePricePlanResolvers } from "./space-price-p
 import { updateMySpaceResolvers, updateMySpaceTypeDefs } from "./updateMySpace";
 import { spaceTypesResolvers, spaceTypesTypeDefs } from "./space-types";
 import { spaceObjectResolvers, spaceObjectTypeDefs } from "./SpaceObject";
-import { spaceToSpaceTypeResolvers, spaceToSpaceTypeTypeDefs } from "./space-to-space-type";
 import { spaceAddressResolvers, spaceAddressTypeDefs } from "./space-address";
 import { removeSpaceResolvers, removeSpaceTypeDefs } from "./removeSpace";
 import { suspendSpaceResolvers, suspendSpaceTypeDefs } from "./suspendSpace";
@@ -15,6 +14,10 @@ import { addSpacePhotosResolvers, addSpacePhotosTypeDefs } from "./addSpacePhoto
 import { availableSpacesByAccountResolvers, availableSpacesByAccountTypeDefs } from "./availableSpacesByAccount";
 import { allSpacesByAccountResolvers, allSpacesByAccountTypeDefs } from "./allSpacesByAccount";
 import { allSpacesResolvers, allSpacesTypeDefs } from "./allSpaces";
+import { updateTypesInSpaceResolvers, updateTypesInSpaceTypeDefs } from "./updateTypesInSpace";
+import { spaceAmenitiesResolvers, spaceAmenitiesTypeDefs } from "./space-amenities";
+import { spaceSettingResolvers, spaceSettingTypeDefs } from "./space-setting";
+import { publishSpaceResolvers, publishSpaceTypeDefs } from "./publishSpace";
 
 export const spaceTypeDefs = mergeTypeDefs([
     spaceObjectTypeDefs,
@@ -25,7 +28,6 @@ export const spaceTypeDefs = mergeTypeDefs([
     spacePricePlanTypeDefs,
     spaceTypesTypeDefs,
     updateMySpaceTypeDefs,
-    spaceToSpaceTypeTypeDefs,
     spaceAddressTypeDefs,
     removeSpaceTypeDefs,
     suspendSpaceTypeDefs,
@@ -33,6 +35,10 @@ export const spaceTypeDefs = mergeTypeDefs([
     availableSpacesByAccountTypeDefs,
     allSpacesByAccountTypeDefs,
     allSpacesTypeDefs,
+    updateTypesInSpaceTypeDefs,
+    spaceAmenitiesTypeDefs,
+    spaceSettingTypeDefs,
+    publishSpaceTypeDefs,
 ]);
 
 export const spaceResolvers = mergeResolvers([
@@ -44,7 +50,6 @@ export const spaceResolvers = mergeResolvers([
     spacePricePlanResolvers,
     spaceTypesResolvers,
     updateMySpaceResolvers,
-    spaceToSpaceTypeResolvers,
     spaceAddressResolvers,
     removeSpaceResolvers,
     suspendSpaceResolvers,
@@ -52,4 +57,8 @@ export const spaceResolvers = mergeResolvers([
     availableSpacesByAccountResolvers,
     allSpacesByAccountResolvers,
     allSpacesResolvers,
+    updateTypesInSpaceResolvers,
+    spaceAmenitiesResolvers,
+    spaceSettingResolvers,
+    publishSpaceResolvers,
 ]);

@@ -48,7 +48,15 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
         },
     });
 
-    await dataSources.spaceAlgolia.saveObject({ objectID: space.id, name, maximumCapacity, numberOfSeats, spaceSize });
+    if (space.published) {
+        await dataSources.spaceAlgolia.saveObject({
+            objectID: space.id,
+            name,
+            maximumCapacity,
+            numberOfSeats,
+            spaceSize,
+        });
+    }
 
     return { space, result: { message: "Successfully added a new space" } };
 };

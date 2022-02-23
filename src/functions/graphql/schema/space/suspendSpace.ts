@@ -15,7 +15,9 @@ const suspendSpace: SuspendSpace = async (_, { id }, { store, dataSources }) => 
 
     if (!updatedSpace) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 
-    await dataSources.spaceAlgolia.deleteObject(id);
+    if (updatedSpace.published) {
+        await dataSources.spaceAlgolia.deleteObject(id);
+    }
 
     return { message: `Successfully suspended space named ${updatedSpace.name}` };
 };

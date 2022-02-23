@@ -4,54 +4,60 @@ import { Context } from "../../../context";
 import { GqlError } from "src/functions/graphql/error";
 import { Result } from "../../core/result";
 
-type RemoveSpacePricePlanInput = {
-    id: string;
-    spaceId: string;
-};
-
-type RemoveSpacePricePlanArgs = { input: RemoveSpacePricePlanInput };
+type RemoveSpacePricePlanArgs = { id: string };
 
 type RemoveSpacePricePlanResult = Promise<Result>;
 
 type RemoveSpacePricePlan = IFieldResolver<any, Context, RemoveSpacePricePlanArgs, RemoveSpacePricePlanResult>;
 
-const removeSpacePricePlan: RemoveSpacePricePlan = async (_, { input }, { authData, dataSources, store }) => {
+const removeSpacePricePlan: RemoveSpacePricePlan = async (_, { id }, { authData, dataSources, store }) => {
     const { accountId } = authData;
-    const { id, spaceId } = input;
 
     const spacePricePlan = await store.spacePricePlan.findFirst({
-        where: { id, spaceId },
-        select: { title: true, space: { select: { accountId: true, isDeleted: true } } },
+        where: { id },
+        select: {
+            isDefault: true,
+            isDeleted: true,
+            title: true,
+            space: { select: { id: true, accountId: true, isDeleted: true } },
+        },
     });
 
-    if (!spacePricePlan || spacePricePlan.space.isDeleted)
+    if (!spacePricePlan || spacePricePlan.isDeleted || spacePricePlan.space.isDeleted)
         throw new GqlError({ code: "NOT_FOUND", message: "Space price plan not found" });
 
     if (accountId !== spacePricePlan.space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
     const updatedSpace = await store.space.update({
-        where: { id: spaceId },
-        data: { spacePricePlans: { delete: { id } } },
-        select: { id: true, spacePricePlans: { select: { amount: true, duration: true, type: true } } },
+        where: { id: spacePricePlan.space.id },
+        data: { pricePlans: { update: { where: { id }, data: { isDeleted: true } } } },
+        select: {
+            id: true,
+            published: true,
+            pricePlans: spacePricePlan.isDefault
+                ? {
+                      where: { isDefault: true, isDeleted: false },
+                      orderBy: { createdAt: "desc" },
+                      select: { amount: true, duration: true, type: true },
+                  }
+                : false,
+        },
     });
 
-    await dataSources.spaceAlgolia.partialUpdateObject({
-        objectID: updatedSpace.id,
-        price: updatedSpace.spacePricePlans?.map(({ amount, duration, type }) => ({ amount, duration, type })),
-    });
+    if (spacePricePlan.isDefault && updatedSpace.published) {
+        await dataSources.spaceAlgolia.partialUpdateObject({
+            objectID: updatedSpace.id,
+            price: updatedSpace.pricePlans?.map(({ amount, duration, type }) => ({ amount, duration, type })),
+        });
+    }
 
     return { message: `Successfully removed price plan named ${spacePricePlan.title} from your space` };
 };
 
 export const removeSpacePricePlanTypeDefs = gql`
-    input RemoveSpacePricePlanInput {
-        id: ID!
-        spaceId: ID!
-    }
-
     type Mutation {
-        removeSpacePricePlan(input: RemoveSpacePricePlanInput!): Result! @auth(requires: [user, host])
+        removeSpacePricePlan(id: ID!): Result! @auth(requires: [user, host])
     }
 `;
 

@@ -20,6 +20,7 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
         where: { id: spaceId, isDeleted: false, address: { id } },
         select: {
             accountId: true,
+            published: true,
             address: {
                 select: {
                     addressLine1: true,
@@ -86,10 +87,11 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
     Log(updatedAddress);
 
     if (
-        updatedAddress.prefecture.id !== space.address.prefectureId ||
-        updatedAddress.city !== space.address.city ||
-        updatedAddress.latitude !== space.address.latitude ||
-        updatedAddress.longitude !== space.address.longitude
+        space.published &&
+        (updatedAddress.prefecture.id !== space.address.prefectureId ||
+            updatedAddress.city !== space.address.city ||
+            updatedAddress.latitude !== space.address.latitude ||
+            updatedAddress.longitude !== space.address.longitude)
     ) {
         await dataSources.spaceAlgolia.partialUpdateObject({
             objectID: updatedAddress.spaceId,

@@ -19,6 +19,7 @@ export type SpaceIndexRecord = AlgoliaRecord & {
     rating?: number;
     spaceSize?: number;
     spaceTypes?: string[];
+    availableAmenities?: string[];
     thumbnail?: string;
     updatedAt?: number;
     viewCount?: number;
@@ -31,6 +32,7 @@ const settings: Settings = {
         "searchable(spaceTypes)",
         "searchable(prefecture)",
         "searchable(city)",
+        "searchable(availableAmenities)",
         "filterOnly(nearestStations)",
         "filterOnly(price.type)",
     ],

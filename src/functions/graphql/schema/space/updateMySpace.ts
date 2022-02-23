@@ -52,13 +52,15 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
         data: { ...input, name: name?.trim(), description: description?.trim() },
     });
 
-    await dataSources.spaceAlgolia.partialUpdateObject({
-        objectID: id,
-        name: updatedSpace.name,
-        maximumCapacity: updatedSpace.maximumCapacity,
-        numberOfSeats: updatedSpace.numberOfSeats,
-        spaceSize: updatedSpace.spaceSize,
-    });
+    if (updatedSpace.published) {
+        await dataSources.spaceAlgolia.partialUpdateObject({
+            objectID: id,
+            name: updatedSpace.name,
+            maximumCapacity: updatedSpace.maximumCapacity,
+            numberOfSeats: updatedSpace.numberOfSeats,
+            spaceSize: updatedSpace.spaceSize,
+        });
+    }
 
     return { message: `Successfully updated space` };
 };

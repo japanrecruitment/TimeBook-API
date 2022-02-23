@@ -1,24 +1,26 @@
 import { Account, ProfileType, User, Company } from "@prisma/client";
-import { encodePassword } from "../../src/utils";
+import { encodePassword } from "../../src/utils/authUtils";
 
 export type AccountSeed = {
-    userProfile: {create: Partial<User>};
-    companyProfile: {create: Partial<Company>};
-}
+    userProfile: { create: Partial<User> };
+    companyProfile: { create: Partial<Company> };
+};
 
 export const users: Partial<Account & AccountSeed>[] = [
     {
-        email: 'user.verified@mail.com',
+        email: "user.verified@mail.com",
         emailVerified: true,
         password: "password",
-        roles: ['user'],
+        roles: ["user"],
         profileType: ProfileType.UserProfile,
-        userProfile: {create: {
-            firstName: "john",
-            lastName: "doe",
-            firstNameKana: "john",
-            lastNameKana: "doe",
-        }}
+        userProfile: {
+            create: {
+                firstName: "john",
+                lastName: "doe",
+                firstNameKana: "john",
+                lastNameKana: "doe",
+            },
+        },
     },
     // {
     //     email: 'user.unverified@mail.com',
@@ -63,5 +65,3 @@ export const userProcessor = (user: Partial<Account>): Partial<Account> => {
     user.password = encodePassword(user.password);
     return user;
 };
-
-

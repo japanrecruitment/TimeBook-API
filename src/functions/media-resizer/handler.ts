@@ -1,6 +1,6 @@
 import { S3Event, S3EventRecord, S3Handler } from "aws-lambda";
 import { middyfy } from "@middlewares/index";
-import { Log, ImageProcessor, store, RedisClient } from "@utils/index";
+import { environment, Log, ImageProcessor, spaceIndex, store, RedisClient } from "@utils/index";
 import { S3Lib } from "@libs/index";
 
 const resizeMediaQueueWorker: S3Handler = async (event: S3Event) => {
@@ -24,9 +24,9 @@ const readAndResize = async (key: string) => {
     // get key information from DB
     const photoId = key.split(".")[0];
     // get image ID
-    const { id, mime, type, postUploadInfo } = await store.photo.findUnique({
+    const { id, mime, type, postUploadInfo, spaceId } = await store.photo.findUnique({
         where: { id: photoId },
-        select: { id: true, mime: true, type: true, postUploadInfo: true },
+        select: { id: true, mime: true, type: true, postUploadInfo: true, spaceId: true },
     });
 
     Log(id, mime, type, postUploadInfo);
@@ -65,6 +65,15 @@ const readAndResize = async (key: string) => {
                 S3.putPublicObject({ Key: `${size}/${key}`, Body: image, ContentType: uploadedImage.ContentType });
             })
         );
+        if (spaceId) {
+            const publicBucketName = environment.PUBLIC_MEDIA_BUCKET;
+            const awsRegion = "ap-northeast-1";
+            const imageSize = "small";
+            const imageKey = key;
+            const smallImage = processedImages.find(({ size }) => size === imageSize);
+            const smallImageUrl = `https://${publicBucketName}.s3.${awsRegion}.amazonaws.com/${imageSize}/${imageKey}`;
+            if (smallImage) await spaceIndex.partialUpdateObject({ objectID: spaceId, thumbnail: smallImageUrl });
+        }
     }
 
     // Delete original from

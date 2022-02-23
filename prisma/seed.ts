@@ -1,5 +1,6 @@
 import { Account, PrismaClient } from "@prisma/client";
-import { environment, Log } from "../src/utils";
+import { environment } from "../src/utils/environment";
+import { Log } from "../src/utils/logger";
 
 import { users, userProcessor } from "./seeds/users";
 import { prefectures } from "./seeds/prefecture";
@@ -26,7 +27,12 @@ const main = async () => {
 
 type DataProcessor<T> = (T) => T;
 
-const seedTable = async <T>(schema: string, data: T[], dataProcessor: DataProcessor<T> | null, update: boolean = false ): Promise<void> => {
+const seedTable = async <T>(
+    schema: string,
+    data: T[],
+    dataProcessor: DataProcessor<T> | null,
+    update: boolean = false
+): Promise<void> => {
     try {
         if (dataProcessor) {
             Log(`${schema}: Processing data...`);
@@ -38,12 +44,12 @@ const seedTable = async <T>(schema: string, data: T[], dataProcessor: DataProces
         Log(`${schema}: Finish clearing data`);
 
         Log(`${schema}: Seeding new data...`);
-        if(update){
+        if (update) {
             const requests = data.map(async (record: T, index: number) => {
-                return await prisma[schema].upsert({update: {}, create: record, where: {email: index.toString()}});
+                return await prisma[schema].upsert({ update: {}, create: record, where: { email: index.toString() } });
             });
             await Promise.all(requests);
-        }else{
+        } else {
             await prisma[schema].createMany({ data });
         }
         Log(`${schema}: Seeding complete`);

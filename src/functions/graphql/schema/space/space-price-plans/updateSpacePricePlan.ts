@@ -4,14 +4,16 @@ import { gql } from "apollo-server-core";
 import { Context } from "../../../context";
 import { GqlError } from "src/functions/graphql/error";
 import { Result } from "../../core/result";
+import { omit } from "@utils/object-helper";
 
 type UpdateSpacePricePlanInput = {
     id: string;
-    spaceId: string;
     amount?: number;
     duration?: number;
     title?: string;
     type?: SpacePricePlanType;
+    fromDate?: Date;
+    toDate?: Date;
     cooldownTime?: number;
     lastMinuteDiscount?: number;
     maintenanceFee?: number;
@@ -25,17 +27,18 @@ type UpdateSpacePricePlan = IFieldResolver<any, Context, UpdateSpacePricePlanArg
 
 const updateSpacePricePlan: UpdateSpacePricePlan = async (_, { input }, { authData, dataSources, store }) => {
     const { accountId } = authData;
-    const { id, spaceId, amount, duration, cooldownTime, lastMinuteDiscount, maintenanceFee, title, type } = input;
+    const { id, amount, duration, cooldownTime, lastMinuteDiscount, maintenanceFee, title, type, fromDate, toDate } =
+        input;
 
     if (!amount && !duration && !cooldownTime && !lastMinuteDiscount && !maintenanceFee && !title && !type)
         throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited price plan are empty" });
 
-    const spacePricePlan = await store.spacePricePlan.findFirst({
-        where: { id, spaceId },
-        select: { amount: true, duration: true, type: true, space: { select: { accountId: true, isDeleted: true } } },
+    const spacePricePlan = await store.spacePricePlan.findUnique({
+        where: { id },
+        select: { isDefault: true, isDeleted: true, space: { select: { id: true, accountId: true, isDeleted: true } } },
     });
 
-    if (!spacePricePlan || spacePricePlan.space.isDeleted)
+    if (!spacePricePlan || spacePricePlan.isDeleted || spacePricePlan.space.isDeleted)
         throw new GqlError({ code: "NOT_FOUND", message: "Space price not found" });
 
     if (accountId !== spacePricePlan.space.accountId)
@@ -59,23 +62,36 @@ const updateSpacePricePlan: UpdateSpacePricePlan = async (_, { input }, { authDa
     if (type && !Object.values(SpacePricePlanType).includes(type))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space type" });
 
+    if (!spacePricePlan.isDefault) {
+        if (fromDate && (fromDate.getTime() < Date.now() || (toDate && fromDate.getTime() < toDate.getTime())))
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid start date" });
+
+        if (toDate && (toDate.getTime() < Date.now() || (fromDate && toDate.getTime() > fromDate.getTime())))
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid end date" });
+    }
+
+    let inputData = spacePricePlan.isDefault ? omit(input, "id", "fromDate", "toDate") : omit(input, "id");
+    inputData = { ...inputData, title: title ? title.trim() : undefined };
     const updatedSpace = await store.space.update({
-        where: { id: spaceId },
-        data: {
-            spacePricePlans: {
-                update: {
-                    where: { id },
-                    data: { title, type, amount, cooldownTime, lastMinuteDiscount, maintenanceFee },
-                },
+        where: { id: spacePricePlan.space.id },
+        data: { pricePlans: { update: { where: { id }, data: inputData } } },
+        select: {
+            id: true,
+            published: true,
+            pricePlans: {
+                where: { isDefault: true, isDeleted: false },
+                orderBy: { createdAt: "desc" },
+                select: { amount: true, duration: true, type: true },
             },
         },
-        select: { id: true, spacePricePlans: { select: { amount: true, duration: true, type: true } } },
     });
 
-    await dataSources.spaceAlgolia.partialUpdateObject({
-        objectID: updatedSpace.id,
-        price: updatedSpace.spacePricePlans?.map(({ amount, duration, type }) => ({ amount, duration, type })),
-    });
+    if (updatedSpace.published) {
+        await dataSources.spaceAlgolia.partialUpdateObject({
+            objectID: updatedSpace.id,
+            price: updatedSpace.pricePlans?.map(({ amount, duration, type }) => ({ amount, duration, type })),
+        });
+    }
 
     return { message: `Successfully updated price plan named ${title} in your space` };
 };
@@ -83,10 +99,11 @@ const updateSpacePricePlan: UpdateSpacePricePlan = async (_, { input }, { authDa
 export const updateSpacePricePlanTypeDefs = gql`
     input UpdateSpacePricePlanInput {
         id: ID!
-        spaceId: ID!
         amount: Float
         duration: Float
         title: String
+        fromDate: Date
+        toDate: Date
         type: SpacePricePlanType
         cooldownTime: Int
         lastMinuteDiscount: Float

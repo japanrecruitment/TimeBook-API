@@ -1,18 +1,26 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { spacePricePlanObjectTypeDefs } from "./SpacePricePlanObject";
-import { addSpacePricePlansResolvers, addSpacePricePlansTypeDefs } from "./addSpacePricePlan";
 import { updateSpacePricePlanResolvers, updateSpacePricePlanTypeDefs } from "./updateSpacePricePlan";
 import { removeSpacePricePlanResolvers, removeSpacePricePlanTypeDefs } from "./removeSpacePricePlan";
+import { addDefaultSpacePricePlansResolvers, addDefaultSpacePricePlansTypeDefs } from "./addDefaultSpacePricePlan";
+import { overrideSpacePricePlansResolvers, overrideSpacePricePlansTypeDefs } from "./overrideSpacePricePlans";
+import { pricePlanBySpaceIdResolvers, pricePlanBySpaceIdTypeDefs } from "./pricePlansBySpaceId";
+import { pricePlanFilterOptionsTypeDefs } from "./PricePlanFilterOptions";
 
 export const spacePricePlanTypeDefs = mergeTypeDefs([
     spacePricePlanObjectTypeDefs,
-    addSpacePricePlansTypeDefs,
+    addDefaultSpacePricePlansTypeDefs,
+    overrideSpacePricePlansTypeDefs,
+    pricePlanFilterOptionsTypeDefs,
+    pricePlanBySpaceIdTypeDefs,
     updateSpacePricePlanTypeDefs,
     removeSpacePricePlanTypeDefs,
 ]);
 
 export const spacePricePlanResolvers = mergeResolvers([
-    addSpacePricePlansResolvers,
+    addDefaultSpacePricePlansResolvers,
+    overrideSpacePricePlansResolvers,
+    pricePlanBySpaceIdResolvers,
     updateSpacePricePlanResolvers,
     removeSpacePricePlanResolvers,
 ]);

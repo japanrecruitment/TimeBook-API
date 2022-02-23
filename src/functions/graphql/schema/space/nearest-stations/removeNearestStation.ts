@@ -36,13 +36,15 @@ const removeNearestStation: RemoveNearestStation = async (_, { input }, { authDa
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
         data: { nearestStations: { delete: { spaceId_stationId: { spaceId, stationId } } } },
-        select: { id: true, nearestStations: { select: { stationId: true } } },
+        select: { id: true, published: true, nearestStations: { select: { stationId: true } } },
     });
 
-    await dataSources.spaceAlgolia.partialUpdateObject({
-        objectID: updatedSpace.id,
-        nearestStations: updatedSpace.nearestStations.map(({ stationId }) => stationId),
-    });
+    if (updatedSpace.published) {
+        await dataSources.spaceAlgolia.partialUpdateObject({
+            objectID: updatedSpace.id,
+            nearestStations: updatedSpace.nearestStations.map(({ stationId }) => stationId),
+        });
+    }
 
     return { message: `Successfully removed ${nearestStation.station.stationName} as nearest station from your space` };
 };
