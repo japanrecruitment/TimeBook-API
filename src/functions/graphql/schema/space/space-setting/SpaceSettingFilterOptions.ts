@@ -7,7 +7,7 @@ export type SpaceSettingFilterOptions = {
 
 export const spaceSettingFilterOptionsTypeDefs = gql`
     input SpaceSettingFilterOptions {
-        fromDate: Date!
-        toDate: Date!
+        fromDate: Date
+        toDate: Date
     }
 `;

@@ -34,9 +34,9 @@ type AddPricePlan = IFieldResolver<any, Context, AddPricePlanArgs, Promise<AddPr
 const validateInput = (input: AddPricePlanInput) => {
     const { amount, duration, title, type, cooldownTime, fromDate, lastMinuteDiscount, maintenanceFee, toDate } = input;
 
-    if (!amount || amount < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
+    if (!amount || amount <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
 
-    if (!duration || duration < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration" });
+    if (!duration || duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration" });
 
     if (!title || title.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid title" });
 
@@ -91,7 +91,7 @@ const addPricePlan: AddPricePlan = async (_, { pricePlan, spaceId }, { store, au
                                   OR: [
                                       { AND: [{ fromDate: { lte: fromDate } }, { toDate: { gte: toDate } }] },
                                       { AND: [{ fromDate: { gte: fromDate } }, { fromDate: { lte: toDate } }] },
-                                      { AND: [{ toDate: { gte: fromDate } }, { fromDate: { lte: toDate } }] },
+                                      { AND: [{ toDate: { gte: fromDate } }, { toDate: { lte: toDate } }] },
                                   ],
                               },
                           ],
