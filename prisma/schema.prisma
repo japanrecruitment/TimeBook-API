@@ -50,6 +50,11 @@ enum SpacePricePlanType {
   MINUTES
 }
 
+enum PricePlanOverrideType {
+  DAY_OF_WEEK
+  DATE_TIME
+}
+
 enum PaymentSourceType {
   Card
 }
@@ -268,22 +273,36 @@ model SpaceSetting {
 }
 
 model SpacePricePlan {
-  id                 String             @id @default(cuid())
+  id                 String              @id @default(cuid())
   spaceId            String
-  title              String             @db.VarChar(255)
-  isDefault          Boolean            @default(false)
-  isDeleted          Boolean            @default(false)
+  title              String              @db.VarChar(255)
+  isDefault          Boolean             @default(false)
+  isDeleted          Boolean             @default(false)
   type               SpacePricePlanType
-  duration           Float              @default(0)
-  amount             Float              @default(0)
-  maintenanceFee     Float              @default(0)
-  lastMinuteDiscount Float              @default(0)
-  cooldownTime       Int                @default(0)
+  duration           Float               @default(0)
+  amount             Float               @default(0)
+  maintenanceFee     Float               @default(0)
+  lastMinuteDiscount Float               @default(0)
+  cooldownTime       Int                 @default(0)
   fromDate           DateTime?
   toDate             DateTime?
-  createdAt          DateTime           @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime           @updatedAt
-  space              Space              @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt          DateTime            @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime            @updatedAt
+  space              Space               @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  overrides          PricePlanOverride[]
+}
+
+model PricePlanOverride {
+  id          String                @id @default(cuid())
+  pricePlanId String
+  type        PricePlanOverrideType
+  amount      Float
+  daysOfWeek  Int[]
+  fromDate    DateTime?
+  toDate      DateTime?
+  createdAt   DateTime              @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime              @updatedAt
+  pricePlan   SpacePricePlan        @relation(fields: [pricePlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Reservation {

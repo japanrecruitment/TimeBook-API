@@ -2,6 +2,7 @@ export * from "./algolia";
 export * from "./appConfig";
 export * from "./authUtils";
 export * from "./compute";
+export * from "./date-utils";
 export * from "./environment";
 export * from "./logger";
 export * from "./message";
