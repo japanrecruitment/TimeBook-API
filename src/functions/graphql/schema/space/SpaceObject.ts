@@ -68,6 +68,8 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         "reservedDates"
     );
 
+    console.log(spaceSelect);
+
     if (
         isEmpty(spaceSelect) &&
         !nearestStationsSelect &&

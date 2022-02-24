@@ -1,7 +1,7 @@
 import { SpacePricePlan } from "@prisma/client";
 import { gql } from "apollo-server-core";
 import { PrismaSelect, toPrismaSelect } from "graphql-map-selections";
-import { omit } from "lodash";
+import { omit, isEmpty } from "lodash";
 import { PricePlanOverrideSelect, toPricePlanOverrideSelect } from "./price-plan-override";
 
 export type SpacePricePlanObject = Partial<SpacePricePlan>;
@@ -21,10 +21,11 @@ export type SpacePricePlanSelect = {
     overrides: PrismaSelect<PricePlanOverrideSelect>;
 };
 
-export const toSpacePricePlanSelect = (selection): PrismaSelect<SpacePricePlanSelect> => {
-    const overridesSelect = toPricePlanOverrideSelect(selection.overrides);
+export const toSpacePricePlanSelect = (selections, defaultValue: any = false): PrismaSelect<SpacePricePlanSelect> => {
+    if (!selections || isEmpty(selections)) return defaultValue;
+    const overridesSelect = toPricePlanOverrideSelect(selections.overrides);
 
-    const spacePricePlanSelect = omit(selection, "overrides");
+    const spacePricePlanSelect = omit(selections, "overrides");
 
     return {
         select: {
