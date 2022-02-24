@@ -1,6 +1,8 @@
 import { SpacePricePlan } from "@prisma/client";
 import { gql } from "apollo-server-core";
-import { toPrismaSelect } from "graphql-map-selections";
+import { PrismaSelect, toPrismaSelect } from "graphql-map-selections";
+import { omit } from "lodash";
+import { PricePlanOverrideSelect, toPricePlanOverrideSelect } from "./price-plan-override";
 
 export type SpacePricePlanObject = Partial<SpacePricePlan>;
 
@@ -16,9 +18,21 @@ export type SpacePricePlanSelect = {
     cooldownTime: boolean;
     fromDate: boolean;
     toDate: boolean;
+    overrides: PrismaSelect<PricePlanOverrideSelect>;
 };
 
-export const toSpacePricePlanSelect = (selection) => toPrismaSelect<SpacePricePlanSelect>(selection);
+export const toSpacePricePlanSelect = (selection): PrismaSelect<SpacePricePlanSelect> => {
+    const overridesSelect = toPricePlanOverrideSelect(selection.overrides);
+
+    const spacePricePlanSelect = omit(selection, "overrides");
+
+    return {
+        select: {
+            ...spacePricePlanSelect,
+            overrides: overridesSelect,
+        },
+    } as PrismaSelect<SpacePricePlanSelect>;
+};
 
 export const spacePricePlanObjectTypeDefs = gql`
     enum SpacePricePlanType {
@@ -39,5 +53,6 @@ export const spacePricePlanObjectTypeDefs = gql`
         cooldownTime: Int
         fromDate: Date
         toDate: Date
+        overrides: [PricePlanOverrideObject]
     }
 `;

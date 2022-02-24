@@ -6,7 +6,7 @@ export type SpaceAmenitiesObject = Partial<SpaceAmenities>;
 
 export type SpaceAmenitiesSelect = {
     id: boolean;
-    title: boolean;
+    name: boolean;
 };
 
 export const toSpaceAmenitiesSelect = (selections: any): PrismaSelect<SpaceAmenitiesSelect> => {
@@ -16,6 +16,6 @@ export const toSpaceAmenitiesSelect = (selections: any): PrismaSelect<SpaceAmeni
 export const spaceAmenititesObjectTypeDefs = gql`
     type SpaceAmenitiesObject {
         id: ID!
-        title: String!
+        name: String!
     }
 `;
