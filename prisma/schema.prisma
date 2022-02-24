@@ -279,8 +279,8 @@ model SpacePricePlan {
   isDefault          Boolean             @default(false)
   isDeleted          Boolean             @default(false)
   type               SpacePricePlanType
-  duration           Float               @default(0)
-  amount             Float               @default(0)
+  duration           Float
+  amount             Float
   maintenanceFee     Float               @default(0)
   lastMinuteDiscount Float               @default(0)
   cooldownTime       Int                 @default(0)

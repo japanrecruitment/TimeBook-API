@@ -13,6 +13,7 @@ import { toHostSelect, HostSelect, HostObject } from "../account/host/HostObject
 import { ReservationObject } from "../reservation/ReservationObject";
 import { SpaceTypeObject, SpaceTypeSelect, toSpaceTypeSelect } from "./space-types";
 import { SpaceAmenitiesObject, SpaceAmenitiesSelect, toSpaceAmenitiesSelect } from "./space-amenities";
+import { SpaceSettingObject, SpaceSettingSelect, toSpaceSettingSelect } from "./space-setting";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
@@ -23,6 +24,7 @@ export type SpaceObject = Partial<Space> & {
     account?: { host?: Partial<HostObject> };
     reservations?: Partial<ReservationObject>[];
     pricePlans?: Partial<SpacePricePlanObject>[];
+    settings?: Partial<SpaceSettingObject>[];
 };
 
 export type SpaceSelect = {
@@ -37,6 +39,7 @@ export type SpaceSelect = {
     nearestStations: PrismaSelect<NearestStationSelect>;
     availableAmenities: PrismaSelect<SpaceAmenitiesSelect>;
     pricePlans: PrismaSelect<SpacePricePlanSelect>;
+    settings: PrismaSelect<SpaceSettingSelect>;
     spaceTypes: PrismaSelect<SpaceTypeSelect>;
     address: PrismaSelect<AddressSelect>;
     photos: PrismaSelect<PhotoSelect>;
@@ -49,6 +52,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
     const nearestStationsSelect = toNearestStationSelect(selections.nearestStations);
     const availableAmenitiesSelect = toSpaceAmenitiesSelect(selections.availableAmenities);
     const pricePlansSelect = toSpacePricePlanSelect(selections.pricePlans);
+    const settingsSelect = toSpaceSettingSelect(selections.settings);
     const spaceTypesSelect = toSpaceTypeSelect(selections.spaceTypes);
     const addressSelect = toAddressSelect(selections.address);
     const photosSelect = toPhotoSelect(selections.photos);
@@ -61,6 +65,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         "nearestStations",
         "availableAmenities",
         "pricePlans",
+        "settings",
         "spaceTypes",
         "address",
         "photo",
@@ -75,6 +80,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         !nearestStationsSelect &&
         !availableAmenitiesSelect &&
         !pricePlansSelect &&
+        !settingsSelect &&
         !spaceTypesSelect &&
         !addressSelect &&
         !photosSelect &&
@@ -89,6 +95,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
             nearestStations: nearestStationsSelect,
             availableAmenities: availableAmenitiesSelect,
             pricePlans: pricePlansSelect,
+            settings: settingsSelect,
             spaceTypes: spaceTypesSelect,
             address: addressSelect,
             photos: photosSelect,
@@ -125,6 +132,7 @@ export const spaceObjectTypeDefs = gql`
         host: Host
         availableAmenities: [SpaceAmenitiesObject]
         pricePlans: [SpacePricePlanObject]
+        settings: [SpaceSettingObject]
         reservedDates: [ReservedDates]
     }
 `;

@@ -35,7 +35,7 @@ const pricePlanBySpaceId: PricePlanBySpaceId = async (_, { spaceId, filter }, { 
                         { isDefault: true },
                         { AND: [{ fromDate: { lte: fromDate } }, { toDate: { gte: toDate } }] },
                         { AND: [{ fromDate: { gte: fromDate } }, { fromDate: { lte: toDate } }] },
-                        { AND: [{ toDate: { gte: fromDate } }, { fromDate: { lte: toDate } }] },
+                        { AND: [{ toDate: { gte: fromDate } }, { toDate: { lte: toDate } }] },
                     ],
                 },
             ],

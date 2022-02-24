@@ -1,15 +1,11 @@
-import { PricePlanOverrideType, SpacePricePlanType } from "@prisma/client";
+import { PricePlanOverrideType } from "@prisma/client";
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
 import { GqlError } from "src/functions/graphql/error";
 import { Context } from "../../../../context";
 import { Result } from "../../../core/result";
-import { SpacePricePlanObject, toSpacePricePlanSelect } from "../SpacePricePlanObject";
-import { mapSelections } from "graphql-map-selections";
-import { merge } from "lodash";
 import { PricePlanOverrideObject } from "./PricePlanOverrideObject";
 import { Log } from "@utils/logger";
-import moment from "moment";
 import { getDaysOfWeekIncludedBetn } from "@utils/date-utils";
 import { omit } from "@utils/object-helper";
 
@@ -56,7 +52,7 @@ const validateInput = (input: PricePlanOverrideInput) => {
             throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid end date" });
     }
 
-    if (!amount || amount < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
+    if (!amount || amount <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
 };
 
 const addPricePlanOverride: AddPricePlanOverride = async (_, { input, pricePlanId }, { authData, store }, info) => {
@@ -79,7 +75,7 @@ const addPricePlanOverride: AddPricePlanOverride = async (_, { input, pricePlanI
                               OR: [
                                   { AND: [{ fromDate: { lte: fromDate } }, { toDate: { gte: toDate } }] },
                                   { AND: [{ fromDate: { gte: fromDate } }, { fromDate: { lte: toDate } }] },
-                                  { AND: [{ toDate: { gte: fromDate } }, { fromDate: { lte: toDate } }] },
+                                  { AND: [{ toDate: { gte: fromDate } }, { toDate: { lte: toDate } }] },
                               ],
                           },
             },

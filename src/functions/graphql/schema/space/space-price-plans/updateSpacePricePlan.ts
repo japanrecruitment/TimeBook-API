@@ -44,9 +44,9 @@ const updateSpacePricePlan: UpdateSpacePricePlan = async (_, { input }, { authDa
     if (accountId !== spacePricePlan.space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    if (amount && amount < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
+    if (amount && amount <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
 
-    if (duration && duration < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration" });
+    if (duration && duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration" });
 
     if (cooldownTime && cooldownTime < 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cooldown time" });

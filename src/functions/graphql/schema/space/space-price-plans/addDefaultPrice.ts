@@ -42,19 +42,19 @@ const validateInput = (input: AddDefaultPriceInput) => {
 
     if (
         !dailyAmount &&
-        dailyAmount === 0 &&
+        dailyAmount <= 0 &&
         !fifteenMinuteAmount &&
-        fifteenMinuteAmount === 0 &&
+        fifteenMinuteAmount <= 0 &&
         !fiveMinuteAmount &&
-        fiveMinuteAmount === 0 &&
+        fiveMinuteAmount <= 0 &&
         !fortyFiveMinuteAmount &&
-        fortyFiveMinuteAmount === 0 &&
+        fortyFiveMinuteAmount <= 0 &&
         !hourlyAmount &&
-        hourlyAmount === 0 &&
+        hourlyAmount <= 0 &&
         !tenMinuteAmount &&
-        tenMinuteAmount === 0 &&
+        tenMinuteAmount <= 0 &&
         !thirtyMinuteAmount &&
-        thirtyMinuteAmount === 0
+        thirtyMinuteAmount <= 0
     ) {
         throw new GqlError({ code: "BAD_REQUEST", message: "Add atleast one price plan" });
     }
