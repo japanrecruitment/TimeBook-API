@@ -94,10 +94,10 @@ export const updateSpaceSettingTypeDefs = gql`
 
     input UpdateSpaceSettingInput {
         id: ID!
-        closingHr: Int
-        openingHr: Int
-        breakFromHr: Int
-        breakToHr: Int
+        closingHr: Float
+        openingHr: Float
+        breakFromHr: Float
+        breakToHr: Float
         businessDays: [Int]
         totalStock: Int
         closed: Boolean
