@@ -88,7 +88,7 @@ const updateSpaceSetting: UpdateSpaceSetting = async (_, { input }, { authData, 
 
 export const updateSpaceSettingTypeDefs = gql`
     type UpdateSpaceSettingResult {
-        message: Result
+        result: Result
         setting: SpaceSettingObject
     }
 
