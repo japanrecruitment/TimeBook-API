@@ -2,9 +2,11 @@ import { SpacePricePlan } from "@prisma/client";
 import { gql } from "apollo-server-core";
 import { PrismaSelect, toPrismaSelect } from "graphql-map-selections";
 import { omit, isEmpty } from "lodash";
-import { PricePlanOverrideSelect, toPricePlanOverrideSelect } from "./price-plan-override";
+import { PricePlanOverrideObject, PricePlanOverrideSelect, toPricePlanOverrideSelect } from "./price-plan-override";
 
-export type SpacePricePlanObject = Partial<SpacePricePlan>;
+export type SpacePricePlanObject = Partial<SpacePricePlan> & {
+    overrides?: PricePlanOverrideObject[];
+};
 
 export type SpacePricePlanSelect = {
     id: boolean;
