@@ -1,9 +1,11 @@
-import { SpacePricePlan, SpacePricePlanType } from "@prisma/client";
-import { getDurationsBetn } from "../../../../utils/date-utils";
+import { PricePlanOverride, SpacePricePlan, SpacePricePlanType } from "@prisma/client";
+import { getAllDatesBetn, getDurationsBetn } from "../../../../utils/date-utils";
 import { omit } from "../../../../utils/object-helper";
 import { concat, isEmpty, merge } from "lodash";
 import moment from "moment";
 import { SpacePricePlanObject } from "../space/space-price-plans";
+
+type ReservationPricePlan = Partial<SpacePricePlan> & Partial<Pick<PricePlanOverride, "daysOfWeek">>;
 
 type ReservationPriceCalculatorConstructorArgs = {
     checkIn: Date;
@@ -14,7 +16,7 @@ type ReservationPriceCalculatorConstructorArgs = {
 export default class ReservationPriceCalculator {
     private _checkIn: Date;
     private _checkOut: Date;
-    private _pricePlans: Partial<SpacePricePlan>[];
+    private _pricePlans: Partial<ReservationPricePlan>[];
     private dumpedMinutes: number = 0;
     readonly price: number = 0;
 
@@ -25,13 +27,22 @@ export default class ReservationPriceCalculator {
         this._pricePlans = concat(
             pricePlans.map((p) => omit(p, "overrides")),
             pricePlans
-                .flatMap((p) => p.overrides?.map((o) => merge(o, { type: p.type, duration: p.duration })))
+                .flatMap((p) =>
+                    p.overrides?.map((o) =>
+                        merge(o, {
+                            type: p.type,
+                            duration: p.duration,
+                            fromDate: o.fromDate || p.fromDate,
+                            toDate: o.toDate || p.toDate,
+                        })
+                    )
+                )
                 .filter((p) => p)
         );
         this.price = this.calculatePrice(checkIn, checkOut, this._pricePlans) + this.calculatePriceOfDumpedMinutes();
     }
 
-    private calculatePrice(from: Date, to: Date, plans: Partial<SpacePricePlan>[]) {
+    private calculatePrice(from: Date, to: Date, plans: Partial<ReservationPricePlan>[]) {
         const mDurations = getDurationsBetn(from, to);
 
         const days = () => mDurations.days;
@@ -47,7 +58,7 @@ export default class ReservationPriceCalculator {
         if (hours() > 0 && isEmpty(hourlyPlans)) mDurations.minutes = minutes() + hours() * 60;
         const minutesPlans = minutes() > 0 ? this.filterAndSortPlans(plans, "MINUTES", minutes()) : [];
 
-        const mPlans: Partial<SpacePricePlan>[] = concat(dailyPlans, hourlyPlans, minutesPlans);
+        const mPlans: Partial<ReservationPricePlan>[] = concat(dailyPlans, hourlyPlans, minutesPlans);
         if (isEmpty(mPlans)) {
             this.dumpedMinutes = this.dumpedMinutes + minutes();
             return mPrice;
@@ -57,44 +68,60 @@ export default class ReservationPriceCalculator {
         console.log(mPlans);
 
         for (let i = 0; i < mPlans.length; i++) {
-            const { amount, duration, fromDate, toDate, type } = mPlans[i];
+            const { amount, daysOfWeek, duration, fromDate, toDate, type } = mPlans[i];
             const unit = type === "DAILY" ? "days" : type === "HOURLY" ? "hours" : "minutes";
             if (fromDate && toDate) {
                 const startMs = fromDate.getTime();
                 const endMs = toDate.getTime();
+                let isEligible: boolean = false;
+                let eligibleStartDate: Date;
+                let eligibleEndDate: Date;
                 if (startMs >= mStartMs() && startMs <= mEndMs() && endMs > mEndMs()) {
-                    const uDuration = getDurationsBetn(fromDate, to)[unit];
-                    if (uDuration >= duration) {
-                        let remPrice = this.calculatePrice(from, moment(to).subtract(duration, unit).toDate(), plans);
-                        mPrice = mPrice + amount + remPrice;
-                        break;
+                    isEligible = getDurationsBetn(fromDate, to)[unit] >= duration;
+                    if (isEligible) {
+                        eligibleStartDate = moment(to).subtract(duration, unit).toDate();
+                        eligibleEndDate = to;
                     }
                 } else if (startMs >= mStartMs() && startMs <= mEndMs() && endMs >= mStartMs() && endMs <= mEndMs()) {
-                    const uDuration = getDurationsBetn(fromDate, toDate)[unit];
-                    if (uDuration >= duration) {
-                        let remPrice1 = this.calculatePrice(toDate, to, plans);
-                        let remPrice2 = this.calculatePrice(
-                            from,
-                            moment(toDate).subtract(duration, unit).toDate(),
-                            plans
-                        );
-                        mPrice = mPrice + amount + remPrice1 + remPrice2;
-                        break;
+                    isEligible = getDurationsBetn(fromDate, toDate)[unit] >= duration;
+                    if (isEligible) {
+                        eligibleStartDate = moment(toDate).subtract(duration, unit).toDate();
+                        eligibleEndDate = toDate;
                     }
                 } else if (endMs >= mStartMs() && endMs <= mEndMs() && startMs < mStartMs()) {
-                    const uDuration = getDurationsBetn(from, toDate)[unit];
-                    if (uDuration >= duration) {
-                        let remPrice1 = this.calculatePrice(toDate, to, plans);
-                        let remPrice2 = this.calculatePrice(
-                            from,
-                            moment(toDate).subtract(duration, unit).toDate(),
-                            plans
-                        );
+                    isEligible = getDurationsBetn(from, toDate)[unit] >= 0;
+                    if (isEligible) {
+                        eligibleStartDate = moment(toDate).subtract(duration, unit).toDate();
+                        eligibleEndDate = toDate;
+                    }
+                }
+                if (daysOfWeek && daysOfWeek.length > 0 && isEligible) {
+                    const uDates = getAllDatesBetn(fromDate, toDate, { order: "desc" });
+                    let matchedDate = uDates.find((d) => daysOfWeek.includes(moment(d).weekday()));
+                    if (matchedDate) {
+                        eligibleStartDate = moment(matchedDate).subtract(duration, unit).toDate();
+                        eligibleEndDate = matchedDate;
+                    }
+                }
+                if (isEligible && eligibleStartDate && eligibleEndDate) {
+                    let remPrice1 = this.calculatePrice(eligibleEndDate, to, plans);
+                    let remPrice2 = this.calculatePrice(from, eligibleStartDate, plans);
+                    mPrice = mPrice + amount + remPrice1 + remPrice2;
+                    break;
+                }
+            } else {
+                if (daysOfWeek && daysOfWeek.length > 0) {
+                    const uDates = getAllDatesBetn(from, to, { order: "desc" });
+                    let matchedDate = uDates.find((d) => daysOfWeek.includes(moment(d).weekday()));
+                    if (matchedDate) {
+                        const eligibleStartDate = moment(matchedDate).subtract(duration, unit).toDate();
+                        const eligibleEndDate = matchedDate;
+                        let remPrice1 = this.calculatePrice(eligibleEndDate, to, plans);
+                        let remPrice2 = this.calculatePrice(from, eligibleStartDate, plans);
                         mPrice = mPrice + amount + remPrice1 + remPrice2;
                         break;
                     }
                 }
-            } else {
                 while (mDurations[unit] >= duration) {
                     mPrice = mPrice + amount;
                     mDurations[unit] = mDurations[unit] - duration;

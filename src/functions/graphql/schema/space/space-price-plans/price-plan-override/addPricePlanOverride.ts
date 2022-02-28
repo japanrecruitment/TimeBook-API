@@ -6,7 +6,7 @@ import { Context } from "../../../../context";
 import { Result } from "../../../core/result";
 import { PricePlanOverrideObject } from "./PricePlanOverrideObject";
 import { Log } from "@utils/logger";
-import { getDaysOfWeekIncludedBetn } from "@utils/date-utils";
+import { getDaysOfWeekBetn } from "@utils/date-utils";
 import { omit } from "@utils/object-helper";
 
 type PricePlanOverrideInput = {
@@ -117,7 +117,7 @@ const addPricePlanOverride: AddPricePlanOverride = async (_, { input, pricePlanI
 
     if (type === "DAY_OF_WEEK") {
         if (pricePlan.fromDate && pricePlan.toDate) {
-            const days = getDaysOfWeekIncludedBetn(pricePlan.fromDate, pricePlan.toDate);
+            const days = getDaysOfWeekBetn(pricePlan.fromDate, pricePlan.toDate, { distinct: true });
             daysOfWeek.forEach((d) => {
                 if (!days.includes(d)) {
                     throw new GqlError({
