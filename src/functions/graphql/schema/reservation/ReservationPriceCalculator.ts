@@ -1,6 +1,7 @@
 import { PricePlanOverride, SpacePricePlan, SpacePricePlanType } from "@prisma/client";
 import { getAllDatesBetn, getDurationsBetn } from "../../../../utils/date-utils";
 import { omit } from "../../../../utils/object-helper";
+import { Log } from "../../../../utils/logger";
 import { concat, isEmpty, merge } from "lodash";
 import moment from "moment";
 import { SpacePricePlanObject } from "../space/space-price-plans";
@@ -64,7 +65,7 @@ export default class ReservationPriceCalculator {
             return mPrice;
         }
 
-        console.log(`${from}, ${to}`, mDurations);
+        Log(`${from}, ${to}`, mDurations);
 
         for (let i = 0; i < mPlans.length; i++) {
             const { amount, daysOfWeek, duration, fromDate, toDate, type } = mPlans[i];
@@ -209,8 +210,8 @@ export default class ReservationPriceCalculator {
     }
 
     private logAppliedPrices(pricePlan: ReservationPricePlan, price: number, from?: Date, to?: Date) {
-        console.log(`plan: `, pricePlan);
-        console.log(`from: ${from} to:${to} price: ${price}`);
-        console.log();
+        Log(`plan: `, pricePlan);
+        Log(`from: ${from} to:${to} price: ${price}`);
+        Log();
     }
 }
