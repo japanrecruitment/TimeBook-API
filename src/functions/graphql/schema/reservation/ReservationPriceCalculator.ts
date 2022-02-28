@@ -64,8 +64,7 @@ export default class ReservationPriceCalculator {
             return mPrice;
         }
 
-        console.log(from, to, mDurations);
-        console.log(mPlans);
+        console.log(`${from}, ${to}`, mDurations);
 
         for (let i = 0; i < mPlans.length; i++) {
             const { amount, daysOfWeek, duration, fromDate, toDate, type } = mPlans[i];
@@ -107,29 +106,29 @@ export default class ReservationPriceCalculator {
                     let remPrice1 = this.calculatePrice(eligibleEndDate, to, plans);
                     let remPrice2 = this.calculatePrice(from, eligibleStartDate, plans);
                     mPrice = mPrice + amount + remPrice1 + remPrice2;
+                    this.logAppliedPrices(mPlans[i], mPrice, eligibleStartDate, eligibleEndDate);
+                    break;
+                }
+            } else if (daysOfWeek && daysOfWeek.length > 0) {
+                const uDates = getAllDatesBetn(from, to, { order: "desc" });
+                let matchedDate = uDates.find((d) => daysOfWeek.includes(moment(d).weekday()));
+                if (matchedDate) {
+                    const eligibleStartDate = moment(matchedDate).subtract(duration, unit).toDate();
+                    const eligibleEndDate = matchedDate;
+                    let remPrice1 = this.calculatePrice(eligibleEndDate, to, plans);
+                    let remPrice2 = this.calculatePrice(from, eligibleStartDate, plans);
+                    mPrice = mPrice + amount + remPrice1 + remPrice2;
+                    this.logAppliedPrices(mPlans[i], mPrice, eligibleStartDate, eligibleEndDate);
                     break;
                 }
             } else {
-                if (daysOfWeek && daysOfWeek.length > 0) {
-                    const uDates = getAllDatesBetn(from, to, { order: "desc" });
-                    let matchedDate = uDates.find((d) => daysOfWeek.includes(moment(d).weekday()));
-                    if (matchedDate) {
-                        const eligibleStartDate = moment(matchedDate).subtract(duration, unit).toDate();
-                        const eligibleEndDate = matchedDate;
-                        let remPrice1 = this.calculatePrice(eligibleEndDate, to, plans);
-                        let remPrice2 = this.calculatePrice(from, eligibleStartDate, plans);
-                        mPrice = mPrice + amount + remPrice1 + remPrice2;
-                        break;
-                    }
-                }
                 while (mDurations[unit] >= duration) {
                     mPrice = mPrice + amount;
+                    this.logAppliedPrices(mPlans[i], mPrice);
                     mDurations[unit] = mDurations[unit] - duration;
                 }
             }
         }
-
-        console.log("return:price:", mPrice);
 
         return mPrice;
     }
@@ -187,7 +186,7 @@ export default class ReservationPriceCalculator {
         return mPrice;
     }
 
-    private filterAndSortPlans(plans: SpacePricePlanObject[], type: SpacePricePlanType, maxDuration: number) {
+    private filterAndSortPlans(plans: ReservationPricePlan[], type: SpacePricePlanType, maxDuration: number) {
         return (
             plans
                 .filter((p) => p.type === type && p.duration <= maxDuration)
@@ -196,9 +195,22 @@ export default class ReservationPriceCalculator {
                     if (a.fromDate && b.fromDate) return b.fromDate.getTime() - a.fromDate.getTime();
                     if (a.fromDate && !b.fromDate) return -1;
                     if (!a.fromDate && b.fromDate) return 1;
+                    if (!isEmpty(a.daysOfWeek) && !isEmpty(b.daysOfWeek)) {
+                        const aMax = a.daysOfWeek.sort()[a.daysOfWeek.length - 1];
+                        const bMax = b.daysOfWeek.sort()[b.daysOfWeek.length - 1];
+                        return bMax - aMax;
+                    }
+                    if (!isEmpty(a.daysOfWeek) && isEmpty(b.daysOfWeek)) return -1;
+                    if (isEmpty(a.daysOfWeek) && !isEmpty(b.daysOfWeek)) return 1;
                     return 0;
                 })
                 .sort((a, b) => b.duration - a.duration)
         );
+    }
+
+    private logAppliedPrices(pricePlan: ReservationPricePlan, price: number, from?: Date, to?: Date) {
+        console.log(`plan: `, pricePlan);
+        console.log(`from: ${from} to:${to} price: ${price}`);
+        console.log();
     }
 }
