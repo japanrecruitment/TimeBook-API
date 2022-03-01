@@ -1,3 +1,4 @@
+import { environment } from "@utils/environment";
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
 
@@ -15,7 +16,7 @@ const template = `
             <div class="f-fallback">
               <h1>ご登録情報変更のお知らせ</h1>
               <p>
-                いつもtime bookをご利用いただき、誠にありがとうございます。サービス情報の変更が完了致しましたので、お知らせいたします。
+                いつも${environment.APP_READABLE_NAME}をご利用いただき、誠にありがとうございます。サービス情報の変更が完了致しましたので、お知らせいたします。
               </p>
             </div>
           </td>
@@ -26,4 +27,7 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<ProfileUpdateEmailData>(template, "【time book】ご登録情報変更のお知らせ");
+export default generateTemplate<ProfileUpdateEmailData>(
+    template,
+    `【${environment.APP_READABLE_NAME}】ご登録情報変更のお知らせ`
+);

@@ -1,3 +1,5 @@
+import { environment } from "@utils/environment";
+
 export default `
 <tr>
     <td class="email-body" width="100%" cellpadding="0" cellspacing="0">
@@ -34,7 +36,7 @@ export default `
                     &copy; 2020 All rights reserved.
                     </p>
                     <p class="f-fallback sub align-center">
-                    <strong>time book</strong>
+                    <strong>${environment.APP_READABLE_NAME}</strong>
                     </p>
                     <p class="f-fallback sub align-center">
                     <strong

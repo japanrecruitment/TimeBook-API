@@ -1,3 +1,4 @@
+import { environment } from "@utils/environment";
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
 
@@ -15,7 +16,7 @@ const template = `
             <div class="f-fallback">
               <h1>へのお申込みありがとうございます</h1>
               <p>
-                この度は、time bookにお申込みいただき、誠にありがとうございます。ご入力いただきました内容に基づき、弊社所定の審査を行わせていただきます。審査結果に関しまして、通常約〇日間ほどで、こちらのアドレスに返信致します。審査完了までしばらくお待ちください。
+                この度は、${environment.APP_READABLE_NAME}にお申込みいただき、誠にありがとうございます。ご入力いただきました内容に基づき、弊社所定の審査を行わせていただきます。審査結果に関しまして、通常約〇日間ほどで、こちらのアドレスに返信致します。審査完了までしばらくお待ちください。
               </p>
             </div>
           </td>
@@ -28,5 +29,5 @@ const template = `
 
 export default generateTemplate<HostApplicationReceivedEmailData>(
     template,
-    "【time book】へのお申込みありがとうございます"
+    `【${environment.APP_READABLE_NAME}】へのお申込みありがとうございます`
 );
