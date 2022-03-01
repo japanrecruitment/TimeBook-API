@@ -17,6 +17,8 @@
     "include": ["src/**/*","serverless.ts"],
     "exclude": [
         "node_modules/**/*",
+        "src/**/__test__/*",
+        "src/**/*.{d.ts,mock.ts,spec.ts,test.ts}",
         ".serverless/**/*",
         ".webpack/**/*",
         "_warmup/**/*",

@@ -15,6 +15,8 @@ import { gql } from "apollo-server-core";
 import Stripe from "stripe";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
+import { getDurationsBetn } from "@utils/date-utils";
+import ReservationPriceCalculator from "./ReservationPriceCalculator";
 
 type ReserveSpaceInput = {
     fromDateTime: Date;
@@ -45,22 +47,54 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         if (fromDateTime.getTime() < Date.now() || toDateTime.getTime() < Date.now())
             throw new GqlError({ code: "BAD_USER_INPUT", message: "Selected time frame is invalid" });
 
-        const hourDuration = Math.ceil(Math.abs(toDateTime.getTime() - fromDateTime.getTime()) / (1000 * 60 * 60));
+        const { days, hours, minutes } = getDurationsBetn(fromDateTime, toDateTime);
 
-        Log("hour duration", hourDuration);
+        Log("reserveSpace: durations:", days, hours, minutes);
 
-        if (hourDuration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selection" });
+        if (days <= 0 && hours <= 0 && minutes < 5)
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selection" });
 
-        const space = await store.space.findUnique({
-            where: { id: spaceId },
+        const space = await store.space.findFirst({
+            where: { id: spaceId, isDeleted: false },
             include: {
                 account: { include: { host: true } },
-                pricePlans: { where: { type: "HOURLY", duration: { lte: hourDuration } } },
-                reservations: {
+                pricePlans: {
                     where: {
                         AND: [
-                            { fromDateTime: { lt: toDateTime } },
-                            { OR: [{ fromDateTime: { gte: fromDateTime } }, { toDateTime: { gte: fromDateTime } }] },
+                            { isDeleted: false },
+                            {
+                                OR: [
+                                    { type: "DAILY", duration: { lte: days } },
+                                    { type: "HOURLY", duration: { lte: hours } },
+                                    { type: "MINUTES", duration: { lte: minutes } },
+                                ],
+                            },
+                            {
+                                OR: [
+                                    { isDefault: true },
+                                    { fromDate: { lte: toDateTime } },
+                                    { toDate: { lte: toDateTime } },
+                                ],
+                            },
+                        ],
+                    },
+                },
+                reservations: {
+                    where: {
+                        OR: [
+                            { AND: [{ fromDateTime: { lte: fromDateTime } }, { toDateTime: { gte: toDateTime } }] },
+                            { AND: [{ fromDateTime: { gte: fromDateTime } }, { fromDateTime: { lte: toDateTime } }] },
+                            { AND: [{ toDateTime: { gte: fromDateTime } }, { toDateTime: { lte: toDateTime } }] },
+                        ],
+                    },
+                },
+                settings: {
+                    where: {
+                        OR: [
+                            { isDefault: true },
+                            { AND: [{ fromDate: { lte: fromDateTime } }, { toDate: { gte: toDateTime } }] },
+                            { AND: [{ fromDate: { gte: fromDateTime } }, { fromDate: { lte: toDateTime } }] },
+                            { AND: [{ toDate: { gte: fromDateTime } }, { toDate: { lte: toDateTime } }] },
                         ],
                     },
                 },
@@ -71,22 +105,17 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         Log("reserveSpace: space:", space);
 
-        const reservations = space.reservations?.filter((r) => {
-            return (
-                (fromDateTime >= r.fromDateTime && fromDateTime <= r.toDateTime) ||
-                (toDateTime >= r.fromDateTime && toDateTime <= r.toDateTime)
-            );
-        });
+        const { pricePlans, reservations, settings } = space;
 
-        Log("reserveSpace: reservations:", reservations);
+        const totalStock = settings && settings.length > 0 ? settings[settings.length - 1].totalStock : 1;
 
-        if (reservations && reservations.length > 0)
+        if (reservations && reservations.length >= totalStock)
             throw new GqlError({
                 code: "BAD_USER_INPUT",
                 message: "Reservation is not available for this space in the selected time frame",
             });
 
-        if (!space.pricePlans || space.pricePlans?.length <= 0)
+        if (!pricePlans || pricePlans.length <= 0)
             throw new GqlError({
                 code: "BAD_USER_INPUT",
                 message: "Selected time frame doesn't satisfy the minimum required duration to book this space.",
@@ -94,14 +123,21 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         const stripe = new StripeLib();
         const paymentMethod = await stripe.retrievePaymentMethod(paymentSourceId);
-        const customerId = (await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } }))
-            ?.stripeCustomerId;
+        const customerId = (
+            await store.user.findUnique({
+                where: { id: userId },
+                select: { stripeCustomerId: true },
+            })
+        )?.stripeCustomerId;
 
         if (paymentMethod.customer !== customerId)
-            throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
+            throw new GqlError({
+                code: "NOT_FOUND",
+                message: "Invalid payment source.",
+            });
 
-        const price = formatPrice("HOURLY", space.pricePlans, true, true);
-        const amount = hourDuration * price;
+        const { price } = new ReservationPriceCalculator({ checkIn: fromDateTime, checkOut: toDateTime, pricePlans });
+        const amount = price;
         const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
         const transferAmount = amount - applicationFeeAmount;
 
@@ -131,7 +167,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 amount,
                 provider: "STRIPE",
                 assetType: "SPACE",
-                assetData: omit(space, "createdAt", "account", "pricePlans", "updatedAt", "reservations"),
+                assetData: omit(space, "createdAt", "account", "pricePlans", "updatedAt", "reservations", "settings"),
                 currency: "JPY",
                 description: `Reservation of ${space.name}`,
                 status: "CREATED",

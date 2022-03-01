@@ -1,0 +1,7 @@
+{
+    "all": true,
+    "exclude": ["./node_modules/**/*", "./**/__test__/*", "**/*.{d.ts,mock.ts,spec.ts,test.ts}"],
+    "extension": [".ts"],
+    "include": ["src/**/*.ts"],
+    "reporter": ["lcov"]
+}
