@@ -10,7 +10,6 @@ import {
 import { appConfig } from "@utils/appConfig";
 import { Log } from "@utils/logger";
 import { omit } from "@utils/object-helper";
-import { formatPrice } from "@utils/stringHelper";
 import { gql } from "apollo-server-core";
 import Stripe from "stripe";
 import { Context } from "../../context";

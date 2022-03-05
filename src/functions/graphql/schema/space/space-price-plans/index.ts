@@ -7,6 +7,7 @@ import { pricePlanBySpaceIdResolvers, pricePlanBySpaceIdTypeDefs } from "./price
 import { pricePlanFilterOptionsTypeDefs } from "./PricePlanFilterOptions";
 import { addPricePlanResolvers, addPricePlanTypeDefs } from "./addPricePlan";
 import { pricePlanOverrideResolvers, pricePlanOverrideTypeDefs } from "./price-plan-override";
+import { updateDefaultPriceResolvers, updateDefaultPriceTypeDefs } from "./updateDefaultPrice";
 
 export const spacePricePlanTypeDefs = mergeTypeDefs([
     spacePricePlanObjectTypeDefs,
@@ -16,6 +17,7 @@ export const spacePricePlanTypeDefs = mergeTypeDefs([
     updateSpacePricePlanTypeDefs,
     removeSpacePricePlanTypeDefs,
     addPricePlanTypeDefs,
+    updateDefaultPriceTypeDefs,
     pricePlanOverrideTypeDefs,
 ]);
 
@@ -25,6 +27,7 @@ export const spacePricePlanResolvers = mergeResolvers([
     updateSpacePricePlanResolvers,
     removeSpacePricePlanResolvers,
     addPricePlanResolvers,
+    updateDefaultPriceResolvers,
     pricePlanOverrideResolvers,
 ]);
 
