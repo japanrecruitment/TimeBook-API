@@ -42,19 +42,12 @@ const validateInput = (input: UpdateDefaultPriceInput) => {
 
     if (
         !dailyAmount &&
-        dailyAmount <= 0 &&
         !fifteenMinuteAmount &&
-        fifteenMinuteAmount <= 0 &&
         !fiveMinuteAmount &&
-        fiveMinuteAmount <= 0 &&
         !fortyFiveMinuteAmount &&
-        fortyFiveMinuteAmount <= 0 &&
         !hourlyAmount &&
-        hourlyAmount <= 0 &&
         !tenMinuteAmount &&
-        tenMinuteAmount <= 0 &&
-        !thirtyMinuteAmount &&
-        thirtyMinuteAmount <= 0
+        !thirtyMinuteAmount
     ) {
         throw new GqlError({ code: "BAD_REQUEST", message: "Add atleast one price plan" });
     }
@@ -101,11 +94,12 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
     const pricePlansToAdd: Array<Pick<SpacePricePlan, "amount" | "duration" | "title" | "type" | "isDefault">> = [];
-    const pricePlansToUpdate: Array<Pick<SpacePricePlan, "id" | "amount">> = [];
+    const pricePlansToUpdate: Array<Pick<SpacePricePlan, "id" | "amount" | "isDeleted">> = [];
     if (input.dailyAmount) {
         const plan = space.pricePlans.find((p) => p.type === "DAILY" && p.duration === 1);
-        if (plan) pricePlansToUpdate.push({ id: plan.id, amount: input.dailyAmount });
-        else {
+        if (plan) {
+            pricePlansToUpdate.push({ id: plan.id, amount: input.dailyAmount, isDeleted: input.dailyAmount <= 0 });
+        } else {
             pricePlansToAdd.push({
                 amount: input.dailyAmount,
                 duration: 1,
@@ -117,8 +111,9 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
     }
     if (input.hourlyAmount) {
         const plan = space.pricePlans.find((p) => p.type === "HOURLY" && p.duration === 1);
-        if (plan) pricePlansToUpdate.push({ id: plan.id, amount: input.hourlyAmount });
-        else {
+        if (plan) {
+            pricePlansToUpdate.push({ id: plan.id, amount: input.hourlyAmount, isDeleted: input.hourlyAmount <= 0 });
+        } else {
             pricePlansToAdd.push({
                 amount: input.hourlyAmount,
                 duration: 1,
@@ -130,8 +125,13 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
     }
     if (input.fiveMinuteAmount) {
         const plan = space.pricePlans.find((p) => p.type === "MINUTES" && p.duration === 5);
-        if (plan) pricePlansToUpdate.push({ id: plan.id, amount: input.fiveMinuteAmount });
-        else {
+        if (plan) {
+            pricePlansToUpdate.push({
+                id: plan.id,
+                amount: input.fiveMinuteAmount,
+                isDeleted: input.fifteenMinuteAmount <= 0,
+            });
+        } else {
             pricePlansToAdd.push({
                 amount: input.fiveMinuteAmount,
                 duration: 5,
@@ -143,8 +143,13 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
     }
     if (input.tenMinuteAmount) {
         const plan = space.pricePlans.find((p) => p.type === "MINUTES" && p.duration === 10);
-        if (plan) pricePlansToUpdate.push({ id: plan.id, amount: input.tenMinuteAmount });
-        else {
+        if (plan) {
+            pricePlansToUpdate.push({
+                id: plan.id,
+                amount: input.tenMinuteAmount,
+                isDeleted: input.tenMinuteAmount <= 0,
+            });
+        } else {
             pricePlansToAdd.push({
                 amount: input.tenMinuteAmount,
                 duration: 10,
@@ -156,8 +161,13 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
     }
     if (input.fifteenMinuteAmount) {
         const plan = space.pricePlans.find((p) => p.type === "MINUTES" && p.duration === 15);
-        if (plan) pricePlansToUpdate.push({ id: plan.id, amount: input.fifteenMinuteAmount });
-        else {
+        if (plan) {
+            pricePlansToUpdate.push({
+                id: plan.id,
+                amount: input.fifteenMinuteAmount,
+                isDeleted: input.fifteenMinuteAmount <= 0,
+            });
+        } else {
             pricePlansToAdd.push({
                 amount: input.fifteenMinuteAmount,
                 duration: 15,
@@ -169,8 +179,13 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
     }
     if (input.thirtyMinuteAmount) {
         const plan = space.pricePlans.find((p) => p.type === "MINUTES" && p.duration === 30);
-        if (plan) pricePlansToUpdate.push({ id: plan.id, amount: input.thirtyMinuteAmount });
-        else {
+        if (plan) {
+            pricePlansToUpdate.push({
+                id: plan.id,
+                amount: input.thirtyMinuteAmount,
+                isDeleted: input.thirtyMinuteAmount <= 0,
+            });
+        } else {
             pricePlansToAdd.push({
                 amount: input.thirtyMinuteAmount,
                 duration: 30,
@@ -182,8 +197,13 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
     }
     if (input.fortyFiveMinuteAmount) {
         const plan = space.pricePlans.find((p) => p.type === "MINUTES" && p.duration === 45);
-        if (plan) pricePlansToUpdate.push({ id: plan.id, amount: input.fortyFiveMinuteAmount });
-        else {
+        if (plan) {
+            pricePlansToUpdate.push({
+                id: plan.id,
+                amount: input.fortyFiveMinuteAmount,
+                isDeleted: input.fortyFiveMinuteAmount <= 0,
+            });
+        } else {
             pricePlansToAdd.push({
                 amount: input.fortyFiveMinuteAmount,
                 duration: 45,
