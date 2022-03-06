@@ -50,7 +50,7 @@ const updateSpaceSetting: UpdateSpaceSetting = async (_, { input }, { authData, 
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space setting" });
 
     const prevSetting = omit(setting, "createdAt", "space", "spaceId", "updatedAt");
-    const mergedInput = merge(prevSetting, inputData);
+    const mergedInput = merge(omit(prevSetting, "businessDays"), inputData);
     let { closingHr, openingHr, breakFromHr, breakToHr, businessDays, fromDate, toDate } = mergedInput;
 
     if (fromDate && (fromDate.getTime() < Date.now() || (toDate && fromDate.getTime() >= toDate.getTime())))
