@@ -116,7 +116,7 @@ const addPricePlan: AddPricePlan = async (_, { pricePlan, spaceId }, { store, au
 
     const { select } = toSpacePricePlanSelect(mapSelections(info).pricePlan) || {};
     const newPricePlan = await store.spacePricePlan.create({
-        data: { ...pricePlan, isDefault, fromDate, toDate, space: { connect: { id: spaceId } } },
+        data: { ...pricePlan, fromDate, toDate, space: { connect: { id: spaceId } } },
         select: {
             ...select,
             space: {
