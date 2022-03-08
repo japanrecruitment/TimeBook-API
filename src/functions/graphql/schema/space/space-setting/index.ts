@@ -1,6 +1,7 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { addDefaultSpaceSettingResolvers, addDefaultSpaceSettingTypeDefs } from "./addDefaultSpaceSetting";
 import { overrideSpaceSettingResolvers, overrideSpaceSettingTypeDefs } from "./overrideSpaceSetting";
+import { removeSpaceSettingResolvers, removeSpaceSettingTypeDefs } from "./removeSpaceSetting";
 import { spaceSettingFilterOptionsTypeDefs } from "./SpaceSettingFilterOptions";
 import { spaceSettingObjectTypeDefs } from "./SpaceSettingObject";
 import { spaceSettingsBySpaceIdResolvers, spaceSettingsBySpaceIdTypeDefs } from "./spaceSettingsBySpaceId";
@@ -13,6 +14,7 @@ export const spaceSettingTypeDefs = mergeTypeDefs([
     spaceSettingObjectTypeDefs,
     spaceSettingsBySpaceIdTypeDefs,
     updateSpaceSettingTypeDefs,
+    removeSpaceSettingTypeDefs,
 ]);
 
 export const spaceSettingResolvers = mergeResolvers([
@@ -20,6 +22,7 @@ export const spaceSettingResolvers = mergeResolvers([
     overrideSpaceSettingResolvers,
     spaceSettingsBySpaceIdResolvers,
     updateSpaceSettingResolvers,
+    removeSpaceSettingResolvers,
 ]);
 
 export * from "./SpaceSettingFilterOptions";
