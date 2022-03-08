@@ -298,6 +298,7 @@ model PricePlanOverride {
   type        PricePlanOverrideType
   amount      Float
   daysOfWeek  Int[]
+  isDeleted   Boolean               @default(false)
   fromDate    DateTime?
   toDate      DateTime?
   createdAt   DateTime              @default(now()) @db.Timestamp(6)
