@@ -20,7 +20,7 @@ export type SpacePricePlanSelect = {
     cooldownTime: boolean;
     fromDate: boolean;
     toDate: boolean;
-    overrides: PrismaSelect<PricePlanOverrideSelect>;
+    overrides: PrismaSelect<PricePlanOverrideSelect> & { where: { isDeleted: false } };
 };
 
 export const toSpacePricePlanSelect = (selections, defaultValue: any = false): PrismaSelect<SpacePricePlanSelect> => {
@@ -32,7 +32,7 @@ export const toSpacePricePlanSelect = (selections, defaultValue: any = false): P
     return {
         select: {
             ...spacePricePlanSelect,
-            overrides: overridesSelect,
+            overrides: { where: { isDeleted: false }, ...overridesSelect },
         },
     } as PrismaSelect<SpacePricePlanSelect>;
 };
