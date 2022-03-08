@@ -38,7 +38,7 @@ export type SpaceSelect = {
     published: boolean;
     nearestStations: PrismaSelect<NearestStationSelect>;
     availableAmenities: PrismaSelect<SpaceAmenitiesSelect>;
-    pricePlans: PrismaSelect<SpacePricePlanSelect>;
+    pricePlans: PrismaSelect<SpacePricePlanSelect> & { where: { isDeleted: false } };
     settings: PrismaSelect<SpaceSettingSelect>;
     spaceTypes: PrismaSelect<SpaceTypeSelect>;
     address: PrismaSelect<AddressSelect>;
@@ -94,7 +94,10 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
             ...spaceSelect,
             nearestStations: nearestStationsSelect,
             availableAmenities: availableAmenitiesSelect,
-            pricePlans: pricePlansSelect,
+            pricePlans: {
+                where: { isDeleted: false },
+                ...pricePlansSelect,
+            },
             settings: settingsSelect,
             spaceTypes: spaceTypesSelect,
             address: addressSelect,
