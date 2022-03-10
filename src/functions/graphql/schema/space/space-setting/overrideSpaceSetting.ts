@@ -14,6 +14,7 @@ export type OverrideSpaceSettingInput = {
     openingHr?: number;
     breakFromHr?: number;
     breakToHr?: number;
+    businessDays?: Array<number>;
     closed?: boolean;
     totalStock?: number;
 };
@@ -48,7 +49,7 @@ const overrideSpaceSetting: OverrideSpaceSetting = async (_, { spaceSetting, spa
     if (space.settings.length <= 0)
         throw new GqlError({ code: "FORBIDDEN", message: "Please add default setting before overriding" });
 
-    let { closingHr, openingHr, breakFromHr, breakToHr, fromDate, toDate } = spaceSetting;
+    let { closingHr, openingHr, breakFromHr, breakToHr, businessDays, fromDate, toDate } = spaceSetting;
 
     if (fromDate.getTime() < Date.now() || fromDate.getTime() >= toDate.getTime())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid start date" });
@@ -68,7 +69,19 @@ const overrideSpaceSetting: OverrideSpaceSetting = async (_, { spaceSetting, spa
     if (breakToHr && (breakToHr > closingHr || breakToHr < openingHr || (breakFromHr && breakToHr < breakFromHr)))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid break end hour" });
 
-    const defaultSetting = omit(space.settings[space.settings.length - 1], "createdAt", "id", "spaceId", "updatedAt");
+    if (businessDays) {
+        businessDays = businessDays.filter((d) => d < 7).sort();
+        businessDays = businessDays.filter((c, index) => businessDays.indexOf(c) === index);
+    }
+
+    const defaultSetting = omit(
+        space.settings[space.settings.length - 1],
+        "businessDays",
+        "createdAt",
+        "id",
+        "spaceId",
+        "updatedAt"
+    );
 
     const select = toSpaceSettingSelect(mapSelections(info).setting);
     const setting = await store.spaceSetting.create({
@@ -92,6 +105,7 @@ export const overrideSpaceSettingTypeDefs = gql`
         openingHr: Float
         breakFromHr: Float
         breakToHr: Float
+        businessDays: [Int]
         closed: Boolean
         totalStock: Int
     }
