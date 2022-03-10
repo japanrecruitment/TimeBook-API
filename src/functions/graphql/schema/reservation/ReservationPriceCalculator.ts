@@ -6,7 +6,8 @@ import { concat, isEmpty, merge } from "lodash";
 import moment from "moment";
 import { SpacePricePlanObject } from "../space/space-price-plans";
 
-type ReservationPricePlan = Partial<SpacePricePlan> & Partial<Pick<PricePlanOverride, "daysOfWeek">>;
+type ReservationPricePlan = { isOverride: boolean } & Partial<SpacePricePlan> &
+    Partial<Pick<PricePlanOverride, "daysOfWeek" | "pricePlanId">> & { appliedTimes?: number };
 
 type ReservationPriceCalculatorConstructorArgs = {
     checkIn: Date;
@@ -17,8 +18,9 @@ type ReservationPriceCalculatorConstructorArgs = {
 export default class ReservationPriceCalculator {
     private _checkIn: Date;
     private _checkOut: Date;
-    private _pricePlans: Partial<ReservationPricePlan>[];
+    private _pricePlans: ReservationPricePlan[];
     private dumpedMinutes: number = 0;
+    readonly appliedReservationPlans: ReservationPricePlan[] = [];
     readonly price: number = 0;
 
     constructor(args: ReservationPriceCalculatorConstructorArgs) {
@@ -26,11 +28,13 @@ export default class ReservationPriceCalculator {
         this._checkIn = checkIn;
         this._checkOut = checkOut;
         this._pricePlans = concat(
-            pricePlans.map((p) => omit(p, "overrides")),
+            pricePlans.map((p) => ({ isOverride: false, ...omit(p, "overrides") })),
             pricePlans
                 .flatMap((p) =>
                     p.overrides?.map((o) =>
                         merge(o, {
+                            isOverride: true,
+                            title: p.title,
                             type: p.type,
                             duration: p.duration,
                             fromDate: o.fromDate || p.fromDate,
@@ -41,9 +45,11 @@ export default class ReservationPriceCalculator {
                 .filter((p) => p)
         );
         this.price = this.calculatePrice(checkIn, checkOut, this._pricePlans) + this.calculatePriceOfDumpedMinutes();
+        this.appliedReservationPlans = this.distinctAppliedPlans(this.appliedReservationPlans);
+        Log(this.appliedReservationPlans);
     }
 
-    private calculatePrice(from: Date, to: Date, plans: Partial<ReservationPricePlan>[]) {
+    private calculatePrice(from: Date, to: Date, plans: ReservationPricePlan[]) {
         const mDurations = getDurationsBetn(from, to);
 
         const days = () => mDurations.days;
@@ -59,7 +65,7 @@ export default class ReservationPriceCalculator {
         if (hours() > 0 && isEmpty(hourlyPlans)) mDurations.minutes = minutes() + hours() * 60;
         const minutesPlans = minutes() > 0 ? this.filterAndSortPlans(plans, "MINUTES", minutes()) : [];
 
-        const mPlans: Partial<ReservationPricePlan>[] = concat(dailyPlans, hourlyPlans, minutesPlans);
+        const mPlans: ReservationPricePlan[] = concat(dailyPlans, hourlyPlans, minutesPlans);
         if (isEmpty(mPlans)) {
             this.dumpedMinutes = this.dumpedMinutes + minutes();
             return mPrice;
@@ -107,6 +113,7 @@ export default class ReservationPriceCalculator {
                     let remPrice1 = this.calculatePrice(eligibleEndDate, to, plans);
                     let remPrice2 = this.calculatePrice(from, eligibleStartDate, plans);
                     mPrice = mPrice + amount + remPrice1 + remPrice2;
+                    this.appliedReservationPlans.push(mPlans[i]);
                     this.logAppliedPrices(mPlans[i], mPrice, eligibleStartDate, eligibleEndDate);
                     break;
                 }
@@ -119,12 +126,14 @@ export default class ReservationPriceCalculator {
                     let remPrice1 = this.calculatePrice(eligibleEndDate, to, plans);
                     let remPrice2 = this.calculatePrice(from, eligibleStartDate, plans);
                     mPrice = mPrice + amount + remPrice1 + remPrice2;
+                    this.appliedReservationPlans.push(mPlans[i]);
                     this.logAppliedPrices(mPlans[i], mPrice, eligibleStartDate, eligibleEndDate);
                     break;
                 }
             } else {
                 while (mDurations[unit] >= duration) {
                     mPrice = mPrice + amount;
+                    this.appliedReservationPlans.push(mPlans[i]);
                     this.logAppliedPrices(mPlans[i], mPrice);
                     mDurations[unit] = mDurations[unit] - duration;
                 }
@@ -155,6 +164,7 @@ export default class ReservationPriceCalculator {
             if (days >= duration) {
                 mPrice = mPrice + amount;
                 days = days - duration;
+                this.appliedReservationPlans.push(dailyPlans[i]);
             }
         }
 
@@ -164,6 +174,7 @@ export default class ReservationPriceCalculator {
             if (hours >= duration) {
                 mPrice = mPrice + amount;
                 hours = hours - duration;
+                this.appliedReservationPlans.push(hourlyPlans[i]);
             }
         }
 
@@ -173,6 +184,7 @@ export default class ReservationPriceCalculator {
             if (minutes >= duration) {
                 mPrice = mPrice + amount;
                 minutes = minutes - duration;
+                this.appliedReservationPlans.push(minutesPlans[i]);
             }
         }
 
@@ -181,7 +193,10 @@ export default class ReservationPriceCalculator {
             const hPlans = iPlans.filter(({ duration }) => duration >= minutes);
             const lPlans = iPlans.filter(({ duration }) => duration <= minutes);
             const plan = hPlans.length > 0 ? hPlans[0] : lPlans.length > 0 ? lPlans[0] : null;
-            if (plan) mPrice = mPrice + plan.amount;
+            if (plan) {
+                mPrice = mPrice + plan.amount;
+                this.appliedReservationPlans.push(plan);
+            }
         }
 
         return mPrice;
@@ -207,6 +222,20 @@ export default class ReservationPriceCalculator {
                 })
                 .sort((a, b) => b.duration - a.duration)
         );
+    }
+
+    private distinctAppliedPlans(plans: ReservationPricePlan[]) {
+        let newPlans: ReservationPricePlan[] = [];
+        for (const plan of plans) {
+            const nPlan = newPlans.find((p) => p.id === plan.id);
+            if (!nPlan) {
+                newPlans.push({ ...plan, appliedTimes: 1 });
+            } else {
+                newPlans = newPlans.filter((p) => p.id !== plan.id);
+                newPlans.push({ ...plan, appliedTimes: nPlan.appliedTimes + 1 });
+            }
+        }
+        return newPlans;
     }
 
     private logAppliedPrices(pricePlan: ReservationPricePlan, price: number, from?: Date, to?: Date) {

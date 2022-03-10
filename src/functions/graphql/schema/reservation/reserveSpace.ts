@@ -77,6 +77,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                             },
                         ],
                     },
+                    include: { overrides: true },
                 },
                 reservations: {
                     where: {
