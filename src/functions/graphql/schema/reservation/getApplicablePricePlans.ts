@@ -26,9 +26,9 @@ type GetApplicablePricePlansResult = {
 };
 
 type GetApplicablePricePlansInput = {
-    fromDateTime: Date;
-    durationType: SpacePricePlanType;
     duration: number;
+    durationType: SpacePricePlanType;
+    fromDateTime: Date;
     spaceId: string;
 };
 
@@ -45,6 +45,8 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
     const { duration, durationType, fromDateTime, spaceId } = input;
     if (fromDateTime.getTime() < Date.now())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid from date." });
+
+    if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration." });
 
     const durationUnit: Record<SpacePricePlanType, "days" | "hours" | "minutes"> = {
         DAILY: "days",
@@ -80,7 +82,9 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
 
 export const getApplicablePricePlansTypeDefs = gql`
     type ApplicablePricePlan {
+        id: ID!
         title: String
+        daysOfWeek: [Int]
         duration: Int
         type: SpacePricePlanType
         isDefault: Boolean
@@ -99,9 +103,9 @@ export const getApplicablePricePlansTypeDefs = gql`
     }
 
     input GetApplicablePricePlansInput {
-        fromDateTime: Date!
-        durationType: SpacePricePlanType!
         duration: Int!
+        durationType: SpacePricePlanType!
+        fromDateTime: Date!
         spaceId: ID!
     }
 
