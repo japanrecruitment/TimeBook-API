@@ -16,12 +16,15 @@ import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { getDurationsBetn } from "@utils/date-utils";
 import ReservationPriceCalculator from "./ReservationPriceCalculator";
+import { SpacePricePlanType } from "@prisma/client";
+import moment from "moment";
 
 type ReserveSpaceInput = {
+    duration: number;
+    durationType: SpacePricePlanType;
     fromDateTime: Date;
     paymentSourceId: string;
     spaceId: string;
-    toDateTime: Date;
 };
 
 type ReserveSpaceArgs = { input: ReserveSpaceInput };
@@ -40,11 +43,22 @@ type ReserveSpace = IFieldResolver<any, Context, ReserveSpaceArgs, Promise<Reser
 
 const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => {
     const { id: userId, accountId, email } = authData;
-    const { fromDateTime, paymentSourceId, spaceId, toDateTime } = input;
+    const { fromDateTime, paymentSourceId, spaceId, duration, durationType } = input;
+
     try {
-        Log(fromDateTime, toDateTime);
-        if (fromDateTime.getTime() < Date.now() || toDateTime.getTime() < Date.now())
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Selected time frame is invalid" });
+        Log(fromDateTime, duration);
+        if (fromDateTime.getTime() < Date.now())
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid from date." });
+
+        if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration." });
+
+        const durationUnit: Record<SpacePricePlanType, "days" | "hours" | "minutes"> = {
+            DAILY: "days",
+            HOURLY: "hours",
+            MINUTES: "minutes",
+        };
+
+        const toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
 
         const { days, hours, minutes } = getDurationsBetn(fromDateTime, toDateTime);
 
@@ -60,14 +74,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 pricePlans: {
                     where: {
                         AND: [
-                            { isDeleted: false },
-                            {
-                                OR: [
-                                    { type: "DAILY", duration: { lte: days } },
-                                    { type: "HOURLY", duration: { lte: hours } },
-                                    { type: "MINUTES", duration: { lte: minutes } },
-                                ],
-                            },
+                            { isDeleted: false, type: durationType, duration: { lte: duration } },
                             {
                                 OR: [
                                     { isDefault: true },
@@ -270,10 +277,11 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
 export const reserveSpaceTypeDefs = gql`
     input ReserveSpaceInput {
+        duration: Int!
+        durationType: SpacePricePlanType!
         fromDateTime: Date!
         paymentSourceId: ID!
         spaceId: ID!
-        toDateTime: Date!
     }
 
     type ReserveSpaceResult {
