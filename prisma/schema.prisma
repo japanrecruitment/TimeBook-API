@@ -36,6 +36,7 @@ enum ReservationStatus {
   PENDING
   FAILED
   DISAPPROVED
+  CANCELED
 }
 
 enum PhotoType {
