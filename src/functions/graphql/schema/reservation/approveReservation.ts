@@ -47,6 +47,7 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
         recipientEmail: reservation.reservee.email,
         recipientName: "",
         spaceId: reservation.space.id,
+        reservationId,
     });
 
     return {
