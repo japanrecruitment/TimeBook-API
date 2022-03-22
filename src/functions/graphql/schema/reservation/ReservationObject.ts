@@ -14,6 +14,7 @@ export type ReservationObject = Partial<Reservation>;
 
 export type ReservationSelect = {
     id: boolean;
+    reservationId: boolean;
     fromDateTime: boolean;
     toDateTime: boolean;
     status: boolean;
@@ -59,6 +60,7 @@ const reservationResolver: IObjectTypeResolver<any, Context> = {
 export const reservationObjectTypeDefs = gql`
     type ReservationObject {
         id: ID
+        reservationId: String
         fromDateTime: Date
         toDateTime: Date
         status: ReservationStatus
