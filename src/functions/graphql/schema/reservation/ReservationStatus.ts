@@ -8,6 +8,7 @@ export const reservationStatusTypeDef = gql`
         PENDING
         FAILED
         DISAPPROVED
+        CANCELED
     }
 `;
 
