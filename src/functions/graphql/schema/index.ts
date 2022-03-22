@@ -12,6 +12,7 @@ import { mediaTypeDefs, mediaResolvers } from "./media";
 import { cacheResolvers, cacheTypeDefs } from "./cache";
 import * as chat from "./chat";
 import * as reservation from "./reservation";
+import * as transaction from "./transaction";
 
 const typeDefs = mergeTypeDefs([
     coreTypeDefs,
@@ -25,6 +26,7 @@ const typeDefs = mergeTypeDefs([
     mediaTypeDefs,
     chat.typeDefs,
     reservation.typeDefs,
+    transaction.typeDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -39,6 +41,7 @@ const resolvers = mergeResolvers([
     mediaResolvers,
     chat.resolvers,
     reservation.resolvers,
+    transaction.resolvers,
 ]);
 
 const schemaDirectives = merge(coreDirectives);

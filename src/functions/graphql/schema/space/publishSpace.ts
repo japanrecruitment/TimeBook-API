@@ -62,7 +62,7 @@ const publishSpace: PublishSpace = async (_, { id }, { authData, store, dataSour
 
 export const publishSpaceTypeDefs = gql`
     type Mutation {
-        publishSpace(id: ID!): Result! @auth(requires: [user, host])
+        publishSpace(id: ID!, publish: Boolean): Result! @auth(requires: [user, host])
     }
 `;
 
