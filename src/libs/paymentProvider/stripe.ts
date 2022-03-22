@@ -184,6 +184,19 @@ export class StripeLib implements IStripeUtil {
             Log(error);
         }
     }
+
+    async cancelPaymentIntent(id: Stripe.PaymentIntent["id"]) {
+        try {
+            Log("[STARTED]: Cancel stripe payment intent", id);
+            const intent = await stripe.paymentIntents.cancel(id);
+            Log("[COMPLETED]: Cancel stripe payment intent", intent);
+            return intent;
+        } catch (error) {
+            Log("[FAILED]: Cancel stripe payment intent", error);
+            return error;
+        }
+    }
+
     async createPaymentIntent(
         params: Stripe.PaymentIntentCreateParams,
         options?: Stripe.RequestOptions

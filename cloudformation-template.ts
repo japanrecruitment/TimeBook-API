@@ -254,6 +254,7 @@ const emailQueue: AWS["resources"]["Resources"] = {
         },
     },
 };
+
 const transactionQueue: AWS["resources"]["Resources"] = {
     EmailQueue: {
         Type: "AWS::SQS::Queue",

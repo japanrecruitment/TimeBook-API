@@ -18,6 +18,7 @@ import { getDurationsBetn } from "@utils/date-utils";
 import ReservationPriceCalculator from "./ReservationPriceCalculator";
 import { SpacePricePlanType } from "@prisma/client";
 import moment from "moment";
+import { environment } from "@utils/environment";
 
 type ReserveSpaceInput = {
     duration: number;
@@ -202,17 +203,16 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             payment_method_types: [paymentMethod.type],
             description: transaction.description,
             receipt_email: email,
-            capture_method: space.needApproval ? "manual" : "automatic",
+            capture_method: "manual",
             metadata: {
                 transactionId: transaction.id,
                 reservationId: transaction.reservationId,
                 userId: accountId,
                 spaceId: spaceId,
             },
+            statement_descriptor: `[AUTHORIZATION]:${environment.APP_READABLE_NAME}`,
             application_fee_amount: applicationFeeAmount,
-            transfer_data: {
-                destination: space.account.host.stripeAccountId,
-            },
+            transfer_data: { destination: space.account.host.stripeAccountId },
             confirm: true,
         };
 
