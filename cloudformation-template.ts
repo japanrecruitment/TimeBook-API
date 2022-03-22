@@ -254,6 +254,20 @@ const emailQueue: AWS["resources"]["Resources"] = {
         },
     },
 };
+const transactionQueue: AWS["resources"]["Resources"] = {
+    EmailQueue: {
+        Type: "AWS::SQS::Queue",
+        Properties: {
+            QueueName: "${self:service}-${sls:stage}-transaction-queue",
+            Tags: [
+                {
+                    Key: "Name",
+                    Value: "${self:service}-${sls:stage} Transaction Queue",
+                },
+            ],
+        },
+    },
+};
 
 const resources: AWS["resources"] = {
     Resources: {
@@ -262,6 +276,7 @@ const resources: AWS["resources"] = {
         ...securityGroup,
         ...elasticCache,
         ...emailQueue,
+        ...transactionQueue,
     },
 };
 
