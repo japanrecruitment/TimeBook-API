@@ -25,7 +25,7 @@ const reservationById: ReservationById = async (_, { id }, { store }, info) => {
 
 export const reservationByIdTypeDefs = gql`
     type Query {
-        reservationById(id: ID!): ReservationObject
+        reservationById(id: ID!): ReservationObject @auth(requires: [user, host])
     }
 `;
 
