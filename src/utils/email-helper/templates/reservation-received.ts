@@ -1,6 +1,6 @@
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
-import { store } from "@utils/store";
+import { environment } from "@utils/environment";
 
 export type ReservationReceivedData = EmailData & {
     spaceId: string;
@@ -18,7 +18,7 @@ const template = `
           <td class="content-cell">
             <div class="f-fallback">
               <h1>こんにちは {{recipientName}}、</h1>
-              <p>いつもtime bookをご利用いただき、誠にありがとうございます。</p>
+              <p>いつも${environment.APP_READABLE_NAME}をご利用いただき、誠にありがとうございます。</p>
               <p>
                 スペース{{spaceId}}の予約リクエストを受け取りました。
               </p>
@@ -35,4 +35,7 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<ReservationReceivedData>(template, "【time book】予約リクエストを受け取りました。");
+export default generateTemplate<ReservationReceivedData>(
+    template,
+    `【${environment.APP_READABLE_NAME}】予約リクエストを受け取りました。`
+);

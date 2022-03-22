@@ -1,3 +1,4 @@
+import { environment } from "@utils/environment";
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
 
@@ -17,7 +18,7 @@ const template = `
           <td class="content-cell">
             <div class="f-fallback">
               <h1>こんにちは {{recipientName}}、</h1>
-              <p>いつもtime bookをご利用いただき、誠にありがとうございます。</p>
+              <p>いつも${environment.APP_READABLE_NAME}をご利用いただき、誠にありがとうございます。</p>
               <p>
                 スペース{{spaceid}}のご予約が完了しましたことをお知らせいたします。
               </p>
@@ -34,4 +35,4 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<ReservationCompletedData>(template, "【time book】予約完了");
+export default generateTemplate<ReservationCompletedData>(template, `【${environment.APP_READABLE_NAME}】予約完了`);

@@ -1,6 +1,8 @@
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
 
+import { environment } from "@utils/environment";
+
 export type HostApplicationApprovedEmailData = EmailData;
 
 const template = `
@@ -15,10 +17,10 @@ const template = `
             <div class="f-fallback">
               <h1>お申込み承認のお知らせ</h1>
               <p>
-                この度は、time bookへお申込みいただき誠にありがとうございます。登録審査が完了致しましたのでご連絡致します。
+                この度は、${environment.APP_READABLE_NAME}へお申込みいただき誠にありがとうございます。登録審査が完了致しましたのでご連絡致します。
               </p>
               <p>
-                これより、ご登録いただいた住所へ「time book利用規約」をお送りいたします。お手元に届きましたら内容をご確認の上、同意書にサインの上ご返送下さいますようお願い申し上げます。
+                これより、ご登録いただいた住所へ「${environment.APP_READABLE_NAME}利用規約」をお送りいたします。お手元に届きましたら内容をご確認の上、同意書にサインの上ご返送下さいますようお願い申し上げます。
               </p>
               <p>
                 その後、ログインIDを発行させていただきます。
@@ -35,4 +37,7 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<HostApplicationApprovedEmailData>(template, "【time book】お申込み承認のお知らせ");
+export default generateTemplate<HostApplicationApprovedEmailData>(
+    template,
+    `【${environment.APP_READABLE_NAME}】お申込み承認のお知らせ`
+);

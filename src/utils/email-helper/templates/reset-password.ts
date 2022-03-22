@@ -1,3 +1,4 @@
+import { environment } from "@utils/environment";
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
 
@@ -30,4 +31,7 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<ResetPasswordData>(template, "【time book】パスワードリセットの確認");
+export default generateTemplate<ResetPasswordData>(
+    template,
+    `【${environment.APP_READABLE_NAME}】パスワードリセットの確認`
+);

@@ -1,5 +1,6 @@
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
+import { environment } from "@utils/environment";
 
 export type EmailVerificationData = EmailData & {
     verificationCode: number;
@@ -16,9 +17,9 @@ const template = `
           <td class="content-cell">
             <div class="f-fallback">
               <h1>{{recipientName}}様、</h1>
-              <p>time bookへようこそ！</p>
+              <p>${environment.APP_READABLE_NAME}へようこそ！</p>
               <p>
-                time bookにご登録頂きまして、誠にありがとうございます。
+                ${environment.APP_READABLE_NAME}にご登録頂きまして、誠にありがとうございます。
                 本登録を完了するには下記の確認番号を利用してください。
               </p>
               <p class="verificationCode">{{verificationCode}}</p>
@@ -35,4 +36,7 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<EmailVerificationData>(template, "【time book】ご登録メールアドレスの確認");
+export default generateTemplate<EmailVerificationData>(
+    template,
+    `【${environment.APP_READABLE_NAME}】ご登録メールアドレスの確認`
+);
