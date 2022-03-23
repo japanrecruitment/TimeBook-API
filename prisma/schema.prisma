@@ -75,6 +75,7 @@ enum TransactionStatus {
   WEBHOOK_RECEIVED
   SUCCESSFULL
   FAILED
+  CANCELED
 }
 
 enum ChatType {

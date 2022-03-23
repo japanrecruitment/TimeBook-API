@@ -210,7 +210,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 userId: accountId,
                 spaceId: spaceId,
             },
-            statement_descriptor: `[AUTH]:${environment.APP_READABLE_NAME}`.substring(0,22),
+            statement_descriptor: `AUTH_${environment.APP_READABLE_NAME}`.substring(0, 22),
             application_fee_amount: applicationFeeAmount,
             transfer_data: { destination: space.account.host.stripeAccountId },
             confirm: true,
