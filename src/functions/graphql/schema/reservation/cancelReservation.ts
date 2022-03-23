@@ -25,24 +25,19 @@ const cancelReservation: CancelReservation = async (_, { reservationId }, { auth
         select: {
             fromDateTime: true,
             reserveeId: true,
-            spaceId: true,
             status: true,
-            reservee: { select: { id: true, email: true, suspended: true } },
+            reservee: { select: { suspended: true } },
             space: {
-                select: {
-                    name: true,
-                    account: {
-                        select: { suspended: true, host: { select: { stripeAccountId: true, suspended: true } } },
-                    },
-                },
+                select: { account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } } },
             },
-            transaction: { select: { id: true, amount: true, paymentIntentId: true, responseReceivedLog: true } },
+            transaction: { select: { amount: true, paymentIntentId: true, responseReceivedLog: true } },
         },
     });
 
     if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "Reservation not found" });
 
-    if (reservation.reserveeId !== accountId) throw new GqlError({ code: "UNAUTHORIZED", message: "Not Authorized" });
+    if (reservation.reserveeId !== accountId && reservation.space.account.id !== accountId)
+        throw new GqlError({ code: "UNAUTHORIZED", message: "Not Authorized" });
 
     if (reservation.status === "CANCELED")
         throw new GqlError({ code: "BAD_REQUEST", message: "Reservation already canceled" });
@@ -53,14 +48,23 @@ const cancelReservation: CancelReservation = async (_, { reservationId }, { auth
     if (reservation.status === "FAILED")
         throw new GqlError({ code: "BAD_REQUEST", message: "Cannot cancel a failed reservation" });
 
-    if (reservation.reservee.suspended)
+    const isHost = reservation.space.account.id === accountId;
+
+    if (isHost && (reservation.space.account.suspended || reservation.space.account.host.suspended))
+        throw new GqlError({ code: "FORBIDDEN", message: "You are suspended. Please contact our support team." });
+    else if (!isHost && reservation.reservee.suspended)
         throw new GqlError({ code: "FORBIDDEN", message: "You are suspended. Please contact our support team." });
 
     const stripe = new StripeLib();
     await stripe.cancelPaymentIntent(reservation.transaction.paymentIntentId);
 
-    if (reservation.space.account.suspended || reservation.space.account.host.suspended)
+    if (isHost || reservation.space.account.suspended || reservation.space.account.host.suspended) {
+        await store.reservation.update({
+            where: { id: reservationId },
+            data: { status: "CANCELED", transaction: { update: { status: "CANCELED" } } },
+        });
         return { message: "Successfully canceled reservation." };
+    }
 
     let cancellationChargeRate = 0;
     const currDateMillis = Date.now();
@@ -69,7 +73,13 @@ const cancelReservation: CancelReservation = async (_, { reservationId }, { auth
     if (currDateMillis >= sub3hrs) cancellationChargeRate = 1;
     else if (currDateMillis >= sub18hrs) cancellationChargeRate = 0.5;
 
-    if (cancellationChargeRate <= 0) return { message: "Successfully canceled reservation." };
+    if (cancellationChargeRate <= 0) {
+        await store.reservation.update({
+            where: { id: reservationId },
+            data: { status: "CANCELED", transaction: { update: { status: "CANCELED" } } },
+        });
+        return { message: "Successfully canceled reservation." };
+    }
 
     const amount = cancellationChargeRate * reservation.transaction.amount;
     const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
@@ -99,7 +109,7 @@ const cancelReservation: CancelReservation = async (_, { reservationId }, { auth
 
 export const cancelReservationTypeDefs = gql`
     type Mutation {
-        cancelReservation(reservationId: ID!): Result @auth(requires: [user])
+        cancelReservation(reservationId: ID!): Result @auth(requires: [user, host])
     }
 `;
 
