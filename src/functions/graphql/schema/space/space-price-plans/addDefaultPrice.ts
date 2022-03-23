@@ -100,7 +100,7 @@ const addDefaultPrice: AddDefaultPrice = async (_, { input, spaceId }, { authDat
         pricePlansToAdd.push({
             amount: input.dailyAmount,
             duration: 1,
-            title: "default 1 day",
+            title: "基本料金１日",
             type: "DAILY",
             isDefault: true,
         });
@@ -108,7 +108,7 @@ const addDefaultPrice: AddDefaultPrice = async (_, { input, spaceId }, { authDat
         pricePlansToAdd.push({
             amount: input.hourlyAmount,
             duration: 1,
-            title: "default 1 hour",
+            title: "基本料金1時間",
             type: "HOURLY",
             isDefault: true,
         });
@@ -116,7 +116,7 @@ const addDefaultPrice: AddDefaultPrice = async (_, { input, spaceId }, { authDat
         pricePlansToAdd.push({
             amount: input.fiveMinuteAmount,
             duration: 5,
-            title: "default 5 minutes",
+            title: "基本料金5分",
             type: "MINUTES",
             isDefault: true,
         });
@@ -124,7 +124,7 @@ const addDefaultPrice: AddDefaultPrice = async (_, { input, spaceId }, { authDat
         pricePlansToAdd.push({
             amount: input.tenMinuteAmount,
             duration: 10,
-            title: "default 10 minutes",
+            title: "基本料金10分",
             type: "MINUTES",
             isDefault: true,
         });
@@ -132,7 +132,7 @@ const addDefaultPrice: AddDefaultPrice = async (_, { input, spaceId }, { authDat
         pricePlansToAdd.push({
             amount: input.fifteenMinuteAmount,
             duration: 15,
-            title: "default 15 minutes",
+            title: "基本料金15分",
             type: "MINUTES",
             isDefault: true,
         });
@@ -140,7 +140,7 @@ const addDefaultPrice: AddDefaultPrice = async (_, { input, spaceId }, { authDat
         pricePlansToAdd.push({
             amount: input.thirtyMinuteAmount,
             duration: 30,
-            title: "default 30 minutes",
+            title: "基本料金30分",
             type: "MINUTES",
             isDefault: true,
         });
@@ -148,7 +148,7 @@ const addDefaultPrice: AddDefaultPrice = async (_, { input, spaceId }, { authDat
         pricePlansToAdd.push({
             amount: input.fortyFiveMinuteAmount,
             duration: 45,
-            title: "default 45 minutes",
+            title: "基本料金45分",
             type: "MINUTES",
             isDefault: true,
         });
