@@ -11,6 +11,7 @@ export const transactionStatusTypeDef = gql`
         WEBHOOK_RECEIVED
         SUCCESSFULL
         FAILED
+        CANCELED
     }
 `;
 
