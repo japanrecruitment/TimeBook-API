@@ -21,6 +21,7 @@ export type TransactionObject = {
     status: TransactionStatus;
     paymentMethodInfo?: PaymentMethodInfo;
     webhookReceivedLog?: any;
+    responseReceivedLog?: any;
 };
 
 export type TransactionSelect = {
@@ -29,6 +30,7 @@ export type TransactionSelect = {
     currency: boolean;
     status: boolean;
     webhookReceivedLog: boolean;
+    responseReceivedLog: boolean;
 };
 
 export const toTrasactionSelect = (selections, defaultValue: any = false): PrismaSelect<TransactionSelect> => {
@@ -41,14 +43,15 @@ export const toTrasactionSelect = (selections, defaultValue: any = false): Prism
         select: {
             ...transactionSelect,
             webhookReceivedLog: true,
+            responseReceivedLog: true,
         } as TransactionSelect,
     };
 };
 
 const transactionResolver: IObjectTypeResolver<TransactionObject, Context> = {
-    paymentMethodInfo: async ({ webhookReceivedLog }) => {
-        if (!webhookReceivedLog) return;
-        const data = webhookReceivedLog.charges?.data;
+    paymentMethodInfo: async ({ webhookReceivedLog, responseReceivedLog }) => {
+        if (!webhookReceivedLog || !responseReceivedLog) return;
+        const data = webhookReceivedLog.charges?.data || responseReceivedLog.charges?.data;
         if (!data) return;
         if (!(data instanceof Array)) return;
         if (data.length <= 0) return;
