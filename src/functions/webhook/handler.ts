@@ -14,10 +14,12 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
         let amount: number;
         let currency: string;
         let webhookStatusLog: any;
+        let isCanceled: boolean;
 
         const stripe = new StripeLib();
         stripe.validateWebhook(event, {
             onSuccess(intent) {
+                isCanceled = intent.statement_descriptor.startsWith("CANCEL");
                 transactionId = intent?.metadata?.transactionId;
                 reservationId = intent?.metadata?.reservationId;
                 userId = intent?.metadata?.userId;
@@ -76,13 +78,19 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
 
         const updatedReservation = await store.reservation.update({
             where: { id: reservationId },
-            data: { status: reservation.space.needApproval && !reservation.approved ? "HOLD" : "RESERVED" },
+            data: {
+                status: isCanceled
+                    ? "CANCELED"
+                    : reservation.space.needApproval && !reservation.approved
+                    ? "HOLD"
+                    : "RESERVED",
+            },
             select: { id: true, approved: true, reserveeId: true, status: true, spaceId: true },
         });
 
         await store.transaction.update({
             where: { id: transactionId },
-            data: { status: "SUCCESSFULL", resultedLog: updatedReservation },
+            data: { status: isCanceled ? "CANCELED" : "SUCCESSFULL", resultedLog: updatedReservation },
         });
 
         return formatJSONResponse(200, { message: "Operation successful." });
