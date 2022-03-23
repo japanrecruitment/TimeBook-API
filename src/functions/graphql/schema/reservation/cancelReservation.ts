@@ -65,9 +65,9 @@ const cancelReservation: CancelReservation = async (_, { reservationId }, { auth
     let cancellationChargeRate = 0;
     const currDateMillis = Date.now();
     const sub3hrs = moment(reservation.fromDateTime).subtract(3, "hours").toDate().getTime();
-    if (currDateMillis >= sub3hrs) cancellationChargeRate = 1;
     const sub18hrs = moment(reservation.fromDateTime).subtract(18, "hours").toDate().getTime();
-    if (currDateMillis >= sub18hrs) cancellationChargeRate = 0.5;
+    if (currDateMillis >= sub3hrs) cancellationChargeRate = 1;
+    else if (currDateMillis >= sub18hrs) cancellationChargeRate = 0.5;
 
     if (cancellationChargeRate <= 0) return { message: "Successfully canceled reservation." };
 
