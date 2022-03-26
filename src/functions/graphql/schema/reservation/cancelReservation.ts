@@ -28,7 +28,13 @@ const cancelReservation: CancelReservation = async (_, { reservationId }, { auth
             status: true,
             reservee: { select: { suspended: true } },
             space: {
-                select: { account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } } },
+                select: {
+                    account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } },
+                    cancelPolicies: {
+                        orderBy: { beforeHours: "asc" },
+                        select: { id: true, beforeHours: true, percentage: true },
+                    },
+                },
             },
             transaction: { select: { amount: true, paymentIntentId: true, responseReceivedLog: true } },
         },
@@ -66,12 +72,24 @@ const cancelReservation: CancelReservation = async (_, { reservationId }, { auth
         return { message: "Successfully canceled reservation." };
     }
 
+    const cancelPolicies = reservation.space.cancelPolicies;
+    if (cancelPolicies.length <= 0) {
+        await store.reservation.update({
+            where: { id: reservationId },
+            data: { status: "CANCELED", transaction: { update: { status: "CANCELED" } } },
+        });
+        return { message: "Successfully canceled reservation." };
+    }
+
     let cancellationChargeRate = 0;
     const currDateMillis = Date.now();
-    const sub3hrs = moment(reservation.fromDateTime).subtract(3, "hours").toDate().getTime();
-    const sub18hrs = moment(reservation.fromDateTime).subtract(18, "hours").toDate().getTime();
-    if (currDateMillis >= sub3hrs) cancellationChargeRate = 1;
-    else if (currDateMillis >= sub18hrs) cancellationChargeRate = 0.5;
+    for (const { beforeHours, percentage } of cancelPolicies) {
+        const beforeHrsDateMillis = moment(reservation.fromDateTime).subtract(beforeHours, "hours").toDate().getTime();
+        if (currDateMillis >= beforeHrsDateMillis) {
+            cancellationChargeRate = percentage / 100;
+            break;
+        }
+    }
 
     if (cancellationChargeRate <= 0) {
         await store.reservation.update({

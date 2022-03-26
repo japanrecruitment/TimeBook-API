@@ -14,6 +14,7 @@ import { ReservationObject } from "../reservation/ReservationObject";
 import { SpaceTypeObject, SpaceTypeSelect, toSpaceTypeSelect } from "./space-types";
 import { SpaceAmenitiesObject, SpaceAmenitiesSelect, toSpaceAmenitiesSelect } from "./space-amenities";
 import { SpaceSettingObject, SpaceSettingSelect, toSpaceSettingSelect } from "./space-setting";
+import { RatingObject, RatingSelect, toRatingSelect } from "./ratings/RatingObject";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
@@ -25,6 +26,7 @@ export type SpaceObject = Partial<Space> & {
     reservations?: Partial<ReservationObject>[];
     pricePlans?: Partial<SpacePricePlanObject>[];
     settings?: Partial<SpaceSettingObject>[];
+    ratings?: Partial<RatingObject>[];
 };
 
 export type SpaceSelect = {
@@ -46,6 +48,7 @@ export type SpaceSelect = {
     photos: PrismaSelect<PhotoSelect>;
     account: { select: { host: PrismaSelect<HostSelect> } };
     reservations: { where: any; select: { fromDateTime: boolean; toDateTime: boolean } };
+    ratings: PrismaSelect<RatingSelect>;
 };
 
 export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSelect<SpaceSelect> => {
@@ -61,6 +64,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
     const reservationsSelect = selections.reservedDates
         ? { where: { fromDateTime: { gte: new Date() } }, select: { fromDateTime: true, toDateTime: true } }
         : false;
+    const ratingSelect = toRatingSelect(selections.ratings);
     const spaceSelect = omit(
         selections,
         "nearestStations",
@@ -71,7 +75,8 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         "address",
         "photo",
         "host",
-        "reservedDates"
+        "reservedDates",
+        "ratings"
     );
 
     console.log(spaceSelect);
@@ -106,6 +111,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
             photos: photosSelect,
             account: hostSelect ? { select: { host: hostSelect } } : false,
             reservations: reservationsSelect,
+            ratings: ratingSelect,
         } as SpaceSelect,
     };
 };
@@ -139,6 +145,7 @@ export const spaceObjectTypeDefs = gql`
         pricePlans: [SpacePricePlanObject]
         settings: [SpaceSettingObject]
         reservedDates: [ReservedDates]
+        ratings: [RatingObject]
     }
 `;
 

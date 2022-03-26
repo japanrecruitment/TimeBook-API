@@ -107,6 +107,7 @@ model Account {
   chats          Chat[]          @relation("_AccountsChat")
   sentMessages   Message[]
   myTransaction  Transaction[]
+  givenRatings   Rating[]
 }
 
 model PaymentSource {
@@ -237,6 +238,8 @@ model Space {
   photos             Photo[]
   settings           SpaceSetting[]
   pricePlans         SpacePricePlan[]
+  cancelPolicies     CancelPolicy[]
+  ratings            Rating[]
 }
 
 model SpaceType {
@@ -306,6 +309,28 @@ model PricePlanOverride {
   createdAt   DateTime              @default(now()) @db.Timestamp(6)
   updatedAt   DateTime              @updatedAt
   pricePlan   SpacePricePlan        @relation(fields: [pricePlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Rating {
+  id          String   @id @default(cuid())
+  rating      Float
+  comment     String?  @db.Text
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt
+  spaceId     String
+  space       Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  byAccountId String
+  byAccount   Account  @relation(fields: [byAccountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model CancelPolicy {
+  id          String   @id @default(cuid())
+  spaceId     String
+  beforeHours Float
+  percentage  Float
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt
+  space       Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Reservation {

@@ -18,6 +18,8 @@ import { updateTypesInSpaceResolvers, updateTypesInSpaceTypeDefs } from "./updat
 import { spaceAmenitiesResolvers, spaceAmenitiesTypeDefs } from "./space-amenities";
 import { spaceSettingResolvers, spaceSettingTypeDefs } from "./space-setting";
 import { publishSpaceResolvers, publishSpaceTypeDefs } from "./publishSpace";
+import { cancelPolicyResolvers, cancelPolicyTypeDefs } from "./cancel-policy";
+import { ratingResolvers, ratingsTypeDefs } from "./ratings";
 
 export const spaceTypeDefs = mergeTypeDefs([
     spaceObjectTypeDefs,
@@ -39,6 +41,8 @@ export const spaceTypeDefs = mergeTypeDefs([
     spaceAmenitiesTypeDefs,
     spaceSettingTypeDefs,
     publishSpaceTypeDefs,
+    cancelPolicyTypeDefs,
+    ratingsTypeDefs,
 ]);
 
 export const spaceResolvers = mergeResolvers([
@@ -61,4 +65,6 @@ export const spaceResolvers = mergeResolvers([
     spaceAmenitiesResolvers,
     spaceSettingResolvers,
     publishSpaceResolvers,
+    cancelPolicyResolvers,
+    ratingResolvers,
 ]);

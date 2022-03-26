@@ -13,6 +13,8 @@ export type HostObject = Partial<Host> & {
     stripeAccount?: Partial<AccountLink>;
     profilePhoto?: Partial<Photo>;
     photoId?: Partial<Photo>;
+    rating?: number;
+    account?: { mySpace: { ratings: { rating: number }[] }[] };
 };
 
 export type HostSelect = {
@@ -45,6 +47,9 @@ export const toHostSelect = (selections, defaultValue: any = false): PrismaSelec
             stripeAccountId: true,
             photoId: photoIdSelect,
             profilePhoto: profilePhotoSelect,
+            account: selections.rating
+                ? { select: { mySpace: { select: { ratings: { select: { rating: true } } } } } }
+                : false,
         } as HostSelect,
     };
 };
@@ -57,12 +62,14 @@ const hostResolver: IObjectTypeResolver<HostObject, Context> = {
         Log(stripeAccount);
         return stripeAccount;
     },
-    account: async ({ stripeAccountId }) => {
-        if (!stripeAccountId) return;
-        const stripe = new StripeLib();
-        const stripeAccount = await stripe.getStripeAccount(stripeAccountId);
-        Log(stripeAccount);
-        return stripeAccount;
+    rating: async ({ account }) => {
+        if (!account) return 0;
+        if (!account.mySpace || account.mySpace.length <= 0) return 0;
+        const rating = account.mySpace
+            .flatMap(({ ratings }) => ratings)
+            .filter((rating) => rating)
+            .reduce((p, c) => p + c.rating, 0);
+        return rating;
     },
 };
 
@@ -97,8 +104,8 @@ export const hostObjectTypeDefs = gql`
         profilePhoto: Photo
         stripeAccountId: String
         stripeAccount: StripeAccount
-        account: StripeAccount
         accountId: String
+        rating: Float
         createdAt: Date
         updatedAt: Date
     }
