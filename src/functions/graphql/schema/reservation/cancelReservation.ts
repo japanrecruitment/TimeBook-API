@@ -9,16 +9,25 @@ import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
 
-type CancelReservationArgs = {
+type CancelReservationInput = {
     reservationId: string;
+    cancelCharge?: number;
+    remarks?: string;
 };
+
+type CancelReservationArgs = { input: CancelReservationInput };
 
 type CancelReservationResult = Promise<Result>;
 
 type CancelReservation = IFieldResolver<any, Context, CancelReservationArgs, CancelReservationResult>;
 
-const cancelReservation: CancelReservation = async (_, { reservationId }, { authData, store }) => {
+const cancelReservation: CancelReservation = async (_, { input }, { authData, store }) => {
     const { accountId } = authData;
+
+    const { reservationId, cancelCharge = 0, remarks } = input;
+
+    if (cancelCharge > 100 || cancelCharge < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cancellation charge" });
 
     const reservation = await store.reservation.findUnique({
         where: { id: reservationId },
@@ -64,7 +73,7 @@ const cancelReservation: CancelReservation = async (_, { reservationId }, { auth
     const stripe = new StripeLib();
     await stripe.cancelPaymentIntent(reservation.transaction.paymentIntentId);
 
-    if (isHost || reservation.space.account.suspended || reservation.space.account.host.suspended) {
+    if (reservation.space.account.suspended || reservation.space.account.host.suspended) {
         await store.reservation.update({
             where: { id: reservationId },
             data: { status: "CANCELED", transaction: { update: { status: "CANCELED" } } },
@@ -72,22 +81,28 @@ const cancelReservation: CancelReservation = async (_, { reservationId }, { auth
         return { message: "Successfully canceled reservation." };
     }
 
-    const cancelPolicies = reservation.space.cancelPolicies;
-    if (cancelPolicies.length <= 0) {
-        await store.reservation.update({
-            where: { id: reservationId },
-            data: { status: "CANCELED", transaction: { update: { status: "CANCELED" } } },
-        });
-        return { message: "Successfully canceled reservation." };
-    }
+    let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
 
-    let cancellationChargeRate = 0;
-    const currDateMillis = Date.now();
-    for (const { beforeHours, percentage } of cancelPolicies) {
-        const beforeHrsDateMillis = moment(reservation.fromDateTime).subtract(beforeHours, "hours").toDate().getTime();
-        if (currDateMillis >= beforeHrsDateMillis) {
-            cancellationChargeRate = percentage / 100;
-            break;
+    if (!isHost) {
+        const cancelPolicies = reservation.space.cancelPolicies;
+        if (cancelPolicies.length <= 0) {
+            await store.reservation.update({
+                where: { id: reservationId },
+                data: { status: "CANCELED", transaction: { update: { status: "CANCELED" } } },
+            });
+            return { message: "Successfully canceled reservation." };
+        }
+
+        const currDateMillis = Date.now();
+        for (const { beforeHours, percentage } of cancelPolicies) {
+            const beforeHrsDateMillis = moment(reservation.fromDateTime)
+                .subtract(beforeHours, "hours")
+                .toDate()
+                .getTime();
+            if (currDateMillis >= beforeHrsDateMillis) {
+                cancellationChargeRate = percentage / 100;
+                break;
+            }
         }
     }
 
@@ -126,8 +141,14 @@ const cancelReservation: CancelReservation = async (_, { reservationId }, { auth
 };
 
 export const cancelReservationTypeDefs = gql`
+    input CancelReservationInput {
+        reservationId: ID!
+        cancelCharge: Int
+        remarks: String
+    }
+
     type Mutation {
-        cancelReservation(reservationId: ID!): Result @auth(requires: [user, host])
+        cancelReservation(input: CancelReservationInput!): Result @auth(requires: [user, host])
     }
 `;
 
