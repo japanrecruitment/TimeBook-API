@@ -69,7 +69,10 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
             data: { status: "WEBHOOK_RECEIVED", webhookReceivedLog: webhookStatusLog },
         });
 
-        if (amount !== transaction.amount || currency.toLowerCase() !== transaction.currency.toLowerCase()) {
+        if (
+            !isCanceled &&
+            (amount !== transaction.amount || currency.toLowerCase() !== transaction.currency.toLowerCase())
+        ) {
             await store.transaction.update({
                 where: { id: transactionId },
                 data: { status: "FAILED", webhookRespondedLog: webhookStatusLog },
