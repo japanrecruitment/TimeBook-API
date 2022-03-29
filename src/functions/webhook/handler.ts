@@ -19,7 +19,7 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
         const stripe = new StripeLib();
         stripe.validateWebhook(event, {
             onSuccess(intent) {
-                isCanceled = intent.statement_descriptor.startsWith("CANCEL");
+                isCanceled = intent?.statement_descriptor?.startsWith("CANCEL");
                 transactionId = intent?.metadata?.transactionId;
                 reservationId = intent?.metadata?.reservationId;
                 userId = intent?.metadata?.userId;
@@ -30,6 +30,7 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
                 webhookStatusLog = intent;
             },
             onUnhandledWebhook(intent) {
+                isCanceled = intent?.statement_descriptor?.startsWith("CANCEL");
                 transactionId = intent?.metadata?.transactionId;
                 reservationId = intent?.metadata?.reservationId;
                 userId = intent?.metadata?.userId;
@@ -39,6 +40,7 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
             },
             onError() {},
         });
+        Log("isCancelled: ", isCanceled);
 
         if (!transactionStatus) return formatJSONResponse(404, { message: "Signature verification failed." });
 

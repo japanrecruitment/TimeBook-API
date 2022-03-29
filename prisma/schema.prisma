@@ -339,6 +339,7 @@ model Reservation {
   fromDateTime  DateTime          @default(now()) @db.Timestamp(6)
   toDateTime    DateTime
   status        ReservationStatus @default(PENDING)
+  remarks       String?           @db.Text
   createdAt     DateTime          @default(now()) @db.Timestamp(6)
   updatedAt     DateTime          @updatedAt
   space         Space             @relation(fields: [spaceId], references: [id])

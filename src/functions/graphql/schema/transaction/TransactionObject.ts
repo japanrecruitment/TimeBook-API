@@ -50,8 +50,7 @@ export const toTrasactionSelect = (selections, defaultValue: any = false): Prism
 
 const transactionResolver: IObjectTypeResolver<TransactionObject, Context> = {
     paymentMethodInfo: async ({ webhookReceivedLog, responseReceivedLog }) => {
-        if (!webhookReceivedLog || !responseReceivedLog) return;
-        const data = webhookReceivedLog.charges?.data || responseReceivedLog.charges?.data;
+        const data = webhookReceivedLog?.charges?.data || responseReceivedLog?.charges?.data;
         if (!data) return;
         if (!(data instanceof Array)) return;
         if (data.length <= 0) return;

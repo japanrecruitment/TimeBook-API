@@ -76,7 +76,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     if (reservation.space.account.suspended || reservation.space.account.host.suspended) {
         await store.reservation.update({
             where: { id: reservationId },
-            data: { status: "CANCELED", transaction: { update: { status: "CANCELED" } } },
+            data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
         return { message: "Successfully canceled reservation." };
     }
@@ -88,7 +88,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
         if (cancelPolicies.length <= 0) {
             await store.reservation.update({
                 where: { id: reservationId },
-                data: { status: "CANCELED", transaction: { update: { status: "CANCELED" } } },
+                data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
             });
             return { message: "Successfully canceled reservation." };
         }
@@ -109,7 +109,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     if (cancellationChargeRate <= 0) {
         await store.reservation.update({
             where: { id: reservationId },
-            data: { status: "CANCELED", transaction: { update: { status: "CANCELED" } } },
+            data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
         return { message: "Successfully canceled reservation." };
     }

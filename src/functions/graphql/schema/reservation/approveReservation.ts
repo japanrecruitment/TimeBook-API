@@ -34,9 +34,6 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
     if (!reservation.transaction.paymentIntentId)
         throw new GqlError({ code: "FORBIDDEN", message: "Payment intent id not found" });
 
-    const stripe = new StripeLib();
-    await stripe.capturePayment(reservation.transaction.paymentIntentId);
-
     await store.reservation.update({
         where: { id: reservationId },
         data: { status: "RESERVED", approved: true, approvedOn: new Date() },
