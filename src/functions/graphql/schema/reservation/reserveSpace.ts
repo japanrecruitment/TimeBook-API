@@ -89,10 +89,30 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 },
                 reservations: {
                     where: {
-                        OR: [
-                            { AND: [{ fromDateTime: { lte: fromDateTime } }, { toDateTime: { gte: toDateTime } }] },
-                            { AND: [{ fromDateTime: { gte: fromDateTime } }, { fromDateTime: { lte: toDateTime } }] },
-                            { AND: [{ toDateTime: { gte: fromDateTime } }, { toDateTime: { lte: toDateTime } }] },
+                        AND: [
+                            { status: { not: "CANCELED" } },
+                            {
+                                OR: [
+                                    {
+                                        AND: [
+                                            { fromDateTime: { lte: fromDateTime } },
+                                            { toDateTime: { gte: toDateTime } },
+                                        ],
+                                    },
+                                    {
+                                        AND: [
+                                            { fromDateTime: { gte: fromDateTime } },
+                                            { fromDateTime: { lte: toDateTime } },
+                                        ],
+                                    },
+                                    {
+                                        AND: [
+                                            { toDateTime: { gte: fromDateTime } },
+                                            { toDateTime: { lte: toDateTime } },
+                                        ],
+                                    },
+                                ],
+                            },
                         ],
                     },
                 },
