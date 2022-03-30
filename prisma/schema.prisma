@@ -374,7 +374,7 @@ model Transaction {
   reservationId       String               @unique
   reservation         Reservation          @relation(fields: [reservationId], references: [id])
   brand String
-  lastAuthorizedDate    DateTime
+  lastAuthorizedDate    DateTime    @default(now())
 }
 
 model TrainLine {

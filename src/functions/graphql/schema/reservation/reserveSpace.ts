@@ -213,7 +213,6 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     },
                 },
                 brand: paymentMethod.card?.brand,
-                lastAuthorizedDate: moment().startOf("day").unix(),
             },
         });
 
