@@ -4,6 +4,7 @@ export const environment = {
     NODE_ENV: process.env.NODE_ENV,
     DB_URL: process.env.DB_URL,
     EMAIL_QUEUE_URL: process.env.EMAIL_QUEUE_URL,
+    TRANSACTION_QUEUE: process.env.TRANSACTION_QUEUE,
     TOKEN_SECRET: process.env.TOKEN_SECRET,
     REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET,
     REDIS_HOST: process.env.REDIS_HOST,

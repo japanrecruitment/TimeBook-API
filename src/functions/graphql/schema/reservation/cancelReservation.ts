@@ -117,21 +117,21 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     const amount = cancellationChargeRate * reservation.transaction.amount;
     const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
 
-    const paymentMethod = reservation.transaction.responseReceivedLog as any;
+    const paymentIntent = reservation.transaction.responseReceivedLog as any;
 
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
         amount,
-        currency: paymentMethod.currency,
-        customer: paymentMethod.customer,
-        payment_method: paymentMethod.payment_method,
-        payment_method_types: paymentMethod.payment_method_types,
-        description: paymentMethod.description,
-        receipt_email: paymentMethod.receipt_email,
+        currency: paymentIntent.currency,
+        customer: paymentIntent.customer,
+        payment_method: paymentIntent.payment_method,
+        payment_method_types: paymentIntent.payment_method_types,
+        description: paymentIntent.description,
+        receipt_email: paymentIntent.receipt_email,
         capture_method: "automatic",
-        metadata: paymentMethod.metadata,
+        metadata: paymentIntent.metadata,
         statement_descriptor: `CANCEL_${environment.APP_READABLE_NAME}`.substring(0, 22),
         application_fee_amount: applicationFeeAmount,
-        transfer_data: paymentMethod.transfer_data,
+        transfer_data: paymentIntent.transfer_data,
         confirm: true,
     };
 

@@ -359,6 +359,8 @@ model Transaction {
   description         String               @db.Text
   amount              Float
   currency            String
+  brand               String
+  lastAuthorizedDate  DateTime             @db.Date
   status              TransactionStatus
   paymentIntentId     String?
   requestedLog        Json?

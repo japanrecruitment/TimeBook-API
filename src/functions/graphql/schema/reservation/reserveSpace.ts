@@ -90,7 +90,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 reservations: {
                     where: {
                         AND: [
-                            { status: { not: "CANCELED" } },
+                            { status: { notIn: ["CANCELED", "DISAPPROVED", "FAILED"] } },
                             {
                                 OR: [
                                     {
@@ -199,6 +199,8 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 currency: "JPY",
                 description: `Reservation of ${space.name}`,
                 status: "CREATED",
+                brand: paymentMethod.card.brand,
+                lastAuthorizedDate: new Date(),
                 account: { connect: { id: accountId } },
                 reservation: {
                     create: {

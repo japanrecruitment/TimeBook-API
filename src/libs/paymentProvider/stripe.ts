@@ -227,6 +227,18 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
+    async retrievePaymentIntent(id: string): Promise<Stripe.Response<Stripe.PaymentIntent>> {
+        try {
+            Log("[STARTED]: Retrieving stripe payment intent", id);
+            const intent = await stripe.paymentIntents.retrieve(id);
+            Log("[COMPLETED]: Retrieving stripe payment intent", intent);
+            return intent;
+        } catch (error) {
+            Log("[FAILED]: Retrieving stripe payment intent", error);
+            return error;
+        }
+    }
+
     async capturePayment(paymentIntentId: string) {
         try {
             Log("[STARTED]: Capturing stripe payment intent", paymentIntentId);
