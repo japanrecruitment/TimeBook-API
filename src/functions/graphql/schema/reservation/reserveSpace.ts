@@ -214,7 +214,6 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                         reservationId,
                     },
                 },
-                brand: paymentMethod.card?.brand,
             },
         });
 

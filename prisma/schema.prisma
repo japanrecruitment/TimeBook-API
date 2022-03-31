@@ -375,8 +375,6 @@ model Transaction {
   account             Account              @relation(fields: [accountId], references: [id])
   reservationId       String               @unique
   reservation         Reservation          @relation(fields: [reservationId], references: [id])
-  brand String
-  lastAuthorizedDate    DateTime    @default(now())
 }
 
 model TrainLine {
