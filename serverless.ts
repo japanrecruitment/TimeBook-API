@@ -45,7 +45,7 @@ const serverlessConfiguration: AWS = {
             REDIS_PORT: { "Fn::GetAtt": ["ElastiCacheCluster", "RedisEndpoint.Port"] },
             IP_STACK_KEY: "${env:IP_STACK_KEY}",
             EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
-            TRANSACTION_QUEUE: { Ref: "TransactionQueue" },
+            // TRANSACTION_QUEUE: { Ref: "TransactionQueue" },
             MEDIA_BUCKET: "${self:custom.mediaBucket}",
             MEDIA_UPLOAD_BUCKET: "${self:custom.uploadMediaBucket}",
             PUBLIC_MEDIA_BUCKET: "${self:custom.publicMediaBucket}",
