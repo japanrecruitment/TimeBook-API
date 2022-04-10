@@ -147,7 +147,7 @@ model Company {
   id                 String   @id @default(cuid())
   name               String   @db.VarChar(255)
   nameKana           String   @db.VarChar(255)
-  registrationNumber String   @db.VarBit(255)
+  registrationNumber String   @db.VarChar(255)
   createdAt          DateTime @default(now()) @db.Timestamp(6)
   updatedAt          DateTime @updatedAt
   accountId          String   @unique
