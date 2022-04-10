@@ -4,6 +4,7 @@ import { hostObjectResolvers, hostObjectTypeDefs } from "./HostObject";
 import { myHostInfoResolvers, myHostInfoTypeDefs } from "./myHostInfo";
 import { registerHostResolvers, registerHostTypeDefs } from "./registerHost";
 import { addHostPhotoIdResolvers, addHostPhotoIdTypeDefs } from "./addHostPhotoId";
+import { licenseResolvers, licenseTypeDefs } from "./license";
 
 export const hostTypeDefs = mergeTypeDefs([
     hostObjectTypeDefs,
@@ -11,6 +12,7 @@ export const hostTypeDefs = mergeTypeDefs([
     myHostInfoTypeDefs,
     registerHostTypeDefs,
     addHostPhotoIdTypeDefs,
+    licenseTypeDefs,
 ]);
 
 export const hostResolvers = mergeResolvers([
@@ -19,6 +21,7 @@ export const hostResolvers = mergeResolvers([
     myHostInfoResolvers,
     registerHostResolvers,
     addHostPhotoIdResolvers,
+    licenseResolvers,
 ]);
 
 export * from "./HostObject";
