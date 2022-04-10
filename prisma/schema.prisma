@@ -475,7 +475,7 @@ model Photo {
   photo          Host?      @relation(name: "photoId", fields: [photoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   photoId        String?    @unique
   license        License?   @relation(name: "licensePhoto", fields: [licenseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  licenseId      String?    @unique
+  licenseId      String?    
 }
 
 model License {
