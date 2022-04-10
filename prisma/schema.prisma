@@ -157,18 +157,19 @@ model Company {
 }
 
 model Host {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   type            HostType
-  name            String   @db.VarChar(255)
-  stripeAccountId String?  @db.VarChar(255)
-  approved        Boolean  @default(false)
-  suspended       Boolean  @default(false)
-  createdAt       DateTime @default(now()) @db.Timestamp(6)
-  updatedAt       DateTime @updatedAt
-  accountId       String   @unique
-  account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  profilePhoto    Photo?   @relation(name: "hostProfilePhoto")
-  photoId         Photo?   @relation(name: "photoId")
+  name            String    @db.VarChar(255)
+  stripeAccountId String?   @db.VarChar(255)
+  approved        Boolean   @default(false)
+  suspended       Boolean   @default(false)
+  createdAt       DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt
+  accountId       String    @unique
+  account         Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  profilePhoto    Photo?    @relation(name: "hostProfilePhoto")
+  photoId         Photo?    @relation(name: "photoId")
+  license         License[] @relation(name: "hostLicense")
 }
 
 model Session {
@@ -359,6 +360,8 @@ model Transaction {
   description         String               @db.Text
   amount              Float
   currency            String
+  brand               String
+  lastAuthorizedDate  DateTime             @db.Date
   status              TransactionStatus
   paymentIntentId     String?
   requestedLog        Json?
@@ -373,8 +376,6 @@ model Transaction {
   account             Account              @relation(fields: [accountId], references: [id])
   reservationId       String               @unique
   reservation         Reservation          @relation(fields: [reservationId], references: [id])
-  brand String
-  lastAuthorizedDate    DateTime    @default(now())
 }
 
 model TrainLine {
@@ -473,6 +474,20 @@ model Photo {
   hostId         String?    @unique
   photo          Host?      @relation(name: "photoId", fields: [photoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   photoId        String?    @unique
+  license        License?   @relation(name: "licensePhoto", fields: [licenseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  licenseId      String?    @unique
+}
+
+model License {
+  id        String   @id @default(cuid())
+  host      Host     @relation(name: "hostLicense", fields: [hostId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hostId    String
+  type      String?
+  approved  Boolean
+  remarks   String?
+  photos    Photo[]  @relation(name: "licensePhoto")
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
 }
 
 model Chat {

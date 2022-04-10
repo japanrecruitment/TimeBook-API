@@ -256,7 +256,7 @@ const emailQueue: AWS["resources"]["Resources"] = {
 };
 
 const transactionQueue: AWS["resources"]["Resources"] = {
-    EmailQueue: {
+    TransactionQueue: {
         Type: "AWS::SQS::Queue",
         Properties: {
             QueueName: "${self:service}-${sls:stage}-transaction-queue",
