@@ -8,6 +8,7 @@ import { PrismaSelect } from "graphql-map-selections";
 import { isEmpty } from "lodash";
 import { Context } from "../../../context";
 import { Photo, PhotoSelect, toPhotoSelect } from "../../media";
+import { LicenseObject, LicenseSelect, toLicenseSelect } from "./license";
 
 export type HostObject = Partial<Host> & {
     stripeAccount?: Partial<AccountLink>;
@@ -15,6 +16,7 @@ export type HostObject = Partial<Host> & {
     photoId?: Partial<Photo>;
     rating?: number;
     account?: { mySpace: { ratings: { rating: number }[] }[] };
+    license?: Partial<LicenseObject>[];
 };
 
 export type HostSelect = {
@@ -26,6 +28,7 @@ export type HostSelect = {
     accountId: true;
     photoId: PrismaSelect<PhotoSelect>;
     profilePhoto: PrismaSelect<PhotoSelect>;
+    license: PrismaSelect<LicenseSelect>;
     stripeAccountId: boolean;
 };
 
@@ -33,9 +36,11 @@ export const toHostSelect = (selections, defaultValue: any = false): PrismaSelec
     if (!selections || isEmpty(selections)) return defaultValue;
     const photoIdSelect = toPhotoSelect(selections?.photoId);
     const profilePhotoSelect = toPhotoSelect(selections?.profilePhoto);
+    const licenseSelect = toLicenseSelect(selections?.license);
     const hostSelect = pick(selections, "id", "type", "name", "stripeAccountId");
 
-    if (isEmpty(hostSelect) && !photoIdSelect && !profilePhotoSelect && !selections.stripeAccount) return defaultValue;
+    if (isEmpty(hostSelect) && !photoIdSelect && !profilePhotoSelect && !selections.stripeAccount && !licenseSelect)
+        return defaultValue;
 
     return {
         select: {
@@ -50,6 +55,7 @@ export const toHostSelect = (selections, defaultValue: any = false): PrismaSelec
             account: selections.rating
                 ? { select: { mySpace: { select: { ratings: { select: { rating: true } } } } } }
                 : false,
+            license: licenseSelect,
         } as HostSelect,
     };
 };
@@ -106,6 +112,7 @@ export const hostObjectTypeDefs = gql`
         stripeAccount: StripeAccount
         accountId: String
         rating: Float
+        license: [LicenseObject]
         createdAt: Date
         updatedAt: Date
     }
