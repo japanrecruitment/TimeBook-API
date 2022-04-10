@@ -1,7 +1,7 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
-import { Context } from "../../../context";
-import { ImageUploadInput, ImageUploadResult } from "../../media";
+import { Context } from "../../../../context";
+import { ImageUploadInput, ImageUploadResult } from "../../../media";
 import { S3Lib } from "@libs/S3";
 
 type AddLicenseInput = {
@@ -53,7 +53,7 @@ export const addLicenseTypeDefs = gql`
     }
 
     type Mutation {
-        addLicense(input: AddLicenseInput!) : [ImageUploadResult] @(requires: [host])
+        addLicense(input: AddLicenseInput!): [ImageUploadResult] @auth(requires: [host])
     }
 `;
 
