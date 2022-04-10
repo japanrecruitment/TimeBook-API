@@ -28,7 +28,6 @@ const addLicense: AddLicense = async (_, { input }, { authData, store }) => {
             photos: {
                 createMany: {
                     data: photos.map(({ mime }) => ({ type: "General", mime })),
-                    skipDuplicates: false,
                 },
             },
         },
