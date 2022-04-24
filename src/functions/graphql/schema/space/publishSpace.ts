@@ -1,4 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { environment } from "@utils/environment";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
@@ -21,6 +22,7 @@ const publishSpace: PublishSpace = async (_, { id }, { authData, store, dataSour
             nearestStations: true,
             pricePlans: true,
             spaceTypes: true,
+            photos: true,
         },
     });
 
@@ -41,7 +43,17 @@ const publishSpace: PublishSpace = async (_, { id }, { authData, store, dataSour
     if (!space.spaceTypes || space.spaceTypes.length <= 0)
         throw new GqlError({ code: "BAD_REQUEST", message: "A space must have atleast one space type" });
 
+    if (!space.photos || space.photos.length <= 0)
+        throw new GqlError({ code: "BAD_REQUEST", message: "A space must have atleast one photo" });
+
     await store.space.update({ where: { id }, data: { published: true } });
+
+    const thumbnailPhoto = space.photos[0];
+    const publicBucketName = environment.PUBLIC_MEDIA_BUCKET;
+    const awsRegion = "ap-northeast-1";
+    const imageSize = "medium";
+    const imageKey = `${thumbnailPhoto.id}.${thumbnailPhoto.mime.split("/")[1]}`;
+    const mediumImageUrl = `https://${publicBucketName}.s3.${awsRegion}.amazonaws.com/${imageSize}/${imageKey}`;
 
     await dataSources.spaceAlgolia.saveObject({
         objectID: id,
@@ -55,6 +67,7 @@ const publishSpace: PublishSpace = async (_, { id }, { authData, store, dataSour
         price: space.pricePlans?.map(({ amount, duration, type }) => ({ amount, duration, type })),
         spaceSize: space.spaceSize,
         spaceTypes: space.spaceTypes?.map(({ title }) => title),
+        thumbnail: mediumImageUrl,
         _geoloc: { lat: space.address?.latitude, lng: space.address?.longitude },
     });
 
