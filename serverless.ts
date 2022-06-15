@@ -63,6 +63,9 @@ const serverlessConfiguration: AWS = {
         webpack: {
             webpackConfig: "./webpack.config.js",
             includeModules: true,
+            packagerOptions: {
+                scripts: ["prisma generate"],
+            },
         },
         enterprise: {
             collectLambdaLogs: false,
@@ -71,7 +74,7 @@ const serverlessConfiguration: AWS = {
         uploadMediaBucket: "${self:service}-${sls:stage}-media-upload",
         publicMediaBucket: "timebook-public-media",
     },
-    plugins: ["serverless-webpack", "serverless-offline"],
+    plugins: ["serverless-webpack", "serverless-webpack-prisma", "serverless-offline"],
     variablesResolutionMode: "20210219",
     functions,
     resources,
