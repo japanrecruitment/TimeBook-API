@@ -23,6 +23,7 @@ export type SpaceIndexRecord = AlgoliaRecord & {
     thumbnail?: string;
     updatedAt?: number;
     viewCount?: number;
+    photo?: string;
 };
 
 export const spaceIndex = algoliaClient.initIndex(environment.isDev() ? `space_dev` : `space_prod`);

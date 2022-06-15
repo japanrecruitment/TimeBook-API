@@ -8,8 +8,8 @@ export const sendEmail = async (to: string, subject: string, body: string) => {
         Log("[STARTED] sending email");
         Log(to);
         const result = await SES.sendEmail({
-            Source: "Timebook <info@japanrecruitment.co.jp>",
-            ReplyToAddresses: ["Timebook <info@japanrecruitment.co.jp>"],
+            Source: "PocketSeq <info@pocketseq.com>",
+            ReplyToAddresses: ["PocketSeq <info@pocketseq.com>"],
             Destination: { ToAddresses: [to] },
             Message: {
                 Subject: {

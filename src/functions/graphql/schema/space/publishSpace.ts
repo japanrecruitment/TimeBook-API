@@ -70,6 +70,7 @@ const publishSpace: PublishSpace = async (_, { id }, { authData, store, dataSour
         thumbnail: mediumImageUrl,
         _geoloc: { lat: space.address?.latitude, lng: space.address?.longitude },
     });
+    // photo: `https://timebook-public-media.s3.ap-northeast-1.amazonaws.com/medium/${photo_id}.jpeg`,
 
     return { message: `Successfully published space` };
 };
