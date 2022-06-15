@@ -47,6 +47,7 @@
         "jsonwebtoken": "^8.5.1",
         "lodash": "^4.17.21",
         "moment": "^2.29.1",
+        "sharp": "^0.30.6",
         "stripe": "^8.157.0",
         "uuid": "^8.3.2",
         "zb-email-verifier": "^0.6.5"
