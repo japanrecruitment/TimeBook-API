@@ -7,6 +7,7 @@ const serverlessConfiguration: AWS = {
     service: "pocketseq-api",
     frameworkVersion: "3",
     useDotenv: true,
+    package: { individually: true },
     provider: {
         name: "aws",
         runtime: "nodejs14.x",
