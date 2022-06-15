@@ -4,7 +4,7 @@ import * as functions from "./src/functions";
 import resources from "./cloudformation-template";
 
 const serverlessConfiguration: AWS = {
-    service: "timebook-api",
+    service: "pocketseq-api",
     frameworkVersion: "3",
     useDotenv: true,
     provider: {
