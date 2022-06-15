@@ -1,7 +1,7 @@
 {
     "name": "timebook-api",
     "version": "1.0.0",
-    "description": "This is simple REST API example for AWS Lambda By Serverless framwork with TypeScript and MongoDB Atlas.",
+    "description": "PocketSeq API",
     "main": "serverless.ts",
     "scripts": {
         "lint": "tslint -p tsconfig.json -c tslint.json",
