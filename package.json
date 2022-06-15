@@ -12,6 +12,7 @@
         "schema:seed": "npx prisma db seed",
         "schema:generate": "npx prisma generate",
         "schema:format": "npx prisma format",
+        "sls:deploy": "npx serverless deploy --aws-profile JRG_AWS",
         "test": "mocha",
         "coverage": "nyc npm run test"
     },

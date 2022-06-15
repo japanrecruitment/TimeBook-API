@@ -3,11 +3,20 @@ import * as functions from "./src/functions";
 
 import resources from "./cloudformation-template";
 
-const serverlessConfiguration: AWS = {
+const serverlessConfiguration: any = {
     service: "pocketseq-api",
     frameworkVersion: "3",
     useDotenv: true,
-    package: { individually: false, excludeDevDependencies: true },
+    package: {
+        individually: false,
+        excludeDevDependencies: true,
+        patterns: [
+            "!node_modules/.prisma/client/libquery_engine-*",
+            "node_modules/.prisma/client/libquery_engine-rhel-*",
+            "!node_modules/prisma/libquery_engine-*",
+            "!node_modules/@prisma/engines/**",
+        ],
+    },
     provider: {
         name: "aws",
         runtime: "nodejs14.x",
