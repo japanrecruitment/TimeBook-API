@@ -11,7 +11,7 @@ export default `
                     <p>
                         ※本メールは送信専用の為、ご返信いただけません。<br />
         　              お問い合わせは下記URLからお願いいたします。<br />
-        　              <a href="https://www.timebook.co.jp/support">https://www.timebook.co.jp/support</a><br />
+        　              <a href="https://www.pocketseq.com/support">https://www.pocketseq.com/support</a><br />
                         運営：株式会社シークエンス
                     </p>
                 </div>
@@ -42,7 +42,7 @@ export default `
                     <strong
                         >株式会社 シークエンス</strong
                     >
-                    <br />〒143-0016 東京都大田区大森北 4－12－3 CASA K 2C<br />メール:　info@timebook.jp<br />お問い合わせ:　03-6404-8046
+                    <br />〒143-0016 東京都大田区大森北 4－12－3 CASA K 2C<br />メール:　info@pocketseq.com<br />お問い合わせ:　03-6404-8046
                     </p>
                 </td>
             </tr>
