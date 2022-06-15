@@ -5,7 +5,7 @@ import resources from "./cloudformation-template";
 
 const serverlessConfiguration: AWS = {
     service: "timebook-api",
-    frameworkVersion: "2",
+    frameworkVersion: "3",
     useDotenv: true,
     provider: {
         name: "aws",
