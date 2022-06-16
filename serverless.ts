@@ -3,19 +3,13 @@ import * as functions from "./src/functions";
 
 import resources from "./cloudformation-template";
 
-const serverlessConfiguration: any = {
+const serverlessConfiguration: AWS = {
     service: "pocketseq-api",
     frameworkVersion: "3",
     useDotenv: true,
     package: {
         individually: false,
         excludeDevDependencies: true,
-        patterns: [
-            "!node_modules/.prisma/client/libquery_engine-*",
-            "node_modules/.prisma/client/libquery_engine-rhel-*",
-            "!node_modules/prisma/libquery_engine-*",
-            "!node_modules/@prisma/engines/**",
-        ],
     },
     provider: {
         name: "aws",
@@ -80,8 +74,8 @@ const serverlessConfiguration: any = {
         enterprise: {
             collectLambdaLogs: false,
         },
-        mediaBucket: "${self:service}-${sls:stage}-media",
-        uploadMediaBucket: "${self:service}-${sls:stage}-media-upload",
+        mediaBucket: "timebook-api-${sls:stage}-media",
+        uploadMediaBucket: "timebook-api-${sls:stage}-media-upload",
         publicMediaBucket: "timebook-public-media",
     },
     plugins: ["serverless-webpack", "serverless-webpack-prisma", "serverless-offline"],
