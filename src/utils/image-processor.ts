@@ -1,4 +1,4 @@
-// import sharp, { Sharp } from "sharp";
+import sharp, { Sharp } from "sharp";
 import { Log } from ".";
 import { ImageTypes } from "../functions/graphql/schema/media";
 
