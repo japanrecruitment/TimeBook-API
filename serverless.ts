@@ -73,9 +73,6 @@ const serverlessConfiguration: AWS = {
         webpack: {
             webpackConfig: "./webpack.config.js",
             includeModules: true,
-            packagerOptions: {
-                scripts: ["prisma generate"],
-            },
         },
         enterprise: {
             collectLambdaLogs: false,
