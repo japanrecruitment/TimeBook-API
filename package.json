@@ -6,6 +6,7 @@
     "scripts": {
         "lint": "tslint -p tsconfig.json -c tslint.json",
         "local": "serverless offline --host 0.0.0.0 --httpPort 3001",
+        "postinstall": "npm run schema:generate",
         "deploy": "serverless deploy",
         "schema:migrate": "npx prisma migrate dev --skip-seed",
         "schema:reset": "npx prisma migrate reset --skip-seed",
