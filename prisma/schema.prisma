@@ -5,7 +5,7 @@ datasource db {
 
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "debian-openssl-1.1.x"]
 }
 
 enum Role {
@@ -475,7 +475,7 @@ model Photo {
   photo          Host?      @relation(name: "photoId", fields: [photoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   photoId        String?    @unique
   license        License?   @relation(name: "licensePhoto", fields: [licenseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  licenseId      String?    
+  licenseId      String?
 }
 
 model License {
