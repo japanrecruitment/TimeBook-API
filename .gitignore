@@ -106,4 +106,7 @@ dist
 # Webpack
 .webpack/
 
+# esbuild directories
+.esbuild
+
 .DS_Store

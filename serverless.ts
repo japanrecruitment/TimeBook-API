@@ -31,6 +31,8 @@ const serverlessConfiguration: AWS = {
             securityGroupIds: [{ Ref: "LambdaSecurityGroup" }],
         },
         environment: {
+            AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
+            NODE_OPTIONS: "--enable-source-maps --stack-trace-limit=1000",
             NODE_ENV: "${opt:stage, 'dev'}",
             DB_URL: "${env:DB_URL}",
             TOKEN_SECRET: "${env:TOKEN_SECRET}",
@@ -56,13 +58,21 @@ const serverlessConfiguration: AWS = {
             GOOGLE_MAP_API_KEY: "${env:GOOGLE_MAP_API_KEY}",
         },
         apiGateway: {
+            minimumCompressionSize: 1024,
             shouldStartNameWithService: true,
         },
     },
     custom: {
-        webpack: {
-            webpackConfig: "./webpack.config.js",
-            includeModules: true,
+        esbuild: {
+            bundle: true,
+            external: ["sharp"],
+            minify: false,
+            sourcemap: true,
+            exclude: ["aws-sdk"],
+            target: "node14",
+            define: { "require.resolve": undefined },
+            platform: "node",
+            concurrency: 10,
         },
         enterprise: {
             collectLambdaLogs: false,
@@ -71,7 +81,8 @@ const serverlessConfiguration: AWS = {
         uploadMediaBucket: "timebook-api-${sls:stage}-media-upload",
         publicMediaBucket: "timebook-public-media",
     },
-    plugins: ["serverless-webpack", "serverless-offline"],
+    plugins: ["serverless-esbuild", "serverless-offline"],
+    package: { individually: true },
     variablesResolutionMode: "20210219",
     functions,
     resources,
