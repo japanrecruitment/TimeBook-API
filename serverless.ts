@@ -5,7 +5,7 @@ import resources from "./cloudformation-template";
 
 const serverlessConfiguration: AWS = {
     service: "pocketseq-api",
-    frameworkVersion: "2",
+    frameworkVersion: "3",
     useDotenv: true,
     provider: {
         name: "aws",
@@ -31,8 +31,6 @@ const serverlessConfiguration: AWS = {
             securityGroupIds: [{ Ref: "LambdaSecurityGroup" }],
         },
         environment: {
-            AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
-            NODE_OPTIONS: "--enable-source-maps --stack-trace-limit=1000",
             NODE_ENV: "${opt:stage, 'dev'}",
             DB_URL: "${env:DB_URL}",
             TOKEN_SECRET: "${env:TOKEN_SECRET}",
@@ -58,28 +56,15 @@ const serverlessConfiguration: AWS = {
             GOOGLE_MAP_API_KEY: "${env:GOOGLE_MAP_API_KEY}",
         },
         apiGateway: {
-            minimumCompressionSize: 1024,
             shouldStartNameWithService: true,
         },
     },
     custom: {
-        esbuild: {
-            bundle: true,
-            external: ["sharp"],
-            minify: false,
-            sourcemap: true,
-            exclude: ["aws-sdk"],
-            target: "node14",
-            define: { "require.resolve": undefined },
-            platform: "node",
-            concurrency: 10,
+        webpack: {
+            webpackConfig: "./webpack.config.js",
+            includeModules: true,
             packagerOptions: {
-                scripts: [
-                    "npx prisma generate",
-                    "rm -rf node_modules/.prisma/client/libquery_engine-*",
-                    "rm -rf node_modules/prisma/libquery_engine-*",
-                    "rm -rf node_modules/@prisma/engines/**",
-                ],
+                scripts: ["prisma generate"],
             },
         },
         enterprise: {
@@ -89,8 +74,16 @@ const serverlessConfiguration: AWS = {
         uploadMediaBucket: "timebook-api-${sls:stage}-media-upload",
         publicMediaBucket: "timebook-public-media",
     },
-    plugins: ["serverless-esbuild", "serverless-offline"],
-    package: { individually: true },
+    plugins: ["serverless-webpack", "serverless-webpack-prisma", "serverless-offline"],
+    package: {
+        patterns: [
+            "!node_modules/.prisma/client/libquery_engine-*",
+            "node_modules/.prisma/client/libquery_engine-rhel-*",
+            "!node_modules/prisma/libquery_engine-*",
+            "!node_modules/@prisma/engines/**",
+        ],
+        individually: true,
+    },
     variablesResolutionMode: "20210219",
     functions,
     resources,

@@ -54,7 +54,7 @@
         "zb-email-verifier": "^0.7.0"
     },
     "devDependencies": {
-        "@serverless/typescript": "^2.71.0",
+        "@serverless/typescript": "^3.19.0",
         "@types/aws-lambda": "^8.10.100",
         "@types/chai": "^4.3.0",
         "@types/ioredis": "^4.28.0",
@@ -69,21 +69,26 @@
         "aws-sdk": "^2.1120.0",
         "chai": "^4.3.6",
         "cross-env": "^7.0.2",
-        "esbuild": "^0.14.47",
+        "fork-ts-checker-webpack-plugin": "^6.0.0",
         "json-schema-to-ts": "^1.4.1",
         "lambda-tester": "^4.0.1",
         "mocha": "^7.2.0",
         "nyc": "^15.1.0",
         "prisma": "^3.15.0",
-        "serverless": "^2.71.0",
+        "serverless": "^3.19.0",
         "serverless-domain-manager": "^5.8.0",
-        "serverless-esbuild": "^1.17.1",
         "serverless-offline": "^8.7.0",
+        "serverless-webpack": "^5.2.0",
+        "serverless-webpack-prisma": "^1.1.0",
         "sinon": "^9.0.0",
         "source-map-support": "^0.5.21",
+        "ts-loader": "^8.0.10",
         "ts-node": "^8.10.0",
         "tsconfig-paths": "^3.9.0",
+        "tsconfig-paths-webpack-plugin": "^3.3.0",
         "tslint": "^6.1.2",
-        "typescript": "^4.6.2"
+        "typescript": "^4.6.2",
+        "webpack": "^5.4.0",
+        "webpack-node-externals": "^2.5.2"
     }
 }
