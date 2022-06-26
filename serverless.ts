@@ -75,15 +75,15 @@ const serverlessConfiguration: AWS = {
         publicMediaBucket: "timebook-public-media",
     },
     plugins: ["serverless-webpack", "serverless-webpack-prisma", "serverless-offline"],
-    package: {
-        patterns: [
-            "!node_modules/.prisma/client/libquery_engine-*",
-            "node_modules/.prisma/client/libquery_engine-rhel-*",
-            "!node_modules/prisma/libquery_engine-*",
-            "!node_modules/@prisma/engines/**",
-        ],
-        individually: true,
-    },
+    // package: {
+    //     patterns: [
+    //         "!node_modules/.prisma/client/libquery_engine-*",
+    //         "node_modules/.prisma/client/libquery_engine-rhel-*",
+    //         "!node_modules/prisma/libquery_engine-*",
+    //         "!node_modules/@prisma/engines/**",
+    //     ],
+    //     individually: true,
+    // },
     variablesResolutionMode: "20210219",
     functions,
     resources,
