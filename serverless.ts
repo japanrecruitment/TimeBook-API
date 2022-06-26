@@ -5,18 +5,8 @@ import resources from "./cloudformation-template";
 
 const serverlessConfiguration: AWS = {
     service: "pocketseq-api",
-    frameworkVersion: "3",
+    frameworkVersion: "2",
     useDotenv: true,
-    package: {
-        individually: false,
-        excludeDevDependencies: true,
-        // exclude: [
-        //     "node_modules/.prisma/client/libquery_engine-*",
-        //     "node_modules/prisma/libquery_engine-*",
-        //     "node_modules/@prisma/engines/**",
-        // ],
-        // include: ["node_modules/.prisma/client/libquery_engine-rhel-*"],
-    },
     provider: {
         name: "aws",
         runtime: "nodejs14.x",
@@ -73,9 +63,6 @@ const serverlessConfiguration: AWS = {
         webpack: {
             webpackConfig: "./webpack.config.js",
             includeModules: true,
-            packagerOptions: {
-                scripts: ["prisma generate"],
-            },
         },
         enterprise: {
             collectLambdaLogs: false,
@@ -84,7 +71,7 @@ const serverlessConfiguration: AWS = {
         uploadMediaBucket: "timebook-api-${sls:stage}-media-upload",
         publicMediaBucket: "timebook-public-media",
     },
-    plugins: ["serverless-webpack", "serverless-webpack-prisma", "serverless-offline"],
+    plugins: ["serverless-webpack", "serverless-offline"],
     variablesResolutionMode: "20210219",
     functions,
     resources,
