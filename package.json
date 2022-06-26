@@ -69,6 +69,7 @@
         "aws-sdk": "^2.1120.0",
         "chai": "^4.3.6",
         "cross-env": "^7.0.2",
+        "esbuild": "^0.14.47",
         "json-schema-to-ts": "^1.4.1",
         "lambda-tester": "^4.0.1",
         "mocha": "^7.2.0",
