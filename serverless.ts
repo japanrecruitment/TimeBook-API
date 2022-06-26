@@ -73,6 +73,14 @@ const serverlessConfiguration: AWS = {
             define: { "require.resolve": undefined },
             platform: "node",
             concurrency: 10,
+            packagerOptions: {
+                scripts: [
+                    "npx prisma generate",
+                    "rm -rf node_modules/.prisma/client/libquery_engine-*",
+                    "rm -rf node_modules/prisma/libquery_engine-*",
+                    "rm -rf node_modules/@prisma/engines/**",
+                ],
+            },
         },
         enterprise: {
             collectLambdaLogs: false,
