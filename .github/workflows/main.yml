@@ -21,7 +21,7 @@ jobs:
             - run: npm ci
             - run: SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm install --arch=x64 --platform=linux sharp
             - name: Serverless Deploy
-              uses: vnshgrg/github-action-amazon-lambda-serverless@nodejs
+              uses: vnshgrg/github-action-amazon-lambda-serverless@v3
               with:
                   args: deploy --stage prod
               env:
