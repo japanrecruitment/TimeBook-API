@@ -13,7 +13,8 @@
         "schema:seed": "npx prisma db seed",
         "schema:generate": "npx prisma generate",
         "schema:format": "npx prisma format",
-        "sls:deploy": "npx serverless deploy --aws-profile JRG_AWS",
+        "sls:deploy": "npx prisma generate && npx serverless deploy --aws-profile JRG_AWS --force",
+        "sls:deploy:prod": "npx prisma generate && npx serverless deploy --stage prod --aws-profile JRG_AWS --force",
         "test": "mocha",
         "coverage": "nyc npm run test"
     },
@@ -48,10 +49,10 @@
         "ioredis": "^4.28.0",
         "jsonwebtoken": "^8.5.0",
         "lodash": "^4.17.21",
-        "moment": "^2.29.3",
-        "sharp": "^0.30.0",
-        "stripe": "^8.219.0",
-        "zb-email-verifier": "^0.7.0"
+        "moment": "^2.29.1",
+        "stripe": "^8.157.0",
+        "uuid": "^8.3.2",
+        "zb-email-verifier": "^0.6.5"
     },
     "devDependencies": {
         "@serverless/typescript": "^3.19.0",
