@@ -57,8 +57,6 @@ const addHotel: AddHotel = async (_, { input }, { authData, store }, info) => {
 
     const hotelSelect = toHotelSelect(mapSelections(info).hotel)?.select;
 
-    Log(accountId, checkInTime, checkOutTime);
-
     const hotel = await store.hotel.create({
         data: {
             checkInTime,
@@ -85,7 +83,7 @@ const addHotel: AddHotel = async (_, { input }, { authData, store }, info) => {
             return { key, mime, type, url };
         });
 
-    Log(hotel,uploadRes);
+    Log(hotel, uploadRes);
 
     return {
         message: "Successfully added a hotel in a draft",
