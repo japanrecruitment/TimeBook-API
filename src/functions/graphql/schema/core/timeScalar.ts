@@ -32,7 +32,7 @@ function mapToDate(value: string): Date {
 }
 
 function mapToTime(date: Date): string {
-    return moment(date).add(15, "m").format("HH:mm:ss");
+    return moment(date).format("HH:mm:ss");
 }
 
 export const TimeScalar: GraphQLScalarType = new GraphQLScalarType({
