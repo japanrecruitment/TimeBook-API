@@ -73,7 +73,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         "settings",
         "spaceTypes",
         "address",
-        "photo",
+        "photos",
         "host",
         "reservedDates",
         "ratings"
