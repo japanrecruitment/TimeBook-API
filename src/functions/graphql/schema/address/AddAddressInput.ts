@@ -1,4 +1,24 @@
 import { gql } from "apollo-server-core";
+import { GqlError } from "../../error";
+
+export function validateAddAddressInput(input: AddAddressInput): AddAddressInput {
+    let { addressLine1, city, postalCode, prefectureId, addressLine2 } = input;
+
+    addressLine1 = addressLine1?.trim();
+    city = city?.trim();
+    postalCode = postalCode?.trim();
+    addressLine2 = addressLine2?.trim();
+
+    if (addressLine1 === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Address line 1 cannot be empty" });
+
+    if (city === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "City cannot be empty" });
+
+    if (postalCode === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Postal code cannot be empty" });
+
+    if (!prefectureId) throw new GqlError({ code: "BAD_USER_INPUT", message: "Prefecture is required" });
+
+    return { addressLine1, city, postalCode, prefectureId, addressLine2 };
+}
 
 export type AddAddressInput = {
     addressLine1: string;

@@ -21,6 +21,7 @@ export const allStationsTypeDefs = gql`
         address: String
         longitude: Float
         latitude: Float
+        prefectureCode: Int
     }
 
     type Query {

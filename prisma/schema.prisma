@@ -120,6 +120,7 @@ model Account {
   sentMessages   Message[]
   myTransaction  Transaction[]
   givenRatings   Rating[]
+  hotels         Hotel[]
 }
 
 model PaymentSource {
@@ -497,7 +498,7 @@ model Photo {
   hotelRoomId    String?
   packagePlan    PackagePlan? @relation(name: "HotelPackagePlanPhoto", fields: [packagePlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   packagePlanId  String?
-  option         Option?      @relation(name: "OptionPhoto", fields: [optionId], references: [id])
+  option         Option?      @relation(name: "OptionPhoto", fields: [optionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   optionId       String?
 }
 
@@ -542,6 +543,8 @@ model Hotel {
   status          HotelStatus           @default(DRAFTED)
   address         Address?
   nearestStations HotelNearestStation[]
+  accountId       String
+  account         Account               @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   photos          Photo[]               @relation(name: "HotelPhoto")
   rooms           HotelRoom[]           @relation(name: "HotelRooms")
   createdAt       DateTime              @default(now()) @db.Timestamp(6)
@@ -549,14 +552,12 @@ model Hotel {
 }
 
 model HotelNearestStation {
-  hotel      Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hotel      Hotel   @relation(fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   hotelId    String
-  station    Station  @relation(fields: [stationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  station    Station @relation(fields: [stationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   stationId  Int
   accessType String
   time       Int
-  createdAt  DateTime @default(now()) @db.Timestamp(6)
-  updatedAt  DateTime @updatedAt
 
   @@id([hotelId, stationId])
 }
