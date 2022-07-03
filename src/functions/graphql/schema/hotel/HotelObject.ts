@@ -6,11 +6,13 @@ import { isEmpty } from "lodash";
 import { AddressObject, AddressSelect, toAddressSelect } from "../address";
 import { Photo, PhotoSelect, toPhotoSelect } from "../media";
 import { HotelNearestStationObject, HotelNearestStationSelect, toHotelNearestStationSelect } from "./nearest-stations";
+import { HotelRoomObject, HotelRoomSelect, toHotelRoomSelect } from "./rooms";
 
 export type HotelObject = Partial<Hotel> & {
     address?: Partial<AddressObject>;
     nearestStations?: Partial<HotelNearestStationObject>[];
     photos?: Partial<Photo>[];
+    rooms?: Partial<HotelRoomObject>[];
 };
 
 export type HotelSelect = {
@@ -23,6 +25,7 @@ export type HotelSelect = {
     address: PrismaSelect<AddressSelect>;
     nearestStations: PrismaSelect<HotelNearestStationSelect>;
     photos: PrismaSelect<PhotoSelect>;
+    rooms: PrismaSelect<HotelRoomSelect>;
     createdAt: boolean;
     updatedAt: boolean;
 };
@@ -32,8 +35,10 @@ export function toHotelSelect(selections, defaultValue: any = false): PrismaSele
     const addressSelect = toAddressSelect(selections.address);
     const nearestStationsSelect = toHotelNearestStationSelect(selections.nearestStations);
     const photosSelect = toPhotoSelect(selections.photos);
-    const hotelSelect = omit(selections, "address", "nearestStations", "photos");
-    if (isEmpty(hotelSelect) && !addressSelect && !nearestStationsSelect && !photosSelect) return defaultValue;
+    const roomsSelect = toHotelRoomSelect(selections.rooms);
+    const hotelSelect = omit(selections, "address", "nearestStations", "photos", "rooms");
+    if (isEmpty(hotelSelect) && !addressSelect && !nearestStationsSelect && !photosSelect && !roomsSelect)
+        return defaultValue;
 
     return {
         select: {
@@ -41,6 +46,7 @@ export function toHotelSelect(selections, defaultValue: any = false): PrismaSele
             address: addressSelect,
             nearestStations: nearestStationsSelect,
             photos: photosSelect,
+            rooms: roomsSelect,
         } as HotelSelect,
     };
 }
@@ -63,6 +69,7 @@ export const hotelObjectTypeDefs = gql`
         address: AddressObject
         nearestStations: [HotelNearestStationObject]
         photos: [Photo]
+        rooms: [HotelRoomObject]
         createdAt: Date
         updatedAt: Date
     }
