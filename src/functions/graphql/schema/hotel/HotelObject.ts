@@ -26,6 +26,7 @@ export type HotelSelect = {
     nearestStations: PrismaSelect<HotelNearestStationSelect>;
     photos: PrismaSelect<PhotoSelect>;
     rooms: PrismaSelect<HotelRoomSelect>;
+    accountId: boolean;
     createdAt: boolean;
     updatedAt: boolean;
 };
@@ -47,6 +48,7 @@ export function toHotelSelect(selections, defaultValue: any = false): PrismaSele
             nearestStations: nearestStationsSelect,
             photos: photosSelect,
             rooms: roomsSelect,
+            accountId: true,
         } as HotelSelect,
     };
 }
@@ -65,7 +67,7 @@ export const hotelObjectTypeDefs = gql`
         description: String
         checkInTime: Time
         checkOutTime: Time
-        status: HotelStatus
+        status: HotelStatus @auth(requires: [admin], allowSelf: true)
         address: AddressObject
         nearestStations: [HotelNearestStationObject]
         photos: [Photo]
