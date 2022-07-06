@@ -3,6 +3,7 @@ import { S3Lib } from "@libs/S3";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
+import { isEmpty } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { AddAddressInput, validateAddAddressInput } from "../address";
@@ -16,9 +17,10 @@ function validateAddHotelInput(input: AddHotelInput): AddHotelInput {
     description = description?.trim();
     name = name?.trim();
 
-    if (!description) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
+    if (isEmpty(description))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Hotel description cannot be empty" });
 
-    if (!name) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
+    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Hotel name cannot be empty" });
 
     address = validateAddAddressInput(address);
 
@@ -49,7 +51,6 @@ type AddHotel = IFieldResolver<any, Context, AddHotelArgs, Promise<AddHotelResul
 
 const addHotel: AddHotel = async (_, { input }, { authData, store }, info) => {
     const { accountId } = authData || {};
-
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const validInput = validateAddHotelInput(input);

@@ -1,14 +1,22 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
+import { GqlError } from "../../../error";
 import { Context } from "../../../context";
-import { PriceSchemeObject } from "./PriceSchemeObject";
+import { PriceSchemeObject, toPriceSchemeSelect } from "./PriceSchemeObject";
+import { mapSelections } from "graphql-map-selections";
+import { Log } from "@utils/logger";
+import { numToAlphaName } from "@utils/compute";
 
 function validateAddPriceSchemeInput(input: AddPriceSchemeInput): AddPriceSchemeInput {
+    let { roomCharge } = input;
+
+    if (roomCharge <= 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Room charge cannot be less than or equal to zero." });
+
     return input;
 }
 
 type AddPriceSchemeInput = {
-    name: string;
     roomCharge: number;
     oneAdultCharge: number;
     twoAdultCharge: number;
@@ -41,15 +49,40 @@ type AddPriceSchemeResult = {
 
 type AddPriceScheme = IFieldResolver<any, Context, AddPriceSchemeArgs, Promise<AddPriceSchemeResult>>;
 
-const addPriceScheme: AddPriceScheme = async () => {
+const addPriceScheme: AddPriceScheme = async (_, { hotelId, input }, { authData, store }, info) => {
+    const { accountId } = authData || {};
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+
+    const validInput = validateAddPriceSchemeInput(input);
+
+    const hotel = await store.hotel.findFirst({
+        where: { id: hotelId, accountId },
+        select: { _count: { select: { priceSchemes: true } } },
+    });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+
+    Log("addPriceScheme: hotel: ", hotel);
+
+    const priceSchemeSelect = toPriceSchemeSelect(mapSelections(info).priceScheme).select;
+    const priceScheme = await store.priceScheme.create({
+        data: {
+            ...validInput,
+            name: numToAlphaName(hotel._count.priceSchemes, ""),
+            hotel: { connect: { id: hotelId } },
+        },
+        select: priceSchemeSelect,
+    });
+
+    Log("addPriceScheme: ", priceScheme);
+
     return {
         message: "Successfully added a Price Scheme!!",
+        priceScheme,
     };
 };
 
 export const addPriceSchemeTypeDefs = gql`
     input AddPriceSchemeInput {
-        name: String!
         roomCharge: Int!
         oneAdultCharge: Int
         twoAdultCharge: Int

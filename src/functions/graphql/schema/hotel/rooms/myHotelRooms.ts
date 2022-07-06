@@ -2,6 +2,7 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
+import { isEmpty } from "lodash";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { HotelRoomObject, toHotelRoomSelect } from "./HotelRoomObject";
@@ -20,10 +21,14 @@ const myHotelRooms: MyHotelRooms = async (_, { hotelId }, { authData, store }, i
 
     const hotelRoomSelect = toHotelRoomSelect(mapSelections(info))?.select;
 
-    const myHotelRooms = await store.hotelRoom.findMany({
-        where: { hotelId },
-        select: hotelRoomSelect,
+    const myHotels = await store.hotel.findMany({
+        where: { id: hotelId, accountId },
+        select: { rooms: { select: hotelRoomSelect } },
     });
+
+    if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+
+    const myHotelRooms = myHotels.flatMap(({ rooms }) => rooms).filter((room) => room);
 
     Log(`hotelId: `, hotelId, `myHotelRooms: `, myHotelRooms);
 

@@ -4,6 +4,7 @@ import { HotelPaymentTerm } from "@prisma/client";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
+import { isEmpty } from "lodash";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { ImageUploadInput, ImageUploadResult } from "../../media";
@@ -15,9 +16,10 @@ function validateAddHotelInput(input: AddHotelRoomInput): AddHotelRoomInput {
     description = description?.trim();
     name = name?.trim();
 
-    if (!description) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
+    if (isEmpty(description))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Hotel description cannot be empty" });
 
-    if (!name) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
+    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Hotel name cannot be empty" });
 
     if (maxCapacityAdult && maxCapacityAdult < 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum adult capacity" });
@@ -52,13 +54,12 @@ type AddHotelRoom = IFieldResolver<any, Context, AddHotelRoomArgs, Promise<AddHo
 
 const addHotelRoom: AddHotelRoom = async (_, { hotelId, input }, { authData, store }, info) => {
     const { accountId } = authData || {};
-
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const validInput = validateAddHotelInput(input);
     const { description, maxCapacityAdult, maxCapacityChild, name, paymentTerm, photos, stock } = validInput;
 
-    const hotel = await store.hotel.findUnique({ where: { id: hotelId } });
+    const hotel = await store.hotel.findFirst({ where: { id: hotelId, accountId } });
     if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
 
     const hotelRoomSelect = toHotelRoomSelect(mapSelections(info).hotelRoom)?.select;

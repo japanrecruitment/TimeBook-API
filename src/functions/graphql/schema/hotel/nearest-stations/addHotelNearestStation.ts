@@ -1,10 +1,13 @@
 import { gql } from "apollo-server-core";
+import { isEmpty } from "lodash";
 import { GqlError } from "../../../error";
 
 export function validateHotelNearestStationInput(input: AddHotelNearestStationInput): AddHotelNearestStationInput {
     let { accessType, stationId, time } = input;
 
     accessType = accessType.trim();
+
+    if (isEmpty(accessType)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Access type cannot be empty" });
 
     return { accessType, stationId, time };
 }

@@ -5,24 +5,27 @@ import { hotelByIdResolvers, hotelByIdTypeDefs } from "./hotelById";
 import { hotelObjectResolvers, hotelObjectTypeDefs } from "./HotelObject";
 import { myHotelsResolvers, myHotelsTypeDefs } from "./myHotels";
 import { hotelNearestStationResolvers, hotelNearestStationTypeDefs } from "./nearest-stations";
+import { priceSchemeResolvers, priceSchemeTypeDefs } from "./price-scheme";
 import { hotelRoomResolvers, hotelRoomTypeDefs } from "./rooms";
 
 export const typeDefs = mergeTypeDefs([
     addHotelTypeDefs,
     hotelObjectTypeDefs,
-    hotelNearestStationTypeDefs,
-    hotelRoomTypeDefs,
     allHotelsTypeDefs,
     myHotelsTypeDefs,
     hotelByIdTypeDefs,
+    hotelNearestStationTypeDefs,
+    hotelRoomTypeDefs,
+    priceSchemeTypeDefs,
 ]);
 
 export const resolvers = mergeResolvers([
     addHotelResolvers,
     hotelObjectResolvers,
-    hotelNearestStationResolvers,
-    hotelRoomResolvers,
     allHotelsResolvers,
     myHotelsResolvers,
     hotelByIdResolvers,
+    hotelNearestStationResolvers,
+    hotelRoomResolvers,
+    priceSchemeResolvers,
 ]);
