@@ -24,3 +24,5 @@ export const hotelNearestStationObjectTypeDefs = gql`
         accessType: String
     }
 `;
+
+export const hotelNearestStationObjectResolvers = {};

@@ -43,3 +43,5 @@ export const addHotelNearestStationTypeDefs = gql`
         time: Int!
     }
 `;
+
+export const addHotelNearestStationResolvers = {};

@@ -22,7 +22,7 @@ const myHotelRooms: MyHotelRooms = async (_, { hotelId }, { authData, store }, i
     const hotelRoomSelect = toHotelRoomSelect(mapSelections(info))?.select;
 
     const myHotels = await store.hotel.findMany({
-        where: { id: hotelId, accountId },
+        where: { id: hotelId || undefined, accountId },
         select: { rooms: { select: hotelRoomSelect } },
     });
 

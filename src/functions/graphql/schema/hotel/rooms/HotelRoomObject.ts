@@ -1,4 +1,4 @@
-import { Hotel, HotelRoom } from "@prisma/client";
+import { HotelRoom } from "@prisma/client";
 import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
