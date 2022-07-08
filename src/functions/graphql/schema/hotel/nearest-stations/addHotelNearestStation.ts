@@ -2,7 +2,7 @@ import { gql } from "apollo-server-core";
 import { isEmpty } from "lodash";
 import { GqlError } from "../../../error";
 
-export function validateHotelNearestStationInput(input: AddHotelNearestStationInput): AddHotelNearestStationInput {
+export function validateAddHotelNearestStationInput(input: AddHotelNearestStationInput): AddHotelNearestStationInput {
     let { accessType, stationId, time } = input;
 
     accessType = accessType.trim();
@@ -12,7 +12,7 @@ export function validateHotelNearestStationInput(input: AddHotelNearestStationIn
     return { accessType, stationId, time };
 }
 
-export function validateHotelNearestStationInputList(
+export function validateAddHotelNearestStationInputList(
     input: AddHotelNearestStationInput[]
 ): AddHotelNearestStationInput[] {
     if (!input || input.length <= 0)
@@ -27,7 +27,7 @@ export function validateHotelNearestStationInputList(
             });
     });
 
-    return input.map(validateHotelNearestStationInput);
+    return input.map(validateAddHotelNearestStationInput);
 }
 
 export type AddHotelNearestStationInput = {

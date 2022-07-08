@@ -8,10 +8,12 @@ import { isEmpty } from "lodash";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { ImageUploadInput, ImageUploadResult } from "../../media";
+import { AddBasicPriceSettingInput, validateAddBasicPriceSettingInputList } from "../basic-price-setting";
 import { HotelRoomObject, toHotelRoomSelect } from "./HotelRoomObject";
 
 function validateAddHotelInput(input: AddHotelRoomInput): AddHotelRoomInput {
-    let { description, maxCapacityAdult, maxCapacityChild, name, paymentTerm, photos, stock } = input;
+    let { basicPriceSettings, description, maxCapacityAdult, maxCapacityChild, name, paymentTerm, photos, stock } =
+        input;
 
     description = description?.trim();
     name = name?.trim();
@@ -29,7 +31,9 @@ function validateAddHotelInput(input: AddHotelRoomInput): AddHotelRoomInput {
 
     if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
 
-    return { description, maxCapacityAdult, maxCapacityChild, name, paymentTerm, photos, stock };
+    basicPriceSettings = validateAddBasicPriceSettingInputList(basicPriceSettings);
+
+    return { basicPriceSettings, description, maxCapacityAdult, maxCapacityChild, name, paymentTerm, photos, stock };
 }
 
 type AddHotelRoomInput = {
@@ -39,6 +43,7 @@ type AddHotelRoomInput = {
     maxCapacityAdult: number;
     maxCapacityChild: number;
     stock: number;
+    basicPriceSettings: AddBasicPriceSettingInput[];
     photos: ImageUploadInput[];
 };
 
@@ -57,7 +62,8 @@ const addHotelRoom: AddHotelRoom = async (_, { hotelId, input }, { authData, sto
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const validInput = validateAddHotelInput(input);
-    const { description, maxCapacityAdult, maxCapacityChild, name, paymentTerm, photos, stock } = validInput;
+    const { basicPriceSettings, description, maxCapacityAdult, maxCapacityChild, name, paymentTerm, photos, stock } =
+        validInput;
 
     const hotel = await store.hotel.findFirst({ where: { id: hotelId, accountId } });
     if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
@@ -72,6 +78,7 @@ const addHotelRoom: AddHotelRoom = async (_, { hotelId, input }, { authData, sto
             paymentTerm,
             stock,
             hotel: { connect: { id: hotelId } },
+            basicPriceSettings: { createMany: { data: basicPriceSettings } },
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
         },
         select: {
@@ -106,6 +113,7 @@ export const addHotelRoomTypeDefs = gql`
         maxCapacityAdult: Int
         maxCapacityChild: Int
         stock: Int
+        basicPriceSettings: [AddBasicPriceSettingInput]!
         photos: [ImageUploadInput]!
     }
 

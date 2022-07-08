@@ -4,9 +4,11 @@ import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
 import { isEmpty } from "lodash";
 import { Photo, PhotoSelect, toPhotoSelect } from "../../media";
+import { BasicPriceSettingObject, BasicPriceSettingSelect, toBasicPriceSettingSelect } from "../basic-price-setting";
 
 export type HotelRoomObject = Partial<HotelRoom> & {
     photos?: Partial<Photo>[];
+    basicPriceSettings?: Partial<BasicPriceSettingObject>[];
 };
 
 export type HotelRoomSelect = {
@@ -19,19 +21,22 @@ export type HotelRoomSelect = {
     stock: boolean;
     hotelId: boolean;
     photos: PrismaSelect<PhotoSelect>;
+    basicPriceSettings: PrismaSelect<BasicPriceSettingSelect>;
     createdAt: boolean;
     updatedAt: boolean;
 };
 
 export function toHotelRoomSelect(selections, defaultValue: any = false): PrismaSelect<HotelRoomSelect> {
     if (!selections || isEmpty(selections)) return defaultValue;
+    const basicPriceSettingSelect = toBasicPriceSettingSelect(selections.basicPriceSettings);
     const photosSelect = toPhotoSelect(selections.photos);
-    const hotelRoomSelect = omit(selections, "photos");
-    if (isEmpty(hotelRoomSelect) && !photosSelect) return defaultValue;
+    const hotelRoomSelect = omit(selections, "basicPriceSettings", "photos");
+    if (isEmpty(hotelRoomSelect) && !basicPriceSettingSelect && !photosSelect) return defaultValue;
 
     return {
         select: {
             ...hotelRoomSelect,
+            basicPriceSettings: basicPriceSettingSelect,
             photos: photosSelect,
         } as HotelRoomSelect,
     };
@@ -52,6 +57,7 @@ export const hotelRoomObjectTypeDefs = gql`
         maxCapacityChild: Int
         stock: Int
         hotelId: ID
+        basicPriceSettings: [BasicPriceSettingObject]
         photos: [Photo]
         createdAt: Date
         updatedAt: Date

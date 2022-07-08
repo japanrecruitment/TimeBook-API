@@ -1,6 +1,7 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { addHotelResolvers, addHotelTypeDefs } from "./addHotel";
 import { allHotelsResolvers, allHotelsTypeDefs } from "./allHotels";
+import { basicPriceSettingResolvers, basicPriceSettingTypeDefs } from "./basic-price-setting";
 import { hotelByIdResolvers, hotelByIdTypeDefs } from "./hotelById";
 import { hotelObjectResolvers, hotelObjectTypeDefs } from "./HotelObject";
 import { myHotelsResolvers, myHotelsTypeDefs } from "./myHotels";
@@ -10,22 +11,24 @@ import { hotelRoomResolvers, hotelRoomTypeDefs } from "./rooms";
 
 export const typeDefs = mergeTypeDefs([
     addHotelTypeDefs,
-    hotelObjectTypeDefs,
     allHotelsTypeDefs,
-    myHotelsTypeDefs,
+    basicPriceSettingTypeDefs,
     hotelByIdTypeDefs,
     hotelNearestStationTypeDefs,
+    hotelObjectTypeDefs,
     hotelRoomTypeDefs,
+    myHotelsTypeDefs,
     priceSchemeTypeDefs,
 ]);
 
 export const resolvers = mergeResolvers([
     addHotelResolvers,
-    hotelObjectResolvers,
     allHotelsResolvers,
-    myHotelsResolvers,
+    basicPriceSettingResolvers,
     hotelByIdResolvers,
     hotelNearestStationResolvers,
+    hotelObjectResolvers,
     hotelRoomResolvers,
+    myHotelsResolvers,
     priceSchemeResolvers,
 ]);

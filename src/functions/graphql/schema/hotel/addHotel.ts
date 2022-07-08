@@ -9,7 +9,7 @@ import { GqlError } from "../../error";
 import { AddAddressInput, validateAddAddressInput } from "../address";
 import { ImageUploadInput, ImageUploadResult } from "../media";
 import { HotelObject, toHotelSelect } from "./HotelObject";
-import { AddHotelNearestStationInput, validateHotelNearestStationInputList } from "./nearest-stations";
+import { AddHotelNearestStationInput, validateAddHotelNearestStationInputList } from "./nearest-stations";
 
 function validateAddHotelInput(input: AddHotelInput): AddHotelInput {
     let { address, checkInTime, checkOutTime, description, name, nearestStations, photos } = input;
@@ -24,7 +24,7 @@ function validateAddHotelInput(input: AddHotelInput): AddHotelInput {
 
     address = validateAddAddressInput(address);
 
-    nearestStations = validateHotelNearestStationInputList(nearestStations);
+    nearestStations = validateAddHotelNearestStationInputList(nearestStations);
 
     return { address, checkInTime, checkOutTime, description, name, nearestStations, photos };
 }

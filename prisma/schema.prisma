@@ -584,8 +584,8 @@ model HotelRoom {
 model BasicPriceSetting {
   id            String       @id @default(cuid())
   dayOfWeek     Int
-  priceSchemeId String
-  priceScheme   PriceScheme  @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  priceSchemeId String?
+  priceScheme   PriceScheme? @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   hotelRoomId   String?
   hotelRoom     HotelRoom?   @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   packagePlanId String?
