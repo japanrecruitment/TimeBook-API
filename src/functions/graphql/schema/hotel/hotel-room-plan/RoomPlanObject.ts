@@ -15,7 +15,6 @@ export type HotelRoomPlanObject = Partial<HotelRoomPlan> & {
 
 export type HotelRoomPlanSelect = {
     id: boolean;
-    stock: boolean;
     hotelRoom: PrismaSelect<HotelRoomSelect>;
     packagePlan: PrismaSelect<PackagePlanSelect>;
     priceSettings: PrismaSelect<BasicPriceSettingSelect>;
@@ -43,7 +42,6 @@ export function toHotelRoomPlanSelect(selections, defaultValue: any = false): Pr
 export const roomPlanObjectTypeDefs = gql`
     type HotelRoomPlanObject {
         id: ID
-        stock: Int
         hotelRoom: HotelRoomObject
         packagePlan: PackagePlanObject
         priceSettings: [BasicPriceSettingObject]

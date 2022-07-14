@@ -16,6 +16,7 @@ export type PackagePlanSelect = {
     name: boolean;
     description: boolean;
     paymentTerm: boolean;
+    stock: boolean;
     startUsage: boolean;
     endUsage: boolean;
     startReservation: boolean;
@@ -51,6 +52,7 @@ export const packagePlanObjectTypeDefs = gql`
         name: String
         description: String
         paymentTerm: HotelPaymentTerm
+        stock: Int
         startUsage: Date
         endUsage: Date
         startReservation: Date

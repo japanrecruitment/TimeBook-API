@@ -21,6 +21,7 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
         name,
         startReservation,
         startUsage,
+        stock,
         ...others
     } = input;
 
@@ -41,8 +42,9 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
     if (cutOffBeforeDays && cutOffBeforeDays < 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cut off before days" });
 
-    hotelRoomPlans = hotelRoomPlans.map(({ hotelRoomId, priceSettings, stock }) => {
-        if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
+    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
+
+    hotelRoomPlans = hotelRoomPlans.map(({ hotelRoomId, priceSettings }) => {
         return {
             hotelRoomId,
             priceSettings: validateAddBasicPriceSettingInputList(priceSettings),
@@ -59,6 +61,7 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
         name,
         startReservation,
         startUsage,
+        stock,
         ...others,
     };
 }
@@ -66,13 +69,13 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
 type PackagePlan_HotelRoomPlanInput = {
     hotelRoomId: string;
     priceSettings: AddBasicPriceSettingInput[];
-    stock: number;
 };
 
 type AddPackagePlanInput = {
     name: string;
     description: string;
     paymentTerm: HotelPaymentTerm;
+    stock: number;
     startUsage: Date;
     endUsage: Date;
     startReservation: Date;
@@ -110,6 +113,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         photos,
         startReservation,
         startUsage,
+        stock,
     } = validInput;
 
     const hotel = await store.hotel.findFirst({
@@ -142,6 +146,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
             endUsage,
             startReservation,
             startUsage,
+            stock,
             hotel: { connect: { id: hotelId } },
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
         },
@@ -149,10 +154,9 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
     });
 
     const roomPlans = await Promise.all(
-        hotelRoomPlans.map(({ hotelRoomId, priceSettings, stock }) =>
+        hotelRoomPlans.map(({ hotelRoomId, priceSettings }) =>
             store.hotelRoomPlan.create({
                 data: {
-                    stock,
                     hotelRoom: { connect: { id: hotelRoomId } },
                     packagePlan: { connect: { id: packagePlan.id } },
                     priceSettings: { createMany: { data: priceSettings } },
@@ -184,13 +188,13 @@ export const addPackagePlanTypeDefs = gql`
     input PackagePlan_HotelRoomPlanInput {
         hotelRoomId: ID!
         priceSettings: [AddBasicPriceSettingInput]!
-        stock: Int!
     }
 
     input AddPackagePlanInput {
         name: String!
         description: String!
         paymentTerm: HotelPaymentTerm!
+        stock: Int!
         startUsage: Date
         endUsage: Date
         startReservation: Date
