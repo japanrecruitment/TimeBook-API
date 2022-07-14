@@ -26,7 +26,7 @@ const myPriceSchemes: MyPriceSchemes = async (_, { hotelId }, { authData, store 
         select: { priceSchemes: { select: priceSchemeSelect } },
     });
 
-    if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "Price schemes not found" });
 
     const myPriceSchemes = myHotels.flatMap(({ priceSchemes }) => priceSchemes).filter((priceScheme) => priceScheme);
 

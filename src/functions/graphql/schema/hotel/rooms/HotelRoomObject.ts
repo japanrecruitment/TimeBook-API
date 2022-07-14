@@ -7,8 +7,8 @@ import { Photo, PhotoSelect, toPhotoSelect } from "../../media";
 import { BasicPriceSettingObject, BasicPriceSettingSelect, toBasicPriceSettingSelect } from "../basic-price-setting";
 
 export type HotelRoomObject = Partial<HotelRoom> & {
-    photos?: Partial<Photo>[];
     basicPriceSettings?: Partial<BasicPriceSettingObject>[];
+    photos?: Partial<Photo>[];
 };
 
 export type HotelRoomSelect = {
