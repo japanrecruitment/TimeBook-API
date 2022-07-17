@@ -2,6 +2,7 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { S3Lib } from "@libs/S3";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
+import { differenceWith } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { ImageUploadInput, ImageUploadResult } from "../media";
@@ -22,7 +23,10 @@ const addHotelPhotos: AddHotelPhotos = async (_, { hotelId, photos }, { authData
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const hotel = await store.hotel.findFirst({ where: { id: hotelId, accountId } });
+    const hotel = await store.hotel.findFirst({
+        where: { id: hotelId, accountId },
+        select: { photos: { select: { id: true } } },
+    });
     if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
 
     const updatedHotel = await store.hotel.update({
@@ -33,8 +37,10 @@ const addHotelPhotos: AddHotelPhotos = async (_, { hotelId, photos }, { authData
         select: { photos: true },
     });
 
+    const newPhotos = differenceWith(updatedHotel.photos, hotel.photos, (a, b) => a.id === b.id);
+
     const S3 = new S3Lib("upload");
-    const uploadRes = updatedHotel.photos
+    const uploadRes = newPhotos
         ?.filter(({ medium, small, large }) => !medium && !small && !large)
         .map(({ id, mime, type }) => {
             const key = `${id}.${mime.split("/")[1]}`;

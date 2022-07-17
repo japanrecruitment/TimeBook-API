@@ -37,7 +37,7 @@ const updateHotelAddress: UpdateHotelAddress = async (_, { address, hotelId }, {
     if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
     if (hotel.address.id !== id) throw new GqlError({ code: "NOT_FOUND", message: "Address not found" });
 
-    const addressSelect = toAddressSelect(mapSelections(info).address)?.select;
+    const addressSelect = toAddressSelect(mapSelections(info)?.address)?.select;
     const updatedAddress = await store.address.update({
         where: { id },
         data: {
