@@ -4,8 +4,9 @@ import { GqlError } from "../../../error";
 import { Context } from "../../../context";
 import { Result } from "../../core/result";
 import { Log } from "@utils/logger";
+import { differenceWith, intersectionWith, isEmpty } from "lodash";
 
-type RemoveHotelNearestStationArgs = { hotelId: string; stationId: number };
+type RemoveHotelNearestStationArgs = { hotelId: string; stationIds: number[] };
 
 type RemoveHotelNearestStationResult = Promise<Result>;
 
@@ -16,34 +17,43 @@ type RemoveHotelNearestStation = IFieldResolver<
     RemoveHotelNearestStationResult
 >;
 
-const removeHotelNearestStation: RemoveHotelNearestStation = async (_, { hotelId, stationId }, { authData, store }) => {
+const removeHotelNearestStation: RemoveHotelNearestStation = async (
+    _,
+    { hotelId, stationIds },
+    { authData, store }
+) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const nearestStation = await store.hotelNearestStation.findUnique({
-        where: { hotelId_stationId: { hotelId, stationId } },
-        select: { hotel: { select: { accountId: true } }, station: { select: { stationName: true } } },
-    });
-    if (!nearestStation) throw new GqlError({ code: "NOT_FOUND", message: "Nearest station not found" });
+    stationIds = stationIds && stationIds.length > 0 ? stationIds : undefined;
 
-    if (accountId !== nearestStation.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel" });
+    const hotel = await store.hotel.findFirst({
+        where: { id: hotelId, accountId },
+        select: { nearestStations: { where: { stationId: { in: stationIds } }, select: { stationId: true } } },
+    });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+
+    if (isEmpty(hotel.nearestStations)) throw new GqlError({ code: "NOT_FOUND", message: "Nearest station not found" });
+
+    const nearestStationsToRemove = stationIds
+        ? intersectionWith(stationIds, hotel.nearestStations, (id, { stationId }) => id === stationId)
+        : hotel.nearestStations.map(({ stationId }) => stationId);
 
     const updatedHotel = await store.hotel.update({
         where: { id: hotelId },
-        data: { nearestStations: { delete: { hotelId_stationId: { hotelId, stationId } } } },
+        data: { nearestStations: { deleteMany: { hotelId, stationId: { in: nearestStationsToRemove } } } },
     });
 
     Log(updatedHotel);
 
     return {
-        message: `Successfully removed ${nearestStation.station.stationName} as nearest station from your hotel`,
+        message: `Successfully removed ${nearestStationsToRemove.length} stations as nearest station from your hotel`,
     };
 };
 
 export const removeHotelNearestStationTypeDefs = gql`
     type Mutation {
-        removeHotelNearestStation(hotelId: ID!, stationId: IntID!): Result @auth(requires: [host])
+        removeHotelNearestStation(hotelId: ID!, stationIds: [IntID]): Result @auth(requires: [host])
     }
 `;
 

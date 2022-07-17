@@ -64,19 +64,25 @@ const addHotelNearestStations: AddHotelNearestStations = async (
 
     const validStations = validateAddHotelNearestStationInputList(stations);
 
+    const hotel = await store.hotel.findFirst({
+        where: { id: hotelId, accountId },
+        select: { address: { select: { prefectureId: true } }, nearestStations: { select: { stationId: true } } },
+    });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+
     const mStations = await store.station.findMany({
-        where: { id: { in: validStations.map(({ stationId }) => stationId) } },
+        where: {
+            id: { in: validStations.map(({ stationId }) => stationId) },
+            prefectureCode: hotel.address.prefectureId,
+        },
         select: { id: true },
     });
     differenceWith(validStations, mStations, ({ stationId }, { id }) => stationId === id).forEach(({ stationId }) => {
-        throw new GqlError({ code: "NOT_FOUND", message: `Cannot find station with id: ${stationId}` });
+        throw new GqlError({
+            code: "NOT_FOUND",
+            message: `Cannot find station with id: ${stationId} in your prefecture`,
+        });
     });
-
-    const hotel = await store.hotel.findFirst({
-        where: { id: hotelId, accountId },
-        select: { nearestStations: { select: { stationId: true } } },
-    });
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
 
     const nearestStationsToAdd = differenceWith(
         validStations,

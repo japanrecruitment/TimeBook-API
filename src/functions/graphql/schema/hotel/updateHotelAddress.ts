@@ -26,12 +26,16 @@ const updateHotelAddress: UpdateHotelAddress = async (_, { address, hotelId }, {
     const { id, addressLine1, addressLine2, city, postalCode, prefectureId } = validInput;
 
     if (prefectureId) {
-        const prefecture = await store.prefecture.findUnique({ where: { id: prefectureId } });
+        const prefecture = await store.prefecture.findFirst({ where: { id: prefectureId, available: true } });
         if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
     }
 
-    const hotel = await store.hotel.findFirst({ where: { id: hotelId, accountId, address: { id } } });
+    const hotel = await store.hotel.findFirst({
+        where: { id: hotelId, accountId },
+        select: { address: { select: { id: true } } },
+    });
     if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (hotel.address.id !== id) throw new GqlError({ code: "NOT_FOUND", message: "Address not found" });
 
     const addressSelect = toAddressSelect(mapSelections(info).address)?.select;
     const updatedAddress = await store.address.update({
