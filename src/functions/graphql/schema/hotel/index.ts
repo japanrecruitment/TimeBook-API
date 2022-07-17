@@ -1,17 +1,21 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { addHotelResolvers, addHotelTypeDefs } from "./addHotel";
+import { addHotelPhotosResolvers, addHotelPhotosTypeDefs } from "./addHotelPhotos";
 import { allHotelsResolvers, allHotelsTypeDefs } from "./allHotels";
 import { basicPriceSettingResolvers, basicPriceSettingTypeDefs } from "./basic-price-setting";
-import { hotelRoomPlanResolvers, hotelRoomPlanTypeDefs } from "./hotel-room-plan";
 import { hotelByIdResolvers, hotelByIdTypeDefs } from "./hotelById";
-import { hotelObjectResolvers, hotelObjectTypeDefs } from "./HotelObject";
-import { myHotelsResolvers, myHotelsTypeDefs } from "./myHotels";
 import { hotelNearestStationResolvers, hotelNearestStationTypeDefs } from "./nearest-stations";
+import { hotelObjectResolvers, hotelObjectTypeDefs } from "./HotelObject";
+import { hotelRoomPlanResolvers, hotelRoomPlanTypeDefs } from "./hotel-room-plan";
+import { hotelRoomResolvers, hotelRoomTypeDefs } from "./rooms";
+import { myHotelsResolvers, myHotelsTypeDefs } from "./myHotels";
 import { packagePlanReslovers, packagePlanTypeDefs } from "./package-plan";
 import { priceSchemeResolvers, priceSchemeTypeDefs } from "./price-scheme";
-import { hotelRoomResolvers, hotelRoomTypeDefs } from "./rooms";
+import { removeHotelPhotoResolvers, removeHotelPhotoTypeDefs } from "./removeHotelPhoto";
+import { updateHotelAddressResolvers, updateHotelAddressTypeDefs } from "./updateHotelAddress";
 
 export const typeDefs = mergeTypeDefs([
+    addHotelPhotosTypeDefs,
     addHotelTypeDefs,
     allHotelsTypeDefs,
     basicPriceSettingTypeDefs,
@@ -23,9 +27,12 @@ export const typeDefs = mergeTypeDefs([
     myHotelsTypeDefs,
     packagePlanTypeDefs,
     priceSchemeTypeDefs,
+    removeHotelPhotoTypeDefs,
+    updateHotelAddressTypeDefs,
 ]);
 
 export const resolvers = mergeResolvers([
+    addHotelPhotosResolvers,
     addHotelResolvers,
     allHotelsResolvers,
     basicPriceSettingResolvers,
@@ -37,4 +44,6 @@ export const resolvers = mergeResolvers([
     myHotelsResolvers,
     packagePlanReslovers,
     priceSchemeResolvers,
+    removeHotelPhotoResolvers,
+    updateHotelAddressResolvers,
 ]);

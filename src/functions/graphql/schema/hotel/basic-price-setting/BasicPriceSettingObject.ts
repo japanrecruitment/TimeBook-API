@@ -14,7 +14,7 @@ export type BasicPriceSettingSelect = {
     dayOfWeek: boolean;
     priceScheme: PrismaSelect<PriceSchemeSelect>;
     hotelRoomId: boolean;
-    packagePlanId: boolean;
+    hotelRoomPlanId: boolean;
     createdAt: boolean;
     updatedAt: boolean;
 };
@@ -43,7 +43,7 @@ export const basicPriceSettingObjectTypeDefs = gql`
         dayOfWeek: Int
         priceScheme: PriceSchemeObject
         hotelRoomId: ID
-        packagePlanId: ID
+        hotelRoomPlanId: ID
         createdAt: Date
         updatedAt: Date
     }

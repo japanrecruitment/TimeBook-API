@@ -71,11 +71,11 @@ export class S3Lib {
         }
     }
 
-    public async deleteObject(key: string, bucket: string = "upload"): Promise<S3.DeleteObjectOutput> {
+    public async deleteObject(key: string, bucket?: string): Promise<S3.DeleteObjectOutput> {
         try {
             const params: S3.DeleteObjectRequest = {
                 Key: key,
-                Bucket: bucket === "upload" ? this._MEDIA_UPLOAD_BUCKET : this._MEDIA_BUCKET,
+                Bucket: bucket || this._BUCKET,
             };
 
             return (await this._S3.deleteObject(params).promise()) as S3.DeleteObjectOutput;
