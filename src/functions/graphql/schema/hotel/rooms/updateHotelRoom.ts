@@ -8,7 +8,7 @@ import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { HotelRoomObject, toHotelRoomSelect } from "./HotelRoomObject";
 
-function validateUpdateHotelInput(input: UpdateHotelRoomInput): UpdateHotelRoomInput {
+function validateUpdateHotelRoomInput(input: UpdateHotelRoomInput): UpdateHotelRoomInput {
     let { id, description, maxCapacityAdult, maxCapacityChild, name, paymentTerm, stock } = input;
 
     description = description?.trim();
@@ -55,7 +55,7 @@ const updateHotelRoom: UpdateHotelRoom = async (_, { input }, { authData, store 
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const { id, ...data } = validateUpdateHotelInput(input);
+    const { id, ...data } = validateUpdateHotelRoomInput(input);
 
     const hotelRoom = await store.hotelRoom.findUnique({
         where: { id },
