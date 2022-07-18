@@ -1,53 +1,50 @@
-import { HotelRoomPlan } from "@prisma/client";
+import { HotelRoom_PackagePlan } from "@prisma/client";
 import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
 import { isEmpty } from "lodash";
 import { BasicPriceSettingObject, BasicPriceSettingSelect, toBasicPriceSettingSelect } from "../basic-price-setting";
-import { PackagePlanObject, PackagePlanSelect, toPackagePlanSelect } from "../package-plan";
 import { HotelRoomObject, HotelRoomSelect, toHotelRoomSelect } from "../rooms";
 
-export type HotelRoomPlanObject = Partial<HotelRoomPlan> & {
+export type PackagePlanRoomTypeObject = Partial<HotelRoom_PackagePlan> & {
     hotelRoom?: Partial<HotelRoomObject>;
-    packagePlan?: Partial<PackagePlanObject>;
     priceSettings?: Partial<BasicPriceSettingObject>[];
 };
 
-export type HotelRoomPlanSelect = {
+export type PackagePlanRoomTypeSelect = {
     id: boolean;
     hotelRoom: PrismaSelect<HotelRoomSelect>;
-    packagePlan: PrismaSelect<PackagePlanSelect>;
     priceSettings: PrismaSelect<BasicPriceSettingSelect>;
     createdAt: boolean;
     updatedAt: boolean;
 };
 
-export function toHotelRoomPlanSelect(selections, defaultValue: any = false): PrismaSelect<HotelRoomPlanSelect> {
+export function toPackagePlanRoomTypeSelect(
+    selections,
+    defaultValue: any = false
+): PrismaSelect<PackagePlanRoomTypeSelect> {
     if (!selections || isEmpty(selections)) return defaultValue;
     const hotelRoomSelect = toHotelRoomSelect(selections.hotelRoom);
-    const packagePlanSelect = toPackagePlanSelect(selections.packagePlan);
     const priceSettingsSelect = toBasicPriceSettingSelect(selections.priceSettings);
-    const roomPlanSelect = omit(selections, "hotelRoom", "packagePlan", "priceSettings");
+    const roomPlanSelect = omit(selections, "hotelRoom", "priceSettings");
 
     return {
         select: {
             ...roomPlanSelect,
             hotelRoom: hotelRoomSelect,
-            packagePlan: packagePlanSelect,
             priceSettings: priceSettingsSelect,
-        } as HotelRoomPlanSelect,
+        } as PackagePlanRoomTypeSelect,
     };
 }
 
-export const roomPlanObjectTypeDefs = gql`
-    type HotelRoomPlanObject {
+export const packagePlanRoomTypeObjectTypeDefs = gql`
+    type PackagePlanRoomTypeObject {
         id: ID
         hotelRoom: HotelRoomObject
-        packagePlan: PackagePlanObject
         priceSettings: [BasicPriceSettingObject]
         createdAt: Date
         updatedAt: Date
     }
 `;
 
-export const roomPlanObjectResolvers = {};
+export const packagePlanRoomTypeObjectResolvers = {};

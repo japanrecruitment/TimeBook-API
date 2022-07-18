@@ -4,7 +4,7 @@ import { addHotelRoomPhotosResolvers, addHotelRoomPhotosTypeDefs } from "./addHo
 import { hotelRoomByIdResolvers, hotelRoomByIdTypeDefs } from "./hotelRoomById";
 import { hotelRoomObjectResolvers, hotelRoomObjectTypeDefs } from "./HotelRoomObject";
 import { myHotelRoomsResolvers, myHotelRoomsTypeDefs } from "./myHotelRooms";
-import { removeHotelRoomPhotoResolvers, removeHotelRoomPhotoTypeDefs } from "./removeHotelPhoto";
+import { removeHotelRoomPhotoResolvers, removeHotelRoomPhotoTypeDefs } from "./removeHotelRoomPhoto";
 import { updateHotelRoomResolvers, updateHotelRoomTypeDefs } from "./updateHotelRoom";
 import {
     updateHotelRoomPriceSettingResolvers,

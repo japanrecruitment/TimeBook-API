@@ -565,48 +565,48 @@ model HotelNearestStation {
 }
 
 model HotelRoom {
-  id                 String              @id @default(cuid())
+  id                 String                  @id @default(cuid())
   name               String
-  description        String              @db.Text
+  description        String                  @db.Text
   paymentTerm        HotelPaymentTerm
   maxCapacityAdult   Int?
   maxCapacityChild   Int?
   stock              Int?
   hotelId            String
-  hotel              Hotel               @relation(name: "HotelRooms", fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  photos             Photo[]             @relation(name: "HotelRoomPhoto")
+  hotel              Hotel                   @relation(name: "HotelRooms", fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photos             Photo[]                 @relation(name: "HotelRoomPhoto")
   basicPriceSettings BasicPriceSetting[]
   priceOverrides     PriceOverride[]
-  hotelRoomPlans     HotelRoomPlan[]
-  createdAt          DateTime            @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime            @updatedAt
+  packagePlans       HotelRoom_PackagePlan[]
+  createdAt          DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime                @updatedAt
 }
 
 model BasicPriceSetting {
-  id              String         @id @default(cuid())
-  dayOfWeek       Int
-  priceSchemeId   String?
-  priceScheme     PriceScheme?   @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  hotelRoomId     String?
-  hotelRoom       HotelRoom?     @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  hotelRoomPlanId String?
-  hotelRoomPlan   HotelRoomPlan? @relation(fields: [hotelRoomPlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt       DateTime       @default(now()) @db.Timestamp(6)
-  updatedAt       DateTime       @updatedAt
+  id                       String                 @id @default(cuid())
+  dayOfWeek                Int
+  priceSchemeId            String?
+  priceScheme              PriceScheme?           @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hotelRoomId              String?
+  hotelRoom                HotelRoom?             @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hotelRoom_packagePlan_id String?
+  hotelRoom_packagePlan    HotelRoom_PackagePlan? @relation(fields: [hotelRoom_packagePlan_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt                DateTime               @default(now()) @db.Timestamp(6)
+  updatedAt                DateTime               @updatedAt
 }
 
 model PriceOverride {
-  id              String         @id @default(cuid())
-  startDate       DateTime       @db.Date
-  endDate         DateTime       @db.Date
-  priceSchemeId   String
-  priceScheme     PriceScheme    @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  hotelRoomId     String?
-  hotelRoom       HotelRoom?     @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  hotelRoomPlanId String?
-  hotelRoomPlan   HotelRoomPlan? @relation(fields: [hotelRoomPlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt       DateTime       @default(now()) @db.Timestamp(6)
-  updatedAt       DateTime       @updatedAt
+  id                       String                 @id @default(cuid())
+  startDate                DateTime               @db.Date
+  endDate                  DateTime               @db.Date
+  priceSchemeId            String
+  priceScheme              PriceScheme            @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hotelRoomId              String?
+  hotelRoom                HotelRoom?             @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hotelRoom_packagePlan_id String?
+  hotelRoom_packagePlan    HotelRoom_PackagePlan? @relation(fields: [hotelRoom_packagePlan_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt                DateTime               @default(now()) @db.Timestamp(6)
+  updatedAt                DateTime               @updatedAt
 }
 
 model PriceScheme {
@@ -642,27 +642,27 @@ model PriceScheme {
 }
 
 model PackagePlan {
-  id                 String           @id @default(cuid())
+  id                 String                  @id @default(cuid())
   name               String
-  description        String           @db.Text
+  description        String                  @db.Text
   paymentTerm        HotelPaymentTerm
   stock              Int
-  startUsage         DateTime?        @db.Date
-  endUsage           DateTime?        @db.Date
-  startReservation   DateTime?        @db.Date
-  endReservation     DateTime?        @db.Date
+  startUsage         DateTime?               @db.Date
+  endUsage           DateTime?               @db.Date
+  startReservation   DateTime?               @db.Date
+  endReservation     DateTime?               @db.Date
   cutOffBeforeDays   Int?
-  cutOffTillTime     DateTime?        @db.Time()
+  cutOffTillTime     DateTime?               @db.Time()
   hotelId            String
-  hotel              Hotel            @relation(fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  photos             Photo[]          @relation(name: "HotelPackagePlanPhoto")
-  optionsAttachments Option[]         @relation(name: "_PackagePlanOptions")
-  hotelRoomPlans     HotelRoomPlan[]
-  createdAt          DateTime         @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime         @updatedAt
+  hotel              Hotel                   @relation(fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photos             Photo[]                 @relation(name: "HotelPackagePlanPhoto")
+  optionsAttachments Option[]                @relation(name: "_PackagePlanOptions")
+  roomTypes          HotelRoom_PackagePlan[]
+  createdAt          DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime                @updatedAt
 }
 
-model HotelRoomPlan {
+model HotelRoom_PackagePlan {
   id             String              @id @default(cuid())
   packagePlanId  String
   packagePlan    PackagePlan         @relation(fields: [packagePlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)

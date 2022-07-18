@@ -65,7 +65,7 @@ const updatePriceScheme: UpdatePriceScheme = async (_, { input }, { authData, st
     if (accountId !== priceScheme.hotel.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
 
-    const priceSchemeSelect = toPriceSchemeSelect(mapSelections(info).priceScheme).select;
+    const priceSchemeSelect = toPriceSchemeSelect(mapSelections(info)?.priceScheme)?.select;
     const updatedPriceScheme = await store.priceScheme.update({ where: { id }, data, select: priceSchemeSelect });
 
     Log("updatePriceScheme: ", updatedPriceScheme);

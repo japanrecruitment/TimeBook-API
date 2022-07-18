@@ -6,7 +6,6 @@ import { basicPriceSettingResolvers, basicPriceSettingTypeDefs } from "./basic-p
 import { hotelByIdResolvers, hotelByIdTypeDefs } from "./hotelById";
 import { hotelNearestStationResolvers, hotelNearestStationTypeDefs } from "./nearest-stations";
 import { hotelObjectResolvers, hotelObjectTypeDefs } from "./HotelObject";
-import { hotelRoomPlanResolvers, hotelRoomPlanTypeDefs } from "./hotel-room-plan";
 import { hotelRoomResolvers, hotelRoomTypeDefs } from "./rooms";
 import { myHotelsResolvers, myHotelsTypeDefs } from "./myHotels";
 import { packagePlanReslovers, packagePlanTypeDefs } from "./package-plan";
@@ -23,7 +22,6 @@ export const typeDefs = mergeTypeDefs([
     hotelByIdTypeDefs,
     hotelNearestStationTypeDefs,
     hotelObjectTypeDefs,
-    hotelRoomPlanTypeDefs,
     hotelRoomTypeDefs,
     myHotelsTypeDefs,
     packagePlanTypeDefs,
@@ -41,7 +39,6 @@ export const resolvers = mergeResolvers([
     hotelByIdResolvers,
     hotelNearestStationResolvers,
     hotelObjectResolvers,
-    hotelRoomPlanResolvers,
     hotelRoomResolvers,
     myHotelsResolvers,
     packagePlanReslovers,

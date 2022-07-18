@@ -9,6 +9,10 @@ import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { ImageUploadInput, ImageUploadResult } from "../../media";
 import { AddBasicPriceSettingInput, validateAddBasicPriceSettingInputList } from "../basic-price-setting";
+import {
+    AddRoomTypesInPackagePlanInput,
+    validateAddRoomTypesInPackagePlanInputList,
+} from "./addRoomTypesInPackagePlan";
 import { PackagePlanObject, toPackagePlanSelect } from "./PackagePlanObject";
 
 function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlanInput {
@@ -17,7 +21,7 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
         description,
         endReservation,
         endUsage,
-        hotelRoomPlans,
+        roomTypes,
         name,
         startReservation,
         startUsage,
@@ -44,20 +48,14 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
 
     if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
 
-    hotelRoomPlans = hotelRoomPlans.map(({ hotelRoomId, priceSettings }) => {
-        return {
-            hotelRoomId,
-            priceSettings: validateAddBasicPriceSettingInputList(priceSettings),
-            stock,
-        };
-    });
+    roomTypes = validateAddRoomTypesInPackagePlanInputList(roomTypes);
 
     return {
         cutOffBeforeDays,
         description,
         endReservation,
         endUsage,
-        hotelRoomPlans,
+        roomTypes,
         name,
         startReservation,
         startUsage,
@@ -65,11 +63,6 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
         ...others,
     };
 }
-
-type PackagePlan_HotelRoomPlanInput = {
-    hotelRoomId: string;
-    priceSettings: AddBasicPriceSettingInput[];
-};
 
 type AddPackagePlanInput = {
     name: string;
@@ -82,7 +75,7 @@ type AddPackagePlanInput = {
     endReservation: Date;
     cutOffBeforeDays: number;
     cutOffTillTime: Date;
-    hotelRoomPlans: PackagePlan_HotelRoomPlanInput[];
+    roomTypes: AddRoomTypesInPackagePlanInput[];
     photos: ImageUploadInput[];
 };
 
@@ -107,7 +100,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         description,
         endReservation,
         endUsage,
-        hotelRoomPlans,
+        roomTypes,
         name,
         paymentTerm,
         photos,
@@ -121,13 +114,13 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         select: { rooms: { select: { id: true } }, priceSchemes: { select: { id: true } } },
     });
     if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
-    differenceWith(hotelRoomPlans, hotel.rooms, ({ hotelRoomId }, { id }) => hotelRoomId === id).forEach(
+    differenceWith(roomTypes, hotel.rooms, ({ hotelRoomId }, { id }) => hotelRoomId === id).forEach(
         ({ hotelRoomId }) => {
             throw new GqlError({ code: "NOT_FOUND", message: `Hotel doesn't have room with id: ${hotelRoomId}` });
         }
     );
     differenceWith(
-        hotelRoomPlans.flatMap(({ priceSettings }) => priceSettings.filter(({ priceSchemeId }) => priceSchemeId)),
+        roomTypes.flatMap(({ priceSettings }) => priceSettings.filter(({ priceSchemeId }) => priceSchemeId)),
         hotel.priceSchemes,
         ({ priceSchemeId }, { id }) => priceSchemeId === id
     ).forEach(({ priceSchemeId }) => {
@@ -150,18 +143,18 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
             hotel: { connect: { id: hotelId } },
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
         },
-        select: { ...packagePlanSelect, id: true, hotelRoomPlans: false },
+        select: { ...packagePlanSelect, id: true, roomTypes: false },
     });
 
     const roomPlans = await Promise.all(
-        hotelRoomPlans.map(({ hotelRoomId, priceSettings }) =>
-            store.hotelRoomPlan.create({
+        roomTypes.map(({ hotelRoomId, priceSettings }) =>
+            store.hotelRoom_PackagePlan.create({
                 data: {
                     hotelRoom: { connect: { id: hotelRoomId } },
                     packagePlan: { connect: { id: packagePlan.id } },
                     priceSettings: { createMany: { data: priceSettings } },
                 },
-                select: { ...packagePlanSelect.hotelRoomPlans.select, packagePlan: false },
+                select: { ...packagePlanSelect.roomTypes.select, packagePlan: false },
             })
         )
     );
@@ -185,11 +178,6 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
 };
 
 export const addPackagePlanTypeDefs = gql`
-    input PackagePlan_HotelRoomPlanInput {
-        hotelRoomId: ID!
-        priceSettings: [AddBasicPriceSettingInput]!
-    }
-
     input AddPackagePlanInput {
         name: String!
         description: String!
@@ -201,7 +189,7 @@ export const addPackagePlanTypeDefs = gql`
         endReservation: Date
         cutOffBeforeDays: Int
         cutOffTillTime: Time
-        hotelRoomPlans: [PackagePlan_HotelRoomPlanInput]!
+        roomTypes: [AddRoomTypesInPackagePlanInput]!
         photos: [ImageUploadInput]!
     }
 
