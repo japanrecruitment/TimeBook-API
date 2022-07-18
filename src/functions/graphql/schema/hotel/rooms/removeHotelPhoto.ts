@@ -5,24 +5,25 @@ import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
 
-type RemoveHotelRoomPhotoArgs = { hotelRoomId: string; photoId: string };
+type RemoveHotelRoomPhotoArgs = { photoId: string };
 
 type RemoveHotelRoomPhotoResult = Result;
 
 type RemoveHotelRoomPhoto = IFieldResolver<any, Context, RemoveHotelRoomPhotoArgs, Promise<RemoveHotelRoomPhotoResult>>;
 
-const removeHotelRoomPhoto: RemoveHotelRoomPhoto = async (_, { hotelRoomId, photoId }, { authData, store }) => {
+const removeHotelRoomPhoto: RemoveHotelRoomPhoto = async (_, { photoId }, { authData, store }) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const photo = await store.photo.findFirst({
-        where: { id: photoId, hotelRoomId },
-        include: { hotel: { select: { accountId: true } } },
+        where: { id: photoId },
+        include: { HotelRoom: { select: { hotel: { select: { accountId: true } } } } },
     });
-    if (!photo) throw new GqlError({ code: "NOT_FOUND", message: "Photo not found" });
+    if (!photo || !photo.HotelRoom || !photo.HotelRoom.hotel)
+        throw new GqlError({ code: "NOT_FOUND", message: "Photo not found" });
 
-    if (accountId !== photo.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel" });
+    if (accountId !== photo.HotelRoom.hotel.accountId)
+        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room photo" });
 
     await store.photo.delete({ where: { id: photoId } });
 
@@ -46,7 +47,7 @@ const removeHotelRoomPhoto: RemoveHotelRoomPhoto = async (_, { hotelRoomId, phot
 
 export const removeHotelRoomPhotoTypeDefs = gql`
     type Mutation {
-        removeHotelRoomPhoto(hotelRoomId: ID!, photoId: ID!): Result @auth(requires: [host])
+        removeHotelRoomPhoto(photoId: ID!): Result @auth(requires: [host])
     }
 `;
 

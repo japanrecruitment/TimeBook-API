@@ -7,8 +7,7 @@ import { GqlError } from "../../error";
 import { AddressObject, toAddressSelect, UpdateAddressInput, validateUpdateAddressInput } from "../address";
 
 type UpdateHotelAddressArgs = {
-    hotelId: string;
-    address: UpdateAddressInput;
+    input: UpdateAddressInput;
 };
 
 type UpdateHotelAddressResult = {
@@ -18,11 +17,11 @@ type UpdateHotelAddressResult = {
 
 type UpdateHotelAddress = IFieldResolver<any, Context, UpdateHotelAddressArgs, Promise<UpdateHotelAddressResult>>;
 
-const updateHotelAddress: UpdateHotelAddress = async (_, { address, hotelId }, { authData, store }, info) => {
+const updateHotelAddress: UpdateHotelAddress = async (_, { input }, { authData, store }, info) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const validInput = validateUpdateAddressInput(address);
+    const validInput = validateUpdateAddressInput(input);
     const { id, addressLine1, addressLine2, city, postalCode, prefectureId } = validInput;
 
     if (prefectureId) {
@@ -30,12 +29,13 @@ const updateHotelAddress: UpdateHotelAddress = async (_, { address, hotelId }, {
         if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
     }
 
-    const hotel = await store.hotel.findFirst({
-        where: { id: hotelId, accountId },
-        select: { address: { select: { id: true } } },
+    const address = await store.address.findUnique({
+        where: { id },
+        select: { hotel: { select: { accountId: true } } },
     });
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
-    if (hotel.address.id !== id) throw new GqlError({ code: "NOT_FOUND", message: "Address not found" });
+    if (!address || !address.hotel) throw new GqlError({ code: "NOT_FOUND", message: "Address not found" });
+    if (accountId !== address.hotel.accountId)
+        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel address" });
 
     const addressSelect = toAddressSelect(mapSelections(info)?.address)?.select;
     const updatedAddress = await store.address.update({
@@ -65,7 +65,7 @@ export const updateHotelAddressTypeDefs = gql`
     }
 
     type Mutation {
-        updateHotelAddress(hotelId: ID!, address: UpdateAddressInput!): UpdateHotelAddressResult @auth(requires: [host])
+        updateHotelAddress(input: UpdateAddressInput!): UpdateHotelAddressResult @auth(requires: [host])
     }
 `;
 

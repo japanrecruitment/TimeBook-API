@@ -5,24 +5,24 @@ import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
 
-type RemoveHotelPhotoArgs = { hotelId: string; photoId: string };
+type RemoveHotelPhotoArgs = { photoId: string };
 
 type RemoveHotelPhotoResult = Result;
 
 type RemoveHotelPhoto = IFieldResolver<any, Context, RemoveHotelPhotoArgs, Promise<RemoveHotelPhotoResult>>;
 
-const removeHotelPhoto: RemoveHotelPhoto = async (_, { hotelId, photoId }, { authData, store }) => {
+const removeHotelPhoto: RemoveHotelPhoto = async (_, { photoId }, { authData, store }) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const photo = await store.photo.findFirst({
-        where: { id: photoId, hotelId },
+    const photo = await store.photo.findUnique({
+        where: { id: photoId },
         include: { hotel: { select: { accountId: true } } },
     });
-    if (!photo) throw new GqlError({ code: "NOT_FOUND", message: "Photo not found" });
+    if (!photo || !photo.hotel) throw new GqlError({ code: "NOT_FOUND", message: "Photo not found" });
 
-    if (accountId !== photo.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel" });
+    if (accountId !== photo.hotel?.accountId)
+        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to remove this hotel photo" });
 
     await store.photo.delete({ where: { id: photoId } });
 
@@ -46,7 +46,7 @@ const removeHotelPhoto: RemoveHotelPhoto = async (_, { hotelId, photoId }, { aut
 
 export const removeHotelPhotoTypeDefs = gql`
     type Mutation {
-        removeHotelPhoto(hotelId: ID!, photoId: ID!): Result @auth(requires: [host])
+        removeHotelPhoto(photoId: ID!): Result @auth(requires: [host])
     }
 `;
 

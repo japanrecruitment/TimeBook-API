@@ -61,7 +61,7 @@ const updateHotelRoom: UpdateHotelRoom = async (_, { input }, { authData, store 
         where: { id },
         select: { hotel: { select: { accountId: true } } },
     });
-    if (!hotelRoom) throw new GqlError({ code: "NOT_FOUND", message: "Hotel room not found" });
+    if (!hotelRoom || !hotelRoom.hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel room not found" });
     if (accountId !== hotelRoom.hotel.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
 
