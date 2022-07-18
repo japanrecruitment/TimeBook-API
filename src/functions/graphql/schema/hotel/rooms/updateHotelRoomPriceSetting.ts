@@ -89,4 +89,4 @@ export const updateHotelRoomPriceSettingTypeDefs = gql`
     }
 `;
 
-export const updateHotelRoomPriceSettingResolvers = { Mutation: [updateHotelRoomPriceSetting] };
+export const updateHotelRoomPriceSettingResolvers = { Mutation: { updateHotelRoomPriceSetting } };

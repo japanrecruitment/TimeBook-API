@@ -21,7 +21,7 @@ export const packagePlanTypeDefs = mergeTypeDefs([
     updatePackagePlanTypeDefs,
 ]);
 
-export const packagePlanReslovers = mergeResolvers([
+export const packagePlanResolvers = mergeResolvers([
     addPackagePlanResolvers,
     addPackagePlanPhotosResolvers,
     addRoomTypesInPackagePlanResolvers,

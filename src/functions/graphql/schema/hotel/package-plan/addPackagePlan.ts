@@ -1,6 +1,6 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { S3Lib } from "@libs/S3";
-import { HotelPaymentTerm, PhotoType } from "@prisma/client";
+import { HotelPaymentTerm } from "@prisma/client";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
@@ -8,7 +8,6 @@ import { isEmpty, differenceWith } from "lodash";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { ImageUploadInput, ImageUploadResult } from "../../media";
-import { AddBasicPriceSettingInput, validateAddBasicPriceSettingInputList } from "../basic-price-setting";
 import {
     AddRoomTypesInPackagePlanInput,
     validateAddRoomTypesInPackagePlanInputList,
