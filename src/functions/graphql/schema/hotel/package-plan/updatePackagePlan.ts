@@ -86,7 +86,7 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, st
         select: { hotel: { select: { accountId: true } } },
     });
     if (!packagePlan || !packagePlan.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Price scheme not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
     if (accountId !== packagePlan.hotel.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel package plan" });
 

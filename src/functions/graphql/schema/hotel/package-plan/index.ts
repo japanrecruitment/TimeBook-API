@@ -7,7 +7,15 @@ import { packagePlanByIdResolvers, packagePlanByIdTypeDefs } from "./packagePlan
 import { packagePlanObjectResolvers, packagePlanObjectTypeDefs } from "./PackagePlanObject";
 import { packagePlanRoomTypeObjectResolvers, packagePlanRoomTypeObjectTypeDefs } from "./PackagePlanRoomTypeObject";
 import { removePackagePlanPhotoResolvers, removePackagePlanPhotoTypeDefs } from "./removePackagePlanPhoto";
+import {
+    removeRoomTypesFromPackagePlanResolvers,
+    removeRoomTypesFromPackagePlanTypeDefs,
+} from "./removeRoomTypesFromPackagePlan";
 import { updatePackagePlanResolvers, updatePackagePlanTypeDefs } from "./updatePackagePlan";
+import {
+    updateRoomTypeOfPackagePlanResolvers,
+    updateRoomTypeOfPackagePlanTypeDefs,
+} from "./updateRoomTypeOfPackagePlan";
 
 export const packagePlanTypeDefs = mergeTypeDefs([
     addPackagePlanTypeDefs,
@@ -18,7 +26,9 @@ export const packagePlanTypeDefs = mergeTypeDefs([
     packagePlanObjectTypeDefs,
     packagePlanRoomTypeObjectTypeDefs,
     removePackagePlanPhotoTypeDefs,
+    removeRoomTypesFromPackagePlanTypeDefs,
     updatePackagePlanTypeDefs,
+    updateRoomTypeOfPackagePlanTypeDefs,
 ]);
 
 export const packagePlanResolvers = mergeResolvers([
@@ -30,7 +40,9 @@ export const packagePlanResolvers = mergeResolvers([
     packagePlanObjectResolvers,
     packagePlanRoomTypeObjectResolvers,
     removePackagePlanPhotoResolvers,
+    removeRoomTypesFromPackagePlanResolvers,
     updatePackagePlanResolvers,
+    updateRoomTypeOfPackagePlanResolvers,
 ]);
 
 export * from "./PackagePlanObject";
