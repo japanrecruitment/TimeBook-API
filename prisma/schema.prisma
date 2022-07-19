@@ -578,6 +578,7 @@ model HotelRoom {
   basicPriceSettings BasicPriceSetting[]
   priceOverrides     PriceOverride[]
   packagePlans       HotelRoom_PackagePlan[]
+  stockOverrides     StockOverride[]
   createdAt          DateTime                @default(now()) @db.Timestamp(6)
   updatedAt          DateTime                @updatedAt
 }
@@ -607,6 +608,19 @@ model PriceOverride {
   hotelRoom_packagePlan    HotelRoom_PackagePlan? @relation(fields: [hotelRoom_packagePlan_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt                DateTime               @default(now()) @db.Timestamp(6)
   updatedAt                DateTime               @updatedAt
+}
+
+model StockOverride {
+  id            String       @id @default(cuid())
+  startDate     DateTime     @db.Date
+  endDate       DateTime     @db.Date
+  stock         Int
+  hotelRoomId   String?
+  hotelRoom     HotelRoom?   @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  packagePlanId String?
+  packagePlans  PackagePlan? @relation(fields: [packagePlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt     DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime     @updatedAt
 }
 
 model PriceScheme {
@@ -658,6 +672,7 @@ model PackagePlan {
   photos             Photo[]                 @relation(name: "HotelPackagePlanPhoto")
   optionsAttachments Option[]                @relation(name: "_PackagePlanOptions")
   roomTypes          HotelRoom_PackagePlan[]
+  stockOverrides     StockOverride[]
   createdAt          DateTime                @default(now()) @db.Timestamp(6)
   updatedAt          DateTime                @updatedAt
 }

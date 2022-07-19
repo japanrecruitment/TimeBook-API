@@ -5,11 +5,13 @@ import {
     priceOverridesByHotelRoomIdResolvers,
     priceOverridesByHotelRoomIdTypeDefs,
 } from "./priceOverridesByHotelRoomId";
+import { priceOverridesByRoomPlanIdResolvers, priceOverridesByRoomPlanIdTypeDefs } from "./priceOverridesByRoomPland";
 import { updatePriceOverrideResolvers, updatePriceOverrideTypeDefs } from "./updatePriceOverride";
 
 export const priceOverrideTypeDefs = mergeTypeDefs([
     addPriceOverrideTypeDefs,
     priceOverridesByHotelRoomIdTypeDefs,
+    priceOverridesByRoomPlanIdTypeDefs,
     priceOverrideObjectTypeDefs,
     updatePriceOverrideTypeDefs,
 ]);
@@ -17,6 +19,7 @@ export const priceOverrideTypeDefs = mergeTypeDefs([
 export const priceOverrideResolvers = mergeResolvers([
     addPriceOverrideResolvers,
     priceOverridesByHotelRoomIdResolvers,
+    priceOverridesByRoomPlanIdResolvers,
     priceOverrideObjectResolvers,
     updatePriceOverrideResolvers,
 ]);

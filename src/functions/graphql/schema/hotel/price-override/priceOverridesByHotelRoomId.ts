@@ -30,14 +30,9 @@ const priceOverridesByHotelRoomId: PriceOverridesByHotelRoomId = async (
     const priceOverrideSelect = toPriceOverrideSelect(mapSelections(info));
     const hotelRoom = await store.hotelRoom.findUnique({
         where: { id: hotelRoomId },
-        select: {
-            hotel: { select: { accountId: true } },
-            priceOverrides: priceOverrideSelect,
-        },
+        select: { priceOverrides: priceOverrideSelect },
     });
-    if (!hotelRoom || !hotelRoom.hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel room not found" });
-    if (accountId !== hotelRoom.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
+    if (!hotelRoom) throw new GqlError({ code: "NOT_FOUND", message: "Hotel room not found" });
 
     let priceOverrides = hotelRoom.priceOverrides;
     if (isEmpty(hotelRoom.priceOverrides)) priceOverrides = [];
