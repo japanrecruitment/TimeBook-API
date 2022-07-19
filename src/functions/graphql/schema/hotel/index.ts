@@ -13,8 +13,7 @@ import { priceSchemeResolvers, priceSchemeTypeDefs } from "./price-scheme";
 import { removeHotelPhotoResolvers, removeHotelPhotoTypeDefs } from "./removeHotelPhoto";
 import { updateHotelAddressResolvers, updateHotelAddressTypeDefs } from "./updateHotelAddress";
 import { updateHotelResolvers, updateHotelTypeDefs } from "./updateHotel";
-import { Log } from "@utils/logger";
-import { merge } from "lodash";
+import { priceOverrideResolvers, priceOverrideTypeDefs } from "./price-override";
 
 export const typeDefs = mergeTypeDefs([
     addHotelPhotosTypeDefs,
@@ -27,6 +26,7 @@ export const typeDefs = mergeTypeDefs([
     hotelRoomTypeDefs,
     myHotelsTypeDefs,
     packagePlanTypeDefs,
+    priceOverrideTypeDefs,
     priceSchemeTypeDefs,
     removeHotelPhotoTypeDefs,
     updateHotelTypeDefs,
@@ -44,6 +44,7 @@ export const resolvers = mergeResolvers([
     hotelRoomResolvers,
     myHotelsResolvers,
     packagePlanResolvers,
+    priceOverrideResolvers,
     priceSchemeResolvers,
     removeHotelPhotoResolvers,
     updateHotelResolvers,
