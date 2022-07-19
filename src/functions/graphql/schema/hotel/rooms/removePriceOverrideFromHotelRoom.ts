@@ -1,13 +1,10 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
-import { mapSelections } from "graphql-map-selections";
-import { intersectionWith, isEmpty } from "lodash";
+import { compact, intersectionWith, isEmpty } from "lodash";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
-import { UpdatePriceOverrideInput, validateUpdatePriceOverrideInput } from "../price-override";
-import { PriceOverrideObject, toPriceOverrideSelect } from "../price-override";
 
 type RemovePriceOverrideFromHotelRoomArgs = { hotelRoomId: string; priceOverrideIds: string[] };
 
@@ -28,7 +25,8 @@ const removePriceOverrideFromHotelRoom: RemovePriceOverrideFromHotelRoom = async
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    priceOverrideIds = priceOverrideIds && priceOverrideIds.length > 0 ? priceOverrideIds : undefined;
+    priceOverrideIds = compact(priceOverrideIds);
+    priceOverrideIds = isEmpty(priceOverrideIds) ? undefined : priceOverrideIds;
 
     const hotelRoom = await store.hotelRoom.findUnique({
         where: { id: hotelRoomId },

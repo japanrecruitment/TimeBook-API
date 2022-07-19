@@ -44,6 +44,7 @@ const updatePriceOverrideInHotelRoom: UpdatePriceOverrideInHotelRoom = async (
                         endDate && startDate
                             ? {
                                   where: {
+                                      id: { not: id },
                                       OR: [
                                           { AND: [{ startDate: { gte: startDate } }, { startDate: { lte: endDate } }] },
                                           { AND: [{ endDate: { gte: startDate } }, { endDate: { lte: endDate } }] },
