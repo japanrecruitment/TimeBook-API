@@ -1,32 +1,17 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { StripeLib } from "@libs/paymentProvider";
-import {
-    addEmailToQueue,
-    ReservationCompletedData,
-    ReservationFailedData,
-    ReservationPendingData,
-    ReservationReceivedData,
-} from "@utils/email-helper";
-import { appConfig } from "@utils/appConfig";
 import { Log } from "@utils/logger";
-import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
-import Stripe from "stripe";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
-import { getAllDatesBetn, getDurationsBetn } from "@utils/date-utils";
-import { SpacePricePlanType } from "@prisma/client";
-import moment from "moment";
-import { environment } from "@utils/environment";
-import { compact, differenceWith, intersectionWith, isEmpty, sum } from "lodash";
-import { mapNumAdultField, PriceSchemeObject } from "../price-scheme";
-import { BasicPriceSettingObject } from "../basic-price-setting";
+import { getAllDatesBetn } from "@utils/date-utils";
+import { differenceWith, intersectionWith, isEmpty, sum } from "lodash";
+import { mapNumAdultField } from "../price-scheme";
 
 function isEqualDate(a: Date, b: Date) {
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-function validateReserveHotelRoomInput(input: ReserveHotelRoomInput): ReserveHotelRoomInput {
+function validateCalculateRoomPlanInput(input: CalculateRoomPlanInput): CalculateRoomPlanInput {
     let { checkInDate, checkOutDate, ...others } = input;
 
     checkInDate = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate());
@@ -39,7 +24,7 @@ function validateReserveHotelRoomInput(input: ReserveHotelRoomInput): ReserveHot
     return { checkInDate, checkOutDate, ...others };
 }
 
-type ReserveHotelRoomInput = {
+type CalculateRoomPlanInput = {
     roomPlanId: string;
     checkInDate: Date;
     checkOutDate: Date;
@@ -47,21 +32,21 @@ type ReserveHotelRoomInput = {
     nChild?: number;
 };
 
-type ReserveHotelRoomArgs = { input: ReserveHotelRoomInput };
+type CalculateRoomPlanArgs = { input: CalculateRoomPlanInput };
 
-type ReserveHotelRoomResult = {
+type CalculateRoomPlanResult = {
     appliedRoomPlanPriceSettings: string[];
     appliedRoomPlanPriceOverrides: string[];
     totalAmount: number;
 };
 
-type ReserveHotelRoom = IFieldResolver<any, Context, ReserveHotelRoomArgs, Promise<ReserveHotelRoomResult>>;
+type CalculateRoomPlan = IFieldResolver<any, Context, CalculateRoomPlanArgs, Promise<CalculateRoomPlanResult>>;
 
-const calculateRoomPlanPrice: ReserveHotelRoom = async (_, { input }, { authData, store }) => {
+const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authData, store }) => {
     const { accountId, email, id: userId } = authData;
     if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const validInput = validateReserveHotelRoomInput(input);
+    const validInput = validateCalculateRoomPlanInput(input);
     const { checkInDate, checkOutDate, roomPlanId, nAdult, nChild } = validInput;
 
     const allDates = getAllDatesBetn(checkInDate, checkOutDate);
@@ -213,7 +198,7 @@ const calculateRoomPlanPrice: ReserveHotelRoom = async (_, { input }, { authData
 };
 
 export const calculateRoomPlanPriceTypeDefs = gql`
-    input ReserveHotelRoomInput {
+    input CalculateRoomPlanInput {
         roomPlanId: ID!
         checkInDate: Date!
         checkOutDate: Date!
@@ -221,17 +206,17 @@ export const calculateRoomPlanPriceTypeDefs = gql`
         nChild: Int
     }
 
-    type ReserveHotelRoomResult {
+    type CalculateRoomPlanResult {
         appliedRoomPlanPriceSettings: [ID]
         appliedRoomPlanPriceOverrides: [ID]
         totalAmount: Int
     }
 
-    type Mutation {
-        calculateRoomPlanPrice(input: ReserveHotelRoomInput): ReserveHotelRoomResult @auth(requires: [user, host])
+    type Query {
+        calculateRoomPlanPrice(input: CalculateRoomPlanInput): CalculateRoomPlanResult @auth(requires: [user, host])
     }
 `;
 
 export const calculateRoomPlanPriceResolvers = {
-    Mutation: { calculateRoomPlanPrice },
+    Query: { calculateRoomPlanPrice },
 };

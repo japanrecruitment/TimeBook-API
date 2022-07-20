@@ -49,15 +49,19 @@ type AddHotelResult = {
 
 type AddHotel = IFieldResolver<any, Context, AddHotelArgs, Promise<AddHotelResult>>;
 
-const addHotel: AddHotel = async (_, { input }, { authData, store }, info) => {
+const addHotel: AddHotel = async (_, { input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const validInput = validateAddHotelInput(input);
     const { address, checkInTime, checkOutTime, description, name, nearestStations, photos } = validInput;
 
-    const hotelSelect = toHotelSelect(mapSelections(info).hotel)?.select;
+    const prefecture = await store.prefecture.findUnique({ where: { id: address.prefectureId } });
+    if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
+    const geoloc = await dataSources.googleMap.getLatLng(prefecture.name, address.city, address.addressLine1);
+    if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid address" });
 
+    const hotelSelect = toHotelSelect(mapSelections(info).hotel)?.select;
     const hotel = await store.hotel.create({
         data: {
             checkInTime,
@@ -65,7 +69,7 @@ const addHotel: AddHotel = async (_, { input }, { authData, store }, info) => {
             description,
             name,
             account: { connect: { id: accountId } },
-            address: { create: address },
+            address: { create: { ...address, latitude: geoloc.lat, longitude: geoloc.lng } },
             nearestStations: { createMany: { data: nearestStations } },
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
         },
