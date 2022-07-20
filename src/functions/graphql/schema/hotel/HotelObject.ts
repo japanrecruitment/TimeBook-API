@@ -72,7 +72,7 @@ export const hotelObjectTypeDefs = gql`
         description: String
         checkInTime: Time
         checkOutTime: Time
-        status: HotelStatus @auth(requires: [admin], allowSelf: true)
+        status: HotelStatus
         address: AddressObject
         nearestStations: [HotelNearestStationObject]
         photos: [Photo]

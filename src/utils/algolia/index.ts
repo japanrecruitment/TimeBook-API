@@ -1,11 +1,12 @@
 import { SearchIndex } from "algoliasearch";
-import { spaceIndex } from "./indices";
+import { hotelIndex, spaceIndex } from "./indices";
 
-export type AlgoliaIndices = "space";
+export type AlgoliaIndices = "hotel" | "space";
 
 export type Algolia = Record<AlgoliaIndices, SearchIndex>;
 
 export const algolia: Algolia = {
+    hotel: hotelIndex,
     space: spaceIndex,
 };
 

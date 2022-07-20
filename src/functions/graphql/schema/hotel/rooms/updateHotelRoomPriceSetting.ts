@@ -85,7 +85,7 @@ export const updateHotelRoomPriceSettingTypeDefs = gql`
         updateHotelRoomPriceSetting(
             hotelRoomId: ID!
             priceSettings: [UpdateBasicPriceSettingInput!]!
-        ): [BasicPriceSettingObject] @auth(requires: [host])
+        ): UpdateHotelRoomPriceSettingResult @auth(requires: [host])
     }
 `;
 

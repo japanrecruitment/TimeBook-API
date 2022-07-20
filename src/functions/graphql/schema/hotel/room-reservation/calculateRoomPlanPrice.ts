@@ -43,9 +43,6 @@ type CalculateRoomPlanResult = {
 type CalculateRoomPlan = IFieldResolver<any, Context, CalculateRoomPlanArgs, Promise<CalculateRoomPlanResult>>;
 
 const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authData, store }) => {
-    const { accountId, email, id: userId } = authData;
-    if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
-
     const validInput = validateCalculateRoomPlanInput(input);
     const { checkInDate, checkOutDate, roomPlanId, nAdult, nChild } = validInput;
 
@@ -112,8 +109,6 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         },
     });
     if (!plan) throw new GqlError({ code: "NOT_FOUND", message: "Plan not found" });
-    if (accountId !== plan.hotelRoom?.hotel?.account?.id)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
 
     Log("calculateRoomPlanPrice:", "packagePlan:", plan);
 
@@ -213,7 +208,7 @@ export const calculateRoomPlanPriceTypeDefs = gql`
     }
 
     type Query {
-        calculateRoomPlanPrice(input: CalculateRoomPlanInput): CalculateRoomPlanResult @auth(requires: [user, host])
+        calculateRoomPlanPrice(input: CalculateRoomPlanInput!): CalculateRoomPlanResult
     }
 `;
 

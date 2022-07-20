@@ -188,8 +188,6 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             },
         });
         if (!plan) throw new GqlError({ code: "NOT_FOUND", message: "Plan not found" });
-        if (accountId !== plan.hotelRoom?.hotel?.account?.id)
-            throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
 
         Log("reserveHotelRoom:", "packagePlan:", plan);
 
@@ -226,13 +224,15 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         if (paymentMethod.customer !== customerId)
             throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
 
+        let appliedRoomPlanPriceOverrides = [];
+        let appliedRoomPlanPriceSettings = [];
         let amount = 0;
         let remDates = allDates;
 
         // Calculating override price
         if (!isEmpty(priceOverrides)) {
             let bookingDates = remDates;
-            priceOverrides.forEach(({ endDate, priceScheme, startDate }) => {
+            priceOverrides.forEach(({ id, endDate, priceScheme, startDate }) => {
                 const matchedDates = intersectionWith(bookingDates, getAllDatesBetn(startDate, endDate), isEqualDate);
                 const mDatesLen = matchedDates.length;
                 if (mDatesLen > 0) {
@@ -245,6 +245,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                             amount += priceScheme[mapNumAdultField(nChild) ?? "oneChildCharge"] * nChild * mDatesLen;
                     }
                     bookingDates = differenceWith(bookingDates, matchedDates, isEqualDate);
+                    appliedRoomPlanPriceOverrides.push(id);
                 }
             });
             if (bookingDates.length > 0) remDates = bookingDates;
@@ -267,7 +268,11 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 }
                 amount = adultPrice + childPrice;
             }
+            appliedRoomPlanPriceSettings = appliedRoomPlanPriceSettings.concat(remPriceSettings.map(({ id }) => id));
         }
+
+        Log("applied plan", appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings);
+
         const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
         const transferAmount = amount - applicationFeeAmount;
 
@@ -315,7 +320,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 account: { connect: { id: accountId } },
                 hotelRoomReservation: {
                     create: {
-                        approved: true,
+                        approved: false,
                         fromDateTime: checkInDate,
                         toDateTime: checkOutDate,
                         status: "PENDING",
@@ -420,7 +425,7 @@ export const reserveHotelRoomTypeDefs = gql`
     }
 
     type Mutation {
-        reserveHotelRoom(input: ReserveHotelRoomInput): ReserveHotelRoomResult @auth(requires: [user, host])
+        reserveHotelRoom(input: ReserveHotelRoomInput!): ReserveHotelRoomResult @auth(requires: [user, host])
     }
 `;
 
