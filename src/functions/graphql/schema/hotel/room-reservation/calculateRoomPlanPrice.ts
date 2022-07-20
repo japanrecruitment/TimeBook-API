@@ -143,8 +143,8 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         });
     }
 
-    const appliedRoomPlanPriceSettings = [];
-    const appliedRoomPlanPriceOverrides = [];
+    let appliedRoomPlanPriceOverrides = [];
+    let appliedRoomPlanPriceSettings = [];
     let amount = 0;
     let remDates = allDates;
 
@@ -187,7 +187,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
             }
             amount = adultPrice + childPrice;
         }
-        appliedRoomPlanPriceSettings.concat(remPriceSettings.map(({ id }) => id));
+        appliedRoomPlanPriceSettings = appliedRoomPlanPriceSettings.concat(remPriceSettings.map(({ id }) => id));
     }
 
     return {
