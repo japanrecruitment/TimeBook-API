@@ -24,9 +24,6 @@ const stockOverridesByPackagePlanId: StockOverridesByPackagePlanId = async (
     { authData, store },
     info
 ) => {
-    const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
-
     const stockOverrideSelect = toStockOverrideSelect(mapSelections(info));
     const packagePlan = await store.packagePlan.findUnique({
         where: { id: packagePlanId },
@@ -44,7 +41,7 @@ const stockOverridesByPackagePlanId: StockOverridesByPackagePlanId = async (
 
 export const stockOverridesByPackagePlanIdTypeDefs = gql`
     type Query {
-        stockOverridesByPackagePlanId(packagePlanId: ID!): [StockOverrideObject] @auth(requires: [host])
+        stockOverridesByPackagePlanId(packagePlanId: ID!): [StockOverrideObject]
     }
 `;
 

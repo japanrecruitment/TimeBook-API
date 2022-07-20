@@ -15,9 +15,6 @@ type PackagePlanByIdResult = PackagePlanObject;
 type PackagePlanById = IFieldResolver<any, Context, PackagePlanByIdArgs, Promise<PackagePlanByIdResult>>;
 
 const packagePlanById: PackagePlanById = async (_, { id }, { authData, store }, info) => {
-    const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
-
     const packagePlanSelect = toPackagePlanSelect(mapSelections(info))?.select;
 
     const packagePlan = await store.packagePlan.findUnique({
@@ -34,7 +31,7 @@ const packagePlanById: PackagePlanById = async (_, { id }, { authData, store }, 
 
 export const packagePlanByIdTypeDefs = gql`
     type Query {
-        packagePlanById(id: ID!): PackagePlanObject @auth(requires: [host])
+        packagePlanById(id: ID!): PackagePlanObject
     }
 `;
 

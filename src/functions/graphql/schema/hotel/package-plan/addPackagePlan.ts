@@ -142,7 +142,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
             hotel: { connect: { id: hotelId } },
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
         },
-        select: { ...packagePlanSelect, id: true, roomTypes: false },
+        select: { ...packagePlanSelect, id: true, photos: true },
     });
 
     const roomPlans = await Promise.all(

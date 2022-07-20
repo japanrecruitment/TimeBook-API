@@ -6,11 +6,13 @@ import { isEmpty } from "lodash";
 import { AddressObject, AddressSelect, toAddressSelect } from "../address";
 import { Photo, PhotoSelect, toPhotoSelect } from "../media";
 import { HotelNearestStationObject, HotelNearestStationSelect, toHotelNearestStationSelect } from "./nearest-stations";
+import { PackagePlanObject, PackagePlanSelect, toPackagePlanSelect } from "./package-plan";
 import { HotelRoomObject, HotelRoomSelect, toHotelRoomSelect } from "./rooms";
 
 export type HotelObject = Partial<Hotel> & {
     address?: Partial<AddressObject>;
     nearestStations?: Partial<HotelNearestStationObject>[];
+    packagePlans?: Partial<PackagePlanObject>[];
     photos?: Partial<Photo>[];
     rooms?: Partial<HotelRoomObject>[];
 };
@@ -24,6 +26,7 @@ export type HotelSelect = {
     status: boolean;
     address: PrismaSelect<AddressSelect>;
     nearestStations: PrismaSelect<HotelNearestStationSelect>;
+    packagePlans: PrismaSelect<PackagePlanSelect>;
     photos: PrismaSelect<PhotoSelect>;
     rooms: PrismaSelect<HotelRoomSelect>;
     accountId: boolean;
@@ -35,9 +38,10 @@ export function toHotelSelect(selections, defaultValue: any = false): PrismaSele
     if (!selections || isEmpty(selections)) return defaultValue;
     const addressSelect = toAddressSelect(selections.address);
     const nearestStationsSelect = toHotelNearestStationSelect(selections.nearestStations);
+    const packagePlanSelect = toPackagePlanSelect(selections.packagePlans);
     const photosSelect = toPhotoSelect(selections.photos);
     const roomsSelect = toHotelRoomSelect(selections.rooms);
-    const hotelSelect = omit(selections, "address", "nearestStations", "photos", "rooms");
+    const hotelSelect = omit(selections, "address", "nearestStations", "packagePlans", "photos", "rooms");
     if (isEmpty(hotelSelect) && !addressSelect && !nearestStationsSelect && !photosSelect && !roomsSelect)
         return defaultValue;
 
@@ -46,6 +50,7 @@ export function toHotelSelect(selections, defaultValue: any = false): PrismaSele
             ...hotelSelect,
             address: addressSelect,
             nearestStations: nearestStationsSelect,
+            packagePlans: packagePlanSelect,
             photos: photosSelect,
             rooms: roomsSelect,
             accountId: true,
@@ -72,6 +77,7 @@ export const hotelObjectTypeDefs = gql`
         nearestStations: [HotelNearestStationObject]
         photos: [Photo]
         rooms: [HotelRoomObject]
+        packagePlans: [PackagePlanObject]
         createdAt: Date
         updatedAt: Date
     }

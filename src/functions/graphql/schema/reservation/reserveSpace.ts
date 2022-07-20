@@ -169,7 +169,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
         const transferAmount = amount - applicationFeeAmount;
 
-        const reservationId = "TB" + Math.floor(100000 + Math.random() * 900000);
+        const reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);
 
         Log(amount, applicationFeeAmount, transferAmount);
 

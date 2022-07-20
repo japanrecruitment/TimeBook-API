@@ -24,9 +24,6 @@ const priceOverridesByHotelRoomId: PriceOverridesByHotelRoomId = async (
     { authData, store },
     info
 ) => {
-    const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
-
     const priceOverrideSelect = toPriceOverrideSelect(mapSelections(info));
     const hotelRoom = await store.hotelRoom.findUnique({
         where: { id: hotelRoomId },
@@ -44,7 +41,7 @@ const priceOverridesByHotelRoomId: PriceOverridesByHotelRoomId = async (
 
 export const priceOverridesByHotelRoomIdTypeDefs = gql`
     type Query {
-        priceOverridesByHotelRoomId(hotelRoomId: ID!): [PriceOverrideObject] @auth(requires: [host])
+        priceOverridesByHotelRoomId(hotelRoomId: ID!): [PriceOverrideObject]
     }
 `;
 

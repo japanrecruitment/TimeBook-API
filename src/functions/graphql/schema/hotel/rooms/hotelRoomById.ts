@@ -15,9 +15,6 @@ type HotelRoomByIdResult = HotelRoomObject;
 type HotelRoomById = IFieldResolver<any, Context, HotelRoomByIdArgs, Promise<HotelRoomByIdResult>>;
 
 const hotelRoomById: HotelRoomById = async (_, { id }, { authData, store }, info) => {
-    const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
-
     const hotelRoomSelect = toHotelRoomSelect(mapSelections(info))?.select;
 
     const hotelRoom = await store.hotelRoom.findUnique({
@@ -34,7 +31,7 @@ const hotelRoomById: HotelRoomById = async (_, { id }, { authData, store }, info
 
 export const hotelRoomByIdTypeDefs = gql`
     type Query {
-        hotelRoomById(id: ID!): HotelRoomObject @auth(requires: [host])
+        hotelRoomById(id: ID!): HotelRoomObject
     }
 `;
 

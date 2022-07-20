@@ -19,9 +19,6 @@ type PriceOverridesByRoomPlanId = IFieldResolver<
 >;
 
 const priceOverridesByRoomPlanId: PriceOverridesByRoomPlanId = async (_, { roomPlanId }, { authData, store }, info) => {
-    const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
-
     const priceOverrideSelect = toPriceOverrideSelect(mapSelections(info));
     const roomPlan = await store.hotelRoom_PackagePlan.findUnique({
         where: { id: roomPlanId },
@@ -39,7 +36,7 @@ const priceOverridesByRoomPlanId: PriceOverridesByRoomPlanId = async (_, { roomP
 
 export const priceOverridesByRoomPlanIdTypeDefs = gql`
     type Query {
-        priceOverridesByRoomPlanId(roomPlanId: ID!): [PriceOverrideObject] @auth(requires: [host])
+        priceOverridesByRoomPlanId(roomPlanId: ID!): [PriceOverrideObject]
     }
 `;
 

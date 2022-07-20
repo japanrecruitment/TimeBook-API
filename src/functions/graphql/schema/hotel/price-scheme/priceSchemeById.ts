@@ -15,9 +15,6 @@ type PriceSchemeByIdResult = PriceSchemeObject;
 type PriceSchemeById = IFieldResolver<any, Context, PriceSchemeByIdArgs, Promise<PriceSchemeByIdResult>>;
 
 const priceSchemeById: PriceSchemeById = async (_, { id }, { authData, store }, info) => {
-    const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
-
     const priceSchemeSelect = toPriceSchemeSelect(mapSelections(info))?.select;
 
     const priceScheme = await store.priceScheme.findUnique({
@@ -34,7 +31,7 @@ const priceSchemeById: PriceSchemeById = async (_, { id }, { authData, store }, 
 
 export const priceSchemeByIdTypeDefs = gql`
     type Query {
-        priceSchemeById(id: ID!): PriceSchemeObject @auth(requires: [host])
+        priceSchemeById(id: ID!): PriceSchemeObject
     }
 `;
 

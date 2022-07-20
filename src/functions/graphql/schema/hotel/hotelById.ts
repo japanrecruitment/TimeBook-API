@@ -28,7 +28,7 @@ const hotelById: HotelById = async (_, { id }, { store }, info) => {
 
 export const hotelByIdTypeDefs = gql`
     type Query {
-        hotelById(id: ID!): HotelObject @auth(requires: [host])
+        hotelById(id: ID!): HotelObject
     }
 `;
 

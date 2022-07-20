@@ -66,6 +66,7 @@ enum PaymentProvider {
 
 enum TransactionAssetType {
   SPACE
+  HOTEL_ROOM
 }
 
 enum TransactionStatus {
@@ -96,31 +97,32 @@ enum HotelPaymentTerm {
 }
 
 model Account {
-  id             String          @id @default(cuid())
-  approved       Boolean         @default(false)
-  email          String          @unique @db.VarChar(255)
-  emailVerified  Boolean         @default(false)
-  phoneNumber    String?         @db.VarChar(10)
-  phoneVerified  Boolean         @default(false)
-  password       String          @db.VarChar(255)
-  roles          Role[]
-  suspended      Boolean         @default(false)
-  createdAt      DateTime        @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime        @updatedAt
-  profileType    ProfileType
-  userProfile    User?
-  companyProfile Company?
-  session        Session[]
-  myReservation  Reservation[]
-  mySpace        Space[]
-  Credit         Credit[]
-  paymentSource  PaymentSource[]
-  host           Host?
-  chats          Chat[]          @relation("_AccountsChat")
-  sentMessages   Message[]
-  myTransaction  Transaction[]
-  givenRatings   Rating[]
-  hotels         Hotel[]
+  id                      String                 @id @default(cuid())
+  approved                Boolean                @default(false)
+  email                   String                 @unique @db.VarChar(255)
+  emailVerified           Boolean                @default(false)
+  phoneNumber             String?                @db.VarChar(10)
+  phoneVerified           Boolean                @default(false)
+  password                String                 @db.VarChar(255)
+  roles                   Role[]
+  suspended               Boolean                @default(false)
+  createdAt               DateTime               @default(now()) @db.Timestamp(6)
+  updatedAt               DateTime               @updatedAt
+  profileType             ProfileType
+  userProfile             User?
+  companyProfile          Company?
+  session                 Session[]
+  myReservation           Reservation[]
+  myHotelRoomReservations HotelRoomReservation[]
+  mySpace                 Space[]
+  Credit                  Credit[]
+  paymentSource           PaymentSource[]
+  host                    Host?
+  chats                   Chat[]                 @relation("_AccountsChat")
+  sentMessages            Message[]
+  myTransaction           Transaction[]
+  givenRatings            Rating[]
+  hotels                  Hotel[]
 }
 
 model PaymentSource {
@@ -368,29 +370,31 @@ model Reservation {
 }
 
 model Transaction {
-  id                  String               @id @default(cuid())
-  provider            PaymentProvider      @default(STRIPE)
-  assetType           TransactionAssetType @default(SPACE)
-  assetData           Json
-  description         String               @db.Text
-  amount              Float
-  currency            String
-  brand               String
-  lastAuthorizedDate  DateTime             @db.Date
-  status              TransactionStatus
-  paymentIntentId     String?
-  requestedLog        Json?
-  responseReceivedLog Json?
-  webhookReceivedLog  Json?
-  webhookRespondedLog Json?
-  resultedLog         Json?
-  failedLog           Json?
-  createdAt           DateTime             @default(now()) @db.Timestamp(6)
-  updatedAt           DateTime             @updatedAt
-  accountId           String
-  account             Account              @relation(fields: [accountId], references: [id])
-  reservationId       String               @unique
-  reservation         Reservation          @relation(fields: [reservationId], references: [id])
+  id                     String                @id @default(cuid())
+  provider               PaymentProvider       @default(STRIPE)
+  assetType              TransactionAssetType  @default(SPACE)
+  assetData              Json
+  description            String                @db.Text
+  amount                 Float
+  currency               String
+  brand                  String
+  lastAuthorizedDate     DateTime              @db.Date
+  status                 TransactionStatus
+  paymentIntentId        String?
+  requestedLog           Json?
+  responseReceivedLog    Json?
+  webhookReceivedLog     Json?
+  webhookRespondedLog    Json?
+  resultedLog            Json?
+  failedLog              Json?
+  createdAt              DateTime              @default(now()) @db.Timestamp(6)
+  updatedAt              DateTime              @updatedAt
+  accountId              String
+  account                Account               @relation(fields: [accountId], references: [id])
+  reservationId          String?               @unique
+  reservation            Reservation?          @relation(fields: [reservationId], references: [id])
+  hotelRoomReservationId String?               @unique
+  hotelRoomReservation   HotelRoomReservation? @relation(fields: [hotelRoomReservationId], references: [id])
 }
 
 model TrainLine {
@@ -579,6 +583,7 @@ model HotelRoom {
   priceOverrides     PriceOverride[]
   packagePlans       HotelRoom_PackagePlan[]
   stockOverrides     StockOverride[]
+  reservations       HotelRoomReservation[]
   createdAt          DateTime                @default(now()) @db.Timestamp(6)
   updatedAt          DateTime                @updatedAt
 }
@@ -673,6 +678,7 @@ model PackagePlan {
   optionsAttachments Option[]                @relation(name: "_PackagePlanOptions")
   roomTypes          HotelRoom_PackagePlan[]
   stockOverrides     StockOverride[]
+  reservations       HotelRoomReservation[]
   createdAt          DateTime                @default(now()) @db.Timestamp(6)
   updatedAt          DateTime                @updatedAt
 }
@@ -704,4 +710,24 @@ model Option {
   packagePlans     PackagePlan[] @relation(name: "_PackagePlanOptions")
   createdAt        DateTime      @default(now()) @db.Timestamp(6)
   updatedAt        DateTime      @updatedAt
+}
+
+model HotelRoomReservation {
+  id            String            @id @default(cuid())
+  reservationId String            @default("PS")
+  fromDateTime  DateTime          @default(now()) @db.Date
+  toDateTime    DateTime          @db.Date
+  status        ReservationStatus @default(PENDING)
+  remarks       String?           @db.Text
+  approved      Boolean
+  approvedOn    DateTime?         @db.Timestamp(6)
+  hotelRoomId   String
+  hotelRoom     HotelRoom         @relation(fields: [hotelRoomId], references: [id])
+  packagePlanId String
+  packagePlan   PackagePlan       @relation(fields: [packagePlanId], references: [id])
+  reserveeId    String
+  reservee      Account           @relation(fields: [reserveeId], references: [id])
+  transaction   Transaction?
+  createdAt     DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime          @updatedAt
 }

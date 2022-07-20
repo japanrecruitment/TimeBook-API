@@ -22,3 +22,4 @@ export const priceSchemeResolvers = mergeResolvers([
 ]);
 
 export * from "./PriceSchemeObject";
+export * from "./fieldMapper";

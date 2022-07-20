@@ -11,6 +11,7 @@ import { PackagePlanObject, toPackagePlanSelect } from "./PackagePlanObject";
 function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePackagePlanInput {
     let {
         cutOffBeforeDays,
+        cutOffTillTime,
         description,
         endReservation,
         endUsage,
@@ -25,8 +26,13 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
     name = name?.trim();
 
     if (isEmpty(description)) description = undefined;
-
     if (isEmpty(name)) name = undefined;
+    if (!startUsage) startUsage = null;
+    if (!endUsage) endUsage = null;
+    if (!startReservation) startReservation = null;
+    if (!endReservation) endReservation = null;
+    if (!cutOffBeforeDays) cutOffBeforeDays = null;
+    if (!cutOffTillTime) cutOffTillTime = null;
 
     if (startUsage?.getTime() > endUsage?.getTime())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid usage period" });
