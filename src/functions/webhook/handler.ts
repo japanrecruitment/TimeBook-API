@@ -9,6 +9,7 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
         let transactionId: string;
         let reservationId: string;
         let userId: string;
+        let hotelRoomId: string;
         let spaceId: string;
         let transactionStatus: TransactionStatus;
         let amount: number;
@@ -23,6 +24,7 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
                 transactionId = intent?.metadata?.transactionId;
                 reservationId = intent?.metadata?.reservationId;
                 userId = intent?.metadata?.userId;
+                hotelRoomId = intent?.metadata?.hotelRoomId;
                 spaceId = intent?.metadata?.spaceId;
                 transactionStatus = TransactionStatus.WEBHOOK_RECEIVED;
                 amount = intent?.amount;
@@ -34,6 +36,7 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
                 transactionId = intent?.metadata?.transactionId;
                 reservationId = intent?.metadata?.reservationId;
                 userId = intent?.metadata?.userId;
+                hotelRoomId = intent?.metadata?.hotelRoomId;
                 spaceId = intent?.metadata?.spaceId;
                 transactionStatus = TransactionStatus.FAILED;
                 webhookStatusLog = intent;
@@ -47,7 +50,7 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
         if (transactionStatus === TransactionStatus.FAILED)
             return formatJSONResponse(200, { message: "Signature verification failed." });
 
-        if (!transactionId || !reservationId || !userId || !spaceId)
+        if (!transactionId || !reservationId || !userId || (!spaceId && !hotelRoomId))
             return formatJSONResponse(500, { message: "Could not validate transaction on our end." });
 
         const transaction = await store.transaction.findUnique({ where: { id: transactionId } });

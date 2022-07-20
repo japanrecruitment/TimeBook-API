@@ -17,11 +17,13 @@ import { priceOverrideResolvers, priceOverrideTypeDefs } from "./price-override"
 import { publishHotelResolvers, publishHotelTypeDefs } from "./publishHotel";
 import { stockOverrideResolvers, stockOverrideTypeDefs } from "./stock-override";
 import { roomReservationResolvers, roomReservationTypeDefs } from "./room-reservation";
+import { allPublishedHotelsResolvers, allPublishedHotelsTypeDefs } from "./allPublishedHotels";
 
 export const typeDefs = mergeTypeDefs([
     addHotelPhotosTypeDefs,
     addHotelTypeDefs,
     allHotelsTypeDefs,
+    allPublishedHotelsTypeDefs,
     basicPriceSettingTypeDefs,
     hotelByIdTypeDefs,
     hotelNearestStationTypeDefs,
@@ -43,6 +45,7 @@ export const resolvers = mergeResolvers([
     addHotelPhotosResolvers,
     addHotelResolvers,
     allHotelsResolvers,
+    allPublishedHotelsResolvers,
     basicPriceSettingResolvers,
     hotelByIdResolvers,
     hotelNearestStationResolvers,
