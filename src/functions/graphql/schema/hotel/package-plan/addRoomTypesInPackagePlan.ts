@@ -87,8 +87,9 @@ const addRoomTypesInPackagePlan: AddRoomTypesInPackagePlan = async (
     if (roomTypesToAdd.length <= 0)
         throw new GqlError({ message: `No new room type found from submitted list to add` });
 
-    const packagePlanRoomTypeSelect = toPackagePlanRoomTypeSelect(mapSelections(info)?.roomTypes)?.select;
-
+    const packagePlanRoomTypeSelect = toPackagePlanRoomTypeSelect(mapSelections(info)?.roomTypes)?.select || {
+        id: true,
+    };
     const newRoomTypes = await Promise.all(
         roomTypesToAdd.map(({ hotelRoomId, priceSettings }) =>
             store.hotelRoom_PackagePlan.create({

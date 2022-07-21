@@ -49,6 +49,7 @@ const removeRoomTypesFromPackagePlan: RemoveRoomTypesFromPackagePlan = async (
         where: { id: packagePlanId },
         data: { roomTypes: { deleteMany: { packagePlanId, id: { in: roomTypesToRemove } } } },
         select: {
+            id: true,
             hotel:
                 packagePlan.hotel.status === "PUBLISHED"
                     ? {

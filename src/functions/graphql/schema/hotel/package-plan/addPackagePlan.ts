@@ -126,7 +126,10 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         throw new GqlError({ code: "NOT_FOUND", message: `Hotel doesn't have price scheme with id: ${priceSchemeId}` });
     });
 
-    const packagePlanSelect = toPackagePlanSelect(mapSelections(info).packagePlan)?.select;
+    const packagePlanSelect = toPackagePlanSelect(mapSelections(info).packagePlan)?.select || {
+        id: true,
+        roomTypes: { select: { id: true } },
+    };
     let packagePlan = await store.packagePlan.create({
         data: {
             description,
@@ -142,7 +145,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
             hotel: { connect: { id: hotelId } },
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
         },
-        select: { ...packagePlanSelect, id: true, photos: true },
+        select: { ...packagePlanSelect, id: true, photos: true, roomTypes: false },
     });
 
     const roomPlans = await Promise.all(
@@ -204,7 +207,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
 
     return {
         message: "Successfully added a package plan",
-        packagePlan: { ...packagePlan, hotelRoomPlans: roomPlans },
+        packagePlan: { ...packagePlan, roomTypes: roomPlans },
         uploadRes,
     };
 };
