@@ -5,7 +5,7 @@ import httpJsonBodyParses from "@middy/http-json-body-parser";
 import httpHeaderNormalizer from "@middy/http-header-normalizer";
 
 const middyfy = (handler: Handler, preventTimeoout: boolean = false) => {
-    const middlewares = [httpHeaderNormalizer({ canonical: true }), httpJsonBodyParses()];
+    const middlewares = [httpHeaderNormalizer(), httpJsonBodyParses()];
 
     // if preventTimeout is true add doNotWaitForEmptyEventLoop middleware.
     // This middleware sets context.callbackWaitsForEmptyEventLoop property to false

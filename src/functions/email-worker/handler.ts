@@ -1,5 +1,4 @@
 import { SQSHandler } from "aws-lambda";
-import { middyfy } from "@middlewares/index";
 import {
     EmailQueueData,
     emailTemplates,
@@ -9,8 +8,12 @@ import {
     verifyEmailViaSMTP,
 } from "@utils/email-helper";
 import { Log } from "@utils/logger";
+import middy from "@middy/core";
+import doNotWaitForEmptyEventLoop from "@middy/do-not-wait-for-empty-event-loop";
 
 const emailQueueWorker: SQSHandler = async (event) => {
+    Log(`[STARTED]: EMAIL WORKER`);
+    Log(event);
     if (event.Records.length === 0) return;
     const emailQueueData: EmailQueueData = JSON.parse(event.Records[0].body);
     const { template, ...emailData } = emailQueueData;
@@ -22,6 +25,7 @@ const emailQueueWorker: SQSHandler = async (event) => {
     if (!validateEmailOnCertainDomain(to) && !(await verifyEmailViaSMTP(to))) return;
 
     await sendEmail(to, subject, body);
+    Log(`[FINISHED]: EMAIL WORKER`);
 };
 
-export const main = middyfy(emailQueueWorker, true);
+export const main = middy(emailQueueWorker).use(doNotWaitForEmptyEventLoop());
