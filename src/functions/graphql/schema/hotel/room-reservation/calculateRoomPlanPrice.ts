@@ -6,6 +6,7 @@ import { GqlError } from "../../../error";
 import { getAllDatesBetn } from "@utils/date-utils";
 import { differenceWith, intersectionWith, isEmpty, sum } from "lodash";
 import { mapNumAdultField } from "../price-scheme";
+import moment from "moment";
 
 function isEqualDate(a: Date, b: Date) {
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -20,6 +21,8 @@ function validateCalculateRoomPlanInput(input: CalculateRoomPlanInput): Calculat
     if (checkOutDate < checkInDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
     if (checkInDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+
+    checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
 
     return { checkInDate, checkOutDate, ...others };
 }

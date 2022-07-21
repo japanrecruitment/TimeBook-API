@@ -35,6 +35,8 @@ function validateReserveHotelRoomInput(input: ReserveHotelRoomInput): ReserveHot
 
     if (checkInDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
+    checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
+
     return { checkInDate, checkOutDate, ...others };
 }
 
