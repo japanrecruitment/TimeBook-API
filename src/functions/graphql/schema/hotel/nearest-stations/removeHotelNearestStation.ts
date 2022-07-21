@@ -20,7 +20,7 @@ type RemoveHotelNearestStation = IFieldResolver<
 const removeHotelNearestStation: RemoveHotelNearestStation = async (
     _,
     { hotelId, stationIds },
-    { authData, store }
+    { authData, dataSources, store }
 ) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
@@ -42,9 +42,16 @@ const removeHotelNearestStation: RemoveHotelNearestStation = async (
     const updatedHotel = await store.hotel.update({
         where: { id: hotelId },
         data: { nearestStations: { deleteMany: { hotelId, stationId: { in: nearestStationsToRemove } } } },
+        select: { id: true, status: true, nearestStations: { select: { stationId: true } } },
     });
 
     Log(updatedHotel);
+    if (updatedHotel.status === "PUBLISHED") {
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: updatedHotel.id,
+            nearestStations: updatedHotel.nearestStations.map(({ stationId }) => stationId),
+        });
+    }
 
     return {
         message: `Successfully removed ${nearestStationsToRemove.length} stations as nearest station from your hotel`,

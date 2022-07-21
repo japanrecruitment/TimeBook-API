@@ -88,7 +88,7 @@ type AddPackagePlanResult = {
 
 type AddPackagePlan = IFieldResolver<any, Context, AddPackagePlanArgs, Promise<AddPackagePlanResult>>;
 
-const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData, store }, info) => {
+const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
@@ -168,6 +168,41 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         });
 
     Log(packagePlan, roomPlans, uploadRes);
+
+    const updatedHotel = await store.hotel.findUnique({
+        where: { id: hotelId },
+        select: {
+            id: true,
+            packagePlans: {
+                select: {
+                    paymentTerm: true,
+                    roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+                },
+            },
+            status: true,
+        },
+    });
+    if (updatedHotel) {
+        let highestPrice = 0;
+        let lowestPrice = 0;
+        updatedHotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
+            const selector = paymentTerm === "PER_PERSON" ? "oneAdultCharge" : "roomCharge";
+            roomTypes.forEach(({ priceSettings }, index) => {
+                priceSettings.forEach(({ priceScheme }) => {
+                    if (index === 0) lowestPrice = priceScheme[selector];
+                    if (priceScheme[selector] > highestPrice) highestPrice = priceScheme[selector];
+                    if (priceScheme[selector] < lowestPrice) lowestPrice = priceScheme[selector];
+                });
+            });
+        });
+        if (updatedHotel.status === "PUBLISHED") {
+            await dataSources.hotelAlgolia.partialUpdateObject({
+                objectID: updatedHotel.id,
+                highestPrice,
+                lowestPrice,
+            });
+        }
+    }
 
     return {
         message: "Successfully added a package plan",

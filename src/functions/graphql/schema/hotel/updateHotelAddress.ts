@@ -26,7 +26,7 @@ const updateHotelAddress: UpdateHotelAddress = async (_, { input }, { authData, 
 
     const address = await store.address.findUnique({
         where: { id },
-        include: { hotel: { select: { accountId: true } }, prefecture: true },
+        include: { hotel: { select: { id: true, accountId: true, status: true } }, prefecture: true },
     });
     if (!address || !address.hotel) throw new GqlError({ code: "NOT_FOUND", message: "Address not found" });
     if (accountId !== address.hotel.accountId)
@@ -49,7 +49,7 @@ const updateHotelAddress: UpdateHotelAddress = async (_, { input }, { authData, 
         if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid address" });
     }
 
-    const addressSelect = toAddressSelect(mapSelections(info)?.address)?.select;
+    const addressSelect = toAddressSelect(mapSelections(info)?.address)?.select || { id: true };
     const updatedAddress = await store.address.update({
         where: { id },
         data: {
@@ -61,10 +61,31 @@ const updateHotelAddress: UpdateHotelAddress = async (_, { input }, { authData, 
             postalCode,
             prefecture: prefectureId ? { connect: { id: prefectureId } } : undefined,
         },
-        select: addressSelect,
+        select: {
+            ...addressSelect,
+            city: true,
+            latitude: true,
+            longitude: true,
+            prefecture: true,
+            hotelId: true,
+        },
     });
 
     Log(updatedAddress);
+    if (
+        address.hotel.status === "PUBLISHED" &&
+        (updatedAddress.prefecture.id !== address.prefectureId ||
+            updatedAddress.city !== address.city ||
+            updatedAddress.latitude !== address.latitude ||
+            updatedAddress.longitude !== address.longitude)
+    ) {
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: updatedAddress.hotelId,
+            prefecture: updatedAddress.prefecture.name,
+            city: updatedAddress.city,
+            _geoloc: { lat: updatedAddress.latitude, lng: updatedAddress.longitude },
+        });
+    }
 
     return {
         message: "Successfully update hotel address",

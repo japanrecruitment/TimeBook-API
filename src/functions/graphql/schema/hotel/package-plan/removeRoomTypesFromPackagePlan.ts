@@ -20,7 +20,7 @@ type RemoveRoomTypesFromPackagePlan = IFieldResolver<
 const removeRoomTypesFromPackagePlan: RemoveRoomTypesFromPackagePlan = async (
     _,
     { packagePlanId, roomTypesIds },
-    { authData, store }
+    { authData, dataSources, store }
 ) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
@@ -48,9 +48,46 @@ const removeRoomTypesFromPackagePlan: RemoveRoomTypesFromPackagePlan = async (
     const updatedPackagePlan = await store.packagePlan.update({
         where: { id: packagePlanId },
         data: { roomTypes: { deleteMany: { packagePlanId, id: { in: roomTypesToRemove } } } },
+        select: {
+            hotel: {
+                select: {
+                    id: true,
+                    packagePlans: {
+                        select: {
+                            paymentTerm: true,
+                            roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+                        },
+                    },
+                    status: true,
+                },
+            },
+        },
     });
 
     Log(updatedPackagePlan);
+
+    const hotel = updatedPackagePlan?.hotel;
+    if (hotel) {
+        let highestPrice = 0;
+        let lowestPrice = 0;
+        hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
+            const selector = paymentTerm === "PER_PERSON" ? "oneAdultCharge" : "roomCharge";
+            roomTypes.forEach(({ priceSettings }, index) => {
+                priceSettings.forEach(({ priceScheme }) => {
+                    if (index === 0) lowestPrice = priceScheme[selector];
+                    if (priceScheme[selector] > highestPrice) highestPrice = priceScheme[selector];
+                    if (priceScheme[selector] < lowestPrice) lowestPrice = priceScheme[selector];
+                });
+            });
+        });
+        if (hotel.status === "PUBLISHED") {
+            await dataSources.hotelAlgolia.partialUpdateObject({
+                objectID: hotel.id,
+                highestPrice,
+                lowestPrice,
+            });
+        }
+    }
 
     return { message: `Successfully removed ${roomTypesToRemove.length} room type from package plan` };
 };

@@ -51,7 +51,7 @@ type UpdateHotelRoomResult = {
 
 type UpdateHotelRoom = IFieldResolver<any, Context, UpdateHotelRoomArgs, Promise<UpdateHotelRoomResult>>;
 
-const updateHotelRoom: UpdateHotelRoom = async (_, { input }, { authData, store }, info) => {
+const updateHotelRoom: UpdateHotelRoom = async (_, { input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
@@ -65,10 +65,38 @@ const updateHotelRoom: UpdateHotelRoom = async (_, { input }, { authData, store 
     if (accountId !== hotelRoom.hotel.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
 
-    const hotelRoomSelect = toHotelRoomSelect(mapSelections(info)?.hotelRoom)?.select;
-    const updatedHotelRoom = await store.hotelRoom.update({ where: { id }, data, select: hotelRoomSelect });
+    const hotelRoomSelect = toHotelRoomSelect(mapSelections(info)?.hotelRoom)?.select || { id: true };
+    const updatedHotelRoom = await store.hotelRoom.update({
+        where: { id },
+        data,
+        select: {
+            ...hotelRoomSelect,
+            hotel: {
+                select: {
+                    id: true,
+                    rooms: { select: { name: true, maxCapacityAdult: true, maxCapacityChild: true } },
+                    status: true,
+                },
+            },
+        },
+    });
 
     Log(updatedHotelRoom);
+
+    let maxAdult = 0;
+    let maxChild = 0;
+    updatedHotelRoom.hotel.rooms.forEach(({ maxCapacityAdult, maxCapacityChild }) => {
+        if (maxCapacityAdult > maxAdult) maxAdult = maxCapacityAdult;
+        if (maxCapacityChild > maxChild) maxChild = maxCapacityAdult;
+    });
+    if (updatedHotelRoom.hotel.status === "PUBLISHED") {
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: updatedHotelRoom.hotel.id,
+            hotelRooms: updatedHotelRoom.hotel.rooms.map(({ name }) => name),
+            maxAdult,
+            maxChild,
+        });
+    }
 
     return {
         message: "Successfully updated hotel room",

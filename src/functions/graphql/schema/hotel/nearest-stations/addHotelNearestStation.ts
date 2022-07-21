@@ -2,7 +2,7 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
-import { differenceWith, isEmpty } from "lodash";
+import { differenceWith, isEmpty, uniqWith } from "lodash";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { HotelNearestStationObject, toHotelNearestStationSelect } from "./HotelNearestStationObject";
@@ -23,14 +23,18 @@ export function validateAddHotelNearestStationInputList(
     if (!input || input.length <= 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Please select some stations to add" });
 
-    input.forEach((station, index) => {
-        const hasDuplicateStation = input.slice(index + 1).some((s) => s.stationId === station.stationId);
-        if (hasDuplicateStation)
-            throw new GqlError({
-                code: "BAD_USER_INPUT",
-                message: "Multiple station with the same id found in the selection",
-            });
-    });
+    const duplicateStations = differenceWith(
+        input,
+        uniqWith(input, (a, b) => a.stationId === b.stationId),
+        (a, b) => a.stationId === b.stationId
+    );
+    if (!isEmpty(duplicateStations)) {
+        const duplicateIds = duplicateStations.map(({ stationId }) => stationId);
+        throw new GqlError({
+            code: "BAD_USER_INPUT",
+            message: `Multiple station with the same ids: ${duplicateIds} found in the selection`,
+        });
+    }
 
     return input.map(validateAddHotelNearestStationInput);
 }
@@ -56,7 +60,7 @@ type AddHotelNearestStations = IFieldResolver<any, Context, AddHotelNearestStati
 const addHotelNearestStations: AddHotelNearestStations = async (
     _,
     { hotelId, stations },
-    { authData, store },
+    { authData, dataSources, store },
     info
 ) => {
     const { accountId } = authData || {};
@@ -93,14 +97,22 @@ const addHotelNearestStations: AddHotelNearestStations = async (
     if (nearestStationsToAdd.length <= 0)
         throw new GqlError({ message: `No new station found from submitted station list to add` });
 
-    const nearestStationSelect = toHotelNearestStationSelect(mapSelections(info)?.nearestStations);
+    const nearestStationSelect = toHotelNearestStationSelect(mapSelections(info)?.nearestStations)?.select || {
+        station: true,
+    };
     const updatedHotel = await store.hotel.update({
         where: { id: hotelId },
         data: { nearestStations: { createMany: { data: nearestStationsToAdd } } },
-        select: { nearestStations: nearestStationSelect },
+        select: { id: true, nearestStations: { select: { ...nearestStationSelect, stationId: true } }, status: true },
     });
 
     Log(updatedHotel);
+    if (updatedHotel.status === "PUBLISHED") {
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: updatedHotel.id,
+            nearestStations: updatedHotel.nearestStations.map(({ stationId }) => stationId),
+        });
+    }
 
     return {
         message: `Succesfully added ${nearestStationsToAdd.length} new nearest stations in your hotel`,

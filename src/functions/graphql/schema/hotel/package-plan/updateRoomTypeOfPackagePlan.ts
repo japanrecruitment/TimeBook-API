@@ -35,7 +35,12 @@ type UpdateRoomTypeOfPackagePlan = IFieldResolver<
     Promise<UpdateRoomTypeOfPackagePlanResult>
 >;
 
-const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (_, { input }, { authData, store }, info) => {
+const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (
+    _,
+    { input },
+    { authData, dataSources, store },
+    info
+) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
@@ -58,19 +63,62 @@ const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (_, { inp
         throw new GqlError({ code: "NOT_FOUND", message: `Basic setting with id: ${id} not found in this room type` });
     });
 
-    const packagePlanRoomTypeSelect = toPackagePlanRoomTypeSelect(mapSelections(info)?.roomTypes)?.select;
     await Promise.all(
         priceSettings.map(({ id, priceSchemeId }) =>
             store.basicPriceSetting.update({ where: { id }, data: { priceScheme: { connect: { id: priceSchemeId } } } })
         )
     );
 
+    const packagePlanRoomTypeSelect = toPackagePlanRoomTypeSelect(mapSelections(info)?.roomTypes)?.select || {
+        id: true,
+    };
     const updatedRoomType = await store.hotelRoom_PackagePlan.findUnique({
         where: { id },
-        select: packagePlanRoomTypeSelect,
+        select: {
+            ...packagePlanRoomTypeSelect,
+            packagePlan: {
+                select: {
+                    hotel: {
+                        select: {
+                            id: true,
+                            packagePlans: {
+                                select: {
+                                    paymentTerm: true,
+                                    roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+                                },
+                            },
+                            status: true,
+                        },
+                    },
+                },
+            },
+        },
     });
 
     Log(updatedRoomType);
+
+    const hotel = updatedRoomType?.packagePlan?.hotel;
+    if (hotel) {
+        let highestPrice = 0;
+        let lowestPrice = 0;
+        hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
+            const selector = paymentTerm === "PER_PERSON" ? "oneAdultCharge" : "roomCharge";
+            roomTypes.forEach(({ priceSettings }, index) => {
+                priceSettings.forEach(({ priceScheme }) => {
+                    if (index === 0) lowestPrice = priceScheme[selector];
+                    if (priceScheme[selector] > highestPrice) highestPrice = priceScheme[selector];
+                    if (priceScheme[selector] < lowestPrice) lowestPrice = priceScheme[selector];
+                });
+            });
+        });
+        if (hotel.status === "PUBLISHED") {
+            await dataSources.hotelAlgolia.partialUpdateObject({
+                objectID: hotel.id,
+                highestPrice,
+                lowestPrice,
+            });
+        }
+    }
 
     return {
         message: `Successfully added room type is package plan`,

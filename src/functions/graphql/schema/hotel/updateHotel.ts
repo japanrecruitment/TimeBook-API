@@ -40,7 +40,7 @@ type UpdateHotelResult = {
 
 type UpdateHotel = IFieldResolver<any, Context, UpdateHotelArgs, Promise<UpdateHotelResult>>;
 
-const updateHotel: UpdateHotel = async (_, { input }, { authData, store }, info) => {
+const updateHotel: UpdateHotel = async (_, { input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
@@ -49,10 +49,20 @@ const updateHotel: UpdateHotel = async (_, { input }, { authData, store }, info)
     const hotel = await store.hotel.findFirst({ where: { id, accountId } });
     if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
 
-    const hotelSelect = toHotelSelect(mapSelections(info)?.hotel)?.select;
-    const updatedHotel = await store.hotel.update({ where: { id }, data, select: hotelSelect });
+    const hotelSelect = toHotelSelect(mapSelections(info)?.hotel)?.select || { id: true };
+    const updatedHotel = await store.hotel.update({
+        where: { id },
+        data,
+        select: { ...hotelSelect, id: true, name: true, status: true },
+    });
 
     Log(updatedHotel);
+    if (updatedHotel.status === "PUBLISHED" && hotel.name !== updateHotel.name) {
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: updatedHotel.id,
+            name: updatedHotel.name,
+        });
+    }
 
     return {
         message: `Successfully updated hotel`,

@@ -57,7 +57,7 @@ type AddHotelRoomResult = {
 
 type AddHotelRoom = IFieldResolver<any, Context, AddHotelRoomArgs, Promise<AddHotelRoomResult>>;
 
-const addHotelRoom: AddHotelRoom = async (_, { hotelId, input }, { authData, store }, info) => {
+const addHotelRoom: AddHotelRoom = async (_, { hotelId, input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
@@ -68,7 +68,7 @@ const addHotelRoom: AddHotelRoom = async (_, { hotelId, input }, { authData, sto
     const hotel = await store.hotel.findFirst({ where: { id: hotelId, accountId } });
     if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
 
-    const hotelRoomSelect = toHotelRoomSelect(mapSelections(info).hotelRoom)?.select;
+    const hotelRoomSelect = toHotelRoomSelect(mapSelections(info).hotelRoom)?.select || { id: true };
     const hotelRoom = await store.hotelRoom.create({
         data: {
             description,
@@ -84,8 +84,30 @@ const addHotelRoom: AddHotelRoom = async (_, { hotelId, input }, { authData, sto
         select: {
             ...hotelRoomSelect,
             photos: true,
+            hotel: {
+                select: {
+                    id: true,
+                    rooms: { select: { name: true, maxCapacityAdult: true, maxCapacityChild: true } },
+                    status: true,
+                },
+            },
         },
     });
+
+    let maxAdult = 0;
+    let maxChild = 0;
+    hotelRoom.hotel.rooms.forEach(({ maxCapacityAdult, maxCapacityChild }) => {
+        if (maxCapacityAdult > maxAdult) maxAdult = maxCapacityAdult;
+        if (maxCapacityChild > maxChild) maxChild = maxCapacityAdult;
+    });
+    if (hotelRoom.hotel.status === "PUBLISHED") {
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: hotelRoom.hotel.id,
+            hotelRooms: hotelRoom.hotel.rooms.map(({ name }) => name),
+            maxAdult,
+            maxChild,
+        });
+    }
 
     const S3 = new S3Lib("upload");
     const uploadRes = hotelRoom.photos

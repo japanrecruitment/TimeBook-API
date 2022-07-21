@@ -81,7 +81,7 @@ type UpdatePackagePlanResult = {
 
 type UpdatePackagePlan = IFieldResolver<any, Context, UpdatePackagePlanArgs, Promise<UpdatePackagePlanResult>>;
 
-const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, store }, info) => {
+const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
@@ -96,10 +96,51 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, st
     if (accountId !== packagePlan.hotel.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel package plan" });
 
-    const packagePlanSelect = toPackagePlanSelect(mapSelections(info)?.packagePlan)?.select;
-    const updatedPackagePlan = await store.packagePlan.update({ where: { id }, data, select: packagePlanSelect });
+    const packagePlanSelect = toPackagePlanSelect(mapSelections(info)?.packagePlan)?.select || { id: true };
+    const updatedPackagePlan = await store.packagePlan.update({
+        where: { id },
+        data,
+        select: {
+            ...packagePlanSelect,
+            hotel: {
+                select: {
+                    id: true,
+                    packagePlans: {
+                        select: {
+                            paymentTerm: true,
+                            roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+                        },
+                    },
+                    status: true,
+                },
+            },
+        },
+    });
 
     Log("updatePackagePlan: ", updatedPackagePlan);
+
+    const hotel = updatedPackagePlan?.hotel;
+    if (hotel) {
+        let highestPrice = 0;
+        let lowestPrice = 0;
+        hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
+            const selector = paymentTerm === "PER_PERSON" ? "oneAdultCharge" : "roomCharge";
+            roomTypes.forEach(({ priceSettings }, index) => {
+                priceSettings.forEach(({ priceScheme }) => {
+                    if (index === 0) lowestPrice = priceScheme[selector];
+                    if (priceScheme[selector] > highestPrice) highestPrice = priceScheme[selector];
+                    if (priceScheme[selector] < lowestPrice) lowestPrice = priceScheme[selector];
+                });
+            });
+        });
+        if (hotel.status === "PUBLISHED") {
+            await dataSources.hotelAlgolia.partialUpdateObject({
+                objectID: hotel.id,
+                highestPrice,
+                lowestPrice,
+            });
+        }
+    }
 
     return {
         message: `Successfully updated package plan`,
