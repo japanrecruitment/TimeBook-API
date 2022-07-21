@@ -23,7 +23,7 @@ const myPriceSchemes: MyPriceSchemes = async (_, { hotelId }, { authData, store 
 
     const myHotels = await store.hotel.findMany({
         where: { id: hotelId || undefined, accountId },
-        select: { priceSchemes: { select: priceSchemeSelect } },
+        select: { priceSchemes: { select: priceSchemeSelect, orderBy: { createdAt: "asc" } } },
     });
 
     if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "Price schemes not found" });

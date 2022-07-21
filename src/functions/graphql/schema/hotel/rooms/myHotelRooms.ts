@@ -24,6 +24,7 @@ const myHotelRooms: MyHotelRooms = async (_, { hotelId }, { authData, store }, i
     const myHotels = await store.hotel.findMany({
         where: { id: hotelId || undefined, accountId },
         select: { rooms: { select: hotelRoomSelect } },
+        orderBy: { createdAt: "desc" },
     });
 
     if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });

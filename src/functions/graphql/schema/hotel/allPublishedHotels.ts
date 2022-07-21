@@ -18,6 +18,7 @@ const allPublishedHotels: AllPublishedHotels = async (_, __, { store }, info) =>
     const allPublishedHotels = await store.hotel.findMany({
         where: { status: "PUBLISHED" },
         select: hotelSelect,
+        orderBy: { createdAt: "desc" },
     });
 
     Log(`allPublishedHotels: `, allPublishedHotels);

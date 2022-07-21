@@ -25,6 +25,7 @@ const allHotels: AllHotels = async (_, { filter }, { store }, info) => {
     const allHotels = await store.hotel.findMany({
         where: filter ? { ...filter, status: { in: filter.status } } : undefined,
         select: hotelSelect,
+        orderBy: { createdAt: "desc" },
     });
 
     Log(`filter: `, filter, `allHotels: `, allHotels);

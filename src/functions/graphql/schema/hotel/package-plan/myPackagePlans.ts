@@ -23,7 +23,7 @@ const myPackagePlans: MyPackagePlans = async (_, { hotelId }, { authData, store 
 
     const myHotels = await store.hotel.findMany({
         where: { id: hotelId || undefined, accountId },
-        select: { packagePlans: { select: packagePlanSelect } },
+        select: { packagePlans: { select: packagePlanSelect, orderBy: { createdAt: "desc" } } },
     });
 
     if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "Package plans not found" });
