@@ -31,7 +31,7 @@ const myHotelRoomReservation: MyHotelRoomReservation = async (_, { paginate, fil
     const { sortOrder, status } = filter || { sortOrder: "desc" };
 
     const hotelRoomReservationSelect = toHotelRoomReservationSelect(mapSelections(info)?.data)?.select;
-    const myHotelRoomReservation = await store.reservation.findMany({
+    const myHotelRoomReservation = await store.hotelRoomReservation.findMany({
         where: { reserveeId: accountId, status },
         select: hotelRoomReservationSelect,
         orderBy: { updatedAt: sortOrder },

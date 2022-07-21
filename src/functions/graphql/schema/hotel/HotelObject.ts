@@ -1,4 +1,4 @@
-import { Hotel } from "@prisma/client";
+import { Hotel, Prisma } from "@prisma/client";
 import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
@@ -17,6 +17,10 @@ export type HotelObject = Partial<Hotel> & {
     rooms?: Partial<HotelRoomObject>[];
 };
 
+// {
+//     select: {},
+//     orderBy: { createdAt: "desc" },
+// }
 export type HotelSelect = {
     id: boolean;
     name: boolean;
@@ -26,9 +30,9 @@ export type HotelSelect = {
     status: boolean;
     address: PrismaSelect<AddressSelect>;
     nearestStations: PrismaSelect<HotelNearestStationSelect>;
-    packagePlans: PrismaSelect<PackagePlanSelect>;
+    packagePlans: PrismaSelect<PackagePlanSelect> & { orderBy: { createdAt: Prisma.SortOrder } };
     photos: PrismaSelect<PhotoSelect>;
-    rooms: PrismaSelect<HotelRoomSelect>;
+    rooms: PrismaSelect<HotelRoomSelect> & { orderBy: { createdAt: Prisma.SortOrder } };
     accountId: boolean;
     createdAt: boolean;
     updatedAt: boolean;
@@ -38,9 +42,9 @@ export function toHotelSelect(selections, defaultValue: any = false): PrismaSele
     if (!selections || isEmpty(selections)) return defaultValue;
     const addressSelect = toAddressSelect(selections.address);
     const nearestStationsSelect = toHotelNearestStationSelect(selections.nearestStations);
-    const packagePlanSelect = toPackagePlanSelect(selections.packagePlans);
+    const packagePlanSelect = toPackagePlanSelect(selections.packagePlans)?.select;
     const photosSelect = toPhotoSelect(selections.photos);
-    const roomsSelect = toHotelRoomSelect(selections.rooms);
+    const roomsSelect = toHotelRoomSelect(selections.rooms)?.select;
     const hotelSelect = omit(selections, "address", "nearestStations", "packagePlans", "photos", "rooms");
     if (isEmpty(hotelSelect) && !addressSelect && !nearestStationsSelect && !photosSelect && !roomsSelect)
         return defaultValue;
@@ -50,9 +54,9 @@ export function toHotelSelect(selections, defaultValue: any = false): PrismaSele
             ...hotelSelect,
             address: addressSelect,
             nearestStations: nearestStationsSelect,
-            packagePlans: packagePlanSelect,
+            packagePlans: packagePlanSelect ? { select: packagePlanSelect, orderBy: { createdAt: "desc" } } : undefined,
             photos: photosSelect,
-            rooms: roomsSelect,
+            rooms: roomsSelect ? { select: roomsSelect, orderBy: { createdAt: "desc" } } : false,
             accountId: true,
         } as HotelSelect,
     };

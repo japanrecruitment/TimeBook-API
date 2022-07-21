@@ -13,7 +13,7 @@ type ReservationById = IFieldResolver<any, Context, ReservationByIdArgs, Reserva
 
 const hotelRoomReservationById: ReservationById = async (_, { id }, { store }, info) => {
     const hotelRoomReservationSelect = toHotelRoomReservationSelect(mapSelections(info))?.select;
-    const reservation = await store.reservation.findUnique({
+    const reservation = await store.hotelRoomReservation.findUnique({
         where: { id },
         select: hotelRoomReservationSelect,
     });

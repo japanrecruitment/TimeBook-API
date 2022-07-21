@@ -1,4 +1,4 @@
-import { PackagePlan } from "@prisma/client";
+import { PackagePlan, Prisma } from "@prisma/client";
 import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
@@ -29,7 +29,7 @@ export type PackagePlanSelect = {
     cutOffTillTime: boolean;
     hotelId: boolean;
     photos: PrismaSelect<PhotoSelect>;
-    roomTypes: PrismaSelect<PackagePlanRoomTypeSelect>;
+    roomTypes: PrismaSelect<PackagePlanRoomTypeSelect> & { orderBy: { createdAt: Prisma.SortOrder } };
     createdAt: boolean;
     updatedAt: boolean;
 };
@@ -37,7 +37,7 @@ export type PackagePlanSelect = {
 export function toPackagePlanSelect(selections, defaultValue: any = false): PrismaSelect<PackagePlanSelect> {
     if (!selections || isEmpty(selections)) return defaultValue;
     const photosSelect = toPhotoSelect(selections.photos);
-    const roomTypeSelect = toPackagePlanRoomTypeSelect(selections.roomTypes);
+    const roomTypeSelect = toPackagePlanRoomTypeSelect(selections.roomTypes)?.select;
     const hotelRoomSelect = omit(selections, "photos", "roomTypes");
     if (isEmpty(hotelRoomSelect) && !photosSelect && !roomTypeSelect) return defaultValue;
 
@@ -45,7 +45,7 @@ export function toPackagePlanSelect(selections, defaultValue: any = false): Pris
         select: {
             ...hotelRoomSelect,
             photos: photosSelect,
-            roomTypes: roomTypeSelect,
+            roomTypes: roomTypeSelect ? { select: roomTypeSelect, orderBy: { createdAt: "desc" } } : undefined,
         } as PackagePlanSelect,
     };
 }
