@@ -30,7 +30,7 @@ const removeRoomTypesFromPackagePlan: RemoveRoomTypesFromPackagePlan = async (
     const packagePlan = await store.packagePlan.findUnique({
         where: { id: packagePlanId },
         select: {
-            hotel: { select: { accountId: true } },
+            hotel: { select: { accountId: true, status: true } },
             roomTypes: { where: { id: { in: roomTypesIds } }, select: { id: true } },
         },
     });
@@ -49,25 +49,28 @@ const removeRoomTypesFromPackagePlan: RemoveRoomTypesFromPackagePlan = async (
         where: { id: packagePlanId },
         data: { roomTypes: { deleteMany: { packagePlanId, id: { in: roomTypesToRemove } } } },
         select: {
-            hotel: {
-                select: {
-                    id: true,
-                    packagePlans: {
-                        select: {
-                            paymentTerm: true,
-                            roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
-                        },
-                    },
-                    status: true,
-                },
-            },
+            hotel:
+                packagePlan.hotel.status === "PUBLISHED"
+                    ? {
+                          select: {
+                              id: true,
+                              packagePlans: {
+                                  select: {
+                                      paymentTerm: true,
+                                      roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+                                  },
+                              },
+                              status: true,
+                          },
+                      }
+                    : undefined,
         },
     });
 
     Log(updatedPackagePlan);
 
     const hotel = updatedPackagePlan?.hotel;
-    if (hotel) {
+    if (hotel && hotel.status === "PUBLISHED") {
         let highestPrice = 0;
         let lowestPrice = 0;
         hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
@@ -80,13 +83,11 @@ const removeRoomTypesFromPackagePlan: RemoveRoomTypesFromPackagePlan = async (
                 });
             });
         });
-        if (hotel.status === "PUBLISHED") {
-            await dataSources.hotelAlgolia.partialUpdateObject({
-                objectID: hotel.id,
-                highestPrice,
-                lowestPrice,
-            });
-        }
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: hotel.id,
+            highestPrice,
+            lowestPrice,
+        });
     }
 
     return { message: `Successfully removed ${roomTypesToRemove.length} room type from package plan` };

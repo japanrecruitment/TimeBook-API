@@ -55,7 +55,10 @@ const addRoomTypesInPackagePlan: AddRoomTypesInPackagePlan = async (
 
     const packagePlan = await store.packagePlan.findUnique({
         where: { id: packagePlanId },
-        select: { hotel: { select: { accountId: true, id: true } }, roomTypes: { select: { hotelRoomId: true } } },
+        select: {
+            hotel: { select: { accountId: true, id: true, status: true } },
+            roomTypes: { select: { hotelRoomId: true } },
+        },
     });
     if (!packagePlan || !packagePlan.hotel)
         throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
@@ -101,20 +104,20 @@ const addRoomTypesInPackagePlan: AddRoomTypesInPackagePlan = async (
 
     Log(newRoomTypes);
 
-    const hotel = await store.hotel.findUnique({
-        where: { id: packagePlan.hotel.id },
-        select: {
-            id: true,
-            packagePlans: {
-                select: {
-                    paymentTerm: true,
-                    roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+    if (packagePlan.hotel.status === "PUBLISHED") {
+        const hotel = await store.hotel.findUnique({
+            where: { id: packagePlan.hotel.id },
+            select: {
+                id: true,
+                packagePlans: {
+                    select: {
+                        paymentTerm: true,
+                        roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+                    },
                 },
+                status: true,
             },
-            status: true,
-        },
-    });
-    if (hotel) {
+        });
         let highestPrice = 0;
         let lowestPrice = 0;
         hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
@@ -127,13 +130,11 @@ const addRoomTypesInPackagePlan: AddRoomTypesInPackagePlan = async (
                 });
             });
         });
-        if (hotel.status === "PUBLISHED") {
-            await dataSources.hotelAlgolia.partialUpdateObject({
-                objectID: hotel.id,
-                highestPrice,
-                lowestPrice,
-            });
-        }
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: hotel.id,
+            highestPrice,
+            lowestPrice,
+        });
     }
 
     return {

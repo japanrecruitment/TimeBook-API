@@ -89,7 +89,7 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
 
     const packagePlan = await store.packagePlan.findUnique({
         where: { id },
-        select: { hotel: { select: { accountId: true } } },
+        select: { hotel: { select: { accountId: true, status: true } } },
     });
     if (!packagePlan || !packagePlan.hotel)
         throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
@@ -102,25 +102,28 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
         data,
         select: {
             ...packagePlanSelect,
-            hotel: {
-                select: {
-                    id: true,
-                    packagePlans: {
-                        select: {
-                            paymentTerm: true,
-                            roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
-                        },
-                    },
-                    status: true,
-                },
-            },
+            hotel:
+                packagePlan.hotel.status === "PUBLISHED"
+                    ? {
+                          select: {
+                              id: true,
+                              packagePlans: {
+                                  select: {
+                                      paymentTerm: true,
+                                      roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+                                  },
+                              },
+                              status: true,
+                          },
+                      }
+                    : undefined,
         },
     });
 
     Log("updatePackagePlan: ", updatedPackagePlan);
 
     const hotel = updatedPackagePlan?.hotel;
-    if (hotel) {
+    if (hotel && hotel.status === "PUBLISHED") {
         let highestPrice = 0;
         let lowestPrice = 0;
         hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
@@ -133,13 +136,11 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
                 });
             });
         });
-        if (hotel.status === "PUBLISHED") {
-            await dataSources.hotelAlgolia.partialUpdateObject({
-                objectID: hotel.id,
-                highestPrice,
-                lowestPrice,
-            });
-        }
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: hotel.id,
+            highestPrice,
+            lowestPrice,
+        });
     }
 
     return {

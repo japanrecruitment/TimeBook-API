@@ -83,13 +83,13 @@ const updateHotelRoom: UpdateHotelRoom = async (_, { input }, { authData, dataSo
 
     Log(updatedHotelRoom);
 
-    let maxAdult = 0;
-    let maxChild = 0;
-    updatedHotelRoom.hotel.rooms.forEach(({ maxCapacityAdult, maxCapacityChild }) => {
-        if (maxCapacityAdult > maxAdult) maxAdult = maxCapacityAdult;
-        if (maxCapacityChild > maxChild) maxChild = maxCapacityAdult;
-    });
     if (updatedHotelRoom.hotel.status === "PUBLISHED") {
+        let maxAdult = 0;
+        let maxChild = 0;
+        updatedHotelRoom.hotel.rooms.forEach(({ maxCapacityAdult, maxCapacityChild }) => {
+            if (maxCapacityAdult > maxAdult) maxAdult = maxCapacityAdult;
+            if (maxCapacityChild > maxChild) maxChild = maxCapacityAdult;
+        });
         await dataSources.hotelAlgolia.partialUpdateObject({
             objectID: updatedHotelRoom.hotel.id,
             hotelRooms: updatedHotelRoom.hotel.rooms.map(({ name }) => name),

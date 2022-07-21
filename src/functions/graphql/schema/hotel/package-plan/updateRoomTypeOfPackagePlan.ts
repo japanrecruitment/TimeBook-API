@@ -50,7 +50,7 @@ const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (
     const roomType = await store.hotelRoom_PackagePlan.findUnique({
         where: { id },
         select: {
-            packagePlan: { select: { hotel: { select: { accountId: true } } } },
+            packagePlan: { select: { hotel: { select: { accountId: true, status: true } } } },
             priceSettings: { where: { id: { in: priceSettings.map(({ id }) => id) } }, select: { id: true } },
         },
     });
@@ -76,29 +76,34 @@ const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (
         where: { id },
         select: {
             ...packagePlanRoomTypeSelect,
-            packagePlan: {
-                select: {
-                    hotel: {
-                        select: {
-                            id: true,
-                            packagePlans: {
-                                select: {
-                                    paymentTerm: true,
-                                    roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
-                                },
-                            },
-                            status: true,
-                        },
-                    },
-                },
-            },
+            packagePlan:
+                roomType.packagePlan.hotel.status === "PUBLISHED"
+                    ? {
+                          select: {
+                              hotel: {
+                                  select: {
+                                      id: true,
+                                      packagePlans: {
+                                          select: {
+                                              paymentTerm: true,
+                                              roomTypes: {
+                                                  select: { priceSettings: { select: { priceScheme: true } } },
+                                              },
+                                          },
+                                      },
+                                      status: true,
+                                  },
+                              },
+                          },
+                      }
+                    : undefined,
         },
     });
 
     Log(updatedRoomType);
 
     const hotel = updatedRoomType?.packagePlan?.hotel;
-    if (hotel) {
+    if (hotel && hotel.status === "PUBLISHED") {
         let highestPrice = 0;
         let lowestPrice = 0;
         hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
@@ -111,13 +116,11 @@ const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (
                 });
             });
         });
-        if (hotel.status === "PUBLISHED") {
-            await dataSources.hotelAlgolia.partialUpdateObject({
-                objectID: hotel.id,
-                highestPrice,
-                lowestPrice,
-            });
-        }
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: hotel.id,
+            highestPrice,
+            lowestPrice,
+        });
     }
 
     return {

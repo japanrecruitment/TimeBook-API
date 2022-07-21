@@ -110,7 +110,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
 
     const hotel = await store.hotel.findFirst({
         where: { id: hotelId, accountId },
-        select: { rooms: { select: { id: true } }, priceSchemes: { select: { id: true } } },
+        select: { rooms: { select: { id: true } }, priceSchemes: { select: { id: true } }, status: true },
     });
     if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
     differenceWith(roomTypes, hotel.rooms, ({ hotelRoomId }, { id }) => hotelRoomId === id).forEach(
@@ -169,23 +169,23 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
 
     Log(packagePlan, roomPlans, uploadRes);
 
-    const updatedHotel = await store.hotel.findUnique({
-        where: { id: hotelId },
-        select: {
-            id: true,
-            packagePlans: {
-                select: {
-                    paymentTerm: true,
-                    roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+    if (hotel.status === "PUBLISHED") {
+        const hotel = await store.hotel.findUnique({
+            where: { id: hotelId },
+            select: {
+                id: true,
+                packagePlans: {
+                    select: {
+                        paymentTerm: true,
+                        roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+                    },
                 },
+                status: true,
             },
-            status: true,
-        },
-    });
-    if (updatedHotel) {
+        });
         let highestPrice = 0;
         let lowestPrice = 0;
-        updatedHotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
+        hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
             const selector = paymentTerm === "PER_PERSON" ? "oneAdultCharge" : "roomCharge";
             roomTypes.forEach(({ priceSettings }, index) => {
                 priceSettings.forEach(({ priceScheme }) => {
@@ -195,13 +195,11 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
                 });
             });
         });
-        if (updatedHotel.status === "PUBLISHED") {
-            await dataSources.hotelAlgolia.partialUpdateObject({
-                objectID: updatedHotel.id,
-                highestPrice,
-                lowestPrice,
-            });
-        }
+        await dataSources.hotelAlgolia.partialUpdateObject({
+            objectID: hotel.id,
+            highestPrice,
+            lowestPrice,
+        });
     }
 
     return {
