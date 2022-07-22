@@ -358,6 +358,19 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
 
         const paymentIntent = await stripe.createPaymentIntent(paymentIntentParams);
 
+        if (!paymentIntent.id) {
+            await store.transaction.update({
+                where: { id: transaction.id },
+                data: {
+                    paymentIntentId: paymentIntent.id,
+                    requestedLog: paymentIntentParams as any,
+                    failedLog: paymentIntent as any,
+                    reservation: { update: { status: "FAILED" } },
+                },
+            });
+            throw new GqlError({ code: "BAD_REQUEST", message: "Couldn't create a payment intent" });
+        }
+
         await store.transaction.update({
             where: { id: transaction.id },
             data: {

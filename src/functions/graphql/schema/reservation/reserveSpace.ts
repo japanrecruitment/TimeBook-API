@@ -240,6 +240,18 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         const paymentIntent = await stripe.createPaymentIntent(paymentIntentParams);
 
+        if (!paymentIntent?.id) {
+            await store.transaction.update({
+                where: { id: transaction.id },
+                data: {
+                    requestedLog: paymentIntentParams as any,
+                    failedLog: paymentIntent as any,
+                    reservation: { update: { status: "FAILED" } },
+                },
+            });
+            throw new GqlError({ code: "BAD_REQUEST", message: "Couldn't create a payment intent" });
+        }
+
         await store.transaction.update({
             where: { id: transaction.id },
             data: {
