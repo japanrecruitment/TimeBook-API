@@ -19,7 +19,7 @@ import { SpacePricePlanType } from "@prisma/client";
 import moment from "moment";
 import { environment } from "@utils/environment";
 import { compact, differenceWith, intersectionWith, isEmpty, sum } from "lodash";
-import { mapNumAdultField } from "../price-scheme";
+import { mapNumAdultField, mapNumChildField } from "../price-scheme";
 
 function isEqualDate(a: Date, b: Date) {
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -241,10 +241,14 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                     if (packagePlan.paymentTerm === "PER_ROOM") {
                         amount += priceScheme.roomCharge * mDatesLen;
                     } else {
-                        if (nAdult)
-                            amount += priceScheme[mapNumAdultField(nAdult) ?? "oneAdultCharge"] * nAdult * mDatesLen;
-                        if (nChild)
-                            amount += priceScheme[mapNumAdultField(nChild) ?? "oneChildCharge"] * nChild * mDatesLen;
+                        if (nAdult) {
+                            const charge = priceScheme[mapNumAdultField(nAdult)] || priceScheme.oneAdultCharge;
+                            amount += charge * nAdult * mDatesLen;
+                        }
+                        if (nChild) {
+                            const charge = priceScheme[mapNumChildField(nChild)] || priceScheme.oneChildCharge;
+                            amount += charge * nChild * mDatesLen;
+                        }
                     }
                     bookingDates = differenceWith(bookingDates, matchedDates, isEqualDate);
                     appliedRoomPlanPriceOverrides.push(id);
@@ -261,12 +265,20 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 let adultPrice = 0;
                 let childPrice = 0;
                 if (nAdult) {
-                    let numAdultField = mapNumAdultField(nAdult) ?? "oneAdultCharge";
-                    adultPrice = sum(remPriceSettings.map(({ priceScheme }) => priceScheme[numAdultField] * nAdult));
+                    let numAdultField = mapNumAdultField(nAdult);
+                    adultPrice = sum(
+                        remPriceSettings.map(
+                            ({ priceScheme }) => (priceScheme[numAdultField] || priceScheme.oneAdultCharge) * nAdult
+                        )
+                    );
                 }
                 if (nChild) {
-                    let numChildField = mapNumAdultField(nChild) ?? "oneChildCharge";
-                    childPrice = sum(remPriceSettings.map(({ priceScheme }) => priceScheme[numChildField] * nChild));
+                    let numChildField = mapNumChildField(nChild);
+                    childPrice = sum(
+                        remPriceSettings.map(
+                            ({ priceScheme }) => (priceScheme[numChildField] || priceScheme.oneChildCharge) * nChild
+                        )
+                    );
                 }
                 amount = adultPrice + childPrice;
             }
@@ -362,7 +374,6 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             await store.transaction.update({
                 where: { id: transaction.id },
                 data: {
-                    paymentIntentId: paymentIntent.id,
                     requestedLog: paymentIntentParams as any,
                     failedLog: paymentIntent as any,
                     hotelRoomReservation: { update: { status: "FAILED" } },

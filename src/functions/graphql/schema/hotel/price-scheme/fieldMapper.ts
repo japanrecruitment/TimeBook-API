@@ -24,16 +24,16 @@ const numChild = {
     10: "tenChildCharge",
 };
 
-export function mapNumAdultField(index: number): string | undefined {
-    if (!index) return;
+export function mapNumAdultField(index: number, defaultValue: string = "oneAdultCharge"): string | undefined {
+    if (!index) return defaultValue;
     index = Math.floor(index);
-    if (index < 1 || index > 10) return;
+    if (index < 1 || index > 10) return defaultValue;
     return numAdult[index];
 }
 
-export function mapNumChildField(index: number): string | undefined {
-    if (!index) return;
+export function mapNumChildField(index: number, defaultValue: string = "oneChildCharge"): string | undefined {
+    if (!index) return defaultValue;
     index = Math.floor(index);
-    if (index < 1 || index > 10) return;
+    if (index < 1 || index > 10) return defaultValue;
     return numChild[index];
 }

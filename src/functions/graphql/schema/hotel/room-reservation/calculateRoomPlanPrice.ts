@@ -5,7 +5,7 @@ import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { getAllDatesBetn } from "@utils/date-utils";
 import { differenceWith, intersectionWith, isEmpty, sum } from "lodash";
-import { mapNumAdultField } from "../price-scheme";
+import { mapNumAdultField, mapNumChildField } from "../price-scheme";
 import moment from "moment";
 
 function isEqualDate(a: Date, b: Date) {
@@ -156,10 +156,14 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                 if (packagePlan.paymentTerm === "PER_ROOM") {
                     amount += priceScheme.roomCharge * mDatesLen;
                 } else {
-                    if (nAdult)
-                        amount += priceScheme[mapNumAdultField(nAdult) ?? "oneAdultCharge"] * nAdult * mDatesLen;
-                    if (nChild)
-                        amount += priceScheme[mapNumAdultField(nChild) ?? "oneChildCharge"] * nChild * mDatesLen;
+                    if (nAdult) {
+                        const charge = priceScheme[mapNumAdultField(nAdult)] || priceScheme.oneAdultCharge;
+                        amount += charge * nAdult * mDatesLen;
+                    }
+                    if (nChild) {
+                        const charge = priceScheme[mapNumChildField(nChild)] || priceScheme.oneChildCharge;
+                        amount += charge * nChild * mDatesLen;
+                    }
                 }
                 bookingDates = differenceWith(bookingDates, matchedDates, isEqualDate);
                 appliedRoomPlanPriceOverrides.push(id);
@@ -176,17 +180,27 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
             let adultPrice = 0;
             let childPrice = 0;
             if (nAdult) {
-                let numAdultField = mapNumAdultField(nAdult) ?? "oneAdultCharge";
-                adultPrice = sum(remPriceSettings.map(({ priceScheme }) => priceScheme[numAdultField] * nAdult));
+                let numAdultField = mapNumAdultField(nAdult);
+                adultPrice = sum(
+                    remPriceSettings.map(
+                        ({ priceScheme }) => (priceScheme[numAdultField] || priceScheme.oneAdultCharge) * nAdult
+                    )
+                );
             }
             if (nChild) {
-                let numChildField = mapNumAdultField(nChild) ?? "oneChildCharge";
-                childPrice = sum(remPriceSettings.map(({ priceScheme }) => priceScheme[numChildField] * nChild));
+                let numChildField = mapNumChildField(nChild);
+                childPrice = sum(
+                    remPriceSettings.map(
+                        ({ priceScheme }) => (priceScheme[numChildField] || priceScheme.oneChildCharge) * nChild
+                    )
+                );
             }
             amount = adultPrice + childPrice;
         }
         appliedRoomPlanPriceSettings = appliedRoomPlanPriceSettings.concat(remPriceSettings.map(({ id }) => id));
     }
+
+    Log(remDates, appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings, amount);
 
     return {
         appliedRoomPlanPriceOverrides,
