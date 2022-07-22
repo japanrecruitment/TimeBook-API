@@ -365,7 +365,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                     paymentIntentId: paymentIntent.id,
                     requestedLog: paymentIntentParams as any,
                     failedLog: paymentIntent as any,
-                    reservation: { update: { status: "FAILED" } },
+                    hotelRoomReservation: { update: { status: "FAILED" } },
                 },
             });
             throw new GqlError({ code: "BAD_REQUEST", message: "Couldn't create a payment intent" });
