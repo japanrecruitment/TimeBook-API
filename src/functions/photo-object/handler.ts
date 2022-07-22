@@ -59,7 +59,7 @@ const photoObject: ValidatedEventAPIGatewayProxyEvent<typeof getSchema & typeof 
             const publicBucketName = environment.PUBLIC_MEDIA_BUCKET;
             const awsRegion = "ap-northeast-1";
             const imageSize = "medium";
-            const imageKey = photoId;
+            const imageKey = `${id}.${mime.split("/")[1]}`;
             const mediumImage = processedImages.find(({ size }) => size === imageSize);
             const mediumImageUrl = `https://${publicBucketName}.s3.${awsRegion}.amazonaws.com/${imageSize}/${imageKey}`;
             if (mediumImage) await spaceIndex.partialUpdateObject({ objectID: spaceId, thumbnail: mediumImageUrl });
@@ -68,7 +68,7 @@ const photoObject: ValidatedEventAPIGatewayProxyEvent<typeof getSchema & typeof 
 
     const imageUpdateData = {};
     processedImages.map(({ size, width, height }) => {
-        imageUpdateData[size] = { width, height, url: `${type}/${size}/${photoId}` };
+        imageUpdateData[size] = { width, height, url: `${type}/${size}/${id}.${mime.split("/")[1]}` };
     });
 
     await store.photo.update({ where: { id }, data: imageUpdateData });
