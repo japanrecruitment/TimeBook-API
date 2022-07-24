@@ -7,6 +7,7 @@ export type CancelPolicyObject = Partial<CancelPolicy>;
 export type CancelPolicySelect = {
     id: boolean;
     spaceId: boolean;
+    hotelId: boolean;
     beforeHours: boolean;
     percentage: boolean;
     createdAt: boolean;
@@ -21,6 +22,7 @@ export const cancelPolicyObjectTypeDefs = gql`
     type CancelPolicyObject {
         id: ID
         spaceId: ID
+        hotelId: ID
         beforeHours: Float
         percentage: Float
         createdAt: Date
