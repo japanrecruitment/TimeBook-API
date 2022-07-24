@@ -257,7 +257,7 @@ model Space {
   photos             Photo[]
   settings           SpaceSetting[]
   pricePlans         SpacePricePlan[]
-  cancelPolicies     CancelPolicy[]
+  cancelPolicies     CancelPolicy[]   @relation("_SpaceCancelPolicies")
   ratings            Rating[]
 }
 
@@ -348,8 +348,8 @@ model CancelPolicy {
   percentage  Float
   accountId   String
   account     Account? @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  spaces      Space[]
-  hotels      Hotel[]
+  spaces      Space[]  @relation("_SpaceCancelPolicies")
+  hotels      Hotel[]  @relation("_HotelCancelPolicies")
   createdAt   DateTime @default(now()) @db.Timestamp(6)
   updatedAt   DateTime @updatedAt
 }
@@ -556,7 +556,7 @@ model Hotel {
   rooms           HotelRoom[]           @relation(name: "HotelRooms")
   priceSchemes    PriceScheme[]
   packagePlans    PackagePlan[]
-  cancelPolicies  CancelPolicy[]
+  cancelPolicies  CancelPolicy[]        @relation("_HotelCancelPolicies")
   createdAt       DateTime              @default(now()) @db.Timestamp(6)
   updatedAt       DateTime              @updatedAt
 }
