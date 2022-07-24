@@ -127,7 +127,13 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     const amount = cancellationChargeRate * reservation.transaction.amount;
     const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
 
-    const paymentIntent = reservation.transaction.responseReceivedLog as any;
+    const paymentIntent = reservation.transaction?.responseReceivedLog as any;
+
+    if (!paymentIntent)
+        throw new GqlError({
+            code: "BAD_REQUEST",
+            message: "Payment intent not found in your reservation transaction.",
+        });
 
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
         amount,

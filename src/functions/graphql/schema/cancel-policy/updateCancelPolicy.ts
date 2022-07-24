@@ -35,12 +35,12 @@ const updateCancelPolicy: UpdateCancelPolicy = async (_, { input }, { authData, 
 
     const cancelPolicy = await store.cancelPolicy.findUnique({
         where: { id },
-        select: { space: { select: { accountId: true } }, hotel: { select: { accountId: true } } },
+        select: { accountId: true },
     });
 
     if (!cancelPolicy) throw new GqlError({ code: "NOT_FOUND", message: "Cancel policy not found" });
 
-    if (accountId !== cancelPolicy.space?.accountId && accountId !== cancelPolicy.hotel?.accountId)
+    if (accountId !== cancelPolicy.accountId)
         throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorized to modify this space" });
 
     const updatedCancelPolicy = await store.cancelPolicy.update({

@@ -36,11 +36,7 @@ const addCancelPolicies: AddCancelPolicies = async (_, { spaceId, hotelId, input
 
     const data = validateAddCancelPoliciesInputList(input);
 
-    if (!spaceId && !hotelId)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Please provide a hotel id or space id" });
-
-    if (spaceId && hotelId)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Please provide either hotel id or space id" });
+    const cancelPolicySelect = toCancelPolicySelect(mapSelections(info));
 
     if (spaceId) {
         const space = await store.space.findUnique({ where: { id: spaceId }, select: { accountId: true } });
@@ -49,16 +45,6 @@ const addCancelPolicies: AddCancelPolicies = async (_, { spaceId, hotelId, input
 
         if (accountId !== space.accountId)
             throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorized to modify this space" });
-
-        const updatedSpace = await store.space.update({
-            where: { id: spaceId },
-            data: { cancelPolicies: { createMany: { data } } },
-            select: { cancelPolicies: toCancelPolicySelect(mapSelections(info)) },
-        });
-
-        Log("addCancelPolicies", updatedSpace);
-
-        return updatedSpace.cancelPolicies;
     }
 
     if (hotelId) {
@@ -68,17 +54,26 @@ const addCancelPolicies: AddCancelPolicies = async (_, { spaceId, hotelId, input
 
         if (accountId !== hotel.accountId)
             throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorized to modify this hotel" });
-
-        const updatedHotel = await store.hotel.update({
-            where: { id: hotelId },
-            data: { cancelPolicies: { createMany: { data } } },
-            select: { cancelPolicies: toCancelPolicySelect(mapSelections(info)) },
-        });
-
-        Log("addCancelPolicies", updatedHotel);
-
-        return updatedHotel.cancelPolicies;
     }
+
+    const cancelPolicies = await Promise.all(
+        data.map(({ beforeHours, percentage }) =>
+            store.cancelPolicy.create({
+                data: {
+                    beforeHours,
+                    percentage,
+                    account: { connect: { id: accountId } },
+                    hotels: hotelId ? { connect: { id: hotelId } } : undefined,
+                    spaces: spaceId ? { connect: { id: spaceId } } : undefined,
+                },
+                select: cancelPolicySelect?.select,
+            })
+        )
+    );
+
+    Log("addCancelPolicies", cancelPolicies);
+
+    return cancelPolicies;
 };
 
 export const addCancelPoliciesTypeDefs = gql`
