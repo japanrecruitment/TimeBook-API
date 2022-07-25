@@ -13,7 +13,10 @@ const myCancelPolicies: MyCancelPolicies = async (_, __, { authData, store }, in
     const { accountId } = authData;
 
     const cancelPolicySelect = toCancelPolicySelect(mapSelections(info))?.select;
-    const cancelPolices = await store.cancelPolicy.findMany({ where: { accountId }, select: cancelPolicySelect });
+    const cancelPolices = await store.cancelPolicy.findMany({
+        where: { accountId },
+        select: cancelPolicySelect,
+    });
 
     Log("myCancelPolicies", cancelPolices);
 

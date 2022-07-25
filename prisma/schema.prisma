@@ -343,15 +343,26 @@ model Rating {
 }
 
 model CancelPolicy {
-  id          String   @id @default(cuid())
-  beforeHours Float
-  percentage  Float
+  id          String             @id @default(cuid())
+  name        String
+  description String?            @db.Text
   accountId   String
-  account     Account? @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  spaces      Space[]  @relation("_SpaceCancelPolicies")
-  hotels      Hotel[]  @relation("_HotelCancelPolicies")
-  createdAt   DateTime @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime @updatedAt
+  account     Account?           @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaces      Space[]            @relation("_SpaceCancelPolicies")
+  hotels      Hotel[]            @relation("_HotelCancelPolicies")
+  rates       CancelPolicyRate[]
+  createdAt   DateTime           @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime           @updatedAt
+}
+
+model CancelPolicyRate {
+  id             String       @id @default(cuid())
+  beforeHours    Float
+  percentage     Float
+  cancelPolicyId String
+  cancelPolicy   CancelPolicy @relation(fields: [cancelPolicyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime     @updatedAt
 }
 
 model Reservation {

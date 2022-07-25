@@ -1,12 +1,14 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
-import { addCancelPoliciesResolvers, addCancelPoliciesTypeDefs } from "./addCancelPolicies";
-import { cancelPolicyObjectTypeDefs } from "./CancelPolicyObject";
+import { addCancelPolicyResolvers, addCancelPolicyTypeDefs } from "./addCancelPolicy";
+import { cancelPolicyByIdResolvers, cancelPolicyByIdTypeDefs } from "./cancelPolicyById";
+import { cancelPolicyObjectResolvers, cancelPolicyObjectTypeDefs } from "./CancelPolicyObject";
 import { myCancelPoliciesResolvers, myCancelPoliciesTypeDefs } from "./myCancelPolicies";
 import { removeCancelPolicyResolvers, removeCancelPolicyTypeDefs } from "./removeCancelPolicy";
 import { updateCancelPolicyResolvers, updateCancelPolicyTypeDefs } from "./updateCancelPolicy";
 
 export const typeDefs = mergeTypeDefs([
-    addCancelPoliciesTypeDefs,
+    addCancelPolicyTypeDefs,
+    cancelPolicyByIdTypeDefs,
     cancelPolicyObjectTypeDefs,
     myCancelPoliciesTypeDefs,
     removeCancelPolicyTypeDefs,
@@ -14,7 +16,9 @@ export const typeDefs = mergeTypeDefs([
 ]);
 
 export const resolvers = mergeResolvers([
-    addCancelPoliciesResolvers,
+    addCancelPolicyResolvers,
+    cancelPolicyByIdResolvers,
+    cancelPolicyObjectResolvers,
     myCancelPoliciesResolvers,
     removeCancelPolicyResolvers,
     updateCancelPolicyResolvers,

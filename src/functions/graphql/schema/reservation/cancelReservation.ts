@@ -39,10 +39,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             space: {
                 select: {
                     account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } },
-                    cancelPolicies: {
-                        orderBy: { beforeHours: "asc" },
-                        select: { id: true, beforeHours: true, percentage: true },
-                    },
+                    cancelPolicies: { select: { rates: { orderBy: { beforeHours: "asc" } } } },
                 },
             },
             transaction: { select: { amount: true, paymentIntentId: true, responseReceivedLog: true } },
@@ -84,8 +81,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
 
     if (!isHost) {
-        const cancelPolicies = reservation.space.cancelPolicies;
-        if (cancelPolicies.length <= 0) {
+        const cancelPolicyRates = reservation.space.cancelPolicies?.flatMap(({ rates }) => rates);
+        if (cancelPolicyRates.length <= 0) {
             await store.reservation.update({
                 where: { id: reservationId },
                 data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
@@ -94,7 +91,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
         }
 
         const currDateMillis = Date.now();
-        for (const { beforeHours, percentage } of cancelPolicies) {
+        for (const { beforeHours, percentage } of cancelPolicyRates) {
             const beforeHrsDateMillis = moment(reservation.fromDateTime)
                 .subtract(beforeHours, "hours")
                 .toDate()

@@ -28,7 +28,7 @@ const linkHotelToCancelPolicies: LinkHotelToCancelPolicies = async (
 
     const hotel = await store.hotel.findUnique({ where: { id: hotelId }, select: { accountId: true } });
 
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
 
     if (accountId !== hotel.accountId)
         throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorized to modify this hotel" });

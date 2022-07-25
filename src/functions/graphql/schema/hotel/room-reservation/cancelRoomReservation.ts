@@ -44,10 +44,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                         select: {
                             id: true,
                             account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } },
-                            cancelPolicies: {
-                                orderBy: { beforeHours: "asc" },
-                                select: { id: true, beforeHours: true, percentage: true },
-                            },
+                            cancelPolicies: { select: { rates: { orderBy: { beforeHours: "asc" } } } },
                         },
                     },
                 },
@@ -94,8 +91,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
 
     if (!isHost) {
-        const cancelPolicies = reservation.hotelRoom.hotel.cancelPolicies;
-        if (isEmpty(cancelPolicies)) {
+        const cancelPolicyRates = reservation.hotelRoom.hotel.cancelPolicies?.flatMap(({ rates }) => rates);
+        if (isEmpty(cancelPolicyRates)) {
             await store.hotelRoomReservation.update({
                 where: { id: hotelRoomReservationId },
                 data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
@@ -104,7 +101,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
         }
 
         const currDateMillis = Date.now();
-        for (const { beforeHours, percentage } of cancelPolicies) {
+        for (const { beforeHours, percentage } of cancelPolicyRates) {
             const beforeHrsDateMillis = moment(reservation.fromDateTime)
                 .subtract(beforeHours, "hours")
                 .toDate()
