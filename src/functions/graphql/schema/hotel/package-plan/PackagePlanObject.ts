@@ -4,6 +4,7 @@ import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
 import { isEmpty } from "lodash";
 import { Photo, PhotoSelect, toPhotoSelect } from "../../media";
+import { OptionObject, OptionSelect, toOptionSelect } from "../../options";
 import {
     PackagePlanRoomTypeObject,
     PackagePlanRoomTypeSelect,
@@ -13,6 +14,7 @@ import {
 export type PackagePlanObject = Partial<PackagePlan> & {
     photos?: Partial<Photo>[];
     roomTypes?: Partial<PackagePlanRoomTypeObject>[];
+    optionsAttachments?: Partial<OptionObject>[];
 };
 
 export type PackagePlanSelect = {
@@ -30,6 +32,7 @@ export type PackagePlanSelect = {
     hotelId: boolean;
     photos: PrismaSelect<PhotoSelect>;
     roomTypes: PrismaSelect<PackagePlanRoomTypeSelect> & { orderBy: { createdAt: Prisma.SortOrder } };
+    optionsAttachments: PrismaSelect<OptionSelect>;
     createdAt: boolean;
     updatedAt: boolean;
 };
@@ -38,14 +41,16 @@ export function toPackagePlanSelect(selections, defaultValue: any = false): Pris
     if (!selections || isEmpty(selections)) return defaultValue;
     const photosSelect = toPhotoSelect(selections.photos);
     const roomTypeSelect = toPackagePlanRoomTypeSelect(selections.roomTypes)?.select;
-    const hotelRoomSelect = omit(selections, "photos", "roomTypes");
-    if (isEmpty(hotelRoomSelect) && !photosSelect && !roomTypeSelect) return defaultValue;
+    const optionSelect = toOptionSelect(selections.optionsAttachments);
+    const packagePlanSelect = omit(selections, "photos", "roomTypes");
+    if (isEmpty(packagePlanSelect) && !photosSelect && !roomTypeSelect && !optionSelect) return defaultValue;
 
     return {
         select: {
-            ...hotelRoomSelect,
+            ...packagePlanSelect,
             photos: photosSelect,
             roomTypes: roomTypeSelect ? { select: roomTypeSelect, orderBy: { createdAt: "desc" } } : undefined,
+            optionsAttachments: optionSelect,
         } as PackagePlanSelect,
     };
 }
@@ -66,6 +71,7 @@ export const packagePlanObjectTypeDefs = gql`
         hotelId: String
         photos: [Photo]
         roomTypes: [PackagePlanRoomTypeObject]
+        optionsAttachments: [OptionObject]
         createdAt: Date
         updatedAt: Date
     }

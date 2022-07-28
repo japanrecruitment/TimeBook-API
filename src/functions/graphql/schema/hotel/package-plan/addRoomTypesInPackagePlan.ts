@@ -17,6 +17,7 @@ function validateAddRoomTypesInPackagePlanInput(input: AddRoomTypesInPackagePlan
 export function validateAddRoomTypesInPackagePlanInputList(
     input: AddRoomTypesInPackagePlanInput[]
 ): AddRoomTypesInPackagePlanInput[] {
+    if (!input) return [];
     return compact(input.map(validateAddRoomTypesInPackagePlanInput));
 }
 

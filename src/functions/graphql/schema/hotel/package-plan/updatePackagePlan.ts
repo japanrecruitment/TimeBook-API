@@ -3,7 +3,7 @@ import { HotelPaymentTerm } from "@prisma/client";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
-import { isEmpty } from "lodash";
+import { differenceWith, isEmpty } from "lodash";
 import { Context } from "src/functions/graphql/context";
 import { GqlError } from "src/functions/graphql/error";
 import { PackagePlanObject, toPackagePlanSelect } from "./PackagePlanObject";
@@ -16,6 +16,7 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
         endReservation,
         endUsage,
         name,
+        options,
         startReservation,
         startUsage,
         stock,
@@ -70,6 +71,7 @@ type UpdatePackagePlanInput = {
     endReservation?: Date;
     cutOffBeforeDays?: number;
     cutOffTillTime?: Date;
+    options?: [string];
 };
 
 type UpdatePackagePlanArgs = { input: UpdatePackagePlanInput };
@@ -85,23 +87,28 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const { id, ...data } = validateUpdatePackagePlanInput(input);
+    const { id, options, ...data } = validateUpdatePackagePlanInput(input);
 
     const packagePlan = await store.packagePlan.findUnique({
         where: { id },
-        select: { hotel: { select: { accountId: true, status: true } } },
+        select: { hotel: { select: { accountId: true, status: true } }, optionsAttachments: { select: { id: true } } },
     });
     if (!packagePlan || !packagePlan.hotel)
         throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
     if (accountId !== packagePlan.hotel.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel package plan" });
 
-    const packagePlanSelect = toPackagePlanSelect(mapSelections(info)?.packagePlan)?.select || { id: true };
+    const packagePlanSelect = toPackagePlanSelect(mapSelections(info)?.packagePlan)?.select || {
+        id: true,
+        optionsAttachments: { select: { id: true } },
+    };
     const updatedPackagePlan = await store.packagePlan.update({
         where: { id },
         data,
         select: {
             ...packagePlanSelect,
+            id: true,
+            optionsAttachments: false,
             hotel:
                 packagePlan.hotel.status === "PUBLISHED"
                     ? {
@@ -119,6 +126,33 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
                     : undefined,
         },
     });
+
+    const optionsToAdd = differenceWith(options, packagePlan.optionsAttachments, (a, b) => a === b.id);
+    const optionsToRemove = differenceWith(packagePlan.optionsAttachments, options, (a, b) => a.id === b);
+
+    let optionsAttachments = [];
+    if (!isEmpty(optionsToAdd)) {
+        optionsAttachments = await Promise.all(
+            optionsToAdd.map((id) =>
+                store.option.update({
+                    where: { id },
+                    data: { packagePlans: { connect: { id: updatedPackagePlan.id } } },
+                    select: packagePlanSelect.optionsAttachments.select,
+                })
+            )
+        );
+    }
+    if (!isEmpty(optionsToRemove)) {
+        await Promise.all(
+            optionsToRemove.map(({ id }) =>
+                store.option.update({
+                    where: { id },
+                    data: { packagePlans: { disconnect: { id: updatedPackagePlan.id } } },
+                    select: packagePlanSelect.optionsAttachments.select,
+                })
+            )
+        );
+    }
 
     Log("updatePackagePlan: ", updatedPackagePlan);
 
@@ -145,7 +179,7 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
 
     return {
         message: `Successfully updated package plan`,
-        packagePlan: updatedPackagePlan,
+        packagePlan: { ...updatedPackagePlan, optionsAttachments },
     };
 };
 
@@ -162,6 +196,7 @@ export const updatePackagePlanTypeDefs = gql`
         endReservation: Date
         cutOffBeforeDays: Int
         cutOffTillTime: Time
+        options: [ID]
     }
 
     type UpdatePackagePlanResult {

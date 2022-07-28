@@ -5,16 +5,22 @@ import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../context";
 import { CancelPolicyObject, toCancelPolicySelect } from "./CancelPolicyObject";
 
+type MyCancelPoliciesArgs = { hotelId?: string; spaceId?: string };
+
 type MyCancelPoliciesResult = CancelPolicyObject[];
 
-type MyCancelPolicies = IFieldResolver<any, Context, any, Promise<MyCancelPoliciesResult>>;
+type MyCancelPolicies = IFieldResolver<any, Context, MyCancelPoliciesArgs, Promise<MyCancelPoliciesResult>>;
 
-const myCancelPolicies: MyCancelPolicies = async (_, __, { authData, store }, info) => {
+const myCancelPolicies: MyCancelPolicies = async (_, { hotelId, spaceId }, { authData, store }, info) => {
     const { accountId } = authData;
 
     const cancelPolicySelect = toCancelPolicySelect(mapSelections(info))?.select;
     const cancelPolices = await store.cancelPolicy.findMany({
-        where: { accountId },
+        where: {
+            accountId,
+            hotels: hotelId ? { some: { id: hotelId } } : undefined,
+            spaces: spaceId ? { some: { id: spaceId } } : undefined,
+        },
         select: cancelPolicySelect,
     });
 
@@ -25,7 +31,7 @@ const myCancelPolicies: MyCancelPolicies = async (_, __, { authData, store }, in
 
 export const myCancelPoliciesTypeDefs = gql`
     type Query {
-        myCancelPolicies: [CancelPolicyObject] @auth(requires: [host])
+        myCancelPolicies(hotelId: ID, spaceId: ID): [CancelPolicyObject] @auth(requires: [host])
     }
 `;
 

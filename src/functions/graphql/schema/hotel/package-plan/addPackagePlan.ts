@@ -20,8 +20,10 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
         description,
         endReservation,
         endUsage,
-        roomTypes,
         name,
+        options,
+        photos,
+        roomTypes,
         startReservation,
         startUsage,
         stock,
@@ -47,6 +49,10 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
 
     if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
 
+    if (!options) options = [];
+
+    if (!photos) photos = [];
+
     roomTypes = validateAddRoomTypesInPackagePlanInputList(roomTypes);
 
     return {
@@ -54,8 +60,10 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
         description,
         endReservation,
         endUsage,
-        roomTypes,
         name,
+        options,
+        photos,
+        roomTypes,
         startReservation,
         startUsage,
         stock,
@@ -76,6 +84,7 @@ type AddPackagePlanInput = {
     cutOffTillTime: Date;
     roomTypes: AddRoomTypesInPackagePlanInput[];
     photos: ImageUploadInput[];
+    options: string[];
 };
 
 type AddPackagePlanArgs = { hotelId: string; input: AddPackagePlanInput };
@@ -99,9 +108,10 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         description,
         endReservation,
         endUsage,
-        roomTypes,
         name,
+        options,
         paymentTerm,
+        roomTypes,
         photos,
         startReservation,
         startUsage,
@@ -110,7 +120,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
 
     const hotel = await store.hotel.findFirst({
         where: { id: hotelId, accountId },
-        select: { rooms: { select: { id: true } }, priceSchemes: { select: { id: true } }, status: true },
+        select: { priceSchemes: { select: { id: true } }, rooms: { select: { id: true } }, status: true },
     });
     if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
     differenceWith(roomTypes, hotel.rooms, ({ hotelRoomId }, { id }) => hotelRoomId === id).forEach(
@@ -129,6 +139,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
     const packagePlanSelect = toPackagePlanSelect(mapSelections(info).packagePlan)?.select || {
         id: true,
         roomTypes: { select: { id: true } },
+        optionsAttachments: { select: { id: true } },
     };
     let packagePlan = await store.packagePlan.create({
         data: {
@@ -145,7 +156,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
             hotel: { connect: { id: hotelId } },
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
         },
-        select: { ...packagePlanSelect, id: true, photos: true, roomTypes: false },
+        select: { ...packagePlanSelect, id: true, photos: true, roomTypes: false, optionsAttachments: false },
     });
 
     const roomPlans = await Promise.all(
@@ -161,6 +172,19 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         )
     );
 
+    let optionsAttachments = [];
+    if (!isEmpty(options)) {
+        optionsAttachments = await Promise.all(
+            options.map((id) =>
+                store.option.update({
+                    where: { id: id },
+                    data: { packagePlans: { connect: { id: packagePlan.id } } },
+                    select: packagePlanSelect.optionsAttachments.select,
+                })
+            )
+        );
+    }
+
     const S3 = new S3Lib("upload");
     const uploadRes = packagePlan.photos
         ?.filter(({ medium, small, large }) => !medium && !small && !large)
@@ -170,7 +194,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
             return { key, mime, type, url };
         });
 
-    Log(packagePlan, roomPlans, uploadRes);
+    Log(packagePlan, optionsAttachments, roomPlans, uploadRes);
 
     if (hotel.status === "PUBLISHED") {
         const hotel = await store.hotel.findUnique({
@@ -207,7 +231,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
 
     return {
         message: "Successfully added a package plan",
-        packagePlan: { ...packagePlan, roomTypes: roomPlans },
+        packagePlan: { ...packagePlan, optionsAttachments, roomTypes: roomPlans },
         uploadRes,
     };
 };
@@ -224,8 +248,9 @@ export const addPackagePlanTypeDefs = gql`
         endReservation: Date
         cutOffBeforeDays: Int
         cutOffTillTime: Time
-        roomTypes: [AddRoomTypesInPackagePlanInput]!
-        photos: [ImageUploadInput]!
+        roomTypes: [AddRoomTypesInPackagePlanInput]
+        photos: [ImageUploadInput]
+        options: [ID]
     }
 
     type AddPackagePlanResult {

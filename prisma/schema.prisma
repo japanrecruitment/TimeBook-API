@@ -96,6 +96,13 @@ enum HotelPaymentTerm {
   PER_ROOM
 }
 
+enum OptionPaymentTerm {
+  PER_PERSON
+  PER_ROOM
+  PER_USE
+  PER_FLAT
+}
+
 model Account {
   id                      String                 @id @default(cuid())
   approved                Boolean                @default(false)
@@ -124,6 +131,7 @@ model Account {
   givenRatings            Rating[]
   hotels                  Hotel[]
   cancelPolicies          CancelPolicy[]
+  options                 Option[]
 }
 
 model PaymentSource {
@@ -259,6 +267,7 @@ model Space {
   pricePlans         SpacePricePlan[]
   cancelPolicies     CancelPolicy[]   @relation("_SpaceCancelPolicies")
   ratings            Rating[]
+  options            Option[]         @relation(name: "_SpaceOptions")
 }
 
 model SpaceType {
@@ -347,7 +356,7 @@ model CancelPolicy {
   name        String
   description String?            @db.Text
   accountId   String
-  account     Account?           @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  account     Account            @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   spaces      Space[]            @relation("_SpaceCancelPolicies")
   hotels      Hotel[]            @relation("_HotelCancelPolicies")
   rates       CancelPolicyRate[]
@@ -711,20 +720,24 @@ model HotelRoom_PackagePlan {
 }
 
 model Option {
-  id               String        @id @default(cuid())
+  id               String            @id @default(cuid())
   name             String
-  description      String        @db.Text
-  startUsage       DateTime      @db.Date
-  endUsage         DateTime      @db.Date
-  startReservation DateTime      @db.Date
-  endReservation   DateTime      @db.Date
-  cutOffBeforeDays Int
-  cutOffTillTime   DateTime      @db.Time()
-  aditionalPrice   Float
-  photos           Photo[]       @relation(name: "OptionPhoto")
-  packagePlans     PackagePlan[] @relation(name: "_PackagePlanOptions")
-  createdAt        DateTime      @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime      @updatedAt
+  description      String            @db.Text
+  startUsage       DateTime?         @db.Date
+  endUsage         DateTime?         @db.Date
+  startReservation DateTime?         @db.Date
+  endReservation   DateTime?         @db.Date
+  cutOffBeforeDays Int?
+  cutOffTillTime   DateTime?         @db.Time()
+  paymentTerm      OptionPaymentTerm
+  additionalPrice  Int
+  accountId        String
+  account          Account           @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photos           Photo[]           @relation(name: "OptionPhoto")
+  packagePlans     PackagePlan[]     @relation(name: "_PackagePlanOptions")
+  spaces           Space[]           @relation(name: "_SpaceOptions")
+  createdAt        DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime          @updatedAt
 }
 
 model HotelRoomReservation {
