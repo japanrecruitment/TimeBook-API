@@ -35,8 +35,14 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
     if (!cutOffBeforeDays) cutOffBeforeDays = null;
     if (!cutOffTillTime) cutOffTillTime = null;
 
+    if ((startUsage && !endUsage) || (!startUsage && endUsage))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end usage period" });
+
     if (startUsage?.getTime() > endUsage?.getTime())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid usage period" });
+
+    if ((startReservation && !endReservation) || (!startReservation && endReservation))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end reservation period" });
 
     if (startReservation?.getTime() > endReservation?.getTime())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid reservation period" });
@@ -48,6 +54,7 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
 
     return {
         cutOffBeforeDays,
+        cutOffTillTime,
         description,
         endReservation,
         endUsage,

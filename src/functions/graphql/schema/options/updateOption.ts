@@ -1,5 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { HotelPaymentTerm, OptionPaymentTerm } from "@prisma/client";
+import { OptionPaymentTerm } from "@prisma/client";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
@@ -28,7 +28,7 @@ function validateUpdateOptionInput(input: UpdateOptionInput): UpdateOptionInput 
 
     if (isEmpty(description)) description = undefined;
     if (isEmpty(name)) name = undefined;
-    if (!additionalPrice) startUsage = null;
+    if (!additionalPrice) additionalPrice = null;
     if (!startUsage) startUsage = null;
     if (!endUsage) endUsage = null;
     if (!startReservation) startReservation = null;
@@ -36,8 +36,14 @@ function validateUpdateOptionInput(input: UpdateOptionInput): UpdateOptionInput 
     if (!cutOffBeforeDays) cutOffBeforeDays = null;
     if (!cutOffTillTime) cutOffTillTime = null;
 
+    if ((startUsage && !endUsage) || (!startUsage && endUsage))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end usage period" });
+
     if (startUsage?.getTime() > endUsage?.getTime())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid usage period" });
+
+    if ((startReservation && !endReservation) || (!startReservation && endReservation))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end reservation period" });
 
     if (startReservation?.getTime() > endReservation?.getTime())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid reservation period" });
@@ -55,6 +61,7 @@ function validateUpdateOptionInput(input: UpdateOptionInput): UpdateOptionInput 
         id,
         additionalPrice,
         cutOffBeforeDays,
+        cutOffTillTime,
         description,
         endReservation,
         endUsage,
