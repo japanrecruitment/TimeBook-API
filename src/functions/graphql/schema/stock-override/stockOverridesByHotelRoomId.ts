@@ -1,7 +1,7 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
-import { GqlError } from "../../../error";
-import { Context } from "../../../context";
+import { GqlError } from "../../error";
+import { Context } from "../../context";
 import { StockOverrideObject, toStockOverrideSelect } from "./StockOverrideObject";
 import { mapSelections } from "graphql-map-selections";
 import { isEmpty } from "lodash";

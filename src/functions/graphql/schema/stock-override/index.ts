@@ -4,6 +4,7 @@ import {
     addStockOverrideInHotelRoomResolvers,
     addStockOverrideInHotelRoomTypeDefs,
 } from "./addStockOverrideInHotelRoom";
+import { addStockOverrideInOptionResolvers, addStockOverrideInOptionTypeDefs } from "./addStockOverrideInOption";
 import {
     addStockOverrideInPackagePlanResolvers,
     addStockOverrideInPackagePlanTypeDefs,
@@ -13,6 +14,10 @@ import {
     removeStockOverrideFromHotelRoomTypeDefs,
 } from "./removeStockOverrideFromHotelRoom";
 import {
+    removeStockOverrideFromOptionResolvers,
+    removeStockOverrideFromOptionTypeDefs,
+} from "./removeStockOverrideFromOption";
+import {
     removeStockOverrideFromPackagePlanResolvers,
     removeStockOverrideFromPackagePlanTypeDefs,
 } from "./removeStockOverrideFromPackagePlan";
@@ -21,6 +26,7 @@ import {
     stockOverridesByHotelRoomIdResolvers,
     stockOverridesByHotelRoomIdTypeDefs,
 } from "./stockOverridesByHotelRoomId";
+import { stockOverridesByOptionIdResolvers, stockOverridesByOptionIdTypeDefs } from "./stockOverridesByOptionId";
 import {
     stockOverridesByPackagePlanIdResolvers,
     stockOverridesByPackagePlanIdTypeDefs,
@@ -31,34 +37,46 @@ import {
     updateStockOverrideInHotelRoomTypeDefs,
 } from "./updateStockOverrideInHotelRoom";
 import {
+    updateStockOverrideInOptionResolvers,
+    updateStockOverrideInOptionTypeDefs,
+} from "./updateStockOverrideInOption";
+import {
     updateStockOverrideInPackagePlanResolvers,
     updateStockOverrideInPackagePlanTypeDefs,
 } from "./updateStockOverrideInPackagePlan";
 
-export const stockOverrideTypeDefs = mergeTypeDefs([
+export const typeDefs = mergeTypeDefs([
     addStockOverrideTypeDefs,
     addStockOverrideInHotelRoomTypeDefs,
+    addStockOverrideInOptionTypeDefs,
     addStockOverrideInPackagePlanTypeDefs,
     removeStockOverrideFromHotelRoomTypeDefs,
+    removeStockOverrideFromOptionTypeDefs,
     removeStockOverrideFromPackagePlanTypeDefs,
     stockOverrideObjectTypeDefs,
     stockOverridesByHotelRoomIdTypeDefs,
+    stockOverridesByOptionIdTypeDefs,
     stockOverridesByPackagePlanIdTypeDefs,
     updateStockOverrideTypeDefs,
     updateStockOverrideInHotelRoomTypeDefs,
+    updateStockOverrideInOptionTypeDefs,
     updateStockOverrideInPackagePlanTypeDefs,
 ]);
 
-export const stockOverrideResolvers = mergeResolvers([
+export const resolvers = mergeResolvers([
     addStockOverrideResolvers,
     addStockOverrideInHotelRoomResolvers,
+    addStockOverrideInOptionResolvers,
     addStockOverrideInPackagePlanResolvers,
     removeStockOverrideFromHotelRoomResolvers,
+    removeStockOverrideFromOptionResolvers,
     removeStockOverrideFromPackagePlanResolvers,
     stockOverrideObjectResolvers,
     stockOverridesByHotelRoomIdResolvers,
+    stockOverridesByOptionIdResolvers,
     stockOverridesByPackagePlanIdResolvers,
     updateStockOverrideInHotelRoomResolvers,
+    updateStockOverrideInOptionResolvers,
     updateStockOverrideInPackagePlanResolvers,
 ]);
 

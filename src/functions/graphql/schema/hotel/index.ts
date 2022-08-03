@@ -15,7 +15,6 @@ import { updateHotelAddressResolvers, updateHotelAddressTypeDefs } from "./updat
 import { updateHotelResolvers, updateHotelTypeDefs } from "./updateHotel";
 import { priceOverrideResolvers, priceOverrideTypeDefs } from "./price-override";
 import { publishHotelResolvers, publishHotelTypeDefs } from "./publishHotel";
-import { stockOverrideResolvers, stockOverrideTypeDefs } from "./stock-override";
 import { roomReservationResolvers, roomReservationTypeDefs } from "./room-reservation";
 import { allPublishedHotelsResolvers, allPublishedHotelsTypeDefs } from "./allPublishedHotels";
 import { linkHotelToCancelPoliciesResolvers, linkHotelToCancelPoliciesTypeDefs } from "./linkHotelToCancelPolicies";
@@ -38,7 +37,6 @@ export const typeDefs = mergeTypeDefs([
     publishHotelTypeDefs,
     removeHotelPhotoTypeDefs,
     roomReservationTypeDefs,
-    stockOverrideTypeDefs,
     updateHotelTypeDefs,
     updateHotelAddressTypeDefs,
 ]);
@@ -61,7 +59,6 @@ export const resolvers = mergeResolvers([
     publishHotelResolvers,
     removeHotelPhotoResolvers,
     roomReservationResolvers,
-    stockOverrideResolvers,
     updateHotelResolvers,
     updateHotelAddressResolvers,
 ]);

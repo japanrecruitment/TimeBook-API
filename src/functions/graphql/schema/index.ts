@@ -16,6 +16,7 @@ import * as transaction from "./transaction";
 import * as hotel from "./hotel";
 import * as cancelPolicy from "./cancel-policy";
 import * as options from "./options";
+import * as stockOverride from "./stock-override";
 
 const typeDefs = mergeTypeDefs([
     coreTypeDefs,
@@ -33,6 +34,7 @@ const typeDefs = mergeTypeDefs([
     hotel.typeDefs,
     cancelPolicy.typeDefs,
     options.typeDefs,
+    stockOverride.typeDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -51,6 +53,7 @@ const resolvers = mergeResolvers([
     hotel.resolvers,
     cancelPolicy.resolvers,
     options.resolvers,
+    stockOverride.resolvers,
 ]);
 
 const schemaDirectives = merge(coreDirectives);

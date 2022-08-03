@@ -4,9 +4,15 @@ import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
 import { isEmpty } from "lodash";
 import { Photo, PhotoSelect, toPhotoSelect } from "../media";
+import {
+    OptionPriceOverrideObject,
+    OptionPriceOverrideSelect,
+    toOptionPriceOverrideSelect,
+} from "./option-price-override";
 
 export type OptionObject = Partial<Option> & {
     photos?: Partial<Photo>[];
+    priceOverrides?: Partial<OptionPriceOverrideObject>[];
 };
 
 export type OptionSelect = {
@@ -22,6 +28,7 @@ export type OptionSelect = {
     paymentTerm: boolean;
     additionalPrice: boolean;
     photos: PrismaSelect<PhotoSelect>;
+    priceOverrides: PrismaSelect<OptionPriceOverrideSelect>;
     createdAt: boolean;
     updatedAt: boolean;
 };
@@ -29,13 +36,15 @@ export type OptionSelect = {
 export function toOptionSelect(selections, defaultValue: any = false): PrismaSelect<OptionSelect> {
     if (!selections || isEmpty(selections)) return defaultValue;
     const photosSelect = toPhotoSelect(selections.photos);
-    const optionSelect = omit(selections, "photos");
-    if (isEmpty(optionSelect) && !photosSelect) return defaultValue;
+    const optionPriceOverrideSelect = toOptionPriceOverrideSelect(selections.priceOverrides);
+    const optionSelect = omit(selections, "photos", "priceOverrides");
+    if (isEmpty(optionSelect) && !photosSelect && !optionPriceOverrideSelect) return defaultValue;
 
     return {
         select: {
             ...optionSelect,
             photos: photosSelect,
+            priceOverrides: optionPriceOverrideSelect,
         } as OptionSelect,
     };
 }
@@ -60,6 +69,7 @@ export const optionObjectTypeDefs = gql`
         cutOffTillTime: Time
         paymentTerm: OptionPaymentTerm
         additionalPrice: Int
+        priceOverrides: [OptionPriceOverrideObject]
         photos: [Photo]
         createdAt: Date
         updatedAt: Date

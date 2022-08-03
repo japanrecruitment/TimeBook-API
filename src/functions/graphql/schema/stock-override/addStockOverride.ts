@@ -1,5 +1,5 @@
 import { gql } from "apollo-server-core";
-import { GqlError } from "../../../error";
+import { GqlError } from "../../error";
 
 export function validateAddStockOverrideInput(input: AddStockOverrideInput): AddStockOverrideInput {
     let { endDate, stock, startDate } = input;

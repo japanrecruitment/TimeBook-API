@@ -2,9 +2,9 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { compact, intersectionWith, isEmpty } from "lodash";
-import { Context } from "../../../context";
-import { GqlError } from "../../../error";
-import { Result } from "../../core/result";
+import { Context } from "../../context";
+import { GqlError } from "../../error";
+import { Result } from "../core/result";
 
 type RemoveStockOverrideFromPackagePlanArgs = { packagePlanId: string; stockOverrideIds: string[] };
 
@@ -59,7 +59,6 @@ const removeStockOverrideFromPackagePlan: RemoveStockOverrideFromPackagePlan = a
 
     return {
         message: `Successfully removed ${stockOverridesToRemove.length} stock overrides from your hotel package`,
-        stockOverride: updatedHotelPackage,
     };
 };
 

@@ -3,46 +3,46 @@ import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { isEmpty } from "lodash";
-import { Context } from "../../../context";
-import { GqlError } from "../../../error";
+import { Context } from "../../context";
+import { GqlError } from "../../error";
 import { AddStockOverrideInput, validateAddStockOverrideInput } from "./addStockOverride";
 import { StockOverrideObject, toStockOverrideSelect } from "./StockOverrideObject";
 
-type AddStockOverrideInPackagePlanArgs = {
-    packagePlanId: string;
+type AddStockOverrideInHotelRoomArgs = {
+    hotelRoomId: string;
     stockOverride: AddStockOverrideInput;
 };
 
-type AddStockOverrideInPackagePlanResult = {
+type AddStockOverrideInHotelRoomResult = {
     message: string;
     stockOverride?: StockOverrideObject;
 };
 
-type AddStockOverrideInPackagePlan = IFieldResolver<
+type AddStockOverrideInHotelRoom = IFieldResolver<
     any,
     Context,
-    AddStockOverrideInPackagePlanArgs,
-    Promise<AddStockOverrideInPackagePlanResult>
+    AddStockOverrideInHotelRoomArgs,
+    Promise<AddStockOverrideInHotelRoomResult>
 >;
 
-const addStockOverrideInPackagePlan: AddStockOverrideInPackagePlan = async (
+const addStockOverrideInHotelRoom: AddStockOverrideInHotelRoom = async (
     _,
-    { packagePlanId, stockOverride },
+    { hotelRoomId, stockOverride },
     { authData, store },
     info
 ) => {
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const { endDate, stock, startDate } = validateAddStockOverrideInput(stockOverride);
+    const { endDate, startDate, stock } = validateAddStockOverrideInput(stockOverride);
 
-    const packagePlan = await store.packagePlan.findUnique({
-        where: { id: packagePlanId },
+    const hotelRoom = await store.hotelRoom.findUnique({
+        where: { id: hotelRoomId },
         select: {
             hotel: { select: { accountId: true } },
             stockOverrides: {
                 where: {
-                    packagePlanId,
+                    hotelRoomId,
                     OR: [
                         { AND: [{ startDate: { gte: startDate } }, { startDate: { lte: endDate } }] },
                         { AND: [{ endDate: { gte: startDate } }, { endDate: { lte: endDate } }] },
@@ -51,11 +51,10 @@ const addStockOverrideInPackagePlan: AddStockOverrideInPackagePlan = async (
             },
         },
     });
-    if (!packagePlan || !packagePlan.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
-    if (accountId !== packagePlan.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel package" });
-    if (!isEmpty(packagePlan.stockOverrides))
+    if (!hotelRoom || !hotelRoom.hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel room not found" });
+    if (accountId !== hotelRoom.hotel.accountId)
+        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
+    if (!isEmpty(hotelRoom.stockOverrides))
         throw new GqlError({ code: "BAD_REQUEST", message: "Overlapping stock override found." });
 
     const stockOverrideSelect = toStockOverrideSelect(mapSelections(info)?.stockOverride)?.select;
@@ -64,7 +63,7 @@ const addStockOverrideInPackagePlan: AddStockOverrideInPackagePlan = async (
             endDate,
             startDate,
             stock,
-            packagePlan: { connect: { id: packagePlanId } },
+            hotelRoom: { connect: { id: hotelRoomId } },
         },
         select: stockOverrideSelect,
     });
@@ -72,23 +71,23 @@ const addStockOverrideInPackagePlan: AddStockOverrideInPackagePlan = async (
     Log(newStockOverride);
 
     return {
-        message: "Successfully added stock override in package plan",
+        message: "Successfully added stock override in hotel room",
         stockOverride: newStockOverride,
     };
 };
 
-export const addStockOverrideInPackagePlanTypeDefs = gql`
-    type AddStockOverrideInPackagePlanResult {
+export const addStockOverrideInHotelRoomTypeDefs = gql`
+    type AddStockOverrideInHotelRoomResult {
         message: String!
         stockOverride: StockOverrideObject
     }
 
     type Mutation {
-        addStockOverrideInPackagePlan(
-            packagePlanId: ID!
+        addStockOverrideInHotelRoom(
+            hotelRoomId: ID!
             stockOverride: AddStockOverrideInput!
-        ): AddStockOverrideInPackagePlanResult! @auth(requires: [host])
+        ): AddStockOverrideInHotelRoomResult! @auth(requires: [host])
     }
 `;
 
-export const addStockOverrideInPackagePlanResolvers = { Mutation: { addStockOverrideInPackagePlan } };
+export const addStockOverrideInHotelRoomResolvers = { Mutation: { addStockOverrideInHotelRoom } };

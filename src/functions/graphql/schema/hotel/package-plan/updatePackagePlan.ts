@@ -59,6 +59,7 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
         endReservation,
         endUsage,
         name,
+        options,
         startReservation,
         startUsage,
         stock,
