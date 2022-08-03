@@ -22,6 +22,7 @@ function validateAddOptionInput(input: AddOptionInput): AddOptionInput {
         paymentTerm,
         startReservation,
         startUsage,
+        stock,
         photos,
     } = input;
 
@@ -48,6 +49,8 @@ function validateAddOptionInput(input: AddOptionInput): AddOptionInput {
     if (additionalPrice && additionalPrice < 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid addtional price" });
 
+    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid stock" });
+
     if (!photos) photos = [];
 
     return {
@@ -61,6 +64,7 @@ function validateAddOptionInput(input: AddOptionInput): AddOptionInput {
         paymentTerm,
         startReservation,
         startUsage,
+        stock,
         photos,
     };
 }
@@ -76,6 +80,7 @@ type AddOptionInput = {
     cutOffTillTime: Date;
     paymentTerm: OptionPaymentTerm;
     additionalPrice: number;
+    stock: number;
     photos: ImageUploadInput[];
 };
 
@@ -136,6 +141,7 @@ export const addOptionTypeDefs = gql`
         cutOffTillTime: Time
         paymentTerm: OptionPaymentTerm
         additionalPrice: Int
+        stock: Int
         photos: [ImageUploadInput]
     }
 

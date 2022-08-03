@@ -21,6 +21,7 @@ function validateUpdateOptionInput(input: UpdateOptionInput): UpdateOptionInput 
         paymentTerm,
         startReservation,
         startUsage,
+        stock,
     } = input;
 
     description = description?.trim();
@@ -35,6 +36,7 @@ function validateUpdateOptionInput(input: UpdateOptionInput): UpdateOptionInput 
     if (!endReservation) endReservation = null;
     if (!cutOffBeforeDays) cutOffBeforeDays = null;
     if (!cutOffTillTime) cutOffTillTime = null;
+    if (!stock) stock = null;
 
     if ((startUsage && !endUsage) || (!startUsage && endUsage))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end usage period" });
@@ -57,6 +59,8 @@ function validateUpdateOptionInput(input: UpdateOptionInput): UpdateOptionInput 
     if (additionalPrice && additionalPrice < 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid addtional price" });
 
+    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid stock" });
+
     return {
         id,
         additionalPrice,
@@ -69,6 +73,7 @@ function validateUpdateOptionInput(input: UpdateOptionInput): UpdateOptionInput 
         paymentTerm,
         startReservation,
         startUsage,
+        stock,
     };
 }
 
@@ -84,6 +89,7 @@ type UpdateOptionInput = {
     cutOffTillTime?: Date;
     paymentTerm?: OptionPaymentTerm;
     additionalPrice?: number;
+    stock?: number;
 };
 
 type UpdateOptionArgs = { input: UpdateOptionInput };
@@ -134,6 +140,7 @@ export const updateOptionTypeDefs = gql`
         cutOffTillTime: Time
         paymentTerm: OptionPaymentTerm
         additionalPrice: Int
+        stock: Int
     }
 
     type UpdateOptionResult {

@@ -27,6 +27,7 @@ export type OptionSelect = {
     cutOffTillTime: boolean;
     paymentTerm: boolean;
     additionalPrice: boolean;
+    stock: boolean;
     photos: PrismaSelect<PhotoSelect>;
     priceOverrides: PrismaSelect<OptionPriceOverrideSelect>;
     createdAt: boolean;
@@ -69,6 +70,7 @@ export const optionObjectTypeDefs = gql`
         cutOffTillTime: Time
         paymentTerm: OptionPaymentTerm
         additionalPrice: Int
+        stock: Int
         priceOverrides: [OptionPriceOverrideObject]
         photos: [Photo]
         createdAt: Date
