@@ -15,7 +15,7 @@ export type PackagePlanObject = Partial<PackagePlan> & {
     photos?: Partial<Photo>[];
     roomTypes?: Partial<PackagePlanRoomTypeObject>[];
     includedOptions?: Partial<OptionObject>[];
-    addtionalOptions?: Partial<OptionObject>[];
+    additionalOptions?: Partial<OptionObject>[];
 };
 
 export type PackagePlanSelect = {
@@ -35,7 +35,7 @@ export type PackagePlanSelect = {
     photos: PrismaSelect<PhotoSelect>;
     roomTypes: PrismaSelect<PackagePlanRoomTypeSelect> & { orderBy: { createdAt: Prisma.SortOrder } };
     includedOptions: PrismaSelect<OptionSelect>;
-    addtionalOptions: PrismaSelect<OptionSelect>;
+    additionalOptions: PrismaSelect<OptionSelect>;
     createdAt: boolean;
     updatedAt: boolean;
 };
@@ -45,8 +45,8 @@ export function toPackagePlanSelect(selections, defaultValue: any = false): Pris
     const photosSelect = toPhotoSelect(selections.photos);
     const roomTypeSelect = toPackagePlanRoomTypeSelect(selections.roomTypes)?.select;
     const includedOptionSelect = toOptionSelect(selections.includedOptions);
-    const additionalOptionSelect = toOptionSelect(selections.addtionalOptions);
-    const packagePlanSelect = omit(selections, "photos", "roomTypes", "includedOptions", "addtionalOptions");
+    const additionalOptionSelect = toOptionSelect(selections.additionalOptions);
+    const packagePlanSelect = omit(selections, "photos", "roomTypes", "includedOptions", "additionalOptions");
 
     if (
         isEmpty(packagePlanSelect) &&
@@ -64,7 +64,7 @@ export function toPackagePlanSelect(selections, defaultValue: any = false): Pris
             photos: photosSelect,
             roomTypes: roomTypeSelect ? { select: roomTypeSelect, orderBy: { createdAt: "desc" } } : undefined,
             includedOptions: includedOptionSelect,
-            addtionalOptions: additionalOptionSelect,
+            additionalOptions: additionalOptionSelect,
         } as PackagePlanSelect,
     };
 }
@@ -87,7 +87,7 @@ export const packagePlanObjectTypeDefs = gql`
         photos: [Photo]
         roomTypes: [PackagePlanRoomTypeObject]
         includedOptions: [OptionObject]
-        addtionalOptions: [OptionObject]
+        additionalOptions: [OptionObject]
         createdAt: Date
         updatedAt: Date
     }

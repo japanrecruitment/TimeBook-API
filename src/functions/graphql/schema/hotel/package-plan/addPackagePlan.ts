@@ -16,7 +16,7 @@ import { PackagePlanObject, toPackagePlanSelect } from "./PackagePlanObject";
 
 function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlanInput {
     let {
-        addtionalOptions,
+        additionalOptions,
         cutOffBeforeDays,
         description,
         endReservation,
@@ -50,7 +50,7 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
 
     if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
 
-    if (!addtionalOptions) addtionalOptions = [];
+    if (!additionalOptions) additionalOptions = [];
     if (!includedOptions) includedOptions = [];
 
     if (!photos) photos = [];
@@ -58,7 +58,7 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
     roomTypes = validateAddRoomTypesInPackagePlanInputList(roomTypes);
 
     return {
-        addtionalOptions,
+        additionalOptions,
         cutOffBeforeDays,
         description,
         endReservation,
@@ -89,7 +89,7 @@ type AddPackagePlanInput = {
     roomTypes: AddRoomTypesInPackagePlanInput[];
     photos: ImageUploadInput[];
     includedOptions: string[];
-    addtionalOptions: string[];
+    additionalOptions: string[];
 };
 
 type AddPackagePlanArgs = { hotelId: string; input: AddPackagePlanInput };
@@ -145,7 +145,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         id: true,
         roomTypes: { select: { id: true } },
         includedOptions: { select: { id: true } },
-        addtionalOptions: { select: { id: true } },
+        additionalOptions: { select: { id: true } },
     };
     let packagePlan = await store.packagePlan.create({
         data: {
@@ -169,7 +169,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
             photos: true,
             roomTypes: false,
             includedOptions: false,
-            addtionalOptions: false,
+            additionalOptions: false,
         },
     });
 
@@ -199,14 +199,14 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         );
     }
 
-    let addtionalOptions = [];
-    if (!isEmpty(validInput.addtionalOptions)) {
-        addtionalOptions = await Promise.all(
-            validInput.addtionalOptions.map((id) =>
+    let additionalOptions = [];
+    if (!isEmpty(validInput.additionalOptions)) {
+        additionalOptions = await Promise.all(
+            validInput.additionalOptions.map((id) =>
                 store.option.update({
                     where: { id: id },
                     data: { adPackagePlans: { connect: { id: packagePlan.id } } },
-                    select: packagePlanSelect.addtionalOptions.select,
+                    select: packagePlanSelect.additionalOptions.select,
                 })
             )
         );
@@ -221,7 +221,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
             return { key, mime, type, url };
         });
 
-    Log(packagePlan, includedOptions, addtionalOptions, roomPlans, uploadRes);
+    Log(packagePlan, includedOptions, additionalOptions, roomPlans, uploadRes);
 
     if (hotel.status === "PUBLISHED") {
         const hotel = await store.hotel.findUnique({
@@ -260,7 +260,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
 
     return {
         message: "Successfully added a package plan",
-        packagePlan: { ...packagePlan, addtionalOptions, includedOptions, roomTypes: roomPlans },
+        packagePlan: { ...packagePlan, additionalOptions, includedOptions, roomTypes: roomPlans },
         uploadRes,
     };
 };
@@ -281,7 +281,7 @@ export const addPackagePlanTypeDefs = gql`
         roomTypes: [AddRoomTypesInPackagePlanInput]
         photos: [ImageUploadInput]
         includedOptions: [ID]
-        addtionalOptions: [ID]
+        additionalOptions: [ID]
     }
 
     type AddPackagePlanResult {

@@ -10,7 +10,7 @@ import { PackagePlanObject, toPackagePlanSelect } from "./PackagePlanObject";
 
 function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePackagePlanInput {
     let {
-        addtionalOptions,
+        additionalOptions,
         cutOffBeforeDays,
         cutOffTillTime,
         description,
@@ -54,7 +54,7 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
     if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
 
     return {
-        addtionalOptions,
+        additionalOptions,
         cutOffBeforeDays,
         cutOffTillTime,
         description,
@@ -83,7 +83,7 @@ type UpdatePackagePlanInput = {
     cutOffTillTime?: Date;
     isBreakfastIncluded?: boolean;
     includedOptions?: string[];
-    addtionalOptions?: string[];
+    additionalOptions?: string[];
 };
 
 type UpdatePackagePlanArgs = { input: UpdatePackagePlanInput };
@@ -99,13 +99,13 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const { id, addtionalOptions, includedOptions, ...data } = validateUpdatePackagePlanInput(input);
+    const { id, additionalOptions, includedOptions, ...data } = validateUpdatePackagePlanInput(input);
 
     const packagePlan = await store.packagePlan.findUnique({
         where: { id },
         select: {
             hotel: { select: { accountId: true, status: true } },
-            addtionalOptions: { select: { id: true } },
+            additionalOptions: { select: { id: true } },
             includedOptions: { select: { id: true } },
         },
     });
@@ -117,7 +117,7 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
     const packagePlanSelect = toPackagePlanSelect(mapSelections(info)?.packagePlan)?.select || {
         id: true,
         includedOptions: { select: { id: true } },
-        addtionalOptions: { select: { id: true } },
+        additionalOptions: { select: { id: true } },
     };
     const updatedPackagePlan = await store.packagePlan.update({
         where: { id },
@@ -126,7 +126,7 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
             ...packagePlanSelect,
             id: true,
             includedOptions: false,
-            addtionalOptions: false,
+            additionalOptions: false,
             hotel:
                 packagePlan.hotel.status === "PUBLISHED"
                     ? {
@@ -166,22 +166,26 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
                 store.option.update({
                     where: { id },
                     data: { inPackagePlans: { disconnect: { id: updatedPackagePlan.id } } },
-                    select: packagePlanSelect.addtionalOptions.select,
+                    select: packagePlanSelect.additionalOptions.select,
                 })
             )
         );
     }
 
-    const addtionalOptionsToAdd = differenceWith(addtionalOptions, packagePlan.addtionalOptions, (a, b) => a === b.id);
-    const addtionalOptionsToRemove = differenceWith(
-        packagePlan.addtionalOptions,
-        addtionalOptions,
+    const additionalOptionsToAdd = differenceWith(
+        additionalOptions,
+        packagePlan.additionalOptions,
+        (a, b) => a === b.id
+    );
+    const additionalOptionsToRemove = differenceWith(
+        packagePlan.additionalOptions,
+        additionalOptions,
         (a, b) => a.id === b
     );
-    let addtionalOptionsResult = [];
-    if (!isEmpty(addtionalOptionsToAdd)) {
-        addtionalOptionsResult = await Promise.all(
-            addtionalOptionsToAdd.map((id) =>
+    let additionalOptionsResult = [];
+    if (!isEmpty(additionalOptionsToAdd)) {
+        additionalOptionsResult = await Promise.all(
+            additionalOptionsToAdd.map((id) =>
                 store.option.update({
                     where: { id },
                     data: { adPackagePlans: { connect: { id: updatedPackagePlan.id } } },
@@ -190,13 +194,13 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
             )
         );
     }
-    if (!isEmpty(addtionalOptionsToRemove)) {
+    if (!isEmpty(additionalOptionsToRemove)) {
         await Promise.all(
-            addtionalOptionsToRemove.map(({ id }) =>
+            additionalOptionsToRemove.map(({ id }) =>
                 store.option.update({
                     where: { id },
                     data: { adPackagePlans: { disconnect: { id: updatedPackagePlan.id } } },
-                    select: packagePlanSelect.addtionalOptions.select,
+                    select: packagePlanSelect.additionalOptions.select,
                 })
             )
         );
@@ -230,7 +234,7 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
         message: `Successfully updated package plan`,
         packagePlan: {
             ...updatedPackagePlan,
-            addtionalOptions: addtionalOptionsResult,
+            additionalOptions: additionalOptionsResult,
             includedOptions: includedOptionsResult,
         },
     };
@@ -251,7 +255,7 @@ export const updatePackagePlanTypeDefs = gql`
         cutOffTillTime: Time
         isBreakfastIncluded: Boolean
         includedOptions: [ID]
-        addtionalOptions: [ID]
+        additionalOptions: [ID]
     }
 
     type UpdatePackagePlanResult {
