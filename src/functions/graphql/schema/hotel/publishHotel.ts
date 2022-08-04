@@ -36,6 +36,8 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
     const hotel = await store.hotel.findFirst({
         where: { id, accountId },
         select: {
+            buildingType: true,
+            isPetAllowed: true,
             name: true,
             address: {
                 select: { city: true, latitude: true, longitude: true, prefecture: { select: { name: true } } },
@@ -44,6 +46,7 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
             photos: { select: { id: true, mime: true } },
             packagePlans: {
                 select: {
+                    isBreakfastIncluded: true,
                     paymentTerm: true,
                     roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
                 },
@@ -101,9 +104,12 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
     await dataSources.hotelAlgolia.saveObject({
         objectID: id,
         name: hotel.name,
+        buildingType: hotel.buildingType,
         city: hotel.address.city,
         highestPrice,
         hotelRooms: hotel.rooms.map(({ name }) => name),
+        isBreakfastIncluded: hotel.packagePlans.some(({ isBreakfastIncluded }) => isBreakfastIncluded),
+        isPetAllowed: hotel.isPetAllowed,
         lowestPrice,
         maxAdult,
         maxChild,

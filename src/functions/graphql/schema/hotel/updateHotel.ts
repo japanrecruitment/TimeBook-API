@@ -56,13 +56,20 @@ const updateHotel: UpdateHotel = async (_, { input }, { authData, dataSources, s
     const updatedHotel = await store.hotel.update({
         where: { id },
         data,
-        select: { ...hotelSelect, id: true, name: true, status: true },
+        select: { ...hotelSelect, id: true, buildingType: true, isPetAllowed: true, name: true, status: true },
     });
 
     Log(updatedHotel);
-    if (updatedHotel.status === "PUBLISHED" && hotel.name !== updateHotel.name) {
+    if (
+        updatedHotel.status === "PUBLISHED" &&
+        (hotel.buildingType !== updatedHotel.buildingType ||
+            hotel.isPetAllowed !== updatedHotel.isPetAllowed ||
+            hotel.name !== updatedHotel.name)
+    ) {
         await dataSources.hotelAlgolia.partialUpdateObject({
             objectID: updatedHotel.id,
+            buildingType: updatedHotel.buildingType,
+            isPetAllowed: updatedHotel.isPetAllowed,
             name: updatedHotel.name,
         });
     }

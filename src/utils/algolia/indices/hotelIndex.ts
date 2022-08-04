@@ -10,9 +10,12 @@ export type HotelIndexRecord = AlgoliaRecord & {
         lng: number;
     };
     name: string;
+    buildingType?: string;
     city?: string;
     highestPrice?: number;
     hotelRooms?: string[];
+    isBreakfastIncluded?: boolean;
+    isPetAllowed?: boolean;
     lowestPrice?: number;
     maxAdult?: number;
     maxChild?: number;
@@ -31,9 +34,12 @@ const settings: Settings = {
         "searchable(hotelRooms)",
         "searchable(prefecture)",
         "searchable(city)",
+        "searchable(buildingType)",
         "filterOnly(nearestStations)",
         "filterOnly(hightestPrice)",
         "filterOnly(lowestPrice)",
+        "filterOnly(isBreakfastIncluded)",
+        "filterOnly(isPetAllowed)",
     ],
     customRanking: ["desc(rating)", "desc(viewCount)"],
     ranking: ["desc(updatedAt)", "typo", "geo", "words", "filters", "proximity", "attribute", "exact", "custom"],
