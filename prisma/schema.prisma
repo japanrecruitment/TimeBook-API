@@ -84,6 +84,13 @@ enum ChatType {
   GROUP
 }
 
+enum BuildingType {
+  WHOLE_HOUSE
+  SIMPLE_ACCOMODATION
+  HOTEL
+  INN
+}
+
 enum HotelStatus {
   DRAFTED
   PUBLISHED
@@ -568,6 +575,8 @@ model Hotel {
   checkInTime     DateTime              @db.Time()
   checkOutTime    DateTime              @db.Time()
   status          HotelStatus           @default(DRAFTED)
+  buildingType    BuildingType          @default(HOTEL)
+  isPetAllowed    Boolean               @default(false)
   address         Address?
   nearestStations HotelNearestStation[]
   accountId       String
@@ -687,26 +696,28 @@ model PriceScheme {
 }
 
 model PackagePlan {
-  id                 String                  @id @default(cuid())
-  name               String
-  description        String                  @db.Text
-  paymentTerm        HotelPaymentTerm
-  stock              Int
-  startUsage         DateTime?               @db.Date
-  endUsage           DateTime?               @db.Date
-  startReservation   DateTime?               @db.Date
-  endReservation     DateTime?               @db.Date
-  cutOffBeforeDays   Int?
-  cutOffTillTime     DateTime?               @db.Time()
-  hotelId            String
-  hotel              Hotel                   @relation(fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  photos             Photo[]                 @relation(name: "HotelPackagePlanPhoto")
-  optionsAttachments Option[]                @relation(name: "_PackagePlanOptions")
-  roomTypes          HotelRoom_PackagePlan[]
-  stockOverrides     StockOverride[]
-  reservations       HotelRoomReservation[]
-  createdAt          DateTime                @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime                @updatedAt
+  id                  String                  @id @default(cuid())
+  name                String
+  description         String                  @db.Text
+  paymentTerm         HotelPaymentTerm
+  stock               Int
+  isBreakfastIncluded Boolean                 @default(false)
+  startUsage          DateTime?               @db.Date
+  endUsage            DateTime?               @db.Date
+  startReservation    DateTime?               @db.Date
+  endReservation      DateTime?               @db.Date
+  cutOffBeforeDays    Int?
+  cutOffTillTime      DateTime?               @db.Time()
+  hotelId             String
+  hotel               Hotel                   @relation(fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photos              Photo[]                 @relation(name: "HotelPackagePlanPhoto")
+  includedOptions     Option[]                @relation(name: "_PackagePlanIncludedOptions")
+  addtionalOptions    Option[]                @relation(name: "_PackagePlanAddtionalOptions")
+  roomTypes           HotelRoom_PackagePlan[]
+  stockOverrides      StockOverride[]
+  reservations        HotelRoomReservation[]
+  createdAt           DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt           DateTime                @updatedAt
 }
 
 model HotelRoom_PackagePlan {
@@ -737,7 +748,8 @@ model Option {
   accountId        String
   account          Account               @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   photos           Photo[]               @relation(name: "OptionPhoto")
-  packagePlans     PackagePlan[]         @relation(name: "_PackagePlanOptions")
+  inPackagePlans   PackagePlan[]         @relation(name: "_PackagePlanIncludedOptions")
+  adPackagePlans   PackagePlan[]         @relation(name: "_PackagePlanAddtionalOptions")
   spaces           Space[]               @relation(name: "_SpaceOptions")
   priceOverrides   OptionPriceOverride[]
   stockOverrides   StockOverride[]
@@ -746,15 +758,14 @@ model Option {
 }
 
 model OptionPriceOverride {
-  id              String            @id @default(cuid())
-  startDate       DateTime          @db.Date
-  endDate         DateTime          @db.Date
-  paymentTerm     OptionPaymentTerm
-  additionalPrice Int
-  optionId        String
-  option          Option            @relation(fields: [optionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt       DateTime          @default(now()) @db.Timestamp(6)
-  updatedAt       DateTime          @updatedAt
+  id        String   @id @default(cuid())
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  price     Int
+  optionId  String
+  option    Option   @relation(fields: [optionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
 }
 
 model HotelRoomReservation {

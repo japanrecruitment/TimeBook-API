@@ -1,4 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { BuildingType } from "@prisma/client";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
@@ -8,7 +9,7 @@ import { GqlError } from "../../error";
 import { HotelObject, toHotelSelect } from "./HotelObject";
 
 function validateUpdateHotelInput(input: UpdateHotelInput): UpdateHotelInput {
-    let { id, description, checkInTime, checkOutTime, name } = input;
+    let { id, buildingType, description, checkInTime, checkOutTime, isPetAllowed, name } = input;
 
     description = description?.trim();
     name = name?.trim();
@@ -17,10 +18,10 @@ function validateUpdateHotelInput(input: UpdateHotelInput): UpdateHotelInput {
 
     if (isEmpty(name)) name = undefined;
 
-    if (!description && !checkInTime && !checkOutTime && !name)
+    if (!buildingType && !description && !checkInTime && !checkOutTime && !name)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Empty Input" });
 
-    return { id, description, checkInTime, checkOutTime, name };
+    return { id, buildingType, description, checkInTime, checkOutTime, isPetAllowed, name };
 }
 
 type UpdateHotelInput = {
@@ -29,6 +30,8 @@ type UpdateHotelInput = {
     description: string;
     checkInTime: Date;
     checkOutTime: Date;
+    buildingType: BuildingType;
+    isPetAllowed: boolean;
 };
 
 type UpdateHotelArgs = { input: UpdateHotelInput };
@@ -77,6 +80,8 @@ export const updateHotelTypeDefs = gql`
         description: String
         checkInTime: Time
         checkOutTime: Time
+        buildingType: BuildingType
+        isPetAllowed: Boolean
     }
 
     type UpdateHotelResult {

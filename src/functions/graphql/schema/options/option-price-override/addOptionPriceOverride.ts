@@ -9,7 +9,7 @@ import { GqlError } from "../../../error";
 import { OptionPriceOverrideObject, toOptionPriceOverrideSelect } from "./OptionPriceOverrideObject";
 
 function validateAddOptionPriceOverrideInput(input: AddOptionPriceOverrideInput): AddOptionPriceOverrideInput {
-    let { additionalPrice, endDate, paymentTerm, startDate } = input;
+    let { endDate, price, startDate } = input;
 
     endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
     startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
@@ -18,17 +18,15 @@ function validateAddOptionPriceOverrideInput(input: AddOptionPriceOverrideInput)
 
     if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
-    if (additionalPrice < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of additional price" });
+    if (price < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of additional price" });
 
-    return { additionalPrice, endDate, paymentTerm, startDate };
+    return { endDate, price, startDate };
 }
 
 type AddOptionPriceOverrideInput = {
     startDate: Date;
     endDate: Date;
-    paymentTerm: OptionPaymentTerm;
-    additionalPrice: number;
+    price: number;
 };
 
 type AddOptionPriceOverrideArgs = {
@@ -52,7 +50,7 @@ const addOptionPriceOverride: AddOptionPriceOverride = async (_, { input, option
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const { additionalPrice, endDate, paymentTerm, startDate } = validateAddOptionPriceOverrideInput(input);
+    const { endDate, price, startDate } = validateAddOptionPriceOverrideInput(input);
 
     const option = await store.option.findUnique({
         where: { id: optionId },
@@ -78,9 +76,8 @@ const addOptionPriceOverride: AddOptionPriceOverride = async (_, { input, option
     const optionPriceOverrideSelect = toOptionPriceOverrideSelect(mapSelections(info)?.optionPriceOverride)?.select;
     const newOptionPriceOverride = await store.optionPriceOverride.create({
         data: {
-            additionalPrice,
             endDate,
-            paymentTerm,
+            price,
             startDate,
             option: { connect: { id: optionId } },
         },
@@ -99,8 +96,7 @@ export const addOptionPriceOverrideTypeDefs = gql`
     input AddOptionPriceOverrideInput {
         startDate: Date!
         endDate: Date!
-        paymentTerm: OptionPaymentTerm!
-        additionalPrice: Int!
+        price: Int!
     }
 
     type AddOptionPriceOverrideResult {

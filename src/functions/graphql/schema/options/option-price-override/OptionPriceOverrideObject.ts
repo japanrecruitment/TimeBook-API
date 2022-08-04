@@ -9,8 +9,7 @@ export type OptionPriceOverrideSelect = {
     id: boolean;
     startDate: boolean;
     endDate: boolean;
-    paymentTerm: boolean;
-    additionalPrice: boolean;
+    price: boolean;
     createdAt: boolean;
     updatedAt: boolean;
 };
@@ -28,8 +27,7 @@ export const optionPriceOverrideObjectTypeDefs = gql`
         id: ID
         startDate: Date
         endDate: Date
-        paymentTerm: OptionPaymentTerm
-        additionalPrice: Int
+        price: Int
         createdAt: Date
         updatedAt: Date
     }

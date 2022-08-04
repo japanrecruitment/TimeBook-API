@@ -11,7 +11,7 @@ import { OptionPriceOverrideObject, toOptionPriceOverrideSelect } from "./Option
 export function validateUpdateOptionPriceOverrideInput(
     input: UpdateOptionPriceOverrideInput
 ): UpdateOptionPriceOverrideInput {
-    let { id, additionalPrice, endDate, paymentTerm, startDate } = input;
+    let { id, endDate, price, startDate } = input;
 
     if (endDate && startDate) {
         endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
@@ -23,21 +23,18 @@ export function validateUpdateOptionPriceOverrideInput(
         startDate = undefined;
     }
 
-    if (additionalPrice && additionalPrice < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
+    if (price && price < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
 
-    if (!additionalPrice && !endDate && paymentTerm && !startDate)
-        throw new GqlError({ code: "BAD_REQUEST", message: "Empty fields provided" });
+    if (!endDate && price && !startDate) throw new GqlError({ code: "BAD_REQUEST", message: "Empty fields provided" });
 
-    return { id, additionalPrice, endDate, paymentTerm, startDate };
+    return { id, endDate, price, startDate };
 }
 
 export type UpdateOptionPriceOverrideInput = {
     id: string;
     startDate?: Date;
     endDate?: Date;
-    paymentTerm?: OptionPaymentTerm;
-    additionalPrice?: number;
+    price?: number;
 };
 
 type UpdateOptionPriceOverrideArgs = {
@@ -66,7 +63,7 @@ const updateOptionPriceOverride: UpdateOptionPriceOverride = async (
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const { id, additionalPrice, endDate, paymentTerm, startDate } = validateUpdateOptionPriceOverrideInput(input);
+    const { id, endDate, price, startDate } = validateUpdateOptionPriceOverrideInput(input);
 
     const option = await store.option.findUnique({
         where: { id: optionId },
@@ -96,9 +93,8 @@ const updateOptionPriceOverride: UpdateOptionPriceOverride = async (
     const newOptionPriceOverride = await store.optionPriceOverride.update({
         where: { id },
         data: {
-            additionalPrice,
             endDate,
-            paymentTerm,
+            price,
             startDate,
         },
         select: optionPriceOverrideSelect,
@@ -117,8 +113,7 @@ export const updateOptionPriceOverrideTypeDefs = gql`
         id: ID!
         startDate: Date
         endDate: Date
-        paymentTerm: OptionPaymentTerm
-        additionalPrice: Int
+        price: Int
     }
 
     type UpdateOptionPriceOverrideResult {

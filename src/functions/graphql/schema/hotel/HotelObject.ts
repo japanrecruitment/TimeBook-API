@@ -28,6 +28,8 @@ export type HotelSelect = {
     checkInTime: boolean;
     checkOutTime: boolean;
     status: boolean;
+    buildingType: boolean;
+    isPetAllowed: boolean;
     address: PrismaSelect<AddressSelect>;
     nearestStations: PrismaSelect<HotelNearestStationSelect>;
     packagePlans: PrismaSelect<PackagePlanSelect> & { orderBy: { createdAt: Prisma.SortOrder } };
@@ -63,6 +65,13 @@ export function toHotelSelect(selections, defaultValue: any = false): PrismaSele
 }
 
 export const hotelObjectTypeDefs = gql`
+    enum BuildingType {
+        WHOLE_HOUSE
+        SIMPLE_ACCOMODATION
+        HOTEL
+        INN
+    }
+
     enum HotelStatus {
         DRAFTED
         PUBLISHED
@@ -77,6 +86,8 @@ export const hotelObjectTypeDefs = gql`
         checkInTime: Time
         checkOutTime: Time
         status: HotelStatus
+        buildingType: BuildingType
+        isPetAllowed: Boolean
         address: AddressObject
         nearestStations: [HotelNearestStationObject]
         photos: [Photo]
