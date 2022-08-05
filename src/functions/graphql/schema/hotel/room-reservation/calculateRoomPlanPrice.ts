@@ -13,19 +13,30 @@ function isEqualDate(a: Date, b: Date) {
 }
 
 function validateCalculateRoomPlanInput(input: CalculateRoomPlanInput): CalculateRoomPlanInput {
-    let { checkInDate, checkOutDate, ...others } = input;
+    let { checkInDate, checkOutDate, additionalOptions, ...others } = input;
 
     checkInDate = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate());
     checkOutDate = new Date(checkOutDate.getFullYear(), checkOutDate.getMonth(), checkOutDate.getDate());
 
     if (checkOutDate < checkInDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
-    if (checkInDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+    if (checkInDate < moment().subtract(1, "days").toDate())
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
     checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
 
-    return { checkInDate, checkOutDate, ...others };
+    additionalOptions.forEach(({ quantity }) => {
+        if (quantity && quantity < 0)
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
+    });
+
+    return { checkInDate, checkOutDate, additionalOptions, ...others };
 }
+
+type SelectedAdditionalOption = {
+    optionId: string;
+    quantity: number;
+};
 
 type CalculateRoomPlanInput = {
     roomPlanId: string;
@@ -33,6 +44,7 @@ type CalculateRoomPlanInput = {
     checkOutDate: Date;
     nAdult?: number;
     nChild?: number;
+    additionalOptions?: SelectedAdditionalOption[];
 };
 
 type CalculateRoomPlanArgs = { input: CalculateRoomPlanInput };
@@ -47,7 +59,7 @@ type CalculateRoomPlan = IFieldResolver<any, Context, CalculateRoomPlanArgs, Pro
 
 const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authData, store }) => {
     const validInput = validateCalculateRoomPlanInput(input);
-    const { checkInDate, checkOutDate, roomPlanId, nAdult, nChild } = validInput;
+    const { checkInDate, checkOutDate, roomPlanId, additionalOptions, nAdult, nChild } = validInput;
 
     const allDates = getAllDatesBetn(checkInDate, checkOutDate);
     const weekDays = allDates.map((d) => d.getDay());
@@ -59,6 +71,9 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                 select: {
                     id: true,
                     paymentTerm: true,
+                    additionalOptions: {
+                        where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } },
+                    },
                     reservations: {
                         where: {
                             OR: [
@@ -123,6 +138,23 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
             message: "Missing number of adults or number of child",
         });
     }
+
+    differenceWith(additionalOptions, packagePlan.additionalOptions, ({ optionId }, { id }) => optionId === id).forEach(
+        ({ optionId }) => {
+            throw new GqlError({
+                code: "BAD_USER_INPUT",
+                message: `Option with id ${optionId} not found in the plan.`,
+            });
+        }
+    );
+
+    const selectedOptions = packagePlan.additionalOptions.map((aOpts) => {
+        const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
+        if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+        }
+        return { ...aOpts, quantity: bOpt.quantity };
+    });
 
     const planTotalStocks = packagePlan.stock;
     const roomTotalStocks = hotelRoom.stock;
@@ -200,6 +232,14 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         appliedRoomPlanPriceSettings = appliedRoomPlanPriceSettings.concat(remPriceSettings.map(({ id }) => id));
     }
 
+    // Calculating option price
+    selectedOptions.forEach(({ paymentTerm, quantity, additionalPrice }) => {
+        if (additionalPrice && additionalPrice > 0) {
+            if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") amount += quantity * additionalPrice;
+            else amount += additionalPrice;
+        }
+    });
+
     Log(remDates, appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings, amount);
 
     return {
@@ -210,12 +250,18 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
 };
 
 export const calculateRoomPlanPriceTypeDefs = gql`
+    input SelectedAdditionalOption {
+        optionId: ID!
+        quantity: Int
+    }
+
     input CalculateRoomPlanInput {
         roomPlanId: ID!
         checkInDate: Date!
         checkOutDate: Date!
         nAdult: Int
         nChild: Int
+        additionalOptions: [SelectedAdditionalOption]
     }
 
     type CalculateRoomPlanResult {

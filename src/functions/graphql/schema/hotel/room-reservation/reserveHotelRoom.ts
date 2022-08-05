@@ -26,19 +26,30 @@ function isEqualDate(a: Date, b: Date) {
 }
 
 function validateReserveHotelRoomInput(input: ReserveHotelRoomInput): ReserveHotelRoomInput {
-    let { checkInDate, checkOutDate, ...others } = input;
+    let { checkInDate, checkOutDate, additionalOptions, ...others } = input;
 
     checkInDate = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate());
     checkOutDate = new Date(checkOutDate.getFullYear(), checkOutDate.getMonth(), checkOutDate.getDate());
 
     if (checkOutDate < checkInDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
-    if (checkInDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+    if (checkInDate < moment().subtract(1, "days").toDate())
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
     checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
 
-    return { checkInDate, checkOutDate, ...others };
+    additionalOptions.forEach(({ quantity }) => {
+        if (quantity && quantity < 0)
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
+    });
+
+    return { checkInDate, checkOutDate, additionalOptions, ...others };
 }
+
+type SelectedAdditionalOption = {
+    optionId: string;
+    quantity: number;
+};
 
 type ReserveHotelRoomInput = {
     roomPlanId: string;
@@ -47,6 +58,7 @@ type ReserveHotelRoomInput = {
     checkOutDate: Date;
     nAdult?: number;
     nChild?: number;
+    additionalOptions?: SelectedAdditionalOption[];
 };
 
 type ReserveHotelRoomArgs = { input: ReserveHotelRoomInput };
@@ -69,7 +81,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
     if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const validInput = validateReserveHotelRoomInput(input);
-    const { checkInDate, checkOutDate, paymentSourceId, roomPlanId, nAdult, nChild } = validInput;
+    const { checkInDate, checkOutDate, paymentSourceId, roomPlanId, additionalOptions, nAdult, nChild } = validInput;
     try {
         const allDates = getAllDatesBetn(checkInDate, checkOutDate);
         const weekDays = allDates.map((d) => d.getDay());
@@ -81,6 +93,9 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                     select: {
                         id: true,
                         paymentTerm: true,
+                        additionalOptions: {
+                            where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } },
+                        },
                         reservations: {
                             where: {
                                 OR: [
@@ -202,6 +217,25 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             });
         }
 
+        differenceWith(
+            additionalOptions,
+            packagePlan.additionalOptions,
+            ({ optionId }, { id }) => optionId === id
+        ).forEach(({ optionId }) => {
+            throw new GqlError({
+                code: "BAD_USER_INPUT",
+                message: `Option with id ${optionId} not found in the plan.`,
+            });
+        });
+
+        const selectedOptions = packagePlan.additionalOptions.map((aOpts) => {
+            const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
+            if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
+                throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+            }
+            return { ...aOpts, quantity: bOpt.quantity };
+        });
+
         const planTotalStocks = packagePlan.stock;
         const roomTotalStocks = hotelRoom.stock;
 
@@ -284,6 +318,14 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             }
             appliedRoomPlanPriceSettings = appliedRoomPlanPriceSettings.concat(remPriceSettings.map(({ id }) => id));
         }
+
+        // Calculating option price
+        selectedOptions.forEach(({ paymentTerm, quantity, additionalPrice }) => {
+            if (additionalPrice && additionalPrice > 0) {
+                if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") amount += quantity * additionalPrice;
+                else amount += additionalPrice;
+            }
+        });
 
         Log("applied plan", appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings);
 
@@ -430,6 +472,11 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
 };
 
 export const reserveHotelRoomTypeDefs = gql`
+    input SelectedAdditionalOption {
+        optionId: ID!
+        quantity: Int
+    }
+
     input ReserveHotelRoomInput {
         paymentSourceId: ID!
         roomPlanId: ID!
@@ -437,6 +484,7 @@ export const reserveHotelRoomTypeDefs = gql`
         checkOutDate: Date!
         nAdult: Int
         nChild: Int
+        additionalOptions: [SelectedAdditionalOption]
     }
 
     type ReserveHotelRoomResult {
