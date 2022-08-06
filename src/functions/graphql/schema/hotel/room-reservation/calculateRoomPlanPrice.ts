@@ -25,7 +25,7 @@ function validateCalculateRoomPlanInput(input: CalculateRoomPlanInput): Calculat
 
     checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
 
-    additionalOptions.forEach(({ quantity }) => {
+    additionalOptions?.forEach(({ quantity }) => {
         if (quantity && quantity < 0)
             throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
     });
@@ -71,9 +71,11 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                 select: {
                     id: true,
                     paymentTerm: true,
-                    additionalOptions: {
-                        where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } },
-                    },
+                    additionalOptions: !isEmpty(additionalOptions)
+                        ? {
+                              where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } },
+                          }
+                        : undefined,
                     reservations: {
                         where: {
                             OR: [
@@ -139,22 +141,26 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         });
     }
 
-    differenceWith(additionalOptions, packagePlan.additionalOptions, ({ optionId }, { id }) => optionId === id).forEach(
-        ({ optionId }) => {
+    let selectedOptions = [];
+    if (!isEmpty(additionalOptions) && !isEmpty(packagePlan.additionalOptions)) {
+        differenceWith(
+            additionalOptions,
+            packagePlan.additionalOptions,
+            ({ optionId }, { id }) => optionId === id
+        ).forEach(({ optionId }) => {
             throw new GqlError({
                 code: "BAD_USER_INPUT",
                 message: `Option with id ${optionId} not found in the plan.`,
             });
-        }
-    );
-
-    const selectedOptions = packagePlan.additionalOptions.map((aOpts) => {
-        const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
-        if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
-        }
-        return { ...aOpts, quantity: bOpt.quantity };
-    });
+        });
+        selectedOptions = packagePlan.additionalOptions.map((aOpts) => {
+            const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
+            if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
+                throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+            }
+            return { ...aOpts, quantity: bOpt.quantity };
+        });
+    }
 
     const planTotalStocks = packagePlan.stock;
     const roomTotalStocks = hotelRoom.stock;
