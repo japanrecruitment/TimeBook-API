@@ -15,15 +15,12 @@ function isEqualDate(a: Date, b: Date) {
 function validateCalculateRoomPlanInput(input: CalculateRoomPlanInput): CalculateRoomPlanInput {
     let { checkInDate, checkOutDate, additionalOptions, ...others } = input;
 
-    checkInDate = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate());
-    checkOutDate = new Date(checkOutDate.getFullYear(), checkOutDate.getMonth(), checkOutDate.getDate());
-
     if (checkOutDate < checkInDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
     if (checkInDate < moment().subtract(1, "days").toDate())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
-    checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
+    // checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
 
     additionalOptions?.forEach(({ quantity }) => {
         if (quantity && quantity < 0)
@@ -63,6 +60,8 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
 
     const allDates = getAllDatesBetn(checkInDate, checkOutDate);
     const weekDays = allDates.map((d) => d.getDay());
+
+    Log(validInput);
 
     const plan = await store.hotelRoom_PackagePlan.findUnique({
         where: { id: roomPlanId },

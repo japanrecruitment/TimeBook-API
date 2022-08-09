@@ -15,6 +15,7 @@ import { SpaceTypeObject, SpaceTypeSelect, toSpaceTypeSelect } from "./space-typ
 import { SpaceAmenitiesObject, SpaceAmenitiesSelect, toSpaceAmenitiesSelect } from "./space-amenities";
 import { SpaceSettingObject, SpaceSettingSelect, toSpaceSettingSelect } from "./space-setting";
 import { RatingObject, RatingSelect, toRatingSelect } from "./ratings/RatingObject";
+import { OptionObject, OptionSelect, toOptionSelect } from "../options";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
@@ -27,6 +28,8 @@ export type SpaceObject = Partial<Space> & {
     pricePlans?: Partial<SpacePricePlanObject>[];
     settings?: Partial<SpaceSettingObject>[];
     ratings?: Partial<RatingObject>[];
+    includedOptions?: Partial<OptionObject>[];
+    additionalOptions?: Partial<OptionObject>[];
 };
 
 export type SpaceSelect = {
@@ -49,6 +52,8 @@ export type SpaceSelect = {
     account: { select: { host: PrismaSelect<HostSelect> } };
     reservations: { where: any; select: { fromDateTime: boolean; toDateTime: boolean } };
     ratings: PrismaSelect<RatingSelect>;
+    includedOptions: PrismaSelect<OptionSelect>;
+    additionalOptions: PrismaSelect<OptionSelect>;
 };
 
 export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSelect<SpaceSelect> => {
@@ -65,6 +70,8 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         ? { where: { fromDateTime: { gte: new Date() } }, select: { fromDateTime: true, toDateTime: true } }
         : false;
     const ratingSelect = toRatingSelect(selections.ratings);
+    const includedOptionSelect = toOptionSelect(selections.includedOptions);
+    const additionalOptionSelect = toOptionSelect(selections.additionalOptions);
     const spaceSelect = omit(
         selections,
         "nearestStations",
@@ -76,7 +83,9 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         "photos",
         "host",
         "reservedDates",
-        "ratings"
+        "ratings",
+        "includedOptions",
+        "additionalOptions"
     );
 
     console.log(spaceSelect);
@@ -91,7 +100,9 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         !addressSelect &&
         !photosSelect &&
         !hostSelect &&
-        !reservationsSelect
+        !reservationsSelect &&
+        !includedOptionSelect &&
+        !additionalOptionSelect
     )
         return defaultValue;
 
@@ -112,6 +123,8 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
             account: hostSelect ? { select: { host: hostSelect } } : false,
             reservations: reservationsSelect,
             ratings: ratingSelect,
+            includedOptions: includedOptionSelect,
+            additionalOptions: additionalOptionSelect,
         } as SpaceSelect,
     };
 };
@@ -146,6 +159,8 @@ export const spaceObjectTypeDefs = gql`
         settings: [SpaceSettingObject]
         reservedDates: [ReservedDates]
         ratings: [RatingObject]
+        includedOptions: [OptionObject]
+        additionalOptions: [OptionObject]
     }
 `;
 

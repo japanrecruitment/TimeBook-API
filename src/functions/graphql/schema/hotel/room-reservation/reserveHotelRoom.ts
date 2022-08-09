@@ -14,11 +14,10 @@ import { gql } from "apollo-server-core";
 import Stripe from "stripe";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
-import { getAllDatesBetn, getDurationsBetn } from "@utils/date-utils";
-import { SpacePricePlanType } from "@prisma/client";
+import { getAllDatesBetn } from "@utils/date-utils";
 import moment from "moment";
 import { environment } from "@utils/environment";
-import { compact, differenceWith, intersectionWith, isEmpty, sum } from "lodash";
+import { differenceWith, intersectionWith, isEmpty, sum } from "lodash";
 import { mapNumAdultField, mapNumChildField } from "../price-scheme";
 
 function isEqualDate(a: Date, b: Date) {
@@ -28,15 +27,12 @@ function isEqualDate(a: Date, b: Date) {
 function validateReserveHotelRoomInput(input: ReserveHotelRoomInput): ReserveHotelRoomInput {
     let { checkInDate, checkOutDate, additionalOptions, ...others } = input;
 
-    checkInDate = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate());
-    checkOutDate = new Date(checkOutDate.getFullYear(), checkOutDate.getMonth(), checkOutDate.getDate());
-
     if (checkOutDate < checkInDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
     if (checkInDate < moment().subtract(1, "days").toDate())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
-    checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
+    // checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
 
     additionalOptions?.forEach(({ quantity }) => {
         if (quantity && quantity < 0)
@@ -82,6 +78,8 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
 
     const validInput = validateReserveHotelRoomInput(input);
     const { checkInDate, checkOutDate, paymentSourceId, roomPlanId, additionalOptions, nAdult, nChild } = validInput;
+
+    Log(validInput);
     try {
         const allDates = getAllDatesBetn(checkInDate, checkOutDate);
         const weekDays = allDates.map((d) => d.getDay());
@@ -219,8 +217,8 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             });
         }
 
-        let selectedOptions = []
-        if(!isEmpty(additionalOptions) && !isEmpty(packagePlan.additionalOptions)) {
+        let selectedOptions = [];
+        if (!isEmpty(additionalOptions) && !isEmpty(packagePlan.additionalOptions)) {
             differenceWith(
                 additionalOptions,
                 packagePlan.additionalOptions,

@@ -274,7 +274,8 @@ model Space {
   pricePlans         SpacePricePlan[]
   cancelPolicies     CancelPolicy[]   @relation("_SpaceCancelPolicies")
   ratings            Rating[]
-  options            Option[]         @relation(name: "_SpaceOptions")
+  includedOptions    Option[]         @relation(name: "_SpaceIncludedOptions")
+  additionalOptions  Option[]         @relation(name: "_SpaceAdditionalOptions")
 }
 
 model SpaceType {
@@ -750,7 +751,8 @@ model Option {
   photos           Photo[]               @relation(name: "OptionPhoto")
   inPackagePlans   PackagePlan[]         @relation(name: "_PackagePlanIncludedOptions")
   adPackagePlans   PackagePlan[]         @relation(name: "_PackagePlanAdditionalOptions")
-  spaces           Space[]               @relation(name: "_SpaceOptions")
+  inSpaces         Space[]               @relation(name: "_SpaceIncludedOptions")
+  adSpaces         Space[]               @relation(name: "_SpaceAdditionalOptions")
   priceOverrides   OptionPriceOverride[]
   stockOverrides   StockOverride[]
   createdAt        DateTime              @default(now()) @db.Timestamp(6)

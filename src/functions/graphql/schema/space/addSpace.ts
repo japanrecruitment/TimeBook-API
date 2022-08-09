@@ -1,9 +1,53 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
+import { isEmpty } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
 import { SpaceObject } from "./SpaceObject";
+
+function validateAddSpaceInput(input: AddSpaceInput): AddSpaceInput {
+    let {
+        description,
+        name,
+        additionalOptions,
+        includedOptions,
+        maximumCapacity,
+        needApproval,
+        numberOfSeats,
+        spaceSize,
+    } = input;
+
+    description = description?.trim();
+    name = name?.trim();
+
+    if (isEmpty(description))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
+
+    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
+
+    if (maximumCapacity && maximumCapacity < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum capacity" });
+
+    if (numberOfSeats && numberOfSeats < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of seats" });
+
+    if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
+
+    if (!additionalOptions) additionalOptions = [];
+    if (!includedOptions) includedOptions = [];
+
+    return {
+        description,
+        name,
+        additionalOptions,
+        includedOptions,
+        maximumCapacity,
+        needApproval,
+        numberOfSeats,
+        spaceSize,
+    };
+}
 
 type AddSpaceInput = {
     name: string;
@@ -12,6 +56,8 @@ type AddSpaceInput = {
     needApproval?: boolean;
     numberOfSeats?: number;
     spaceSize?: number;
+    includedOptions?: string[];
+    additionalOptions?: string[];
 };
 
 type AddSpaceArgs = { input: AddSpaceInput };
@@ -24,41 +70,47 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const { description, name, maximumCapacity, numberOfSeats, spaceSize } = input;
-
-    if (!description || !description.trim())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
-
-    if (!name || !name.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
-
-    if (maximumCapacity && maximumCapacity < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum capacity" });
-
-    if (numberOfSeats && numberOfSeats < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of seats" });
-
-    if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
+    const { additionalOptions, includedOptions, ...data } = validateAddSpaceInput(input);
 
     const space = await store.space.create({
         data: {
-            ...input,
-            name: name.trim(),
-            description: description?.trim(),
+            ...data,
             account: { connect: { id: accountId } },
         },
     });
 
+    let _includedOptions = [];
+    if (!isEmpty(includedOptions)) {
+        _includedOptions = await Promise.all(
+            includedOptions.map((id) =>
+                store.option.update({ where: { id: id }, data: { inSpaces: { connect: { id: space.id } } } })
+            )
+        );
+    }
+
+    let _additionalOptions = [];
+    if (!isEmpty(additionalOptions)) {
+        _additionalOptions = await Promise.all(
+            additionalOptions.map((id) =>
+                store.option.update({ where: { id: id }, data: { adSpaces: { connect: { id: space.id } } } })
+            )
+        );
+    }
+
     if (space.published) {
         await dataSources.spaceAlgolia.saveObject({
             objectID: space.id,
-            name,
-            maximumCapacity,
-            numberOfSeats,
-            spaceSize,
+            name: space.name,
+            maximumCapacity: space.maximumCapacity,
+            numberOfSeats: space.numberOfSeats,
+            spaceSize: space.spaceSize,
         });
     }
 
-    return { space, result: { message: "Successfully added a new space" } };
+    return {
+        space: { ...space, includedOptions: _includedOptions, additionalOptions: _additionalOptions },
+        result: { message: "Successfully added a new space" },
+    };
 };
 
 export const addSpaceTypeDefs = gql`
@@ -69,6 +121,8 @@ export const addSpaceTypeDefs = gql`
         needApproval: Boolean
         numberOfSeats: Int
         spaceSize: Float
+        includedOptions: [ID]
+        additionalOptions: [ID]
     }
 
     type AddSpaceResult {
