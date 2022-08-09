@@ -360,16 +360,17 @@ model Rating {
 }
 
 model CancelPolicy {
-  id          String             @id @default(cuid())
-  name        String
-  description String?            @db.Text
-  accountId   String
-  account     Account            @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  spaces      Space[]            @relation("_SpaceCancelPolicies")
-  hotels      Hotel[]            @relation("_HotelCancelPolicies")
-  rates       CancelPolicyRate[]
-  createdAt   DateTime           @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime           @updatedAt
+  id           String             @id @default(cuid())
+  name         String
+  description  String?            @db.Text
+  accountId    String
+  account      Account            @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaces       Space[]            @relation("_SpaceCancelPolicies")
+  hotels       Hotel[]            @relation("_HotelCancelPolicies")
+  packagePlans PackagePlan[]      @relation("_PackagePlanCancelPolicies")
+  rates        CancelPolicyRate[]
+  createdAt    DateTime           @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime           @updatedAt
 }
 
 model CancelPolicyRate {
@@ -714,6 +715,7 @@ model PackagePlan {
   photos              Photo[]                 @relation(name: "HotelPackagePlanPhoto")
   includedOptions     Option[]                @relation(name: "_PackagePlanIncludedOptions")
   additionalOptions   Option[]                @relation(name: "_PackagePlanAdditionalOptions")
+  cancelPolicies      CancelPolicy[]          @relation("_PackagePlanCancelPolicies")
   roomTypes           HotelRoom_PackagePlan[]
   stockOverrides      StockOverride[]
   reservations        HotelRoomReservation[]
