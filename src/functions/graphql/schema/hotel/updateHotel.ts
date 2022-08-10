@@ -9,10 +9,11 @@ import { GqlError } from "../../error";
 import { HotelObject, toHotelSelect } from "./HotelObject";
 
 function validateUpdateHotelInput(input: UpdateHotelInput): UpdateHotelInput {
-    let { id, buildingType, description, checkInTime, checkOutTime, isPetAllowed, name } = input;
+    let { id, buildingType, description, cancelPolicyId, checkInTime, checkOutTime, isPetAllowed, name } = input;
 
     description = description?.trim();
     name = name?.trim();
+    if (!cancelPolicyId) cancelPolicyId = null;
 
     if (isEmpty(description)) description = undefined;
 
@@ -21,13 +22,14 @@ function validateUpdateHotelInput(input: UpdateHotelInput): UpdateHotelInput {
     if (!buildingType && !description && !checkInTime && !checkOutTime && !name)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Empty Input" });
 
-    return { id, buildingType, description, checkInTime, checkOutTime, isPetAllowed, name };
+    return { id, buildingType, description, cancelPolicyId, checkInTime, checkOutTime, isPetAllowed, name };
 }
 
 type UpdateHotelInput = {
     id: string;
     name: string;
     description: string;
+    cancelPolicyId: string;
     checkInTime: Date;
     checkOutTime: Date;
     buildingType: BuildingType;
@@ -85,6 +87,7 @@ export const updateHotelTypeDefs = gql`
         id: ID!
         name: String
         description: String
+        cancelPolicyId: ID
         checkInTime: Time
         checkOutTime: Time
         buildingType: BuildingType

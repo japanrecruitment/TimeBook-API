@@ -264,18 +264,19 @@ model Space {
   updatedAt          DateTime         @updatedAt
   accountId          String
   account            Account          @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cancelPolicyId     String?
+  cancelPolicy       CancelPolicy?    @relation(fields: [cancelPolicyId], references: [id], onDelete: SetNull)
   availableAmenities SpaceAmenities[] @relation("_SpaceAmenities")
   spaceTypes         SpaceType[]      @relation("_SpaceTypes")
+  includedOptions    Option[]         @relation(name: "_SpaceIncludedOptions")
+  additionalOptions  Option[]         @relation(name: "_SpaceAdditionalOptions")
   reservations       Reservation[]
   nearestStations    NearestStation[]
   address            Address?
   photos             Photo[]
   settings           SpaceSetting[]
   pricePlans         SpacePricePlan[]
-  cancelPolicies     CancelPolicy[]   @relation("_SpaceCancelPolicies")
   ratings            Rating[]
-  includedOptions    Option[]         @relation(name: "_SpaceIncludedOptions")
-  additionalOptions  Option[]         @relation(name: "_SpaceAdditionalOptions")
 }
 
 model SpaceType {
@@ -365,9 +366,9 @@ model CancelPolicy {
   description  String?            @db.Text
   accountId    String
   account      Account            @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  spaces       Space[]            @relation("_SpaceCancelPolicies")
-  hotels       Hotel[]            @relation("_HotelCancelPolicies")
-  packagePlans PackagePlan[]      @relation("_PackagePlanCancelPolicies")
+  spaces       Space[]
+  hotels       Hotel[]
+  packagePlans PackagePlan[]
   rates        CancelPolicyRate[]
   createdAt    DateTime           @default(now()) @db.Timestamp(6)
   updatedAt    DateTime           @updatedAt
@@ -580,14 +581,15 @@ model Hotel {
   buildingType    BuildingType          @default(HOTEL)
   isPetAllowed    Boolean               @default(false)
   address         Address?
-  nearestStations HotelNearestStation[]
   accountId       String
   account         Account               @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cancelPolicyId  String?
+  cancelPolicy    CancelPolicy?         @relation(fields: [cancelPolicyId], references: [id], onDelete: SetNull)
   photos          Photo[]               @relation(name: "HotelPhoto")
   rooms           HotelRoom[]           @relation(name: "HotelRooms")
+  nearestStations HotelNearestStation[]
   priceSchemes    PriceScheme[]
   packagePlans    PackagePlan[]
-  cancelPolicies  CancelPolicy[]        @relation("_HotelCancelPolicies")
   createdAt       DateTime              @default(now()) @db.Timestamp(6)
   updatedAt       DateTime              @updatedAt
 }
@@ -712,10 +714,11 @@ model PackagePlan {
   cutOffTillTime      DateTime?               @db.Time()
   hotelId             String
   hotel               Hotel                   @relation(fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cancelPolicyId      String?
+  cancelPolicy        CancelPolicy?           @relation(fields: [cancelPolicyId], references: [id], onDelete: SetNull)
   photos              Photo[]                 @relation(name: "HotelPackagePlanPhoto")
   includedOptions     Option[]                @relation(name: "_PackagePlanIncludedOptions")
   additionalOptions   Option[]                @relation(name: "_PackagePlanAdditionalOptions")
-  cancelPolicies      CancelPolicy[]          @relation("_PackagePlanCancelPolicies")
   roomTypes           HotelRoom_PackagePlan[]
   stockOverrides      StockOverride[]
   reservations        HotelRoomReservation[]

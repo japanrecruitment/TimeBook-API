@@ -2,10 +2,6 @@ import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { addPackagePlanResolvers, addPackagePlanTypeDefs } from "./addPackagePlan";
 import { addPackagePlanPhotosResolvers, addPackagePlanPhotosTypeDefs } from "./addPackagePlanPhotos";
 import { addRoomTypesInPackagePlanResolvers, addRoomTypesInPackagePlanTypeDefs } from "./addRoomTypesInPackagePlan";
-import {
-    linkPackagePlanToCancelPoliciesResolvers,
-    linkPackagePlanToCancelPoliciesTypeDefs,
-} from "./linkPackagePlanToCancelPolicies";
 import { myPackagePlansResolvers, myPackagePlansTypeDefs } from "./myPackagePlans";
 import { packagePlanByIdResolvers, packagePlanByIdTypeDefs } from "./packagePlanById";
 import { packagePlanObjectResolvers, packagePlanObjectTypeDefs } from "./PackagePlanObject";
@@ -25,7 +21,6 @@ export const packagePlanTypeDefs = mergeTypeDefs([
     addPackagePlanTypeDefs,
     addPackagePlanPhotosTypeDefs,
     addRoomTypesInPackagePlanTypeDefs,
-    linkPackagePlanToCancelPoliciesTypeDefs,
     myPackagePlansTypeDefs,
     packagePlanByIdTypeDefs,
     packagePlanObjectTypeDefs,
@@ -40,7 +35,6 @@ export const packagePlanResolvers = mergeResolvers([
     addPackagePlanResolvers,
     addPackagePlanPhotosResolvers,
     addRoomTypesInPackagePlanResolvers,
-    linkPackagePlanToCancelPoliciesResolvers,
     myPackagePlansResolvers,
     packagePlanByIdResolvers,
     packagePlanObjectResolvers,

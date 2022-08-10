@@ -3,6 +3,7 @@ import { StripeLib } from "@libs/paymentProvider";
 import { appConfig } from "@utils/appConfig";
 import { environment } from "@utils/environment";
 import { gql } from "apollo-server-core";
+import { isEmpty } from "lodash";
 import moment from "moment";
 import Stripe from "stripe";
 import { Context } from "../../context";
@@ -39,7 +40,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             space: {
                 select: {
                     account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } },
-                    cancelPolicies: { select: { rates: { orderBy: { beforeHours: "asc" } } } },
+                    cancelPolicy: { select: { rates: { orderBy: { beforeHours: "asc" } } } },
                 },
             },
             transaction: { select: { amount: true, paymentIntentId: true, responseReceivedLog: true } },
@@ -81,8 +82,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
 
     if (!isHost) {
-        const cancelPolicyRates = reservation.space.cancelPolicies?.flatMap(({ rates }) => rates);
-        if (cancelPolicyRates.length <= 0) {
+        const cancelPolicyRates = reservation.space.cancelPolicy?.rates;
+        if (isEmpty(cancelPolicyRates)) {
             await store.reservation.update({
                 where: { id: reservationId },
                 data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },

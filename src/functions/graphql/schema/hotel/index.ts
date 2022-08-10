@@ -17,7 +17,6 @@ import { priceOverrideResolvers, priceOverrideTypeDefs } from "./price-override"
 import { publishHotelResolvers, publishHotelTypeDefs } from "./publishHotel";
 import { roomReservationResolvers, roomReservationTypeDefs } from "./room-reservation";
 import { allPublishedHotelsResolvers, allPublishedHotelsTypeDefs } from "./allPublishedHotels";
-import { linkHotelToCancelPoliciesResolvers, linkHotelToCancelPoliciesTypeDefs } from "./linkHotelToCancelPolicies";
 
 export const typeDefs = mergeTypeDefs([
     addHotelPhotosTypeDefs,
@@ -29,7 +28,6 @@ export const typeDefs = mergeTypeDefs([
     hotelNearestStationTypeDefs,
     hotelObjectTypeDefs,
     hotelRoomTypeDefs,
-    linkHotelToCancelPoliciesTypeDefs,
     myHotelsTypeDefs,
     packagePlanTypeDefs,
     priceOverrideTypeDefs,
@@ -51,7 +49,6 @@ export const resolvers = mergeResolvers([
     hotelNearestStationResolvers,
     hotelObjectResolvers,
     hotelRoomResolvers,
-    linkHotelToCancelPoliciesResolvers,
     myHotelsResolvers,
     packagePlanResolvers,
     priceOverrideResolvers,

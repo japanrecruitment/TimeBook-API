@@ -11,6 +11,7 @@ function validateUpdateMySpaceInput(input: UpdateMySpaceInput): UpdateMySpaceInp
         description,
         name,
         additionalOptions,
+        cancelPolicyId,
         includedOptions,
         maximumCapacity,
         needApproval,
@@ -24,6 +25,7 @@ function validateUpdateMySpaceInput(input: UpdateMySpaceInput): UpdateMySpaceInp
     if (isEmpty(description)) description = undefined;
     if (isEmpty(name)) name = undefined;
     if (!additionalOptions) additionalOptions = null;
+    if (!cancelPolicyId) cancelPolicyId = null;
     if (!includedOptions) includedOptions = null;
     if (!maximumCapacity) maximumCapacity = null;
     if (!needApproval) needApproval = null;
@@ -55,6 +57,7 @@ function validateUpdateMySpaceInput(input: UpdateMySpaceInput): UpdateMySpaceInp
         description,
         name,
         additionalOptions,
+        cancelPolicyId,
         includedOptions,
         maximumCapacity,
         needApproval,
@@ -71,6 +74,7 @@ type UpdateMySpaceInput = {
     needApproval?: boolean;
     numberOfSeats?: number;
     spaceSize?: number;
+    cancelPolicyId?: string;
     includedOptions?: string[];
     additionalOptions?: string[];
 };
@@ -100,7 +104,10 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    const updatedSpace = await store.space.update({ where: { id }, data });
+    const updatedSpace = await store.space.update({
+        where: { id },
+        data,
+    });
 
     if (updatedSpace.published) {
         await dataSources.spaceAlgolia.partialUpdateObject({
@@ -160,6 +167,7 @@ export const updateMySpaceTypeDefs = gql`
         needApproval: Boolean
         numberOfSeats: Int
         spaceSize: Float
+        cancelPolicyId: ID
         includedOptions: [ID]
         additionalOptions: [ID]
     }

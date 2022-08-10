@@ -11,6 +11,7 @@ function validateAddSpaceInput(input: AddSpaceInput): AddSpaceInput {
         description,
         name,
         additionalOptions,
+        cancelPolicyId,
         includedOptions,
         maximumCapacity,
         needApproval,
@@ -41,6 +42,7 @@ function validateAddSpaceInput(input: AddSpaceInput): AddSpaceInput {
         description,
         name,
         additionalOptions,
+        cancelPolicyId,
         includedOptions,
         maximumCapacity,
         needApproval,
@@ -56,6 +58,7 @@ type AddSpaceInput = {
     needApproval?: boolean;
     numberOfSeats?: number;
     spaceSize?: number;
+    cancelPolicyId?: string;
     includedOptions?: string[];
     additionalOptions?: string[];
 };
@@ -70,11 +73,12 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
     const { accountId } = authData || {};
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
-    const { additionalOptions, includedOptions, ...data } = validateAddSpaceInput(input);
+    const { additionalOptions, cancelPolicyId, includedOptions, ...data } = validateAddSpaceInput(input);
 
     const space = await store.space.create({
         data: {
             ...data,
+            cancelPolicy: cancelPolicyId ? { connect: { id: cancelPolicyId } } : undefined,
             account: { connect: { id: accountId } },
         },
     });
@@ -121,6 +125,7 @@ export const addSpaceTypeDefs = gql`
         needApproval: Boolean
         numberOfSeats: Int
         spaceSize: Float
+        cancelPolicyId: ID
         includedOptions: [ID]
         additionalOptions: [ID]
     }

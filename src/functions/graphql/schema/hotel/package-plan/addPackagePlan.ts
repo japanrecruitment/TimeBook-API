@@ -88,6 +88,7 @@ type AddPackagePlanInput = {
     isBreakfastIncluded: boolean;
     roomTypes: AddRoomTypesInPackagePlanInput[];
     photos: ImageUploadInput[];
+    cancelPolicyId: string;
     includedOptions: string[];
     additionalOptions: string[];
 };
@@ -108,6 +109,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
 
     const validInput = validateAddPackagePlanInput(input);
     const {
+        cancelPolicyId,
         cutOffBeforeDays,
         cutOffTillTime,
         description,
@@ -161,6 +163,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
             startUsage,
             stock,
             hotel: { connect: { id: hotelId } },
+            cancelPolicy: cancelPolicyId ? { connect: { id: cancelPolicyId } } : undefined,
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
         },
         select: {
@@ -280,6 +283,7 @@ export const addPackagePlanTypeDefs = gql`
         isBreakfastIncluded: Boolean
         roomTypes: [AddRoomTypesInPackagePlanInput]
         photos: [ImageUploadInput]
+        cancelPolicyId: ID
         includedOptions: [ID]
         additionalOptions: [ID]
     }

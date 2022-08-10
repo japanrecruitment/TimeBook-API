@@ -11,6 +11,7 @@ import { PackagePlanObject, toPackagePlanSelect } from "./PackagePlanObject";
 function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePackagePlanInput {
     let {
         additionalOptions,
+        cancelPolicyId,
         cutOffBeforeDays,
         cutOffTillTime,
         description,
@@ -35,6 +36,7 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
     if (!endReservation) endReservation = null;
     if (!cutOffBeforeDays) cutOffBeforeDays = null;
     if (!cutOffTillTime) cutOffTillTime = null;
+    if (!cancelPolicyId) cancelPolicyId = null;
 
     if ((startUsage && !endUsage) || (!startUsage && endUsage))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end usage period" });
@@ -55,6 +57,7 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
 
     return {
         additionalOptions,
+        cancelPolicyId,
         cutOffBeforeDays,
         cutOffTillTime,
         description,
@@ -82,6 +85,7 @@ type UpdatePackagePlanInput = {
     cutOffBeforeDays?: number;
     cutOffTillTime?: Date;
     isBreakfastIncluded?: boolean;
+    cancelPolicyId?: string;
     includedOptions?: string[];
     additionalOptions?: string[];
 };
@@ -254,6 +258,7 @@ export const updatePackagePlanTypeDefs = gql`
         cutOffBeforeDays: Int
         cutOffTillTime: Time
         isBreakfastIncluded: Boolean
+        cancelPolicyId: ID
         includedOptions: [ID]
         additionalOptions: [ID]
     }

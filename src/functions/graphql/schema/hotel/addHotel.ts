@@ -33,6 +33,7 @@ function validateAddHotelInput(input: AddHotelInput): AddHotelInput {
 type AddHotelInput = {
     name: string;
     description: string;
+    cancelPolicyId: string;
     checkInTime: string;
     checkOutTime: string;
     buildingType: BuildingType;
@@ -57,7 +58,7 @@ const addHotel: AddHotel = async (_, { input }, { authData, dataSources, store }
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const validInput = validateAddHotelInput(input);
-    const { address, nearestStations, photos, ...data } = validInput;
+    const { address, cancelPolicyId, nearestStations, photos, ...data } = validInput;
 
     const prefecture = await store.prefecture.findUnique({ where: { id: address.prefectureId } });
     if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
@@ -70,6 +71,7 @@ const addHotel: AddHotel = async (_, { input }, { authData, dataSources, store }
             ...data,
             account: { connect: { id: accountId } },
             address: { create: { ...address, latitude: geoloc.lat, longitude: geoloc.lng } },
+            cancelPolicy: cancelPolicyId ? { connect: { id: cancelPolicyId } } : undefined,
             nearestStations: { createMany: { data: nearestStations } },
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
         },
@@ -101,6 +103,7 @@ export const addHotelTypeDefs = gql`
     input AddHotelInput {
         name: String!
         description: String!
+        cancelPolicyId: ID
         checkInTime: Time
         checkOutTime: Time
         buildingType: BuildingType

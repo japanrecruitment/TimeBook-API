@@ -37,14 +37,14 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             reserveeId: true,
             status: true,
             reservee: { select: { suspended: true } },
-            hotelRoom: {
+            packagePlan: {
                 select: {
                     id: true,
                     hotel: {
                         select: {
                             id: true,
                             account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } },
-                            cancelPolicies: { select: { rates: { orderBy: { beforeHours: "asc" } } } },
+                            cancelPolicy: { select: { rates: { orderBy: { beforeHours: "asc" } } } },
                         },
                     },
                 },
@@ -55,10 +55,10 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
     if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "Reservation not found" });
 
-    if (!reservation.hotelRoom || !reservation.hotelRoom.hotel || !reservation.hotelRoom.hotel.account)
+    if (!reservation.packagePlan || !reservation.packagePlan.hotel || !reservation.packagePlan.hotel.account)
         throw new GqlError({ code: "FORBIDDEN", message: "Invalid reservation found" });
 
-    if (reservation.reserveeId !== accountId && reservation.hotelRoom.hotel.account.id !== accountId)
+    if (reservation.reserveeId !== accountId && reservation.packagePlan.hotel.account.id !== accountId)
         throw new GqlError({ code: "UNAUTHORIZED", message: "Not Authorized" });
 
     if (reservation.status === "CANCELED")
@@ -70,17 +70,18 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     if (reservation.status === "FAILED")
         throw new GqlError({ code: "BAD_REQUEST", message: "Cannot cancel a failed reservation" });
 
-    const isHost = reservation.hotelRoom.hotel.account.id === accountId;
+    const isHost = reservation.packagePlan.hotel.account.id === accountId;
 
-    if (isHost && (reservation.hotelRoom.hotel.account.suspended || reservation.hotelRoom.hotel.account.host.suspended))
-        throw new GqlError({ code: "FORBIDDEN", message: "You are suspended. Please contact our support team." });
-    else if (!isHost && reservation.reservee.suspended)
+    const isSuspended = isHost
+        ? reservation.packagePlan.hotel.account.suspended || reservation.packagePlan.hotel.account.host.suspended
+        : reservation.reservee.suspended;
+    if (isSuspended)
         throw new GqlError({ code: "FORBIDDEN", message: "You are suspended. Please contact our support team." });
 
     const stripe = new StripeLib();
     await stripe.cancelPaymentIntent(reservation.transaction.paymentIntentId);
 
-    if (reservation.hotelRoom.hotel.account.suspended || reservation.hotelRoom.hotel.account.host.suspended) {
+    if (reservation.packagePlan.hotel.account.suspended || reservation.packagePlan.hotel.account.host.suspended) {
         await store.hotelRoomReservation.update({
             where: { id: hotelRoomReservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
@@ -91,7 +92,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
 
     if (!isHost) {
-        const cancelPolicyRates = reservation.hotelRoom.hotel.cancelPolicies?.flatMap(({ rates }) => rates);
+        const cancelPolicyRates = reservation.packagePlan.hotel.cancelPolicy?.rates;
         if (isEmpty(cancelPolicyRates)) {
             await store.hotelRoomReservation.update({
                 where: { id: hotelRoomReservationId },
