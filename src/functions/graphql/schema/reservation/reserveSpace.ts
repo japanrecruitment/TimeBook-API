@@ -84,7 +84,9 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             where: { id: spaceId, isDeleted: false },
             include: {
                 account: { include: { host: true } },
-                additionalOptions: { where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } } },
+                additionalOptions: additionalOptions
+                    ? { where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } } }
+                    : undefined,
                 pricePlans: {
                     where: {
                         AND: [

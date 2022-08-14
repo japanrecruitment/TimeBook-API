@@ -1,5 +1,6 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { SpacePricePlanType } from "@prisma/client";
+import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { differenceWith, isEmpty } from "lodash";
 import moment from "moment";
@@ -25,6 +26,8 @@ type ApplicablePricePlan = {
 };
 
 type GetApplicablePricePlansResult = {
+    spaceAmount: number;
+    optionAmount: number;
     total: number;
     duration: number;
     durationType: SpacePricePlanType;
@@ -86,7 +89,9 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
                 },
                 include: { overrides: true },
             },
-            additionalOptions: { where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } } },
+            additionalOptions: additionalOptions
+                ? { where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } } }
+                : undefined,
         },
     });
 
@@ -115,19 +120,21 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
         });
     }
 
-    let total = price;
+    let optionPrice = 0;
     // Calculating option price
     selectedOptions.forEach(({ paymentTerm, quantity, additionalPrice }) => {
         if (additionalPrice && additionalPrice > 0) {
-            if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") total += quantity * additionalPrice;
-            else total += additionalPrice;
+            if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") optionPrice += quantity * additionalPrice;
+            else optionPrice += additionalPrice;
         }
     });
 
     return {
         duration,
         durationType,
-        total: price,
+        spaceAmount: price,
+        optionAmount: optionPrice,
+        total: price + optionPrice,
         applicablePricePlans: appliedReservationPlans,
     };
 };
@@ -153,6 +160,8 @@ export const getApplicablePricePlansTypeDefs = gql`
     }
 
     type GetApplicablePricePlansResult {
+        spaceAmount: Float
+        optionAmount: Float
         total: Float
         duration: Int
         durationType: SpacePricePlanType
