@@ -16,6 +16,7 @@ import { SpaceAmenitiesObject, SpaceAmenitiesSelect, toSpaceAmenitiesSelect } fr
 import { SpaceSettingObject, SpaceSettingSelect, toSpaceSettingSelect } from "./space-setting";
 import { RatingObject, RatingSelect, toRatingSelect } from "./ratings/RatingObject";
 import { OptionObject, OptionSelect, toOptionSelect } from "../options";
+import { CancelPolicyObject, CancelPolicySelect, toCancelPolicySelect } from "../cancel-policy/CancelPolicyObject";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
@@ -30,6 +31,7 @@ export type SpaceObject = Partial<Space> & {
     ratings?: Partial<RatingObject>[];
     includedOptions?: Partial<OptionObject>[];
     additionalOptions?: Partial<OptionObject>[];
+    cancelPolicy?: Partial<CancelPolicyObject>;
 };
 
 export type SpaceSelect = {
@@ -54,6 +56,7 @@ export type SpaceSelect = {
     ratings: PrismaSelect<RatingSelect>;
     includedOptions: PrismaSelect<OptionSelect>;
     additionalOptions: PrismaSelect<OptionSelect>;
+    cancelPolicy: PrismaSelect<CancelPolicySelect>;
 };
 
 export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSelect<SpaceSelect> => {
@@ -72,6 +75,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
     const ratingSelect = toRatingSelect(selections.ratings);
     const includedOptionSelect = toOptionSelect(selections.includedOptions);
     const additionalOptionSelect = toOptionSelect(selections.additionalOptions);
+    const cancelPolicySelect = toCancelPolicySelect(selections.cancelPolicy);
     const spaceSelect = omit(
         selections,
         "nearestStations",
@@ -85,7 +89,8 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         "reservedDates",
         "ratings",
         "includedOptions",
-        "additionalOptions"
+        "additionalOptions",
+        "cancelPolicy"
     );
 
     console.log(spaceSelect);
@@ -102,7 +107,8 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         !hostSelect &&
         !reservationsSelect &&
         !includedOptionSelect &&
-        !additionalOptionSelect
+        !additionalOptionSelect &&
+        !cancelPolicySelect
     )
         return defaultValue;
 
@@ -125,6 +131,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
             ratings: ratingSelect,
             includedOptions: includedOptionSelect,
             additionalOptions: additionalOptionSelect,
+            cancelPolicy: cancelPolicySelect,
         } as SpaceSelect,
     };
 };
@@ -161,6 +168,7 @@ export const spaceObjectTypeDefs = gql`
         ratings: [RatingObject]
         includedOptions: [OptionObject]
         additionalOptions: [OptionObject]
+        cancelPolicy: CancelPolicyObject
     }
 `;
 

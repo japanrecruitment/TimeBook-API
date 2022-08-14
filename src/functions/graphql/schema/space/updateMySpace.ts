@@ -24,9 +24,7 @@ function validateUpdateMySpaceInput(input: UpdateMySpaceInput): UpdateMySpaceInp
 
     if (isEmpty(description)) description = undefined;
     if (isEmpty(name)) name = undefined;
-    if (!additionalOptions) additionalOptions = null;
     if (!cancelPolicyId) cancelPolicyId = null;
-    if (!includedOptions) includedOptions = null;
     if (!maximumCapacity) maximumCapacity = null;
     if (!needApproval) needApproval = null;
     if (!numberOfSeats) numberOfSeats = null;
@@ -143,14 +141,14 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
     if (!isEmpty(additionalOptionsToAdd)) {
         additionalOptionsResult = await Promise.all(
             additionalOptionsToAdd.map((id) =>
-                store.option.update({ where: { id }, data: { adPackagePlans: { connect: { id: space.id } } } })
+                store.option.update({ where: { id }, data: { adSpaces: { connect: { id: space.id } } } })
             )
         );
     }
     if (!isEmpty(additionalOptionsToRemove)) {
         await Promise.all(
             additionalOptionsToRemove.map(({ id }) =>
-                store.option.update({ where: { id }, data: { adPackagePlans: { disconnect: { id: space.id } } } })
+                store.option.update({ where: { id }, data: { adSpaces: { disconnect: { id: space.id } } } })
             )
         );
     }

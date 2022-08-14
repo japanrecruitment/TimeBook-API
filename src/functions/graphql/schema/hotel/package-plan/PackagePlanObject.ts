@@ -3,6 +3,7 @@ import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
 import { isEmpty } from "lodash";
+import { CancelPolicyObject, CancelPolicySelect, toCancelPolicySelect } from "../../cancel-policy/CancelPolicyObject";
 import { Photo, PhotoSelect, toPhotoSelect } from "../../media";
 import { OptionObject, OptionSelect, toOptionSelect } from "../../options";
 import {
@@ -12,6 +13,7 @@ import {
 } from "./PackagePlanRoomTypeObject";
 
 export type PackagePlanObject = Partial<PackagePlan> & {
+    cancelPolicy?: Partial<CancelPolicyObject>;
     photos?: Partial<Photo>[];
     roomTypes?: Partial<PackagePlanRoomTypeObject>[];
     includedOptions?: Partial<OptionObject>[];
@@ -32,6 +34,7 @@ export type PackagePlanSelect = {
     cutOffTillTime: boolean;
     isBreakfastIncluded: boolean;
     hotelId: boolean;
+    cancelPolicy: PrismaSelect<CancelPolicySelect>;
     photos: PrismaSelect<PhotoSelect>;
     roomTypes: PrismaSelect<PackagePlanRoomTypeSelect> & { orderBy: { createdAt: Prisma.SortOrder } };
     includedOptions: PrismaSelect<OptionSelect>;
@@ -42,14 +45,23 @@ export type PackagePlanSelect = {
 
 export function toPackagePlanSelect(selections, defaultValue: any = false): PrismaSelect<PackagePlanSelect> {
     if (!selections || isEmpty(selections)) return defaultValue;
+    const cancelPolicySelect = toCancelPolicySelect(selections.cancelPolicy);
     const photosSelect = toPhotoSelect(selections.photos);
     const roomTypeSelect = toPackagePlanRoomTypeSelect(selections.roomTypes)?.select;
     const includedOptionSelect = toOptionSelect(selections.includedOptions);
     const additionalOptionSelect = toOptionSelect(selections.additionalOptions);
-    const packagePlanSelect = omit(selections, "photos", "roomTypes", "includedOptions", "additionalOptions");
+    const packagePlanSelect = omit(
+        selections,
+        "cancelPolicy",
+        "photos",
+        "roomTypes",
+        "includedOptions",
+        "additionalOptions"
+    );
 
     if (
         isEmpty(packagePlanSelect) &&
+        !cancelPolicySelect &&
         !photosSelect &&
         !roomTypeSelect &&
         !includedOptionSelect &&
@@ -61,6 +73,7 @@ export function toPackagePlanSelect(selections, defaultValue: any = false): Pris
     return {
         select: {
             ...packagePlanSelect,
+            cancelPolicy: cancelPolicySelect,
             photos: photosSelect,
             roomTypes: roomTypeSelect ? { select: roomTypeSelect, orderBy: { createdAt: "desc" } } : undefined,
             includedOptions: includedOptionSelect,
@@ -84,6 +97,7 @@ export const packagePlanObjectTypeDefs = gql`
         cutOffTillTime: Time
         isBreakfastIncluded: Boolean
         hotelId: String
+        cancelPolicy: CancelPolicyObject
         photos: [Photo]
         roomTypes: [PackagePlanRoomTypeObject]
         includedOptions: [OptionObject]

@@ -19,6 +19,12 @@ import ReservationPriceCalculator from "./ReservationPriceCalculator";
 import { SpacePricePlanType } from "@prisma/client";
 import moment from "moment";
 import { environment } from "@utils/environment";
+import { differenceWith, isEmpty } from "lodash";
+
+type SelectedAdditionalOption = {
+    optionId: string;
+    quantity: number;
+};
 
 type ReserveSpaceInput = {
     duration: number;
@@ -26,6 +32,7 @@ type ReserveSpaceInput = {
     fromDateTime: Date;
     paymentSourceId: string;
     spaceId: string;
+    additionalOptions?: SelectedAdditionalOption[];
 };
 
 type ReserveSpaceArgs = { input: ReserveSpaceInput };
@@ -44,7 +51,7 @@ type ReserveSpace = IFieldResolver<any, Context, ReserveSpaceArgs, Promise<Reser
 
 const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => {
     const { id: userId, accountId, email } = authData;
-    const { fromDateTime, paymentSourceId, spaceId, duration, durationType } = input;
+    const { fromDateTime, paymentSourceId, spaceId, duration, durationType, additionalOptions } = input;
 
     try {
         Log(fromDateTime, duration);
@@ -68,10 +75,16 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         if (days <= 0 && hours <= 0 && minutes < 5)
             throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selection" });
 
+        additionalOptions?.forEach(({ quantity }) => {
+            if (quantity && quantity < 0)
+                throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
+        });
+
         const space = await store.space.findFirst({
             where: { id: spaceId, isDeleted: false },
             include: {
                 account: { include: { host: true } },
+                additionalOptions: { where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } } },
                 pricePlans: {
                     where: {
                         AND: [
@@ -164,8 +177,36 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 message: "Invalid payment source.",
             });
 
+        let selectedOptions = [];
+        if (!isEmpty(additionalOptions) && !isEmpty(space.additionalOptions)) {
+            differenceWith(
+                additionalOptions,
+                space.additionalOptions,
+                ({ optionId }, { id }) => optionId === id
+            ).forEach(({ optionId }) => {
+                throw new GqlError({
+                    code: "BAD_USER_INPUT",
+                    message: `Option with id ${optionId} not found in the plan.`,
+                });
+            });
+            selectedOptions = space.additionalOptions.map((aOpts) => {
+                const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
+                if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
+                    throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+                }
+                return { ...aOpts, quantity: bOpt.quantity };
+            });
+        }
+
         const { price } = new ReservationPriceCalculator({ checkIn: fromDateTime, checkOut: toDateTime, pricePlans });
-        const amount = price;
+        let amount = price;
+        // Calculating option price
+        selectedOptions.forEach(({ paymentTerm, quantity, additionalPrice }) => {
+            if (additionalPrice && additionalPrice > 0) {
+                if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") amount += quantity * additionalPrice;
+                else amount += additionalPrice;
+            }
+        });
         const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
         const transferAmount = amount - applicationFeeAmount;
 
@@ -195,7 +236,16 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 amount,
                 provider: "STRIPE",
                 assetType: "SPACE",
-                assetData: omit(space, "createdAt", "account", "pricePlans", "updatedAt", "reservations", "settings"),
+                assetData: omit(
+                    space,
+                    "createdAt",
+                    "account",
+                    "additionalOptions",
+                    "pricePlans",
+                    "updatedAt",
+                    "reservations",
+                    "settings"
+                ),
                 currency: "JPY",
                 description: `Reservation of ${space.name}`,
                 status: "CREATED",
@@ -310,12 +360,18 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 };
 
 export const reserveSpaceTypeDefs = gql`
+    input SelectedAdditionalOption {
+        optionId: ID!
+        quantity: Int
+    }
+
     input ReserveSpaceInput {
         duration: Int!
         durationType: SpacePricePlanType!
         fromDateTime: Date!
         paymentSourceId: ID!
         spaceId: ID!
+        additionalOptions: [SelectedAdditionalOption]
     }
 
     type ReserveSpaceResult {
