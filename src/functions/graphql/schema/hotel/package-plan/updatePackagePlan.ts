@@ -22,6 +22,7 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
         startReservation,
         startUsage,
         stock,
+        subcriptionPrice,
         ...others
     } = input;
 
@@ -37,6 +38,7 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
     if (!cutOffBeforeDays) cutOffBeforeDays = null;
     if (!cutOffTillTime) cutOffTillTime = null;
     if (!cancelPolicyId) cancelPolicyId = null;
+    if (!subcriptionPrice) subcriptionPrice = null;
 
     if ((startUsage && !endUsage) || (!startUsage && endUsage))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end usage period" });
@@ -55,6 +57,9 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
 
     if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
 
+    if (subcriptionPrice && subcriptionPrice < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid subscription price" });
+
     return {
         additionalOptions,
         cancelPolicyId,
@@ -68,6 +73,7 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
         startReservation,
         startUsage,
         stock,
+        subcriptionPrice,
         ...others,
     };
 }
@@ -85,6 +91,7 @@ type UpdatePackagePlanInput = {
     cutOffBeforeDays?: number;
     cutOffTillTime?: Date;
     isBreakfastIncluded?: boolean;
+    subcriptionPrice?: number;
     cancelPolicyId?: string;
     includedOptions?: string[];
     additionalOptions?: string[];
@@ -258,6 +265,7 @@ export const updatePackagePlanTypeDefs = gql`
         cutOffBeforeDays: Int
         cutOffTillTime: Time
         isBreakfastIncluded: Boolean
+        subcriptionPrice: Int
         cancelPolicyId: ID
         includedOptions: [ID]
         additionalOptions: [ID]

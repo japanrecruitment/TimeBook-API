@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { environment, Log } from "@utils/index";
+import { uniqWith } from "lodash";
 
 const returnURL = environment.STRIPE_CONNECT_ACCOUNT_RETURN_URL;
 const refreshURL = environment.STRIPE_CONNECT_ACCOUNT_REFRESH_URL;
@@ -31,10 +32,13 @@ type Balance = {
     currency: string;
     amount: number;
 };
+
 export type AccountBalance = {
     available: Balance[];
     pending: Balance[];
 };
+
+export type StripePrice = Omit<Stripe.Price, "product"> & { product: Stripe.Product };
 
 export class StripeLib implements IStripeUtil {
     async createConnectAccount({ email }: CreateConnectAccountInput): Promise<Stripe.Account> {
@@ -129,10 +133,25 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
-    async getCustomer(customerId: string) {
+    async getCustomer(customerId: string): Promise<Stripe.Response<Stripe.Customer>> {
         try {
             const customer = await stripe.customers.retrieve(customerId);
-            return customer;
+            if (customer.deleted) return null;
+            return customer as any;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async setDefaultPaymentSource(
+        customerId: string,
+        paymentMethodId: string
+    ): Promise<Stripe.Response<Stripe.Customer>> {
+        try {
+            const customer = await stripe.customers.update(customerId, {
+                invoice_settings: { default_payment_method: paymentMethodId },
+            });
+            return customer as any;
         } catch (error) {
             console.log(error);
         }
@@ -247,6 +266,69 @@ export class StripeLib implements IStripeUtil {
             return intent;
         } catch (error) {
             Log("[FAILED]: Capturing stripe payment intent", error);
+            return error;
+        }
+    }
+
+    async createSubscription(customerId: string, priceId: string): Promise<Stripe.Response<Stripe.Subscription>> {
+        try {
+            Log("[STARTED]: Creating subscription");
+            const subscription = await stripe.subscriptions.create({
+                customer: customerId,
+                items: [{ price: priceId }],
+            });
+            Log("[COMPLETED]: Creating subscription", subscription);
+            return subscription as any;
+        } catch (error) {
+            Log("[FAILED]: Creating subscription", error);
+            return error;
+        }
+    }
+
+    async cancelSubscription(subscriptionId: string): Promise<Stripe.Response<Stripe.Subscription>> {
+        try {
+            Log("[STARTED]: Canceling subscription");
+            const subscription = await stripe.subscriptions.del(subscriptionId);
+            Log("[COMPLETED]: Canceling subscription", subscription);
+            return subscription as any;
+        } catch (error) {
+            Log("[FAILED]: Canceling subscription", error);
+            return error;
+        }
+    }
+
+    async retrievePrice(priceId: string): Promise<Stripe.Response<StripePrice>> {
+        try {
+            Log("[STARTED]: Retrieving stripe price");
+            const price = await stripe.prices.retrieve(priceId, { expand: ["product"] });
+            Log("[COMPLETED]: Retrieving stripe price", price);
+            return price as any;
+        } catch (error) {
+            Log("[FAILED]: Retrieving stripe price", error);
+            return error;
+        }
+    }
+
+    async listSubscriptionPrices(): Promise<Stripe.Response<Stripe.ApiList<StripePrice>>> {
+        const productIds = [
+            "prod_MHKkvxYDSR3Utl",
+            "prod_MHL3nbPl5b5I7y",
+            "prod_MHL95AQUXuIU5P",
+            "prod_MHLC0GjKiwd7oN",
+            "prod_MHLEuTMpuVEuDh",
+            "prod_MHLHPCH1h6bU6V",
+        ];
+        try {
+            Log("[STARTED]: Fetching stripe subscription prices");
+            const prices = await stripe.prices.search({
+                query: productIds.map((id) => `product: '${id}'`).join(" OR "),
+                expand: ["data.product"],
+                limit: 18,
+            });
+            Log("[COMPLETED]: Fetching stripe subscription prices", prices);
+            return prices as any;
+        } catch (error) {
+            Log("[FAILED]: Fetching stripe subscription prices", error);
             return error;
         }
     }

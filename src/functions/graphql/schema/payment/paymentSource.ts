@@ -42,6 +42,10 @@ const paymentSource: TPaymentSource = async (_, __, { authData, store }, info) =
 
         // Get payment sources from stripe
         const stripe = new StripeLib();
+        const customer = await stripe.getCustomer(stripeCustomerId);
+
+        if (!customer) throw new GqlError({ code: "BAD_REQUEST", message: "Invalid customer id found" });
+
         const paymentSources = await stripe.retrieveCard(stripeCustomerId);
 
         Log("PAYMENT SOURCE", paymentSources);
@@ -57,6 +61,7 @@ const paymentSource: TPaymentSource = async (_, __, { authData, store }, info) =
                 last4: source.card.last4,
                 brand: source.card.brand,
                 country: source.card.country,
+                isDefault: customer.invoice_settings.default_payment_method === source.id,
             };
         });
         return result;
@@ -77,6 +82,7 @@ export const paymentSourceTypeDefs = gql`
         last4: String
         brand: String
         country: String
+        isDefault: Boolean
     }
 
     type Query {

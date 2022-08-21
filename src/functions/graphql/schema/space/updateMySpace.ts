@@ -17,6 +17,7 @@ function validateUpdateMySpaceInput(input: UpdateMySpaceInput): UpdateMySpaceInp
         needApproval,
         numberOfSeats,
         spaceSize,
+        subcriptionPrice,
     } = input;
 
     description = description?.trim();
@@ -29,6 +30,7 @@ function validateUpdateMySpaceInput(input: UpdateMySpaceInput): UpdateMySpaceInp
     if (!needApproval) needApproval = null;
     if (!numberOfSeats) numberOfSeats = null;
     if (!spaceSize) spaceSize = null;
+    if (!subcriptionPrice) subcriptionPrice = null;
 
     if (
         !additionalOptions &&
@@ -50,6 +52,9 @@ function validateUpdateMySpaceInput(input: UpdateMySpaceInput): UpdateMySpaceInp
 
     if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
 
+    if (subcriptionPrice && subcriptionPrice < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid subscription price" });
+
     return {
         id,
         description,
@@ -61,6 +66,7 @@ function validateUpdateMySpaceInput(input: UpdateMySpaceInput): UpdateMySpaceInp
         needApproval,
         numberOfSeats,
         spaceSize,
+        subcriptionPrice,
     };
 }
 
@@ -75,6 +81,7 @@ type UpdateMySpaceInput = {
     cancelPolicyId?: string;
     includedOptions?: string[];
     additionalOptions?: string[];
+    subcriptionPrice?: number;
 };
 
 type UpdateMySpaceArgs = { input: UpdateMySpaceInput };
@@ -168,6 +175,7 @@ export const updateMySpaceTypeDefs = gql`
         cancelPolicyId: ID
         includedOptions: [ID]
         additionalOptions: [ID]
+        subcriptionPrice: Int
     }
 
     type Mutation {

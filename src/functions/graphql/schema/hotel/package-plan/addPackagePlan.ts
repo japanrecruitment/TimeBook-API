@@ -28,6 +28,7 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
         startReservation,
         startUsage,
         stock,
+        subcriptionPrice,
         ...others
     } = input;
 
@@ -50,6 +51,9 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
 
     if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
 
+    if (subcriptionPrice && subcriptionPrice < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid subscription price" });
+
     if (!additionalOptions) additionalOptions = [];
     if (!includedOptions) includedOptions = [];
 
@@ -70,6 +74,7 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
         startReservation,
         startUsage,
         stock,
+        subcriptionPrice,
         ...others,
     };
 }
@@ -86,6 +91,7 @@ type AddPackagePlanInput = {
     cutOffBeforeDays: number;
     cutOffTillTime: Date;
     isBreakfastIncluded: boolean;
+    subcriptionPrice: number;
     roomTypes: AddRoomTypesInPackagePlanInput[];
     photos: ImageUploadInput[];
     cancelPolicyId: string;
@@ -123,6 +129,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         startReservation,
         startUsage,
         stock,
+        subcriptionPrice,
     } = validInput;
 
     const hotel = await store.hotel.findFirst({
@@ -162,6 +169,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
             startReservation,
             startUsage,
             stock,
+            subcriptionPrice,
             hotel: { connect: { id: hotelId } },
             cancelPolicy: cancelPolicyId ? { connect: { id: cancelPolicyId } } : undefined,
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
@@ -281,6 +289,7 @@ export const addPackagePlanTypeDefs = gql`
         cutOffBeforeDays: Int
         cutOffTillTime: Time
         isBreakfastIncluded: Boolean
+        subcriptionPrice: Int
         roomTypes: [AddRoomTypesInPackagePlanInput]
         photos: [ImageUploadInput]
         cancelPolicyId: ID

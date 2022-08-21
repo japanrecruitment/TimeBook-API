@@ -33,6 +33,7 @@ export type PackagePlanSelect = {
     cutOffBeforeDays: boolean;
     cutOffTillTime: boolean;
     isBreakfastIncluded: boolean;
+    subcriptionPrice: boolean;
     hotelId: boolean;
     cancelPolicy: PrismaSelect<CancelPolicySelect>;
     photos: PrismaSelect<PhotoSelect>;
@@ -96,6 +97,7 @@ export const packagePlanObjectTypeDefs = gql`
         cutOffBeforeDays: Int
         cutOffTillTime: Time
         isBreakfastIncluded: Boolean
+        subcriptionPrice: Int
         hotelId: String
         cancelPolicy: CancelPolicyObject
         photos: [Photo]

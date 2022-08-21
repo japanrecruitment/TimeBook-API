@@ -17,6 +17,7 @@ function validateAddSpaceInput(input: AddSpaceInput): AddSpaceInput {
         needApproval,
         numberOfSeats,
         spaceSize,
+        subcriptionPrice,
     } = input;
 
     description = description?.trim();
@@ -35,6 +36,9 @@ function validateAddSpaceInput(input: AddSpaceInput): AddSpaceInput {
 
     if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
 
+    if (subcriptionPrice && subcriptionPrice < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid subscription price" });
+
     if (!additionalOptions) additionalOptions = [];
     if (!includedOptions) includedOptions = [];
 
@@ -48,6 +52,7 @@ function validateAddSpaceInput(input: AddSpaceInput): AddSpaceInput {
         needApproval,
         numberOfSeats,
         spaceSize,
+        subcriptionPrice,
     };
 }
 
@@ -61,6 +66,7 @@ type AddSpaceInput = {
     cancelPolicyId?: string;
     includedOptions?: string[];
     additionalOptions?: string[];
+    subcriptionPrice?: number;
 };
 
 type AddSpaceArgs = { input: AddSpaceInput };
@@ -128,6 +134,7 @@ export const addSpaceTypeDefs = gql`
         cancelPolicyId: ID
         includedOptions: [ID]
         additionalOptions: [ID]
+        subcriptionPrice: Int
     }
 
     type AddSpaceResult {

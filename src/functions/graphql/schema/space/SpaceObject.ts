@@ -44,6 +44,7 @@ export type SpaceSelect = {
     needApproval: boolean;
     published: boolean;
     isDeleted: boolean;
+    subcriptionPrice: boolean;
     nearestStations: PrismaSelect<NearestStationSelect>;
     availableAmenities: PrismaSelect<SpaceAmenitiesSelect>;
     pricePlans: PrismaSelect<SpacePricePlanSelect> & { where: { isDeleted: false } };
@@ -156,6 +157,7 @@ export const spaceObjectTypeDefs = gql`
         spaceSize: Float
         needApproval: Boolean
         published: Boolean
+        subcriptionPrice: Int
         nearestStations: [NearestStationObject]
         spaceTypes: [SpaceTypeObject]
         address: AddressObject

@@ -139,6 +139,7 @@ model Account {
   hotels                  Hotel[]
   cancelPolicies          CancelPolicy[]
   options                 Option[]
+  mySubscriptions         Subscription[]
 }
 
 model PaymentSource {
@@ -261,6 +262,7 @@ model Space {
   isDeleted          Boolean          @default(false)
   suspended          Boolean          @default(false)
   published          Boolean          @default(false)
+  subcriptionPrice   Int?
   updatedAt          DateTime         @updatedAt
   accountId          String
   account            Account          @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -494,14 +496,23 @@ model Credit {
   @@unique([accountId], name: "Credit_accountId_date_key")
 }
 
-model SubscriptionPlan {
-  id          String   @id @default(cuid())
-  credit      Float
-  title       String
-  monthlyFees Float
-  yearlyFees  Float
-  createdAt   DateTime @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime @updatedAt
+model Subscription {
+  id                 String   @id @default(cuid())
+  amount             Int
+  currentPeriodEnd   DateTime @db.Timestamp(6)
+  currentPeriodStart DateTime @db.Timestamp(6)
+  isCanceled         Boolean  @default(false)
+  name               String
+  remainingUnit      Int
+  stripePriceId      String
+  stripeProductId    String
+  stripeSubId        String
+  type               String
+  unit               Int
+  accountId          String
+  account            Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt          DateTime @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime @updatedAt
 }
 
 model Photo {
@@ -712,6 +723,7 @@ model PackagePlan {
   endReservation      DateTime?               @db.Date
   cutOffBeforeDays    Int?
   cutOffTillTime      DateTime?               @db.Time()
+  subcriptionPrice    Int?
   hotelId             String
   hotel               Hotel                   @relation(fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   cancelPolicyId      String?

@@ -17,6 +17,7 @@ import * as hotel from "./hotel";
 import * as cancelPolicy from "./cancel-policy";
 import * as options from "./options";
 import * as stockOverride from "./stock-override";
+import * as subscription from "./subscription";
 
 const typeDefs = mergeTypeDefs([
     coreTypeDefs,
@@ -35,6 +36,7 @@ const typeDefs = mergeTypeDefs([
     cancelPolicy.typeDefs,
     options.typeDefs,
     stockOverride.typeDefs,
+    subscription.typeDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -54,6 +56,7 @@ const resolvers = mergeResolvers([
     cancelPolicy.resolvers,
     options.resolvers,
     stockOverride.resolvers,
+    subscription.resolvers,
 ]);
 
 const schemaDirectives = merge(coreDirectives);
