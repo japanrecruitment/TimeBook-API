@@ -1,11 +1,10 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { StripeLib, StripePrice } from "@libs/paymentProvider";
+import { StripeLib } from "@libs/paymentProvider";
+import { convertToJST } from "@utils/date-utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
-import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { SubscriptionObject, toSubscriptionSelect } from "./SubscriptionObject";
 
 type CancelSubscriptionArgs = { id: string };
 
@@ -13,7 +12,7 @@ type CancelSubscriptionResult = { message: string };
 
 type CancelSubscription = IFieldResolver<any, Context, CancelSubscriptionArgs, Promise<CancelSubscriptionResult>>;
 
-const cancelSubscription: CancelSubscription = async (_, { id }, { authData, dataSources, store }, info) => {
+const cancelSubscription: CancelSubscription = async (_, { id }, { authData, store }) => {
     const { accountId } = authData;
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
@@ -21,13 +20,19 @@ const cancelSubscription: CancelSubscription = async (_, { id }, { authData, dat
 
     if (!subscription) throw new GqlError({ code: "BAD_REQUEST", message: "Subscription not found" });
 
-    if (!subscription.isCanceled)
-        throw new GqlError({ code: "BAD_REQUEST", message: "Subscription is already canceled" });
+    if (subscription.isCanceled) throw new GqlError({ code: "BAD_REQUEST", message: "Subscription already canceled" });
 
     const stripe = new StripeLib();
 
-    await stripe.cancelSubscription(subscription.stripeSubId);
-    await store.subscription.update({ where: { id }, data: { isCanceled: true } });
+    const canceledSubscription = await stripe.cancelSubscription(subscription.stripeSubId);
+    await store.subscription.update({
+        where: { id },
+        data: {
+            isCanceled: true,
+            canceledAt: convertToJST(new Date(canceledSubscription.canceled_at * 1000)),
+            endsAt: convertToJST(new Date(canceledSubscription.cancel_at * 1000)),
+        },
+    });
 
     Log(`cancelSubscription: `, subscription);
 

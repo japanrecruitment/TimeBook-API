@@ -2,7 +2,7 @@ import { gql } from "apollo-server-core";
 import { Space } from "@prisma/client";
 import { AddressObject, AddressSelect, toAddressSelect } from "../address";
 import { PrismaSelect } from "graphql-map-selections";
-import { isEmpty } from "lodash";
+import { isEmpty, uniqWith } from "lodash";
 import { omit } from "@utils/object-helper";
 import { NearestStationObject, NearestStationSelect, toNearestStationSelect } from "./nearest-stations";
 import { SpacePricePlanObject, SpacePricePlanSelect, toSpacePricePlanSelect } from "./space-price-plans";
@@ -17,6 +17,11 @@ import { SpaceSettingObject, SpaceSettingSelect, toSpaceSettingSelect } from "./
 import { RatingObject, RatingSelect, toRatingSelect } from "./ratings/RatingObject";
 import { OptionObject, OptionSelect, toOptionSelect } from "../options";
 import { CancelPolicyObject, CancelPolicySelect, toCancelPolicySelect } from "../cancel-policy/CancelPolicyObject";
+import { StripeLib, StripePrice } from "@libs/paymentProvider";
+import {
+    stripePricesToSubscriptionProducts,
+    SubscriptionProductObject,
+} from "../subscription/SubscriptionProductObject";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
@@ -91,7 +96,8 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         "ratings",
         "includedOptions",
         "additionalOptions",
-        "cancelPolicy"
+        "cancelPolicy",
+        "subscriptionProducts"
     );
 
     console.log(spaceSelect);
@@ -133,6 +139,7 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
             includedOptions: includedOptionSelect,
             additionalOptions: additionalOptionSelect,
             cancelPolicy: cancelPolicySelect,
+            subcriptionPrice: true,
         } as SpaceSelect,
     };
 };
@@ -140,6 +147,19 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
 const spaceObjectResolver: IObjectTypeResolver<SpaceObject, Context> = {
     host: ({ account }) => account?.host,
     reservedDates: ({ reservations }) => reservations,
+    subscriptionProducts: async ({ subcriptionPrice }, __, { dataSources }) => {
+        const cacheKey = `subscription:price:all`;
+        let prices = await dataSources.redis.fetch<StripePrice[]>(cacheKey);
+        if (!prices) {
+            const stripe = new StripeLib();
+            prices = await stripe.listPrices();
+            dataSources.redis.store(cacheKey, prices, 86400);
+        }
+        const products = stripePricesToSubscriptionProducts(
+            prices.filter(({ metadata }) => parseInt(metadata.priceRange) <= subcriptionPrice)
+        ).filter(({ type }) => type === "rental-space");
+        return products;
+    },
 };
 
 export const spaceObjectTypeDefs = gql`
@@ -171,6 +191,7 @@ export const spaceObjectTypeDefs = gql`
         includedOptions: [OptionObject]
         additionalOptions: [OptionObject]
         cancelPolicy: CancelPolicyObject
+        subscriptionProducts: [SubscriptionProductObject]
     }
 `;
 

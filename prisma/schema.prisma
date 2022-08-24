@@ -387,21 +387,23 @@ model CancelPolicyRate {
 }
 
 model Reservation {
-  id            String            @id @default(cuid())
-  reservationId String            @default("TB")
-  fromDateTime  DateTime          @default(now()) @db.Timestamp(6)
-  toDateTime    DateTime
-  status        ReservationStatus @default(PENDING)
-  remarks       String?           @db.Text
-  createdAt     DateTime          @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime          @updatedAt
-  space         Space             @relation(fields: [spaceId], references: [id])
-  spaceId       String
-  reservee      Account           @relation(fields: [reserveeId], references: [id])
-  reserveeId    String
-  approved      Boolean
-  approvedOn    DateTime?         @db.Timestamp(6)
-  transaction   Transaction?
+  id                String            @id @default(cuid())
+  reservationId     String            @default("TB")
+  fromDateTime      DateTime          @default(now()) @db.Timestamp(6)
+  toDateTime        DateTime
+  status            ReservationStatus @default(PENDING)
+  remarks           String?           @db.Text
+  createdAt         DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime          @updatedAt
+  space             Space             @relation(fields: [spaceId], references: [id])
+  spaceId           String
+  reservee          Account           @relation(fields: [reserveeId], references: [id])
+  reserveeId        String
+  approved          Boolean
+  approvedOn        DateTime?         @db.Timestamp(6)
+  subscriptionUnit  Int?
+  subscriptionPrice Int?
+  transaction       Transaction?
 }
 
 model Transaction {
@@ -497,22 +499,17 @@ model Credit {
 }
 
 model Subscription {
-  id                 String   @id @default(cuid())
-  amount             Int
-  currentPeriodEnd   DateTime @db.Timestamp(6)
-  currentPeriodStart DateTime @db.Timestamp(6)
-  isCanceled         Boolean  @default(false)
-  name               String
-  remainingUnit      Int
-  stripePriceId      String
-  stripeProductId    String
-  stripeSubId        String
-  type               String
-  unit               Int
-  accountId          String
-  account            Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt          DateTime @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime @updatedAt
+  id              String    @id @default(cuid())
+  isCanceled      Boolean   @default(false)
+  canceledAt      DateTime? @db.Timestamp(6)
+  endsAt          DateTime? @db.Timestamp(6)
+  stripePriceId   String
+  stripeProductId String
+  stripeSubId     String
+  accountId       String
+  account         Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt       DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt
 }
 
 model Photo {
@@ -788,21 +785,23 @@ model OptionPriceOverride {
 }
 
 model HotelRoomReservation {
-  id            String            @id @default(cuid())
-  reservationId String            @default("PS")
-  fromDateTime  DateTime          @default(now()) @db.Date
-  toDateTime    DateTime          @db.Date
-  status        ReservationStatus @default(PENDING)
-  remarks       String?           @db.Text
-  approved      Boolean
-  approvedOn    DateTime?         @db.Timestamp(6)
-  hotelRoomId   String
-  hotelRoom     HotelRoom         @relation(fields: [hotelRoomId], references: [id])
-  packagePlanId String
-  packagePlan   PackagePlan       @relation(fields: [packagePlanId], references: [id])
-  reserveeId    String
-  reservee      Account           @relation(fields: [reserveeId], references: [id])
-  transaction   Transaction?
-  createdAt     DateTime          @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime          @updatedAt
+  id                String            @id @default(cuid())
+  reservationId     String            @default("PS")
+  fromDateTime      DateTime          @default(now()) @db.Date
+  toDateTime        DateTime          @db.Date
+  status            ReservationStatus @default(PENDING)
+  remarks           String?           @db.Text
+  approved          Boolean
+  approvedOn        DateTime?         @db.Timestamp(6)
+  subscriptionUnit  Int?
+  subscriptionPrice Int?
+  hotelRoomId       String
+  hotelRoom         HotelRoom         @relation(fields: [hotelRoomId], references: [id])
+  packagePlanId     String
+  packagePlan       PackagePlan       @relation(fields: [packagePlanId], references: [id])
+  reserveeId        String
+  reservee          Account           @relation(fields: [reserveeId], references: [id])
+  transaction       Transaction?
+  createdAt         DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime          @updatedAt
 }

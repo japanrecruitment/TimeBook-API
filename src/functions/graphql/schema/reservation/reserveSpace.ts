@@ -19,7 +19,7 @@ import ReservationPriceCalculator from "./ReservationPriceCalculator";
 import { SpacePricePlanType } from "@prisma/client";
 import moment from "moment";
 import { environment } from "@utils/environment";
-import { differenceWith, isEmpty } from "lodash";
+import { differenceWith, isEmpty, sum } from "lodash";
 
 type SelectedAdditionalOption = {
     optionId: string;
@@ -44,6 +44,8 @@ type ReserveSpaceResult = {
     amount: number;
     description: string;
     currency: string;
+    subscriptionPrice: number;
+    subscriptionUnit: number;
     paymentMethodTypes: string[];
 };
 
@@ -51,7 +53,8 @@ type ReserveSpace = IFieldResolver<any, Context, ReserveSpaceArgs, Promise<Reser
 
 const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => {
     const { id: userId, accountId, email } = authData;
-    const { fromDateTime, paymentSourceId, spaceId, duration, durationType, additionalOptions } = input;
+    const { paymentSourceId, spaceId, duration, durationType, additionalOptions } = input;
+    const fromDateTime = input.fromDateTime;
 
     try {
         Log(fromDateTime, duration);
@@ -66,7 +69,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             MINUTES: "minutes",
         };
 
-        const toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
+        let toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
 
         const { days, hours, minutes } = getDurationsBetn(fromDateTime, toDateTime);
 
@@ -80,6 +83,10 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
         });
 
+        const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
+        if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
+        if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
+
         const space = await store.space.findFirst({
             where: { id: spaceId, isDeleted: false },
             include: {
@@ -87,24 +94,10 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 additionalOptions: additionalOptions
                     ? { where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } } }
                     : undefined,
-                pricePlans: {
-                    where: {
-                        AND: [
-                            { isDeleted: false, type: durationType, duration: { lte: duration } },
-                            {
-                                OR: [
-                                    { isDefault: true },
-                                    { fromDate: { lte: toDateTime } },
-                                    { toDate: { lte: toDateTime } },
-                                ],
-                            },
-                        ],
-                    },
-                    include: { overrides: true },
-                },
                 reservations: {
                     where: {
                         AND: [
+                            { spaceId },
                             { status: { notIn: ["CANCELED", "DISAPPROVED", "FAILED"] } },
                             {
                                 OR: [
@@ -148,7 +141,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         Log("reserveSpace: space:", space);
 
-        const { pricePlans, reservations, settings } = space;
+        const { reservations, settings } = space;
 
         const totalStock = settings && settings.length > 0 ? settings[settings.length - 1].totalStock : 1;
 
@@ -158,28 +151,85 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 message: "Reservation is not available for this space in the selected time frame",
             });
 
-        if (!pricePlans || pricePlans.length <= 0)
-            throw new GqlError({
-                code: "BAD_USER_INPUT",
-                message: "Selected time frame doesn't satisfy the minimum required duration to book this space.",
-            });
-
         const stripe = new StripeLib();
         const paymentMethod = await stripe.retrievePaymentMethod(paymentSourceId);
-        const customerId = (
-            await store.user.findUnique({
-                where: { id: userId },
-                select: { stripeCustomerId: true },
-            })
-        )?.stripeCustomerId;
-
+        const customerId = user.stripeCustomerId;
         if (paymentMethod.customer !== customerId)
+            throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
+
+        const stripeSubs = await stripe.listSubscriptions(user.stripeCustomerId, "rental-space");
+        let remUnit: number = undefined;
+        if (stripeSubs.length > 1) {
             throw new GqlError({
-                code: "NOT_FOUND",
-                message: "Invalid payment source.",
+                code: "FORBIDDEN",
+                message: "Multiple subscription of space type found in your account. Please contact our support team",
+            });
+        }
+        if (stripeSubs.length === 1) {
+            const subscription = stripeSubs.at(0);
+            const subsPeriodEnd = new Date(subscription.current_period_end);
+            const subsPeriodStart = new Date(subscription.current_period_start);
+            const reservations = await store.reservation.aggregate({
+                where: {
+                    reserveeId: accountId,
+                    subscriptionUnit: { not: null },
+                    subscriptionPrice: { not: null },
+                    status: { notIn: ["CANCELED", "DISAPPROVED", "FAILED"] },
+                    AND: [{ createdAt: { gte: subsPeriodStart } }, { createdAt: { lte: subsPeriodEnd } }],
+                },
+                _sum: { subscriptionUnit: true },
+            });
+            const totalUnit = parseInt(subscription.items.data.at(0).price.metadata.unit);
+            const usedUnit = reservations._sum.subscriptionUnit;
+            remUnit = usedUnit > totalUnit ? 0 : totalUnit - usedUnit;
+        }
+
+        const totalReservationHours = fromDateTime.getTime() - toDateTime.getTime() / 3600000;
+        const subscriptionUnit =
+            remUnit < Math.ceil(totalReservationHours) ? remUnit : Math.ceil(totalReservationHours);
+        // Calculating subscription price
+        let subscriptionPrice = !isEmpty(subscriptionUnit) ? space.subcriptionPrice * subscriptionUnit : undefined;
+        Log("applied subscription", subscriptionUnit, subscriptionPrice);
+
+        let amount = 0;
+
+        const hasRemDates = totalReservationHours - subscriptionUnit > 0;
+        if (hasRemDates) {
+            const newFromDateTime = moment(fromDateTime).add(subscriptionUnit, "hours").toDate();
+            const pricePlans = await store.spacePricePlan.findMany({
+                where: {
+                    spaceId,
+                    isDeleted: false,
+                    type: durationType,
+                    duration: { lte: duration },
+                    OR: [
+                        { isDefault: true },
+                        {
+                            AND: [{ fromDate: { gte: newFromDateTime } }, { fromDate: { lte: toDateTime } }],
+                        },
+                        {
+                            AND: [{ toDate: { gte: newFromDateTime } }, { toDate: { lte: toDateTime } }],
+                        },
+                    ],
+                },
+                include: { overrides: true },
             });
 
-        let selectedOptions = [];
+            if (!pricePlans || pricePlans.length <= 0)
+                throw new GqlError({
+                    code: "BAD_USER_INPUT",
+                    message: "Selected time frame doesn't satisfy the minimum required duration to book this space.",
+                });
+
+            // Calculate reservation price
+            const { price } = new ReservationPriceCalculator({
+                checkIn: newFromDateTime,
+                checkOut: toDateTime,
+                pricePlans,
+            });
+            amount = price;
+        }
+
         if (!isEmpty(additionalOptions) && !isEmpty(space.additionalOptions)) {
             differenceWith(
                 additionalOptions,
@@ -191,30 +241,24 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     message: `Option with id ${optionId} not found in the plan.`,
                 });
             });
-            selectedOptions = space.additionalOptions.map((aOpts) => {
+            const selectedOptions = space.additionalOptions.map((aOpts) => {
                 const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
                 if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
                     throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
                 }
                 return { ...aOpts, quantity: bOpt.quantity };
             });
+            // Calculating option price
+            selectedOptions.forEach(({ paymentTerm, quantity, additionalPrice }) => {
+                if (additionalPrice && additionalPrice > 0) {
+                    if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") amount += quantity * additionalPrice;
+                    else amount += additionalPrice;
+                }
+            });
         }
 
-        const { price } = new ReservationPriceCalculator({ checkIn: fromDateTime, checkOut: toDateTime, pricePlans });
-        let amount = price;
-        // Calculating option price
-        selectedOptions.forEach(({ paymentTerm, quantity, additionalPrice }) => {
-            if (additionalPrice && additionalPrice > 0) {
-                if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") amount += quantity * additionalPrice;
-                else amount += additionalPrice;
-            }
-        });
-        const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
-        const transferAmount = amount - applicationFeeAmount;
-
+        // Create unique reservation Id
         const reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);
-
-        Log(amount, applicationFeeAmount, transferAmount);
 
         await Promise.all([
             addEmailToQueue<ReservationReceivedData>({
@@ -243,7 +287,6 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     "createdAt",
                     "account",
                     "additionalOptions",
-                    "pricePlans",
                     "updatedAt",
                     "reservations",
                     "settings"
@@ -264,54 +307,63 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                         space: { connect: { id: spaceId } },
                         reservee: { connect: { id: accountId } },
                         reservationId,
+                        subscriptionPrice,
+                        subscriptionUnit,
                     },
                 },
             },
         });
 
-        const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
-            amount,
-            currency: "JPY",
-            customer: paymentMethod.customer,
-            payment_method: paymentMethod.id,
-            payment_method_types: [paymentMethod.type],
-            description: transaction.description,
-            receipt_email: email,
-            capture_method: "manual",
-            metadata: {
-                transactionId: transaction.id,
-                reservationId: transaction.reservationId,
-                userId: accountId,
-                spaceId: spaceId,
-            },
-            statement_descriptor: `AUTH_${environment.APP_READABLE_NAME}`.substring(0, 22),
-            application_fee_amount: applicationFeeAmount,
-            transfer_data: { destination: space.account.host.stripeAccountId },
-            confirm: true,
-        };
+        let paymentIntent: Stripe.PaymentIntent;
+        if (amount > 0) {
+            const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+            const transferAmount = amount - applicationFeeAmount;
+            Log(amount, applicationFeeAmount, transferAmount);
 
-        const paymentIntent = await stripe.createPaymentIntent(paymentIntentParams);
+            const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
+                amount,
+                currency: "JPY",
+                customer: paymentMethod.customer,
+                payment_method: paymentMethod.id,
+                payment_method_types: [paymentMethod.type],
+                description: transaction.description,
+                receipt_email: email,
+                capture_method: "manual",
+                metadata: {
+                    transactionId: transaction.id,
+                    reservationId: transaction.reservationId,
+                    userId: accountId,
+                    spaceId: spaceId,
+                },
+                statement_descriptor: `AUTH_${environment.APP_READABLE_NAME}`.substring(0, 22),
+                application_fee_amount: applicationFeeAmount,
+                transfer_data: { destination: space.account.host.stripeAccountId },
+                confirm: true,
+            };
 
-        if (!paymentIntent?.id) {
+            paymentIntent = await stripe.createPaymentIntent(paymentIntentParams);
+
+            if (!paymentIntent?.id) {
+                await store.transaction.update({
+                    where: { id: transaction.id },
+                    data: {
+                        requestedLog: paymentIntentParams as any,
+                        failedLog: paymentIntent as any,
+                        reservation: { update: { status: "FAILED" } },
+                    },
+                });
+                throw new GqlError({ code: "BAD_REQUEST", message: "Couldn't create a payment intent" });
+            }
+
             await store.transaction.update({
                 where: { id: transaction.id },
                 data: {
+                    paymentIntentId: paymentIntent.id,
                     requestedLog: paymentIntentParams as any,
-                    failedLog: paymentIntent as any,
-                    reservation: { update: { status: "FAILED" } },
+                    responseReceivedLog: paymentIntent as any,
                 },
             });
-            throw new GqlError({ code: "BAD_REQUEST", message: "Couldn't create a payment intent" });
         }
-
-        await store.transaction.update({
-            where: { id: transaction.id },
-            data: {
-                paymentIntentId: paymentIntent.id,
-                requestedLog: paymentIntentParams as any,
-                responseReceivedLog: paymentIntent as any,
-            },
-        });
 
         if (!space.needApproval) {
             await addEmailToQueue<ReservationCompletedData>({
@@ -342,13 +394,15 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         return {
             transactionId: transaction.id,
-            intentId: paymentIntent.id,
-            intentCode: paymentIntent.client_secret,
-            amount: paymentIntent.amount,
-            description: paymentIntent.description,
-            currency: paymentIntent.currency,
-            paymentMethodTypes: paymentIntent.payment_method_types,
+            intentId: paymentIntent?.id,
+            intentCode: paymentIntent?.client_secret,
+            amount: paymentIntent?.amount,
+            description: paymentIntent?.description,
+            currency: paymentIntent?.currency,
+            paymentMethodTypes: paymentIntent?.payment_method_types,
             reservationId,
+            subscriptionPrice,
+            subscriptionUnit,
         };
     } catch (error) {
         await addEmailToQueue<ReservationFailedData>({
@@ -385,6 +439,8 @@ export const reserveSpaceTypeDefs = gql`
         currency: String
         paymentMethodTypes: [String]
         reservationId: String
+        subscriptionUnit: Int
+        subscriptionPrice: Int
     }
 
     type Mutation {

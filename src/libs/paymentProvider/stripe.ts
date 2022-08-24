@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { environment, Log } from "@utils/index";
-import { uniqWith } from "lodash";
+import { isEmpty, uniqWith } from "lodash";
 
 const returnURL = environment.STRIPE_CONNECT_ACCOUNT_RETURN_URL;
 const refreshURL = environment.STRIPE_CONNECT_ACCOUNT_REFRESH_URL;
@@ -40,6 +40,9 @@ export type AccountBalance = {
 
 export type StripePrice = Omit<Stripe.Price, "product"> & { product: Stripe.Product };
 
+export type StripeSubscriptionItem = Omit<Stripe.SubscriptionItem, "price"> & { price: StripePrice };
+
+export type StripeSubscription = Omit<Stripe.Subscription, "items"> & { items: Stripe.ApiList<StripeSubscriptionItem> };
 export class StripeLib implements IStripeUtil {
     async createConnectAccount({ email }: CreateConnectAccountInput): Promise<Stripe.Account> {
         try {
@@ -270,29 +273,69 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
-    async createSubscription(customerId: string, priceId: string): Promise<Stripe.Response<Stripe.Subscription>> {
+    async createSubscription(
+        customerId: string,
+        priceId: string,
+        productType: string,
+        accountId: string
+    ): Promise<Stripe.Response<Stripe.Subscription>> {
         try {
             Log("[STARTED]: Creating subscription");
             const subscription = await stripe.subscriptions.create({
                 customer: customerId,
                 items: [{ price: priceId }],
+                collection_method: "charge_automatically",
+                metadata: { productType, accountId },
+                // payment_behavior: "default_incomplete",
+                // expand: ["latest_invoice.payment_intent"],
             });
             Log("[COMPLETED]: Creating subscription", subscription);
             return subscription as any;
         } catch (error) {
             Log("[FAILED]: Creating subscription", error);
-            return error;
+            throw error;
         }
     }
 
     async cancelSubscription(subscriptionId: string): Promise<Stripe.Response<Stripe.Subscription>> {
         try {
             Log("[STARTED]: Canceling subscription");
-            const subscription = await stripe.subscriptions.del(subscriptionId);
+            const subscription = await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true });
             Log("[COMPLETED]: Canceling subscription", subscription);
             return subscription as any;
         } catch (error) {
             Log("[FAILED]: Canceling subscription", error);
+            return error;
+        }
+    }
+
+    async listSubscriptions(accountId: string, productType?: string): Promise<StripeSubscription[]> {
+        try {
+            Log("[STARTED]: Retrieving stripe subscription list");
+            let query = `metadata['accountId']: '${accountId}' AND status: 'active'`;
+            query = productType ? `${query} AND metadata['productType']: '${productType}'` : query;
+            const subscriptions = await stripe.subscriptions.search({ query });
+            if (isEmpty(subscriptions.data)) return [];
+            const productIds = subscriptions.data
+                .flatMap(({ items }) => items.data)
+                .flatMap(({ price }) => price.product as string);
+            const products = await stripe.products.list({ ids: productIds });
+            Log("[COMPLETED]: Retrieving stripe subscription list", subscriptions);
+            return subscriptions.data.map((sub) => ({
+                ...sub,
+                items: {
+                    ...sub.items,
+                    data: sub.items.data.map((subItem) => ({
+                        ...subItem,
+                        price: {
+                            ...subItem.price,
+                            product: products.data.find((product) => product.id === subItem.price.product),
+                        },
+                    })),
+                },
+            }));
+        } catch (error) {
+            Log("[FAILED]: Retrieving stripe subscription list", error);
             return error;
         }
     }
@@ -309,7 +352,7 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
-    async listSubscriptionPrices(): Promise<Stripe.Response<Stripe.ApiList<StripePrice>>> {
+    async listPrices(): Promise<Stripe.Response<StripePrice[]>> {
         const productIds = [
             "prod_MHKkvxYDSR3Utl",
             "prod_MHL3nbPl5b5I7y",
@@ -326,7 +369,7 @@ export class StripeLib implements IStripeUtil {
                 limit: 18,
             });
             Log("[COMPLETED]: Fetching stripe subscription prices", prices);
-            return prices as any;
+            return prices.data as any;
         } catch (error) {
             Log("[FAILED]: Fetching stripe subscription prices", error);
             return error;

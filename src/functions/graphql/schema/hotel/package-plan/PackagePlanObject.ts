@@ -1,11 +1,15 @@
+import { IObjectTypeResolver } from "@graphql-tools/utils";
+import { StripeLib, StripePrice } from "@libs/paymentProvider";
 import { PackagePlan, Prisma } from "@prisma/client";
 import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
 import { isEmpty } from "lodash";
+import { Context } from "../../../context";
 import { CancelPolicyObject, CancelPolicySelect, toCancelPolicySelect } from "../../cancel-policy/CancelPolicyObject";
 import { Photo, PhotoSelect, toPhotoSelect } from "../../media";
 import { OptionObject, OptionSelect, toOptionSelect } from "../../options";
+import { stripePricesToSubscriptionProducts } from "../../subscription/SubscriptionProductObject";
 import {
     PackagePlanRoomTypeObject,
     PackagePlanRoomTypeSelect,
@@ -57,7 +61,8 @@ export function toPackagePlanSelect(selections, defaultValue: any = false): Pris
         "photos",
         "roomTypes",
         "includedOptions",
-        "additionalOptions"
+        "additionalOptions",
+        "subscriptionProducts"
     );
 
     if (
@@ -76,6 +81,7 @@ export function toPackagePlanSelect(selections, defaultValue: any = false): Pris
             ...packagePlanSelect,
             cancelPolicy: cancelPolicySelect,
             photos: photosSelect,
+            subcriptionPrice: true,
             roomTypes: roomTypeSelect ? { select: roomTypeSelect, orderBy: { createdAt: "desc" } } : undefined,
             includedOptions: includedOptionSelect,
             additionalOptions: additionalOptionSelect,
@@ -100,13 +106,30 @@ export const packagePlanObjectTypeDefs = gql`
         subcriptionPrice: Int
         hotelId: String
         cancelPolicy: CancelPolicyObject
+        additionalOptions: [OptionObject]
+        includedOptions: [OptionObject]
         photos: [Photo]
         roomTypes: [PackagePlanRoomTypeObject]
-        includedOptions: [OptionObject]
-        additionalOptions: [OptionObject]
+        subscriptionProducts: [SubscriptionProductObject]
         createdAt: Date
         updatedAt: Date
     }
 `;
 
-export const packagePlanObjectResolvers = {};
+export const packagePlanObjectResolvers = {
+    PackagePlanObject: {
+        subscriptionProducts: async ({ subcriptionPrice }, __, { dataSources }) => {
+            const cacheKey = `subscription:price:all`;
+            let prices = await dataSources.redis.fetch<StripePrice[]>(cacheKey);
+            if (!prices) {
+                const stripe = new StripeLib();
+                prices = await stripe.listPrices();
+                dataSources.redis.store(cacheKey, prices, 86400);
+            }
+            const products = stripePricesToSubscriptionProducts(
+                prices.filter(({ metadata }) => parseInt(metadata.priceRange) <= subcriptionPrice)
+            ).filter(({ type }) => type === "hotel");
+            return products;
+        },
+    } as IObjectTypeResolver<PackagePlanObject, Context>,
+};

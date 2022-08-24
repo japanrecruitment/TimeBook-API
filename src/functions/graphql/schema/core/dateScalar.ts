@@ -1,3 +1,4 @@
+import { convertToJST } from "@utils/date-utils";
 import { gql } from "apollo-server-core";
 import { GraphQLScalarType, Kind } from "graphql";
 
@@ -5,7 +6,7 @@ const DateScalar = new GraphQLScalarType({
     name: "Date",
     description: "Date custom scalar type",
     serialize(value) {
-        return value.getTime(); // Convert outgoing Date to integer for JSON
+        return convertToJST(value).getTime(); // Convert outgoing Date to integer for JSON
     },
     parseValue(value) {
         return new Date(value); // Convert incoming integer to Date

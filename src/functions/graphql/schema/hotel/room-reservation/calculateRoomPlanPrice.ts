@@ -90,6 +90,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                         select: { id: true },
                     },
                     stock: true,
+                    subcriptionPrice: true,
                 },
             },
             hotelRoom: {

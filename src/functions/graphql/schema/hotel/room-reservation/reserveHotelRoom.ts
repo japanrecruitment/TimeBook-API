@@ -67,6 +67,8 @@ type ReserveHotelRoomResult = {
     intentId: string;
     paymentMethodTypes: string[];
     reservationId: string;
+    subscriptionPrice: number;
+    subscriptionUnit: number;
     transactionId: string;
 };
 
@@ -77,12 +79,47 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
     if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const validInput = validateReserveHotelRoomInput(input);
+    Log(validInput);
     const { checkInDate, checkOutDate, paymentSourceId, roomPlanId, additionalOptions, nAdult, nChild } = validInput;
 
-    Log(validInput);
     try {
-        const allDates = getAllDatesBetn(checkInDate, checkOutDate);
-        const weekDays = allDates.map((d) => d.getDay());
+        const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
+        if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
+        if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
+
+        const stripe = new StripeLib();
+        const stripeSubs = await stripe.listSubscriptions(user.stripeCustomerId, "hotel");
+        let remUnit: number = undefined;
+        if (stripeSubs.length > 1) {
+            throw new GqlError({
+                code: "FORBIDDEN",
+                message: "Multiple subscription of space type found in your account. Please contact our support team",
+            });
+        }
+        if (stripeSubs.length === 1) {
+            const subscription = stripeSubs.at(0);
+            const subsPeriodEnd = new Date(subscription.current_period_end);
+            const subsPeriodStart = new Date(subscription.current_period_start);
+            const reservations = await store.hotelRoomReservation.aggregate({
+                where: {
+                    reserveeId: accountId,
+                    subscriptionUnit: { not: null },
+                    subscriptionPrice: { not: null },
+                    status: { notIn: ["CANCELED", "DISAPPROVED", "FAILED"] },
+                    AND: [{ createdAt: { gte: subsPeriodStart } }, { createdAt: { lte: subsPeriodEnd } }],
+                },
+                _sum: { subscriptionUnit: true },
+            });
+            const totalUnit = parseInt(subscription.items.data.at(0).price.metadata.unit);
+            const usedUnit = reservations._sum.subscriptionUnit;
+            remUnit = usedUnit > totalUnit ? 0 : totalUnit - usedUnit;
+        }
+
+        let allReservationDates = getAllDatesBetn(checkInDate, checkOutDate);
+        const weekDays = allReservationDates.map((d) => d.getDay());
+
+        const totalReservationUnits = allReservationDates.length;
+        const subscriptionUnit = remUnit < totalReservationUnits ? remUnit : totalReservationUnits;
 
         const plan = await store.hotelRoom_PackagePlan.findUnique({
             where: { id: roomPlanId },
@@ -130,6 +167,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                             },
                             select: { id: true, endDate: true, startDate: true, stock: true },
                         },
+                        subcriptionPrice: true,
                     },
                 },
                 hotelRoom: {
@@ -255,20 +293,17 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             });
         }
 
-        const stripe = new StripeLib();
         const paymentMethod = await stripe.retrievePaymentMethod(paymentSourceId);
-        const customerId = (await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } }))
-            ?.stripeCustomerId;
-        if (paymentMethod.customer !== customerId)
+        if (paymentMethod.customer !== user.stripeCustomerId)
             throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
 
         let appliedRoomPlanPriceOverrides = [];
         let appliedRoomPlanPriceSettings = [];
         let amount = 0;
-        let remDates = allDates;
+        let remDates = allReservationDates.slice(0, subscriptionUnit);
 
         // Calculating override price
-        if (!isEmpty(priceOverrides)) {
+        if (!isEmpty(remDates) && !isEmpty(priceOverrides)) {
             let bookingDates = remDates;
             priceOverrides.forEach(({ id, endDate, priceScheme, startDate }) => {
                 const matchedDates = intersectionWith(bookingDates, getAllDatesBetn(startDate, endDate), isEqualDate);
@@ -292,7 +327,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             });
             if (bookingDates.length > 0) remDates = bookingDates;
         }
-        if (remDates.length > 0) {
+        if (!isEmpty(remDates)) {
             const remWeekDays = remDates.map((d) => d.getDay());
             const remPriceSettings = priceSettings.filter(({ dayOfWeek }) => remWeekDays.includes(dayOfWeek));
             if (packagePlan.paymentTerm === "PER_ROOM") {
@@ -331,12 +366,14 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
 
         Log("applied plan", appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings);
 
-        const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
-        const transferAmount = amount - applicationFeeAmount;
+        // Calculating subscription price
+        let subscriptionPrice = !isEmpty(subscriptionUnit)
+            ? packagePlan.subcriptionPrice * subscriptionUnit
+            : undefined;
+
+        Log("subscription", subscriptionUnit, subscriptionPrice);
 
         const reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);
-
-        Log(amount, applicationFeeAmount, transferAmount);
 
         await Promise.all([
             addEmailToQueue<ReservationReceivedData>({
@@ -386,55 +423,63 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                         packagePlan: { connect: { id: packagePlan.id } },
                         reservee: { connect: { id: accountId } },
                         reservationId,
+                        subscriptionPrice,
+                        subscriptionUnit,
                     },
                 },
             },
         });
 
-        const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
-            amount,
-            currency: "JPY",
-            customer: paymentMethod.customer,
-            payment_method: paymentMethod.id,
-            payment_method_types: [paymentMethod.type],
-            description: transaction.description,
-            receipt_email: email,
-            capture_method: "manual",
-            metadata: {
-                transactionId: transaction.id,
-                reservationId: transaction.reservationId,
-                userId: accountId,
-                hotelRoomId: hotelRoom.id,
-            },
-            statement_descriptor: `AUTH_${environment.APP_READABLE_NAME}`.substring(0, 22),
-            application_fee_amount: applicationFeeAmount,
-            transfer_data: { destination: hotelRoom.hotel.account.host.stripeAccountId },
-            confirm: true,
-        };
+        let paymentIntent: Stripe.PaymentIntent;
+        if (amount > 0) {
+            const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+            const transferAmount = amount - applicationFeeAmount;
+            Log(amount, applicationFeeAmount, transferAmount);
 
-        const paymentIntent = await stripe.createPaymentIntent(paymentIntentParams);
+            const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
+                amount,
+                currency: "JPY",
+                customer: paymentMethod.customer,
+                payment_method: paymentMethod.id,
+                payment_method_types: [paymentMethod.type],
+                description: transaction.description,
+                receipt_email: email,
+                capture_method: "manual",
+                metadata: {
+                    transactionId: transaction.id,
+                    reservationId: transaction.reservationId,
+                    userId: accountId,
+                    hotelRoomId: hotelRoom.id,
+                },
+                statement_descriptor: `AUTH_${environment.APP_READABLE_NAME}`.substring(0, 22),
+                application_fee_amount: applicationFeeAmount,
+                transfer_data: { destination: hotelRoom.hotel.account.host.stripeAccountId },
+                confirm: true,
+            };
 
-        if (!paymentIntent.id) {
+            const paymentIntent = await stripe.createPaymentIntent(paymentIntentParams);
+
+            if (!paymentIntent.id) {
+                await store.transaction.update({
+                    where: { id: transaction.id },
+                    data: {
+                        requestedLog: paymentIntentParams as any,
+                        failedLog: paymentIntent as any,
+                        hotelRoomReservation: { update: { status: "FAILED" } },
+                    },
+                });
+                throw new GqlError({ code: "BAD_REQUEST", message: "Couldn't create a payment intent" });
+            }
+
             await store.transaction.update({
                 where: { id: transaction.id },
                 data: {
+                    paymentIntentId: paymentIntent.id,
                     requestedLog: paymentIntentParams as any,
-                    failedLog: paymentIntent as any,
-                    hotelRoomReservation: { update: { status: "FAILED" } },
+                    responseReceivedLog: paymentIntent as any,
                 },
             });
-            throw new GqlError({ code: "BAD_REQUEST", message: "Couldn't create a payment intent" });
         }
-
-        await store.transaction.update({
-            where: { id: transaction.id },
-            data: {
-                paymentIntentId: paymentIntent.id,
-                requestedLog: paymentIntentParams as any,
-                responseReceivedLog: paymentIntent as any,
-            },
-        });
-
         await Promise.all([
             addEmailToQueue<ReservationPendingData>({
                 template: "reservation-pending",
@@ -461,6 +506,8 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             currency: paymentIntent.currency,
             paymentMethodTypes: paymentIntent.payment_method_types,
             reservationId,
+            subscriptionPrice,
+            subscriptionUnit,
         };
     } catch (error) {
         await addEmailToQueue<ReservationFailedData>({
@@ -497,6 +544,8 @@ export const reserveHotelRoomTypeDefs = gql`
         intentId: ID
         paymentMethodTypes: [String]
         reservationId: String
+        subscriptionPrice: Int
+        subscriptionUnit: Int
         transactionId: ID
     }
 

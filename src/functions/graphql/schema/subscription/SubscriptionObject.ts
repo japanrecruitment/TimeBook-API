@@ -1,6 +1,7 @@
+import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
-import { PrismaSelect, toPrismaSelect } from "graphql-map-selections";
-import { isEmpty } from "lodash";
+import { sum } from "lodash";
+import { Context } from "../../context";
 
 export type SubscriptionObject = {
     id: string;
@@ -8,25 +9,9 @@ export type SubscriptionObject = {
     currentPeriodEnd: Date;
     currentPeriodStart: Date;
     name: string;
-    remainingUnit: number;
     type: string;
     unit: number;
-};
-
-export type SubscriptionSelect = {
-    id: boolean;
-    amount: boolean;
-    currentPeriodEnd: boolean;
-    currentPeriodStart: boolean;
-    name: boolean;
-    remainingUnit: boolean;
-    type: boolean;
-    unit: boolean;
-};
-
-export const toSubscriptionSelect = (selections, defaultValue: any = false): PrismaSelect<SubscriptionSelect> => {
-    if (!selections || isEmpty(selections)) return defaultValue;
-    return toPrismaSelect<SubscriptionSelect>(selections);
+    remainingUnit?: number;
 };
 
 export const subscriptionObjectTypeDefs = gql`
@@ -42,4 +27,64 @@ export const subscriptionObjectTypeDefs = gql`
     }
 `;
 
-export const subscriptionObjectResolvers = {};
+export const subscriptionObjectResolvers = {
+    SubscriptionObject: {
+        remainingUnit: async (
+            { currentPeriodEnd, currentPeriodStart, remainingUnit, type, unit },
+            __,
+            { authData, store }
+        ) => {
+            const { accountId } = authData;
+            if (!accountId) return;
+            if (remainingUnit) return remainingUnit;
+            if (type === "hotel") {
+                const reservations = await store.hotelRoomReservation.aggregate({
+                    where: {
+                        reserveeId: accountId,
+                        subscriptionUnit: { not: null },
+                        subscriptionPrice: { not: null },
+                        OR: [
+                            {
+                                AND: [
+                                    { fromDateTime: { gte: currentPeriodStart } },
+                                    { fromDateTime: { lte: currentPeriodEnd } },
+                                ],
+                            },
+                            {
+                                AND: [
+                                    { toDateTime: { gte: currentPeriodStart } },
+                                    { toDateTime: { lte: currentPeriodEnd } },
+                                ],
+                            },
+                        ],
+                    },
+                    _sum: { subscriptionUnit: true },
+                });
+                return unit - reservations?._sum?.subscriptionUnit || 0;
+            }
+            const reservations = await store.reservation.aggregate({
+                where: {
+                    reserveeId: accountId,
+                    subscriptionUnit: { not: null },
+                    subscriptionPrice: { not: null },
+                    OR: [
+                        {
+                            AND: [
+                                { fromDateTime: { gte: currentPeriodStart } },
+                                { fromDateTime: { lte: currentPeriodEnd } },
+                            ],
+                        },
+                        {
+                            AND: [
+                                { toDateTime: { gte: currentPeriodStart } },
+                                { toDateTime: { lte: currentPeriodEnd } },
+                            ],
+                        },
+                    ],
+                },
+                _sum: { subscriptionUnit: true },
+            });
+            return unit - reservations?._sum?.subscriptionUnit || 0;
+        },
+    } as IObjectTypeResolver<SubscriptionObject, Context>,
+};
