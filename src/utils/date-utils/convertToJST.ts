@@ -1,5 +1,8 @@
-export default function convertToJST(date) {
-    return new Date(
-        (typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
-    );
+import moment from "moment";
+import { Log } from "..";
+
+export default function convertToJST(date: Date) {
+    const d = moment(date).utcOffset(9).toDate();
+    Log(d, d.getTimezoneOffset());
+    return d;
 }

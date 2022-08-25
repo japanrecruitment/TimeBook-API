@@ -14,7 +14,7 @@ import { gql } from "apollo-server-core";
 import Stripe from "stripe";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
-import { getAllDatesBetn } from "@utils/date-utils";
+import { convertToJST, getAllDatesBetn } from "@utils/date-utils";
 import moment from "moment";
 import { environment } from "@utils/environment";
 import { differenceWith, intersectionWith, isEmpty, sum } from "lodash";
@@ -88,7 +88,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
 
         const stripe = new StripeLib();
-        const stripeSubs = await stripe.listSubscriptions(user.stripeCustomerId, "hotel");
+        const stripeSubs = await stripe.listSubscriptions(accountId, "hotel");
         let remUnit: number = undefined;
         if (stripeSubs.length > 1) {
             throw new GqlError({
@@ -110,16 +110,19 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 },
                 _sum: { subscriptionUnit: true },
             });
-            const totalUnit = parseInt(subscription.items.data.at(0).price.metadata.unit);
+            const totalUnit = parseInt(subscription.items.data.at(0).price.product.metadata.unit);
             const usedUnit = reservations._sum.subscriptionUnit;
             remUnit = usedUnit > totalUnit ? 0 : totalUnit - usedUnit;
         }
 
-        let allReservationDates = getAllDatesBetn(checkInDate, checkOutDate);
-        const weekDays = allReservationDates.map((d) => d.getDay());
+        const allReservationDates = getAllDatesBetn(checkInDate, checkOutDate);
 
         const totalReservationUnits = allReservationDates.length;
         const subscriptionUnit = remUnit < totalReservationUnits ? remUnit : totalReservationUnits;
+
+        allReservationDates.splice(0, subscriptionUnit);
+
+        Log(remUnit, subscriptionUnit, totalReservationUnits, allReservationDates);
 
         const plan = await store.hotelRoom_PackagePlan.findUnique({
             where: { id: roomPlanId },
@@ -172,25 +175,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 },
                 hotelRoom: {
                     include: {
-                        basicPriceSettings: {
-                            where: { dayOfWeek: { in: weekDays } },
-                            select: { id: true, priceScheme: true },
-                        },
-                        hotel: { select: { account: { select: { id: true, email: true, host: true } } } },
-                        priceOverrides: {
-                            where: {
-                                OR: [
-                                    { AND: [{ endDate: { gte: checkInDate } }, { endDate: { lte: checkOutDate } }] },
-                                    {
-                                        AND: [
-                                            { startDate: { gte: checkInDate } },
-                                            { startDate: { lte: checkOutDate } },
-                                        ],
-                                    },
-                                ],
-                            },
-                            select: { id: true, endDate: true, priceScheme: true, startDate: true },
-                        },
+                        hotel: { select: { account: { select: { id: true, email: true, host: true } }, status: true } },
                         reservations: {
                             where: {
                                 OR: [
@@ -226,20 +211,34 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                         },
                     },
                 },
-                priceOverrides: {
-                    where: {
-                        OR: [
-                            { AND: [{ endDate: { gte: checkInDate } }, { endDate: { lte: checkOutDate } }] },
-                            { AND: [{ startDate: { gte: checkInDate } }, { startDate: { lte: checkOutDate } }] },
-                        ],
-                    },
-                    select: { id: true, endDate: true, priceScheme: true, startDate: true },
-                    orderBy: { startDate: "desc" },
-                },
-                priceSettings: {
-                    where: { dayOfWeek: { in: weekDays } },
-                    select: { id: true, dayOfWeek: true, priceScheme: true },
-                },
+                priceOverrides: !isEmpty(allReservationDates)
+                    ? {
+                          where: {
+                              OR: [
+                                  {
+                                      AND: [
+                                          { endDate: { gte: allReservationDates.at(0) } },
+                                          { endDate: { lte: checkOutDate } },
+                                      ],
+                                  },
+                                  {
+                                      AND: [
+                                          { startDate: { gte: allReservationDates.at(0) } },
+                                          { startDate: { lte: checkOutDate } },
+                                      ],
+                                  },
+                              ],
+                          },
+                          select: { id: true, endDate: true, priceScheme: true, startDate: true },
+                          orderBy: { startDate: "desc" },
+                      }
+                    : undefined,
+                priceSettings: !isEmpty(allReservationDates)
+                    ? {
+                          where: { dayOfWeek: { in: allReservationDates.map((d) => d.getDay()) } },
+                          select: { id: true, dayOfWeek: true, priceScheme: true },
+                      }
+                    : undefined,
             },
         });
         if (!plan) throw new GqlError({ code: "NOT_FOUND", message: "Plan not found" });
@@ -247,6 +246,9 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         Log("reserveHotelRoom:", "packagePlan:", plan);
 
         const { hotelRoom, packagePlan, priceOverrides, priceSettings } = plan;
+
+        if (hotelRoom.hotel.status !== "PUBLISHED")
+            throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
 
         if (packagePlan.paymentTerm === "PER_PERSON" && !nAdult && !nChild) {
             throw new GqlError({
@@ -300,7 +302,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         let appliedRoomPlanPriceOverrides = [];
         let appliedRoomPlanPriceSettings = [];
         let amount = 0;
-        let remDates = allReservationDates.slice(0, subscriptionUnit);
+        let remDates = allReservationDates;
 
         // Calculating override price
         if (!isEmpty(remDates) && !isEmpty(priceOverrides)) {
@@ -367,11 +369,11 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         Log("applied plan", appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings);
 
         // Calculating subscription price
-        let subscriptionPrice = !isEmpty(subscriptionUnit)
-            ? packagePlan.subcriptionPrice * subscriptionUnit
-            : undefined;
+        let subscriptionPrice =
+            subscriptionUnit && subscriptionUnit > 0 ? packagePlan.subcriptionPrice * subscriptionUnit : undefined;
 
-        Log("subscription", subscriptionUnit, subscriptionPrice);
+        Log("applied subscription", subscriptionUnit, subscriptionPrice);
+        Log("applied amount", amount);
 
         const reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);
 
@@ -397,16 +399,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 amount,
                 provider: "STRIPE",
                 assetType: "HOTEL_ROOM",
-                assetData: omit(
-                    hotelRoom,
-                    "basicPriceSettings",
-                    "createdAt",
-                    "hotel",
-                    "priceOverrides",
-                    "reservations",
-                    "stockOverrides",
-                    "updatedAt"
-                ),
+                assetData: omit(hotelRoom, "createdAt", "hotel", "reservations", "stockOverrides", "updatedAt"),
                 currency: "JPY",
                 description: `Reservation of ${hotelRoom.name}`,
                 status: "CREATED",

@@ -60,7 +60,6 @@ const createSubscription: CreateSubscription = async (_, { priceId }, { authData
                 stripeSubId: stripeSubscription.id,
                 account: { connect: { id: accountId } },
             },
-            select: { id: true },
         });
 
         Log(`createSubscription: `, subscription);
@@ -70,9 +69,13 @@ const createSubscription: CreateSubscription = async (_, { priceId }, { authData
             subscription: {
                 id: subscription.id,
                 amount: stripePrice.unit_amount,
+                canceledAt: subscription.canceledAt,
                 currentPeriodEnd: new Date(stripeSubscription.current_period_end),
                 currentPeriodStart: new Date(stripeSubscription.current_period_start),
+                endsAt: subscription.endsAt,
+                isCanceled: subscription.isCanceled,
                 name: stripePrice.product.metadata.name,
+                priceType: stripePrice.metadata.name,
                 remainingUnit: parseInt(stripePrice.product.metadata.unit),
                 type: stripePrice.product.metadata.type,
                 unit: parseInt(stripePrice.product.metadata.unit),

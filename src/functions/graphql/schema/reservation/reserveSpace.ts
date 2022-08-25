@@ -88,7 +88,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
 
         const space = await store.space.findFirst({
-            where: { id: spaceId, isDeleted: false },
+            where: { id: spaceId, isDeleted: false, published: true },
             include: {
                 account: { include: { host: true } },
                 additionalOptions: additionalOptions
@@ -157,7 +157,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         if (paymentMethod.customer !== customerId)
             throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
 
-        const stripeSubs = await stripe.listSubscriptions(user.stripeCustomerId, "rental-space");
+        const stripeSubs = await stripe.listSubscriptions(accountId, "rental-space");
         let remUnit: number = undefined;
         if (stripeSubs.length > 1) {
             throw new GqlError({
@@ -179,7 +179,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 },
                 _sum: { subscriptionUnit: true },
             });
-            const totalUnit = parseInt(subscription.items.data.at(0).price.metadata.unit);
+            const totalUnit = parseInt(subscription.items.data.at(0).price.product.metadata.unit);
             const usedUnit = reservations._sum.subscriptionUnit;
             remUnit = usedUnit > totalUnit ? 0 : totalUnit - usedUnit;
         }
@@ -214,6 +214,8 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 },
                 include: { overrides: true },
             });
+
+            Log("price plans: ", pricePlans);
 
             if (!pricePlans || pricePlans.length <= 0)
                 throw new GqlError({
@@ -256,6 +258,8 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 }
             });
         }
+
+        Log("applied amount", amount);
 
         // Create unique reservation Id
         const reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);

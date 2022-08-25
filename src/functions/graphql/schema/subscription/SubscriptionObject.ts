@@ -1,4 +1,5 @@
 import { IObjectTypeResolver } from "@graphql-tools/utils";
+import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { sum } from "lodash";
 import { Context } from "../../context";
@@ -8,9 +9,13 @@ export type SubscriptionObject = {
     amount: number;
     currentPeriodEnd: Date;
     currentPeriodStart: Date;
+    isCanceled: boolean;
     name: string;
+    priceType: string;
     type: string;
     unit: number;
+    canceledAt?: Date;
+    endsAt?: Date;
     remainingUnit?: number;
 };
 
@@ -18,10 +23,14 @@ export const subscriptionObjectTypeDefs = gql`
     type SubscriptionObject {
         id: ID
         amount: Int
+        canceledAt: Date
         currentPeriodEnd: Date
         currentPeriodStart: Date
+        endsAt: Date
+        isCanceled: Boolean
         name: String
-        remainingUnit: Int
+        priceType: String
+        remainingUnit: Int @auth(requires: [user])
         type: String
         unit: Int
     }
@@ -34,7 +43,8 @@ export const subscriptionObjectResolvers = {
             __,
             { authData, store }
         ) => {
-            const { accountId } = authData;
+            Log(authData);
+            const { accountId } = authData || {};
             if (!accountId) return;
             if (remainingUnit) return remainingUnit;
             if (type === "hotel") {
