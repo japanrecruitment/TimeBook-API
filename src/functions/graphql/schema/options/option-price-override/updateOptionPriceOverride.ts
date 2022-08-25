@@ -14,8 +14,6 @@ export function validateUpdateOptionPriceOverrideInput(
     let { id, endDate, price, startDate } = input;
 
     if (endDate && startDate) {
-        endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-        startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
         if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
         if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
     } else {
