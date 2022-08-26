@@ -20,7 +20,7 @@ function validateCalculateRoomPlanInput(input: CalculateRoomPlanInput): Calculat
     if (checkInDate < moment().subtract(1, "days").toDate())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
-    // checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
+    checkOutDate = moment(checkOutDate).subtract(1, "days").endOf("day").toDate();
 
     additionalOptions?.forEach(({ quantity }) => {
         if (quantity && quantity < 0)
@@ -115,6 +115,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
             priceOverrides: {
                 where: {
                     OR: [
+                        { AND: [{ endDate: { gte: checkOutDate } }, { startDate: { lte: checkInDate } }] },
                         { AND: [{ endDate: { gte: checkInDate } }, { endDate: { lte: checkOutDate } }] },
                         { AND: [{ startDate: { gte: checkInDate } }, { startDate: { lte: checkOutDate } }] },
                     ],
@@ -207,7 +208,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                 appliedRoomPlanPriceOverrides.push(id);
             }
         });
-        if (bookingDates.length > 0) remDates = bookingDates;
+        remDates = bookingDates;
     }
     if (remDates.length > 0) {
         const remWeekDays = remDates.map((d) => d.getDay());

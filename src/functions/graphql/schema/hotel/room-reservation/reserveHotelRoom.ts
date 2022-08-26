@@ -2,7 +2,6 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { StripeLib } from "@libs/paymentProvider";
 import {
     addEmailToQueue,
-    ReservationCompletedData,
     ReservationFailedData,
     ReservationPendingData,
     ReservationReceivedData,
@@ -14,7 +13,7 @@ import { gql } from "apollo-server-core";
 import Stripe from "stripe";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
-import { convertToJST, getAllDatesBetn } from "@utils/date-utils";
+import { getAllDatesBetn } from "@utils/date-utils";
 import moment from "moment";
 import { environment } from "@utils/environment";
 import { differenceWith, intersectionWith, isEmpty, sum } from "lodash";
@@ -32,7 +31,7 @@ function validateReserveHotelRoomInput(input: ReserveHotelRoomInput): ReserveHot
     if (checkInDate < moment().subtract(1, "days").toDate())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
 
-    // checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
+    checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
 
     additionalOptions?.forEach(({ quantity }) => {
         if (quantity && quantity < 0)
@@ -327,7 +326,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                     appliedRoomPlanPriceOverrides.push(id);
                 }
             });
-            if (bookingDates.length > 0) remDates = bookingDates;
+            remDates = bookingDates;
         }
         if (!isEmpty(remDates)) {
             const remWeekDays = remDates.map((d) => d.getDay());

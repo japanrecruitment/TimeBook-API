@@ -648,8 +648,8 @@ model BasicPriceSetting {
 
 model PriceOverride {
   id                       String                 @id @default(cuid())
-  startDate                DateTime               @db.Date
-  endDate                  DateTime               @db.Date
+  startDate                DateTime               @db.Timestamp(6)
+  endDate                  DateTime               @db.Timestamp(6)
   priceSchemeId            String
   priceScheme              PriceScheme            @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   hotelRoomId              String?
@@ -662,8 +662,8 @@ model PriceOverride {
 
 model StockOverride {
   id            String       @id @default(cuid())
-  startDate     DateTime     @db.Date
-  endDate       DateTime     @db.Date
+  startDate     DateTime     @db.Timestamp(6)
+  endDate       DateTime     @db.Timestamp(6)
   stock         Int
   hotelRoomId   String?
   hotelRoom     HotelRoom?   @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -714,10 +714,10 @@ model PackagePlan {
   paymentTerm         HotelPaymentTerm
   stock               Int
   isBreakfastIncluded Boolean                 @default(false)
-  startUsage          DateTime?               @db.Date
-  endUsage            DateTime?               @db.Date
-  startReservation    DateTime?               @db.Date
-  endReservation      DateTime?               @db.Date
+  startUsage          DateTime?               @db.Timestamp(6)
+  endUsage            DateTime?               @db.Timestamp(6)
+  startReservation    DateTime?               @db.Timestamp(6)
+  endReservation      DateTime?               @db.Timestamp(6)
   cutOffBeforeDays    Int?
   cutOffTillTime      DateTime?               @db.Time()
   subcriptionPrice    Int?
@@ -751,10 +751,10 @@ model Option {
   id               String                @id @default(cuid())
   name             String
   description      String                @db.Text
-  startUsage       DateTime?             @db.Date
-  endUsage         DateTime?             @db.Date
-  startReservation DateTime?             @db.Date
-  endReservation   DateTime?             @db.Date
+  startUsage       DateTime?             @db.Timestamp(6)
+  endUsage         DateTime?             @db.Timestamp(6)
+  startReservation DateTime?             @db.Timestamp(6)
+  endReservation   DateTime?             @db.Timestamp(6)
   cutOffBeforeDays Int?
   cutOffTillTime   DateTime?             @db.Time()
   paymentTerm      OptionPaymentTerm?
@@ -775,8 +775,8 @@ model Option {
 
 model OptionPriceOverride {
   id        String   @id @default(cuid())
-  startDate DateTime @db.Date
-  endDate   DateTime @db.Date
+  startDate DateTime @db.Timestamp(6)
+  endDate   DateTime @db.Timestamp(6)
   price     Int
   optionId  String
   option    Option   @relation(fields: [optionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -787,8 +787,8 @@ model OptionPriceOverride {
 model HotelRoomReservation {
   id                String            @id @default(cuid())
   reservationId     String            @default("PS")
-  fromDateTime      DateTime          @default(now()) @db.Date
-  toDateTime        DateTime          @db.Date
+  fromDateTime      DateTime          @default(now()) @db.Timestamp(6)
+  toDateTime        DateTime          @db.Timestamp(6)
   status            ReservationStatus @default(PENDING)
   remarks           String?           @db.Text
   approved          Boolean

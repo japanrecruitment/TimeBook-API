@@ -1,6 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { StripeLib } from "@libs/paymentProvider";
-import { convertToJST } from "@utils/date-utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
@@ -29,8 +28,8 @@ const cancelSubscription: CancelSubscription = async (_, { id }, { authData, sto
         where: { id },
         data: {
             isCanceled: true,
-            canceledAt: convertToJST(new Date(canceledSubscription.canceled_at * 1000)),
-            endsAt: convertToJST(new Date(canceledSubscription.cancel_at * 1000)),
+            canceledAt: new Date(canceledSubscription.canceled_at * 1000),
+            endsAt: new Date(canceledSubscription.cancel_at * 1000),
         },
     });
 
