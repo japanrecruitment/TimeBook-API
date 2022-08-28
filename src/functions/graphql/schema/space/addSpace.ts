@@ -114,6 +114,7 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
             maximumCapacity: space.maximumCapacity,
             numberOfSeats: space.numberOfSeats,
             spaceSize: space.spaceSize,
+            subcriptionPrice: [space.subcriptionPrice],
         });
     }
 

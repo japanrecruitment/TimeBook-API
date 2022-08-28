@@ -25,6 +25,7 @@ export type HotelIndexRecord = AlgoliaRecord & {
     thumbnail?: string;
     updatedAt?: number;
     viewCount?: number;
+    subcriptionPrice?: number[];
 };
 
 export const hotelIndex = algoliaClient.initIndex(environment.isDev() ? `hotel_dev` : `hotel_prod`);
@@ -40,10 +41,11 @@ const settings: Settings = {
         "filterOnly(lowestPrice)",
         "filterOnly(isBreakfastIncluded)",
         "filterOnly(isPetAllowed)",
+        "filterOnly(subcriptionPrice)",
     ],
     customRanking: ["desc(rating)", "desc(viewCount)"],
     ranking: ["desc(updatedAt)", "typo", "geo", "words", "filters", "proximity", "attribute", "exact", "custom"],
     searchableAttributes: ["name", "hotelRooms", "city"],
 };
 
-// hotelIndex.setSettings(settings).catch((error) => Log("[FAILED]: setting hotel index", error));
+hotelIndex.setSettings(settings).catch((error) => Log("[FAILED]: setting hotel index", error));

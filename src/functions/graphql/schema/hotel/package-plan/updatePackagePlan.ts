@@ -148,6 +148,7 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
                                       isBreakfastIncluded: true,
                                       paymentTerm: true,
                                       roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+                                      subcriptionPrice: true,
                                   },
                               },
                               status: true,
@@ -238,6 +239,7 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
             highestPrice,
             lowestPrice,
             isBreakfastIncluded: hotel.packagePlans.some(({ isBreakfastIncluded }) => isBreakfastIncluded),
+            subcriptionPrice: hotel.packagePlans.map(({ subcriptionPrice }) => subcriptionPrice),
         });
     }
 

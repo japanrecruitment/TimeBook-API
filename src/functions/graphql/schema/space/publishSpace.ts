@@ -67,6 +67,7 @@ const publishSpace: PublishSpace = async (_, { id }, { authData, store, dataSour
         price: space.pricePlans?.map(({ amount, duration, type }) => ({ amount, duration, type })),
         spaceSize: space.spaceSize,
         spaceTypes: space.spaceTypes?.map(({ title }) => title),
+        subcriptionPrice: [space.subcriptionPrice],
         thumbnail: mediumImageUrl,
         _geoloc: { lat: space.address?.latitude, lng: space.address?.longitude },
     });

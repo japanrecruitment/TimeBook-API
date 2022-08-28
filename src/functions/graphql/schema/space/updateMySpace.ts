@@ -121,6 +121,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
             maximumCapacity: updatedSpace.maximumCapacity,
             numberOfSeats: updatedSpace.numberOfSeats,
             spaceSize: updatedSpace.spaceSize,
+            subcriptionPrice: [updatedSpace.subcriptionPrice],
         });
     }
 

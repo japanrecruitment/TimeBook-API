@@ -18,10 +18,7 @@ import { RatingObject, RatingSelect, toRatingSelect } from "./ratings/RatingObje
 import { OptionObject, OptionSelect, toOptionSelect } from "../options";
 import { CancelPolicyObject, CancelPolicySelect, toCancelPolicySelect } from "../cancel-policy/CancelPolicyObject";
 import { StripeLib, StripePrice } from "@libs/paymentProvider";
-import {
-    stripePricesToSubscriptionProducts,
-    SubscriptionProductObject,
-} from "../subscription/SubscriptionProductObject";
+import { stripePricesToSubscriptionProducts } from "../subscription/SubscriptionProductObject";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];

@@ -49,6 +49,7 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
                     isBreakfastIncluded: true,
                     paymentTerm: true,
                     roomTypes: { select: { priceSettings: { select: { priceScheme: true } } } },
+                    subcriptionPrice: true,
                 },
             },
             nearestStations: { select: { stationId: true } },
@@ -115,6 +116,7 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
         maxChild,
         nearestStations: hotel.nearestStations.map(({ stationId }) => stationId),
         prefecture: hotel.address.prefecture.name,
+        subcriptionPrice: hotel.packagePlans.map(({ subcriptionPrice }) => subcriptionPrice),
         thumbnail: mediumImageUrl,
         _geoloc: { lat: hotel.address.latitude, lng: hotel.address.longitude },
     });
