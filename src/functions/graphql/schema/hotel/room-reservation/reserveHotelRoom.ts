@@ -96,7 +96,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             });
         }
         if (stripeSubs.length === 1) {
-            const subscription = stripeSubs.at(0);
+            const subscription = stripeSubs[0];
             const subsPeriodEnd = new Date(subscription.current_period_end);
             const subsPeriodStart = new Date(subscription.current_period_start);
             const reservations = await store.hotelRoomReservation.aggregate({
@@ -109,7 +109,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 },
                 _sum: { subscriptionUnit: true },
             });
-            const totalUnit = parseInt(subscription.items.data.at(0).price.product.metadata.unit);
+            const totalUnit = parseInt(subscription.items.data[0].price.product.metadata.unit);
             const usedUnit = reservations._sum.subscriptionUnit;
             remUnit = usedUnit > totalUnit ? 0 : totalUnit - usedUnit;
         }
@@ -216,13 +216,13 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                               OR: [
                                   {
                                       AND: [
-                                          { endDate: { gte: allReservationDates.at(0) } },
+                                          { endDate: { gte: allReservationDates[0] } },
                                           { endDate: { lte: checkOutDate } },
                                       ],
                                   },
                                   {
                                       AND: [
-                                          { startDate: { gte: allReservationDates.at(0) } },
+                                          { startDate: { gte: allReservationDates[0] } },
                                           { startDate: { lte: checkOutDate } },
                                       ],
                                   },

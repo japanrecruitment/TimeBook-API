@@ -30,7 +30,7 @@ const mySubscriptions: MySubscriptions = async (_, __, { authData, store }) => {
 
     return subscriptions.map<SubscriptionObject>(({ id, canceledAt, endsAt, isCanceled, stripeSubId }) => {
         const stripeSubscription = stripeSubscriptions.find(({ id }) => id === stripeSubId);
-        const stripePrice = stripeSubscription.items.data.at(0).price;
+        const stripePrice = stripeSubscription.items.data[0].price;
         const stripeProduct = stripePrice.product;
         return {
             id: id,

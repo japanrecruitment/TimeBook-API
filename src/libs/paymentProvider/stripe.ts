@@ -171,6 +171,15 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
+    async detachPaymentMethodToCustomer(paymentMethodId: string) {
+        try {
+            const paymentMethod = await stripe.paymentMethods.detach(paymentMethodId);
+            return paymentMethod;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     async listSources(
         customerId: string,
         paymentSourceType: Stripe.PaymentMethodListParams.Type
@@ -189,7 +198,7 @@ export class StripeLib implements IStripeUtil {
 
     async retrieveCard(customerId: string) {
         try {
-            const cards = (await (await this.listSources(customerId, "card")).data) as Array<Stripe.PaymentMethod>;
+            const cards = (await this.listSources(customerId, "card")).data as Array<Stripe.PaymentMethod>;
             Log("retriveCard cards", cards);
             return cards;
         } catch (error) {

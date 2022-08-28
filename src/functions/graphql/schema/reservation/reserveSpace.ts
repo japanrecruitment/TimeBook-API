@@ -166,7 +166,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             });
         }
         if (stripeSubs.length === 1) {
-            const subscription = stripeSubs.at(0);
+            const subscription = stripeSubs[0];
             const subsPeriodEnd = new Date(subscription.current_period_end);
             const subsPeriodStart = new Date(subscription.current_period_start);
             const reservations = await store.reservation.aggregate({
@@ -179,7 +179,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 },
                 _sum: { subscriptionUnit: true },
             });
-            const totalUnit = parseInt(subscription.items.data.at(0).price.product.metadata.unit);
+            const totalUnit = parseInt(subscription.items.data[0].price.product.metadata.unit);
             const usedUnit = reservations._sum.subscriptionUnit;
             remUnit = usedUnit > totalUnit ? 0 : totalUnit - usedUnit;
         }

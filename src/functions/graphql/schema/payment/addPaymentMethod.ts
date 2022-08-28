@@ -47,22 +47,18 @@ const addPaymentMethod: TPaymentSource = async (_, { paymentMethodId }, { authDa
         rawData: `${{ ...paymentMethod }}`,
     };
 
-    await store.account.update({
-        where: { id: accountId },
+    await store.paymentSource.create({
         data: {
-            paymentSource: {
-                create: {
-                    customer: customerId,
-                    token: paymentMethod.id,
-                    type: "Card",
-                    expMonth: paymentMethod.card.exp_month,
-                    expYear: paymentMethod.card.exp_year,
-                    last4: paymentMethod.card.last4,
-                    brand: paymentMethod.card.brand,
-                    country: paymentMethod.card.country,
-                    rawData: `${{ ...paymentMethod }}`,
-                },
-            },
+            customer: customerId,
+            token: paymentMethod.id,
+            type: "Card",
+            expMonth: paymentMethod.card.exp_month,
+            expYear: paymentMethod.card.exp_year,
+            last4: paymentMethod.card.last4,
+            brand: paymentMethod.card.brand,
+            country: paymentMethod.card.country,
+            rawData: `${{ ...paymentMethod }}`,
+            account: { connect: { id: accountId } },
         },
     });
     return { id: paymentMethod.id, ...paymentMethodData };
