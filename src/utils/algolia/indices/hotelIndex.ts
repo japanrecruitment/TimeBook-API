@@ -48,4 +48,4 @@ const settings: Settings = {
     searchableAttributes: ["name", "hotelRooms", "city"],
 };
 
-hotelIndex.setSettings(settings).catch((error) => Log("[FAILED]: setting hotel index", error));
+// hotelIndex.setSettings(settings).catch((error) => Log("[FAILED]: setting hotel index", error));
