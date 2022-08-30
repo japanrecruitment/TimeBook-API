@@ -1,5 +1,6 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { SpacePricePlanType } from "@prisma/client";
+import { getDurationsBetn } from "@utils/date-utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { differenceWith, isEmpty } from "lodash";
@@ -70,6 +71,13 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
     };
 
     const toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
+
+    const { days, hours, minutes } = getDurationsBetn(fromDateTime, toDateTime);
+
+    Log("reserveSpace: durations:", days, hours, minutes);
+
+    if (days <= 0 && hours <= 0 && minutes < 5)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selection" });
 
     const space = await store.space.findUnique({
         where: { id: spaceId },

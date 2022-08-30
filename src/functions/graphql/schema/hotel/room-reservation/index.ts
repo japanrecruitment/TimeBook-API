@@ -1,6 +1,10 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { approveRoomReservationResolvers, approveRoomReservationTypeDefs } from "./approveRoomReservation";
 import { calculateRoomPlanPriceResolvers, calculateRoomPlanPriceTypeDefs } from "./calculateRoomPlanPrice";
+import {
+    calculateRoomPlanPriceWithAuthResolvers,
+    calculateRoomPlanPriceWithAuthTypeDefs,
+} from "./calculateRoomPlanPriceWithAuth";
 import { cancelRoomReservationResolvers, cancelRoomReservationTypeDefs } from "./cancelRoomReservation";
 import { denyRoomReservationResolvers, denyRoomReservationTypeDefs } from "./denyRoomReservation";
 import { hotelRoomReservationByIdResolvers, hotelRoomReservationByIdTypeDefs } from "./hotelRoomReservationById";
@@ -12,6 +16,7 @@ import { reserveHotelRoomResolvers, reserveHotelRoomTypeDefs } from "./reserveHo
 export const roomReservationTypeDefs = mergeTypeDefs([
     approveRoomReservationTypeDefs,
     calculateRoomPlanPriceTypeDefs,
+    calculateRoomPlanPriceWithAuthTypeDefs,
     cancelRoomReservationTypeDefs,
     denyRoomReservationTypeDefs,
     hotelRoomReservationByIdTypeDefs,
@@ -24,6 +29,7 @@ export const roomReservationTypeDefs = mergeTypeDefs([
 export const roomReservationResolvers = mergeResolvers([
     approveRoomReservationResolvers,
     calculateRoomPlanPriceResolvers,
+    calculateRoomPlanPriceWithAuthResolvers,
     cancelRoomReservationResolvers,
     denyRoomReservationResolvers,
     hotelRoomReservationByIdResolvers,

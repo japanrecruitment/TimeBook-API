@@ -1,7 +1,6 @@
 import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
-import { sum } from "lodash";
 import { Context } from "../../context";
 
 export type SubscriptionObject = {
@@ -53,6 +52,7 @@ export const subscriptionObjectResolvers = {
                         reserveeId: accountId,
                         subscriptionUnit: { not: null },
                         subscriptionPrice: { not: null },
+                        status: { notIn: ["HOLD", "CANCELED", "DISAPPROVED", "FAILED"] },
                         OR: [
                             {
                                 AND: [
@@ -77,6 +77,7 @@ export const subscriptionObjectResolvers = {
                     reserveeId: accountId,
                     subscriptionUnit: { not: null },
                     subscriptionPrice: { not: null },
+                    status: { notIn: ["HOLD", "CANCELED", "DISAPPROVED", "FAILED"] },
                     OR: [
                         {
                             AND: [

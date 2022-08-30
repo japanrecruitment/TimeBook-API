@@ -33,6 +33,7 @@ type ReserveSpaceInput = {
     paymentSourceId: string;
     spaceId: string;
     additionalOptions?: SelectedAdditionalOption[];
+    useSubscription?: boolean;
 };
 
 type ReserveSpaceArgs = { input: ReserveSpaceInput };
@@ -53,7 +54,9 @@ type ReserveSpace = IFieldResolver<any, Context, ReserveSpaceArgs, Promise<Reser
 
 const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => {
     const { id: userId, accountId, email } = authData;
-    const { paymentSourceId, spaceId, duration, durationType, additionalOptions } = input;
+    if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+
+    const { paymentSourceId, spaceId, duration, durationType, additionalOptions, useSubscription } = input;
     const fromDateTime = input.fromDateTime;
 
     try {
@@ -157,43 +160,49 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         if (paymentMethod.customer !== customerId)
             throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
 
-        const stripeSubs = await stripe.listSubscriptions(accountId, "rental-space");
-        let remUnit: number = undefined;
-        if (stripeSubs.length > 1) {
-            throw new GqlError({
-                code: "FORBIDDEN",
-                message: "Multiple subscription of space type found in your account. Please contact our support team",
-            });
-        }
-        if (stripeSubs.length === 1) {
-            const subscription = stripeSubs[0];
-            const subsPeriodEnd = new Date(subscription.current_period_end);
-            const subsPeriodStart = new Date(subscription.current_period_start);
-            const reservations = await store.reservation.aggregate({
-                where: {
-                    reserveeId: accountId,
-                    subscriptionUnit: { not: null },
-                    subscriptionPrice: { not: null },
-                    status: { notIn: ["CANCELED", "DISAPPROVED", "FAILED"] },
-                    AND: [{ createdAt: { gte: subsPeriodStart } }, { createdAt: { lte: subsPeriodEnd } }],
-                },
-                _sum: { subscriptionUnit: true },
-            });
-            const totalUnit = parseInt(subscription.items.data[0].price.product.metadata.unit);
-            const usedUnit = reservations._sum.subscriptionUnit;
-            remUnit = usedUnit > totalUnit ? 0 : totalUnit - usedUnit;
+        let remSubscriptionUnit: number = undefined;
+        if (useSubscription) {
+            const stripeSubs = await stripe.listSubscriptions(accountId, "rental-space");
+            if (stripeSubs.length > 1) {
+                throw new GqlError({
+                    code: "FORBIDDEN",
+                    message:
+                        "Multiple subscription of space type found in your account. Please contact our support team",
+                });
+            }
+            if (stripeSubs.length === 1) {
+                const subscription = stripeSubs[0];
+                const subsPeriodEnd = new Date(subscription.current_period_end);
+                const subsPeriodStart = new Date(subscription.current_period_start);
+                const reservations = await store.reservation.aggregate({
+                    where: {
+                        reserveeId: accountId,
+                        subscriptionUnit: { not: null },
+                        subscriptionPrice: { not: null },
+                        status: { notIn: ["HOLD", "CANCELED", "DISAPPROVED", "FAILED"] },
+                        AND: [{ createdAt: { gte: subsPeriodStart } }, { createdAt: { lte: subsPeriodEnd } }],
+                    },
+                    _sum: { subscriptionUnit: true },
+                });
+                const totalUnit = parseInt(subscription.items.data[0].price.product.metadata.unit);
+                const usedUnit = reservations._sum.subscriptionUnit;
+                remSubscriptionUnit = usedUnit > totalUnit ? undefined : totalUnit - usedUnit;
+            }
         }
 
         const totalReservationHours = fromDateTime.getTime() - toDateTime.getTime() / 3600000;
-        const subscriptionUnit =
-            remUnit < Math.ceil(totalReservationHours) ? remUnit : Math.ceil(totalReservationHours);
+        const subscriptionUnit = !remSubscriptionUnit
+            ? remSubscriptionUnit < Math.ceil(totalReservationHours)
+                ? remSubscriptionUnit
+                : Math.ceil(totalReservationHours)
+            : undefined;
         // Calculating subscription price
         let subscriptionPrice = !isEmpty(subscriptionUnit) ? space.subcriptionPrice * subscriptionUnit : undefined;
         Log("applied subscription", subscriptionUnit, subscriptionPrice);
 
         let amount = 0;
 
-        const hasRemDates = totalReservationHours - subscriptionUnit > 0;
+        const hasRemDates = totalReservationHours - (subscriptionUnit || 0) > 0;
         if (hasRemDates) {
             const newFromDateTime = moment(fromDateTime).add(subscriptionUnit, "hours").toDate();
             const pricePlans = await store.spacePricePlan.findMany({
@@ -432,6 +441,7 @@ export const reserveSpaceTypeDefs = gql`
         paymentSourceId: ID!
         spaceId: ID!
         additionalOptions: [SelectedAdditionalOption]
+        useSubscription: Boolean
     }
 
     type ReserveSpaceResult {

@@ -38,6 +38,8 @@ export type AccountBalance = {
     pending: Balance[];
 };
 
+export type StripeInvoice = Omit<Stripe.Invoice, "subscription"> & { subscription: Stripe.ApiList<StripeSubscription> };
+
 export type StripePrice = Omit<Stripe.Price, "product"> & { product: Stripe.Product };
 
 export type StripeSubscriptionItem = Omit<Stripe.SubscriptionItem, "price"> & { price: StripePrice };
@@ -381,6 +383,24 @@ export class StripeLib implements IStripeUtil {
             return prices.data as any;
         } catch (error) {
             Log("[FAILED]: Fetching stripe subscription prices", error);
+            return error;
+        }
+    }
+
+    async listInvoices(customerId: string, after?: string, take: number = 10): Promise<StripeInvoice[]> {
+        try {
+            Log("[STARTED]: Fetching stripe invoices");
+            const invoices = await stripe.invoices.list({
+                customer: customerId,
+                status: "paid",
+                expand: ["subscription"],
+                limit: take,
+                starting_after: after,
+            });
+            Log("[COMPLETED]: Fetching stripe invoices", invoices);
+            return [];
+        } catch (error) {
+            Log("[FAILED]: Fetching stripe invoices", error);
             return error;
         }
     }

@@ -54,6 +54,7 @@ type ReserveHotelRoomInput = {
     nAdult?: number;
     nChild?: number;
     additionalOptions?: SelectedAdditionalOption[];
+    useSubscription?: boolean;
 };
 
 type ReserveHotelRoomArgs = { input: ReserveHotelRoomInput };
@@ -87,41 +88,48 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
 
         const stripe = new StripeLib();
-        const stripeSubs = await stripe.listSubscriptions(accountId, "hotel");
-        let remUnit: number = undefined;
-        if (stripeSubs.length > 1) {
-            throw new GqlError({
-                code: "FORBIDDEN",
-                message: "Multiple subscription of space type found in your account. Please contact our support team",
-            });
-        }
-        if (stripeSubs.length === 1) {
-            const subscription = stripeSubs[0];
-            const subsPeriodEnd = new Date(subscription.current_period_end);
-            const subsPeriodStart = new Date(subscription.current_period_start);
-            const reservations = await store.hotelRoomReservation.aggregate({
-                where: {
-                    reserveeId: accountId,
-                    subscriptionUnit: { not: null },
-                    subscriptionPrice: { not: null },
-                    status: { notIn: ["CANCELED", "DISAPPROVED", "FAILED"] },
-                    AND: [{ createdAt: { gte: subsPeriodStart } }, { createdAt: { lte: subsPeriodEnd } }],
-                },
-                _sum: { subscriptionUnit: true },
-            });
-            const totalUnit = parseInt(subscription.items.data[0].price.product.metadata.unit);
-            const usedUnit = reservations._sum.subscriptionUnit;
-            remUnit = usedUnit > totalUnit ? 0 : totalUnit - usedUnit;
+        let remSubscriptionUnit: number = undefined;
+        if (validInput.useSubscription) {
+            const stripeSubs = await stripe.listSubscriptions(accountId, "hotel");
+            if (stripeSubs.length > 1) {
+                throw new GqlError({
+                    code: "FORBIDDEN",
+                    message:
+                        "Multiple subscription of space type found in your account. Please contact our support team",
+                });
+            }
+            if (stripeSubs.length === 1) {
+                const subscription = stripeSubs[0];
+                const subsPeriodEnd = new Date(subscription.current_period_end);
+                const subsPeriodStart = new Date(subscription.current_period_start);
+                const reservations = await store.hotelRoomReservation.aggregate({
+                    where: {
+                        reserveeId: accountId,
+                        subscriptionUnit: { not: null },
+                        subscriptionPrice: { not: null },
+                        status: { notIn: ["HOLD", "CANCELED", "DISAPPROVED", "FAILED"] },
+                        AND: [{ createdAt: { gte: subsPeriodStart } }, { createdAt: { lte: subsPeriodEnd } }],
+                    },
+                    _sum: { subscriptionUnit: true },
+                });
+                const totalUnit = parseInt(subscription.items.data[0].price.product.metadata.unit);
+                const usedUnit = reservations._sum.subscriptionUnit;
+                remSubscriptionUnit = usedUnit > totalUnit ? undefined : totalUnit - usedUnit;
+            }
         }
 
         const allReservationDates = getAllDatesBetn(checkInDate, checkOutDate);
 
         const totalReservationUnits = allReservationDates.length;
-        const subscriptionUnit = remUnit < totalReservationUnits ? remUnit : totalReservationUnits;
+        const subscriptionUnit = !remSubscriptionUnit
+            ? remSubscriptionUnit < totalReservationUnits
+                ? remSubscriptionUnit
+                : totalReservationUnits
+            : undefined;
 
         allReservationDates.splice(0, subscriptionUnit);
 
-        Log(remUnit, subscriptionUnit, totalReservationUnits, allReservationDates);
+        Log(remSubscriptionUnit, subscriptionUnit, totalReservationUnits, allReservationDates);
 
         const plan = await store.hotelRoom_PackagePlan.findUnique({
             where: { id: roomPlanId },
@@ -214,6 +222,12 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                     ? {
                           where: {
                               OR: [
+                                  {
+                                      AND: [
+                                          { endDate: { gte: checkOutDate } },
+                                          { startDate: { lte: allReservationDates[0] } },
+                                      ],
+                                  },
                                   {
                                       AND: [
                                           { endDate: { gte: allReservationDates[0] } },
@@ -449,7 +463,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 confirm: true,
             };
 
-            const paymentIntent = await stripe.createPaymentIntent(paymentIntentParams);
+            paymentIntent = await stripe.createPaymentIntent(paymentIntentParams);
 
             if (!paymentIntent.id) {
                 await store.transaction.update({
@@ -491,12 +505,12 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
 
         return {
             transactionId: transaction.id,
-            intentId: paymentIntent.id,
-            intentCode: paymentIntent.client_secret,
-            amount: paymentIntent.amount,
-            description: paymentIntent.description,
-            currency: paymentIntent.currency,
-            paymentMethodTypes: paymentIntent.payment_method_types,
+            intentId: paymentIntent?.id,
+            intentCode: paymentIntent?.client_secret,
+            amount: paymentIntent?.amount,
+            description: paymentIntent?.description,
+            currency: paymentIntent?.currency,
+            paymentMethodTypes: paymentIntent?.payment_method_types,
             reservationId,
             subscriptionPrice,
             subscriptionUnit,
@@ -526,6 +540,7 @@ export const reserveHotelRoomTypeDefs = gql`
         nAdult: Int
         nChild: Int
         additionalOptions: [SelectedAdditionalOption]
+        useSubscription: Boolean
     }
 
     type ReserveHotelRoomResult {

@@ -18,36 +18,17 @@ const removePaymentMethod: RemovePaymentMethod = async (_, { paymentMethodId }, 
     if (!accountId || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     // get current customer ID
-    const account = await store.account.findUnique({
-        where: { id: accountId },
-        select: {
-            paymentSource: { where: { token: paymentMethodId }, select: { id: true } },
-            userProfile: { select: { stripeCustomerId: true } },
-        },
-    });
-    if (!account || !account.userProfile) throw new GqlError({ code: "BAD_REQUEST", message: "Account not found" });
-    if (!account.userProfile.stripeCustomerId) {
-        throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
-    }
-    if (isEmpty(account.paymentSource)) {
-        throw new GqlError({ code: "BAD_REQUEST", message: "Payment source not found" });
-    }
+    const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
+    if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
+    if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
 
-    if (account.paymentSource.length > 1) {
-        throw new GqlError({
-            code: "FORBIDDEN",
-            message: "Multiple payment source with same token found. Please contact our support team",
-        });
-    }
-
-    Log("removePaymentMethod account:", account);
+    Log("removePaymentMethod user:", user);
 
     const stripe = new StripeLib();
-    const paymentMethod = await stripe.detachPaymentMethodToCustomer(paymentMethodId);
+    const paymentMethod = await stripe.retrievePaymentMethod(paymentMethodId);
+    await stripe.detachPaymentMethodToCustomer(paymentMethod.id);
 
     Log(paymentMethod);
-
-    await store.paymentSource.delete({ where: { id: account.paymentSource[0].id } });
 
     return { message: `Payment method removed.` };
 };
