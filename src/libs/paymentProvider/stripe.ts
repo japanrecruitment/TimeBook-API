@@ -9,6 +9,15 @@ const stripe = new Stripe(process.env.STRIPE_SK, {
     apiVersion: "2020-08-27",
 });
 
+const subcriptionProductsIds = [
+    "prod_MHKkvxYDSR3Utl",
+    "prod_MHL3nbPl5b5I7y",
+    "prod_MHL95AQUXuIU5P",
+    "prod_MHLC0GjKiwd7oN",
+    "prod_MHLEuTMpuVEuDh",
+    "prod_MHLHPCH1h6bU6V",
+];
+
 interface CreateConnectAccountInput {
     email: string;
 }
@@ -38,7 +47,7 @@ export type AccountBalance = {
     pending: Balance[];
 };
 
-export type StripeInvoice = Omit<Stripe.Invoice, "subscription"> & { subscription: Stripe.ApiList<StripeSubscription> };
+export type StripeInvoice = Omit<Stripe.Invoice, "subscription"> & { subscription: StripeSubscription };
 
 export type StripePrice = Omit<Stripe.Price, "product"> & { product: Stripe.Product };
 
@@ -308,6 +317,21 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
+    async updateSubscriptionMetadata(
+        subscriptionId: string,
+        metadata: object
+    ): Promise<Stripe.Response<Stripe.Subscription>> {
+        try {
+            Log("[STARTED]: Updating subscription");
+            const subscription = await stripe.subscriptions.update(subscriptionId, { metadata: { ...metadata } });
+            Log("[COMPLETED]: Updating subscription", subscription);
+            return subscription as any;
+        } catch (error) {
+            Log("[FAILED]: Updating subscription", error);
+            throw error;
+        }
+    }
+
     async cancelSubscription(subscriptionId: string): Promise<Stripe.Response<Stripe.Subscription>> {
         try {
             Log("[STARTED]: Canceling subscription");
@@ -316,6 +340,35 @@ export class StripeLib implements IStripeUtil {
             return subscription as any;
         } catch (error) {
             Log("[FAILED]: Canceling subscription", error);
+            return error;
+        }
+    }
+
+    async retrieveSubscription(subscriptionId: string): Promise<StripeSubscription> {
+        try {
+            if (!subscriptionId) return;
+            Log("[STARTED]: Retrieving stripe subscription");
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            if (!subscription) return;
+            const productIds = subscription.items.data.flatMap(({ price }) => price.product as string);
+            const products = await stripe.products.list({ ids: productIds });
+            const result: StripeSubscription = {
+                ...subscription,
+                items: {
+                    ...subscription.items,
+                    data: subscription.items.data.map((subItem) => ({
+                        ...subItem,
+                        price: {
+                            ...subItem.price,
+                            product: products.data.find((product) => product.id === subItem.price.product),
+                        },
+                    })),
+                },
+            };
+            Log("[COMPLETED]: Retrieving stripe subscription", result);
+            return result;
+        } catch (error) {
+            Log("[FAILED]: Retrieving stripe subscription", error);
             return error;
         }
     }
@@ -364,18 +417,10 @@ export class StripeLib implements IStripeUtil {
     }
 
     async listPrices(): Promise<Stripe.Response<StripePrice[]>> {
-        const productIds = [
-            "prod_MHKkvxYDSR3Utl",
-            "prod_MHL3nbPl5b5I7y",
-            "prod_MHL95AQUXuIU5P",
-            "prod_MHLC0GjKiwd7oN",
-            "prod_MHLEuTMpuVEuDh",
-            "prod_MHLHPCH1h6bU6V",
-        ];
         try {
             Log("[STARTED]: Fetching stripe subscription prices");
             const prices = await stripe.prices.search({
-                query: productIds.map((id) => `product: '${id}'`).join(" OR "),
+                query: subcriptionProductsIds.map((id) => `product: '${id}'`).join(" OR "),
                 expand: ["data.product"],
                 limit: 18,
             });
@@ -393,12 +438,33 @@ export class StripeLib implements IStripeUtil {
             const invoices = await stripe.invoices.list({
                 customer: customerId,
                 status: "paid",
-                expand: ["subscription"],
+                expand: ["data.subscription"],
                 limit: take,
                 starting_after: after,
             });
-            Log("[COMPLETED]: Fetching stripe invoices", invoices);
-            return [];
+            if (isEmpty(invoices) || isEmpty(invoices.data)) return;
+            const products = await stripe.products.list({ ids: subcriptionProductsIds });
+            const result: StripeInvoice[] = invoices.data.map((invoice) => {
+                const subscription = invoice.subscription as Stripe.Subscription;
+                return {
+                    ...invoice,
+                    subscription: {
+                        ...subscription,
+                        items: {
+                            ...subscription.items,
+                            data: subscription.items.data.map((subItem) => ({
+                                ...subItem,
+                                price: {
+                                    ...subItem.price,
+                                    product: products.data.find((product) => product.id === subItem.price.product),
+                                },
+                            })),
+                        },
+                    },
+                };
+            });
+            Log("[COMPLETED]: Fetching stripe invoices", result);
+            return result;
         } catch (error) {
             Log("[FAILED]: Fetching stripe invoices", error);
             return error;

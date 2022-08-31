@@ -1,6 +1,8 @@
 import { IObjectTypeResolver } from "@graphql-tools/utils";
+import { StripeSubscription } from "@libs/paymentProvider";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
+import { isEmpty } from "lodash";
 import { Context } from "../../context";
 
 export type SubscriptionObject = {
@@ -17,6 +19,25 @@ export type SubscriptionObject = {
     endsAt?: Date;
     remainingUnit?: number;
 };
+
+export function mapStripeSubscriptionToSubscriptionObject(subscription: StripeSubscription): SubscriptionObject {
+    if (!subscription) return;
+    const stripePrice = subscription.items.data[0].price;
+    const stripeProduct = stripePrice.product;
+    return {
+        id: subscription.metadata?.id,
+        amount: stripePrice.unit_amount,
+        canceledAt: subscription.canceled_at && new Date(subscription.canceled_at),
+        currentPeriodEnd: subscription.current_period_end && new Date(subscription.current_period_end),
+        currentPeriodStart: subscription.current_period_start && new Date(subscription.current_period_start),
+        endsAt: subscription.cancel_at && new Date(subscription.cancel_at),
+        isCanceled: !isEmpty(subscription.cancel_at) || !isEmpty(subscription.canceled_at),
+        name: stripeProduct.metadata.name,
+        priceType: stripePrice.metadata.name,
+        type: stripeProduct.metadata.type,
+        unit: parseInt(stripePrice.product.metadata.unit),
+    };
+}
 
 export const subscriptionObjectTypeDefs = gql`
     type SubscriptionObject {
@@ -37,6 +58,11 @@ export const subscriptionObjectTypeDefs = gql`
 
 export const subscriptionObjectResolvers = {
     SubscriptionObject: {
+        canceledAt: ({ canceledAt }) => canceledAt && new Date(canceledAt.getTime() * 1000),
+        currentPeriodEnd: ({ currentPeriodEnd }) => currentPeriodEnd && new Date(currentPeriodEnd.getTime() * 1000),
+        currentPeriodStart: ({ currentPeriodStart }) =>
+            currentPeriodStart && new Date(currentPeriodStart.getTime() * 1000),
+        endsAt: ({ endsAt }) => endsAt && new Date(endsAt.getTime() * 1000),
         remainingUnit: async (
             { currentPeriodEnd, currentPeriodStart, remainingUnit, type, unit },
             __,

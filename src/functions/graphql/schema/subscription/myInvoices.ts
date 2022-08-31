@@ -1,4 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { StripeLib } from "@libs/paymentProvider";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
@@ -8,7 +9,7 @@ import {
     PaginationOption,
     PaginationResult,
 } from "../core/pagination";
-import { InvoiceObject } from "./InvoiceObject";
+import { InvoiceObject, mapStripeInvoiceToInvoiceObject } from "./InvoiceObject";
 
 type MyInvoicesArgs = { paginate: PaginationOption };
 
@@ -26,7 +27,11 @@ const myInvoices: MyInvoices = async (_, { paginate }, { authData, store }) => {
     if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
     if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
 
-    return createPaginationResult([]);
+    const stripe = new StripeLib();
+    const stripeInvoices = await stripe.listInvoices(user.stripeCustomerId, after as string, take);
+    const invoices = stripeInvoices.map(mapStripeInvoiceToInvoiceObject);
+
+    return createPaginationResult(invoices, take, undefined, after);
 };
 
 export const myInvoicesTypeDefs = gql`

@@ -4,7 +4,7 @@ import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { SubscriptionObject } from "./SubscriptionObject";
+import { mapStripeSubscriptionToSubscriptionObject, SubscriptionObject } from "./SubscriptionObject";
 
 type MySubscriptionsArgs = any;
 
@@ -22,30 +22,11 @@ const mySubscriptions: MySubscriptions = async (_, __, { authData, store }) => {
 
     const stripe = new StripeLib();
     const stripeSubscriptions = await stripe.listSubscriptions(accountId);
-    const subscriptions = await store.subscription.findMany({
-        where: { accountId, stripeSubId: { in: stripeSubscriptions.map(({ id }) => id) } },
-    });
+    const subscriptions = stripeSubscriptions.map(mapStripeSubscriptionToSubscriptionObject);
 
     Log("mySubscriptions", subscriptions);
 
-    return subscriptions.map<SubscriptionObject>(({ id, canceledAt, endsAt, isCanceled, stripeSubId }) => {
-        const stripeSubscription = stripeSubscriptions.find(({ id }) => id === stripeSubId);
-        const stripePrice = stripeSubscription.items.data[0].price;
-        const stripeProduct = stripePrice.product;
-        return {
-            id: id,
-            amount: stripePrice.unit_amount,
-            canceledAt,
-            currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-            endsAt,
-            isCanceled,
-            name: stripeProduct.metadata.name,
-            priceType: stripePrice.metadata.name,
-            type: stripeProduct.metadata.type,
-            unit: parseInt(stripePrice.product.metadata.unit),
-        };
-    });
+    return subscriptions;
 };
 
 export const mySubscriptionsTypeDefs = gql`
