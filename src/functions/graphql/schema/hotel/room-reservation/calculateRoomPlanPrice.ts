@@ -49,6 +49,8 @@ type CalculateRoomPlanArgs = { input: CalculateRoomPlanInput };
 type CalculateRoomPlanResult = {
     appliedRoomPlanPriceSettings: string[];
     appliedRoomPlanPriceOverrides: string[];
+    optionAmount: number;
+    planAmount: number;
     totalAmount: number;
 };
 
@@ -182,7 +184,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
 
     let appliedRoomPlanPriceOverrides = [];
     let appliedRoomPlanPriceSettings = [];
-    let amount = 0;
+    let planAmount = 0;
     let remDates = allDates;
 
     // Calculating override price
@@ -193,15 +195,15 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
             const mDatesLen = matchedDates.length;
             if (mDatesLen > 0) {
                 if (packagePlan.paymentTerm === "PER_ROOM") {
-                    amount += priceScheme.roomCharge * mDatesLen;
+                    planAmount += priceScheme.roomCharge * mDatesLen;
                 } else {
                     if (nAdult) {
                         const charge = priceScheme[mapNumAdultField(nAdult)] || priceScheme.oneAdultCharge;
-                        amount += charge * nAdult * mDatesLen;
+                        planAmount += charge * nAdult * mDatesLen;
                     }
                     if (nChild) {
                         const charge = priceScheme[mapNumChildField(nChild)] || priceScheme.oneChildCharge;
-                        amount += charge * nChild * mDatesLen;
+                        planAmount += charge * nChild * mDatesLen;
                     }
                 }
                 bookingDates = differenceWith(bookingDates, matchedDates, isEqualDate);
@@ -214,7 +216,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         const remWeekDays = remDates.map((d) => d.getDay());
         const remPriceSettings = priceSettings.filter(({ dayOfWeek }) => remWeekDays.includes(dayOfWeek));
         if (packagePlan.paymentTerm === "PER_ROOM") {
-            amount = sum(remPriceSettings.map(({ priceScheme }) => priceScheme.roomCharge));
+            planAmount = sum(remPriceSettings.map(({ priceScheme }) => priceScheme.roomCharge));
         } else {
             let adultPrice = 0;
             let childPrice = 0;
@@ -234,25 +236,28 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                     )
                 );
             }
-            amount = adultPrice + childPrice;
+            planAmount = adultPrice + childPrice;
         }
         appliedRoomPlanPriceSettings = appliedRoomPlanPriceSettings.concat(remPriceSettings.map(({ id }) => id));
     }
 
+    let optionAmount = 0;
     // Calculating option price
     selectedOptions.forEach(({ paymentTerm, quantity, additionalPrice }) => {
         if (additionalPrice && additionalPrice > 0) {
-            if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") amount += quantity * additionalPrice;
-            else amount += additionalPrice;
+            if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") optionAmount += quantity * additionalPrice;
+            else optionAmount += additionalPrice;
         }
     });
 
-    Log(remDates, appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings, amount);
+    Log(remDates, appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings, planAmount, optionAmount);
 
     return {
         appliedRoomPlanPriceOverrides,
         appliedRoomPlanPriceSettings,
-        totalAmount: amount,
+        optionAmount,
+        planAmount,
+        totalAmount: planAmount + optionAmount,
     };
 };
 
@@ -274,6 +279,8 @@ export const calculateRoomPlanPriceTypeDefs = gql`
     type CalculateRoomPlanResult {
         appliedRoomPlanPriceSettings: [ID]
         appliedRoomPlanPriceOverrides: [ID]
+        optionAmount: Int
+        planAmount: Int
         totalAmount: Int
     }
 

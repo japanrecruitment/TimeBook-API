@@ -53,6 +53,8 @@ type CalculateRoomPlanPriceWithAuthArgs = { input: CalculateRoomPlanPriceWithAut
 type CalculateRoomPlanPriceWithAuthResult = {
     appliedRoomPlanPriceSettings: string[];
     appliedRoomPlanPriceOverrides: string[];
+    optionAmount: number;
+    planAmount: number;
     subscriptionUnit: number;
     subscriptionAmount: number;
     totalAmount: number;
@@ -258,7 +260,7 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
 
     let appliedRoomPlanPriceOverrides = [];
     let appliedRoomPlanPriceSettings = [];
-    let amount = 0;
+    let planAmount = 0;
     let remDates = allReservationDates;
 
     // Calculating override price
@@ -269,15 +271,15 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
             const mDatesLen = matchedDates.length;
             if (mDatesLen > 0) {
                 if (packagePlan.paymentTerm === "PER_ROOM") {
-                    amount += priceScheme.roomCharge * mDatesLen;
+                    planAmount += priceScheme.roomCharge * mDatesLen;
                 } else {
                     if (nAdult) {
                         const charge = priceScheme[mapNumAdultField(nAdult)] || priceScheme.oneAdultCharge;
-                        amount += charge * nAdult * mDatesLen;
+                        planAmount += charge * nAdult * mDatesLen;
                     }
                     if (nChild) {
                         const charge = priceScheme[mapNumChildField(nChild)] || priceScheme.oneChildCharge;
-                        amount += charge * nChild * mDatesLen;
+                        planAmount += charge * nChild * mDatesLen;
                     }
                 }
                 bookingDates = differenceWith(bookingDates, matchedDates, isEqualDate);
@@ -290,7 +292,7 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
         const remWeekDays = remDates.map((d) => d.getDay());
         const remPriceSettings = priceSettings.filter(({ dayOfWeek }) => remWeekDays.includes(dayOfWeek));
         if (packagePlan.paymentTerm === "PER_ROOM") {
-            amount = sum(remPriceSettings.map(({ priceScheme }) => priceScheme.roomCharge));
+            planAmount = sum(remPriceSettings.map(({ priceScheme }) => priceScheme.roomCharge));
         } else {
             let adultPrice = 0;
             let childPrice = 0;
@@ -310,16 +312,17 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
                     )
                 );
             }
-            amount = adultPrice + childPrice;
+            planAmount = adultPrice + childPrice;
         }
         appliedRoomPlanPriceSettings = appliedRoomPlanPriceSettings.concat(remPriceSettings.map(({ id }) => id));
     }
 
+    let optionAmount = 0;
     // Calculating option price
     selectedOptions.forEach(({ paymentTerm, quantity, additionalPrice }) => {
         if (additionalPrice && additionalPrice > 0) {
-            if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") amount += quantity * additionalPrice;
-            else amount += additionalPrice;
+            if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") optionAmount += quantity * additionalPrice;
+            else optionAmount += additionalPrice;
         }
     });
 
@@ -330,14 +333,17 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
         subscriptionUnit && subscriptionUnit > 0 ? packagePlan.subcriptionPrice * subscriptionUnit : undefined;
 
     Log("applied subscription", subscriptionUnit, subscriptionPrice);
-    Log("applied amount", allReservationDates, amount);
+    Log("applied plan amount", allReservationDates, planAmount);
+    Log("applied option amount", selectedOptions, optionAmount);
 
     return {
         appliedRoomPlanPriceOverrides,
         appliedRoomPlanPriceSettings,
+        optionAmount,
+        planAmount,
         subscriptionUnit,
         subscriptionAmount: subscriptionPrice,
-        totalAmount: amount,
+        totalAmount: planAmount + optionAmount,
     };
 };
 
@@ -360,6 +366,8 @@ export const calculateRoomPlanPriceWithAuthTypeDefs = gql`
     type CalculateRoomPlanPriceWithAuthResult {
         appliedRoomPlanPriceSettings: [ID]
         appliedRoomPlanPriceOverrides: [ID]
+        optionAmount: Int
+        planAmount: Int
         subscriptionUnit: Int
         subscriptionAmount: Int
         totalAmount: Int
