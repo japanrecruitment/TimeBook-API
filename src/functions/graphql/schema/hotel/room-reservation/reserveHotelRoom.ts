@@ -121,7 +121,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         const allReservationDates = getAllDatesBetn(checkInDate, checkOutDate);
 
         const totalReservationUnits = allReservationDates.length;
-        const subscriptionUnit = !remSubscriptionUnit
+        const subscriptionUnit = remSubscriptionUnit
             ? remSubscriptionUnit < totalReservationUnits
                 ? remSubscriptionUnit
                 : totalReservationUnits

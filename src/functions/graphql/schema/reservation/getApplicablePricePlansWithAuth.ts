@@ -135,15 +135,16 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
         }
     }
 
-    const totalReservationHours = fromDateTime.getTime() - toDateTime.getTime() / 3600000;
-    const subscriptionUnit = !remSubscriptionUnit
+    const totalReservationHours = (toDateTime.getTime() - fromDateTime.getTime()) / 3600000;
+    const subscriptionUnit = remSubscriptionUnit
         ? remSubscriptionUnit < Math.ceil(totalReservationHours)
             ? remSubscriptionUnit
             : Math.ceil(totalReservationHours)
         : undefined;
     // Calculating subscription price
-    let subscriptionPrice = !isEmpty(subscriptionUnit) ? space.subcriptionPrice * subscriptionUnit : undefined;
-    Log("applied subscription", subscriptionUnit, subscriptionPrice);
+    let subscriptionPrice =
+        subscriptionUnit && subscriptionUnit > 0 ? space.subcriptionPrice * subscriptionUnit : undefined;
+    Log("applied subscription", totalReservationHours, remSubscriptionUnit, subscriptionUnit, subscriptionPrice);
 
     let applicablePricePlans = [];
     let amount = 0;

@@ -110,7 +110,7 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
     const allReservationDates = getAllDatesBetn(checkInDate, checkOutDate);
 
     const totalReservationUnits = allReservationDates.length;
-    const subscriptionUnit = !remSubscriptionUnit
+    const subscriptionUnit = remSubscriptionUnit
         ? remSubscriptionUnit < totalReservationUnits
             ? remSubscriptionUnit
             : totalReservationUnits
