@@ -2,7 +2,7 @@ import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { StripeSubscription } from "@libs/paymentProvider";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
-import { isEmpty } from "lodash";
+import { isEmpty, isNil } from "lodash";
 import { Context } from "../../context";
 
 export type SubscriptionObject = {
@@ -31,7 +31,7 @@ export function mapStripeSubscriptionToSubscriptionObject(subscription: StripeSu
         currentPeriodEnd: subscription.current_period_end && new Date(subscription.current_period_end),
         currentPeriodStart: subscription.current_period_start && new Date(subscription.current_period_start),
         endsAt: subscription.cancel_at && new Date(subscription.cancel_at),
-        isCanceled: !isEmpty(subscription.cancel_at) || !isEmpty(subscription.canceled_at),
+        isCanceled: !isNil(subscription.cancel_at) || !isNil(subscription.canceled_at),
         name: stripeProduct.metadata.name,
         priceType: stripePrice.metadata.name,
         type: stripeProduct.metadata.type,
