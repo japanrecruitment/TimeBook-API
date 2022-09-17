@@ -10,6 +10,7 @@ export type NearestStationSelect = {
     station: boolean;
     via: boolean;
     time: boolean;
+    exit: boolean;
 };
 
 export const toNearestStationSelect = (selection) => {
@@ -22,5 +23,6 @@ export const nearestStationObjectTypeDefs = gql`
         station: Station
         time: Int
         via: String
+        exit: String
     }
 `;

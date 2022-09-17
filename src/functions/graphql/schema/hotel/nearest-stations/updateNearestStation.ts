@@ -10,10 +10,11 @@ import { HotelNearestStationObject, toHotelNearestStationSelect } from "./HotelN
 export function validateUpdateHotelNearestStationInput(
     input: UpdateHotelNearestStationInput
 ): UpdateHotelNearestStationInput {
-    let { hotelId, stationId, accessType, time } = input;
+    let { hotelId, stationId, accessType, time, exit } = input;
 
     hotelId = hotelId?.trim();
     accessType = accessType?.trim();
+    exit = exit?.trim();
 
     if (isEmpty(hotelId)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid hotel id provided" });
 
@@ -25,7 +26,7 @@ export function validateUpdateHotelNearestStationInput(
 
     if (!accessType && !time) throw new GqlError({ code: "BAD_USER_INPUT", message: "Empty Input" });
 
-    return { accessType, hotelId, stationId, time };
+    return { accessType, hotelId, stationId, time, exit };
 }
 
 type UpdateHotelNearestStationInput = {
@@ -33,6 +34,7 @@ type UpdateHotelNearestStationInput = {
     stationId: number;
     accessType?: string;
     time?: number;
+    exit?: string;
 };
 
 type UpdateHotelNearestStationArgs = { input: UpdateHotelNearestStationInput };
@@ -54,7 +56,7 @@ const updateHotelNearestStation: UpdateHotelNearestStation = async (_, { input }
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const validInput = validateUpdateHotelNearestStationInput(input);
-    const { hotelId, stationId, accessType, time } = validInput;
+    const { hotelId, stationId, accessType, time, exit } = validInput;
 
     const nearestStation = await store.hotelNearestStation.findUnique({
         where: { hotelId_stationId: { hotelId, stationId } },
@@ -68,7 +70,7 @@ const updateHotelNearestStation: UpdateHotelNearestStation = async (_, { input }
     const nearestStationSelect = toHotelNearestStationSelect(mapSelections(info)?.nearestStation).select;
     const updatedNearestStation = await store.hotelNearestStation.update({
         where: { hotelId_stationId: { hotelId, stationId } },
-        data: { accessType, time },
+        data: { accessType, time, exit },
         select: nearestStationSelect,
     });
 
@@ -83,6 +85,7 @@ export const updateHotelNearestStationTypeDefs = gql`
         stationId: IntID!
         accessType: String
         time: Int
+        exit: String
     }
 
     type UpdateHotelNearestStationResult {

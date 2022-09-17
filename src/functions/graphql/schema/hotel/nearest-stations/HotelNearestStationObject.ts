@@ -10,6 +10,7 @@ export type HotelNearestStationSelect = {
     station: boolean;
     via: boolean;
     time: boolean;
+    exit: boolean;
 };
 
 export function toHotelNearestStationSelect(selection) {
@@ -22,6 +23,7 @@ export const hotelNearestStationObjectTypeDefs = gql`
         station: Station
         time: Int
         accessType: String
+        exit: String
     }
 `;
 

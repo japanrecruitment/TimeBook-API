@@ -472,6 +472,7 @@ model NearestStation {
   stationId Int
   time      Int
   via       String
+  exit      String?
 
   @@id([spaceId, stationId])
 }
@@ -609,6 +610,7 @@ model HotelNearestStation {
   stationId  Int
   accessType String
   time       Int
+  exit       String?
 
   @@id([hotelId, stationId])
 }

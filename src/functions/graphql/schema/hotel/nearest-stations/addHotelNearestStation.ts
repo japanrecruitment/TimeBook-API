@@ -8,13 +8,15 @@ import { GqlError } from "../../../error";
 import { HotelNearestStationObject, toHotelNearestStationSelect } from "./HotelNearestStationObject";
 
 export function validateAddHotelNearestStationInput(input: AddHotelNearestStationInput): AddHotelNearestStationInput {
-    let { accessType, stationId, time } = input;
+    let { accessType, stationId, time, exit } = input;
 
     accessType = accessType.trim();
 
     if (isEmpty(accessType)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Access type cannot be empty" });
 
-    return { accessType, stationId, time };
+    exit = exit?.trim();
+
+    return { accessType, stationId, time, exit };
 }
 
 export function validateAddHotelNearestStationInputList(
@@ -43,6 +45,7 @@ export type AddHotelNearestStationInput = {
     stationId: number;
     accessType: string;
     time: number;
+    exit: string;
 };
 
 type AddHotelNearestStationArgs = {
@@ -125,6 +128,7 @@ export const addHotelNearestStationTypeDefs = gql`
         stationId: IntID!
         accessType: String!
         time: Int!
+        exit: String
     }
 
     type AddHotelNearestStationResult {
