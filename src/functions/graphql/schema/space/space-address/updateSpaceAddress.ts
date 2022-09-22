@@ -1,6 +1,7 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
+import axios from "axios";
 import { GqlError } from "src/functions/graphql/error";
 import { Context } from "../../../context";
 import { UpdateAddressInput } from "../../address";
@@ -93,10 +94,16 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
             updatedAddress.latitude !== space.address.latitude ||
             updatedAddress.longitude !== space.address.longitude)
     ) {
+        // get address prefecture and city from postalcode
+        const postalCodePrefix = postalCode.slice(0, 3);
+        const { data } = await axios.get(`https://yubinbango.github.io/yubinbango-data/data/${postalCodePrefix}.js`);
+        const postalCodeData = JSON.parse(data.trim().slice(7, data.length - 3));
+        const address = postalCodeData[postalCode];
+
         await dataSources.spaceAlgolia.partialUpdateObject({
             objectID: updatedAddress.spaceId,
             prefecture: updatedAddress.prefecture.name,
-            city: updatedAddress.city,
+            city: address[1],
             _geoloc: { lat: updatedAddress.latitude, lng: updatedAddress.longitude },
         });
     }

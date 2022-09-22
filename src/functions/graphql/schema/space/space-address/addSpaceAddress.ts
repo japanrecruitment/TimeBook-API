@@ -1,5 +1,6 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
+import axios from "axios";
 import { mapSelections } from "graphql-map-selections";
 import { merge } from "lodash";
 import { GqlError } from "src/functions/graphql/error";
@@ -61,10 +62,16 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
     });
 
     if (space.published) {
+        // get address prefecture and city from postalcode
+        const postalCodePrefix = postalCode.slice(0, 3);
+        const { data } = await axios.get(`https://yubinbango.github.io/yubinbango-data/data/${postalCodePrefix}.js`);
+        const postalCodeData = JSON.parse(data.trim().slice(7, data.length - 3));
+        const address = postalCodeData[postalCode];
+
         await dataSources.spaceAlgolia.partialUpdateObject({
             objectID: newAddress.spaceId,
             prefecture: newAddress.prefecture.name,
-            city: newAddress.city,
+            city: address[1],
             _geoloc: { lat: newAddress.latitude, lng: newAddress.longitude },
         });
     }
