@@ -24,6 +24,7 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
     const reservation = await store.hotelRoomReservation.findFirst({
         where: { id: reservationId },
         select: {
+            id: true,
             reservee: { select: { email: true } },
             hotelRoom: { select: { id: true, hotel: { select: { accountId: true } } } },
             transaction: { select: { paymentIntentId: true } },
@@ -35,11 +36,8 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
     if (reservation.hotelRoom?.hotel?.accountId !== accountId)
         throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorize to modify this reservation" });
 
-    if (!reservation.transaction?.paymentIntentId)
-        throw new GqlError({ code: "FORBIDDEN", message: "Payment intent id not found" });
-
     await store.hotelRoomReservation.update({
-        where: { id: reservationId },
+        where: { id: reservation.id },
         data: { status: "RESERVED", approved: true, approvedOn: new Date() },
     });
 
