@@ -12,6 +12,7 @@ import {
 } from "../../core/pagination";
 import { HotelRoomReservationObject, toHotelRoomReservationSelect } from "./HotelRoomReservationObject";
 import { GqlError } from "../../../error";
+import { unionWith, uniqWith } from "lodash";
 
 type HotelRoomReservationsFilter = {
     sortOrder: Prisma.SortOrder;
@@ -39,7 +40,7 @@ const hotelRoomReservations: Reservations = async (_, { hotelId: id, paginate, f
                 select: {
                     reservations: {
                         where: { status },
-                        select: hotelRoomReservationSelect,
+                        select: { ...hotelRoomReservationSelect, updatedAt: true },
                         orderBy: { updatedAt: sortOrder },
                         take: take && take + 1,
                         skip,
@@ -50,7 +51,7 @@ const hotelRoomReservations: Reservations = async (_, { hotelId: id, paginate, f
                 select: {
                     reservations: {
                         where: { status },
-                        select: hotelRoomReservationSelect,
+                        select: { ...hotelRoomReservationSelect, updatedAt: true },
                         orderBy: { updatedAt: sortOrder },
                         take: take && take + 1,
                         skip,
@@ -64,14 +65,15 @@ const hotelRoomReservations: Reservations = async (_, { hotelId: id, paginate, f
 
     const hotelRoomReservations = hotel
         .flatMap(({ packagePlans, rooms }) => {
-            return packagePlans
+            const reservations = packagePlans
                 .flatMap(({ reservations }) => reservations)
                 .concat(rooms.flatMap(({ reservations }) => reservations));
+            return unionWith(reservations, (a, b) => a.id === b.id);
         })
         .sort((a, b) => {
             return sortOrder === "desc"
-                ? b.updatedAt.getTime() - a.updatedAt.getTime()
-                : a.updatedAt.getTime() - b.updatedAt.getTime();
+                ? b.updatedAt?.getTime() - a.updatedAt?.getTime()
+                : a.updatedAt?.getTime() - b.updatedAt?.getTime();
         });
 
     Log(hotelRoomReservations);
