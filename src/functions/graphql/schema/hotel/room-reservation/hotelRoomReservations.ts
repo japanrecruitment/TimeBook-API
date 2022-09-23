@@ -12,11 +12,11 @@ import {
 } from "../../core/pagination";
 import { HotelRoomReservationObject, toHotelRoomReservationSelect } from "./HotelRoomReservationObject";
 import { GqlError } from "../../../error";
-import { unionWith, uniqWith } from "lodash";
+import { unionWith } from "lodash";
 
 type HotelRoomReservationsFilter = {
     sortOrder: Prisma.SortOrder;
-    status: ReservationStatus;
+    status: ReservationStatus[];
 };
 
 type HotelRoomReservationsArgs = { hotelId: string; paginate: PaginationOption; filter: HotelRoomReservationsFilter };
@@ -39,7 +39,7 @@ const hotelRoomReservations: Reservations = async (_, { hotelId: id, paginate, f
             rooms: {
                 select: {
                     reservations: {
-                        where: { status },
+                        where: { status: status ? { in: status } : undefined },
                         select: { ...hotelRoomReservationSelect, updatedAt: true },
                         orderBy: { updatedAt: sortOrder },
                         take: take && take + 1,
@@ -50,7 +50,7 @@ const hotelRoomReservations: Reservations = async (_, { hotelId: id, paginate, f
             packagePlans: {
                 select: {
                     reservations: {
-                        where: { status },
+                        where: { status: status ? { in: status } : undefined },
                         select: { ...hotelRoomReservationSelect, updatedAt: true },
                         orderBy: { updatedAt: sortOrder },
                         take: take && take + 1,
@@ -86,7 +86,7 @@ export const hotelRoomReservationsTypeDefs = gql`
 
     input HotelRoomReservationsFilter {
         sortOrder: SortOrder
-        status: ReservationStatus
+        status: [ReservationStatus]
     }
 
     type Query {

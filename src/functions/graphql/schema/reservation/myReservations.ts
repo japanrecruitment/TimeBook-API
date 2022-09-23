@@ -14,7 +14,7 @@ import { ReservationObject, toReservationSelect } from "./ReservationObject";
 
 type MyReservationFilter = {
     sortOrder: Prisma.SortOrder;
-    status: ReservationStatus;
+    status: ReservationStatus[];
 };
 
 type MyReservationsArgs = { paginate: PaginationOption; filter: MyReservationFilter };
@@ -31,7 +31,7 @@ const myReservations: MyReservations = async (_, { paginate, filter }, { authDat
     const { sortOrder, status } = filter || { sortOrder: "desc" };
 
     const myReservations = await store.reservation.findMany({
-        where: { reserveeId: accountId, status },
+        where: { reserveeId: accountId, status: status ? { in: status } : undefined },
         ...toReservationSelect(mapSelections(info).data),
         orderBy: { updatedAt: sortOrder },
         take: take && take + 1,
@@ -48,7 +48,7 @@ export const myReservationsTypeDefs = gql`
 
     input MyReservationFilter {
         sortOrder: SortOrder
-        status: ReservationStatus
+        status: [ReservationStatus]
     }
 
     type Query {

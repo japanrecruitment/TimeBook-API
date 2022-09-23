@@ -15,7 +15,7 @@ import { GqlError } from "../../error";
 
 type ReservationsFilter = {
     sortOrder: Prisma.SortOrder;
-    status: ReservationStatus;
+    status: ReservationStatus[];
 };
 
 type ReservationsArgs = { spaceId: string; paginate: PaginationOption; filter: ReservationsFilter };
@@ -35,7 +35,7 @@ const reservations: Reservations = async (_, { spaceId: id, paginate, filter }, 
         where: { accountId, id },
         select: {
             reservations: {
-                where: { status },
+                where: { status: status ? { in: status } : undefined },
                 ...toReservationSelect(mapSelections(info).data),
                 orderBy: { updatedAt: sortOrder },
                 take: take && take + 1,
@@ -64,7 +64,7 @@ export const reservationsTypeDefs = gql`
 
     input ReservationsFilter {
         sortOrder: SortOrder
-        status: ReservationStatus
+        status: [ReservationStatus]
     }
 
     type Query {

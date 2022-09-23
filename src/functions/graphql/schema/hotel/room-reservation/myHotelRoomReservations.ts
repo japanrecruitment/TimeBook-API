@@ -14,7 +14,7 @@ import { Context } from "src/functions/graphql/context";
 
 type MyHotelRoomReservationFilter = {
     sortOrder: Prisma.SortOrder;
-    status: ReservationStatus;
+    status: ReservationStatus[];
 };
 
 type MyHotelRoomReservationArgs = { paginate: PaginationOption; filter: MyHotelRoomReservationFilter };
@@ -32,7 +32,7 @@ const myHotelRoomReservation: MyHotelRoomReservation = async (_, { paginate, fil
 
     const hotelRoomReservationSelect = toHotelRoomReservationSelect(mapSelections(info)?.data)?.select;
     const myHotelRoomReservation = await store.hotelRoomReservation.findMany({
-        where: { reserveeId: accountId, status },
+        where: { reserveeId: accountId, status: status ? { in: status } : undefined },
         select: hotelRoomReservationSelect,
         orderBy: { updatedAt: sortOrder },
         take: take && take + 1,
@@ -49,7 +49,7 @@ export const myHotelRoomReservationTypeDefs = gql`
 
     input MyHotelRoomReservationFilter {
         sortOrder: SortOrder
-        status: ReservationStatus
+        status: [ReservationStatus]
     }
 
     type Query {
