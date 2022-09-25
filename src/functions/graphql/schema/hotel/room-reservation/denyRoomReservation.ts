@@ -30,12 +30,9 @@ const denyRoomReservation: DenyRoomReservation = async (_, { reservationId }, { 
     if (reservation.hotelRoom?.hotel?.accountId !== accountId)
         throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorize to modify this reservation" });
 
-    if (!reservation.transaction?.paymentIntentId)
-        throw new GqlError({ code: "FORBIDDEN", message: "Payment intent id not found" });
-
     await store.hotelRoomReservation.update({
         where: { id: reservationId },
-        data: { status: "RESERVED", approved: false, approvedOn: new Date() },
+        data: { status: "DISAPPROVED", approved: false, approvedOn: new Date() },
     });
 
     await addEmailToQueue<ReservationFailedData>({
@@ -46,7 +43,7 @@ const denyRoomReservation: DenyRoomReservation = async (_, { reservationId }, { 
     });
 
     return {
-        message: "Successfully approved reservation.",
+        message: "Successfully denied reservation.",
     };
 };
 
