@@ -5,29 +5,43 @@ import { mapSelections } from "graphql-map-selections";
 import { GqlError } from "../../../../error";
 import { Context } from "../../../../context";
 import { LicenseObject, toLicenseSelect } from "./LicenseObject";
+import {
+    createPaginationResult,
+    createPaginationResultType,
+    PaginationOption,
+    PaginationResult,
+} from "../../../core/pagination";
 
-type GetMyLicensesResult = Promise<LicenseObject[]>;
+type GetMyLicensesArgs = {
+    paginate: PaginationOption;
+};
 
-type GetMyLicenses = IFieldResolver<any, Context, any, GetMyLicensesResult>;
+type GetMyLicensesResult = Promise<PaginationResult<LicenseObject>>;
 
-const getMyLicenses: GetMyLicenses = async (_, __, { authData, store }, info) => {
+type GetMyLicenses = IFieldResolver<any, Context, GetMyLicensesArgs, GetMyLicensesResult>;
+
+const getMyLicenses: GetMyLicenses = async (_, { paginate }, { authData, store }, info) => {
     const { accountId } = authData;
+
+    const { skip, take } = paginate || {};
 
     const host = await store.host.findUnique({
         where: { accountId },
-        select: { license: { select: toLicenseSelect(mapSelections(info)).select } },
+        select: { license: { select: toLicenseSelect(mapSelections(info)).select, take: take && take + 1, skip } },
     });
 
     if (!host) throw new GqlError({ code: "NOT_FOUND", message: "Host doesn't exist" });
 
     Log(host);
 
-    return host.license;
+    return createPaginationResult(host.license, take, skip);
 };
 
 export const getMyLicensesTypeDefs = gql`
+    ${createPaginationResultType("GetMyLincensesResult", "LicenseObject")}
+
     type Query {
-        getMyLicenses: [LicenseObject] @auth(requires: [host])
+        getMyLicenses(paginate: PaginationOption): GetMyLincensesResult @auth(requires: [host])
     }
 `;
 

@@ -5,25 +5,34 @@ import { mapSelections } from "graphql-map-selections";
 import { isEmpty } from "lodash";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
+import {
+    createPaginationResult,
+    createPaginationResultType,
+    PaginationOption,
+    PaginationResult,
+} from "../../core/pagination";
 import { HotelRoomObject, toHotelRoomSelect } from "./HotelRoomObject";
 
 type MyHotelRoomsArgs = {
     hotelId: string;
+    paginate: PaginationOption;
 };
 
-type MyHotelRoomsResult = HotelRoomObject[];
+type MyHotelRoomsResult = PaginationResult<HotelRoomObject>;
 
 type MyHotelRooms = IFieldResolver<any, Context, MyHotelRoomsArgs, Promise<MyHotelRoomsResult>>;
 
-const myHotelRooms: MyHotelRooms = async (_, { hotelId }, { authData, store }, info) => {
-    const { accountId } = authData || {};
+const myHotelRooms: MyHotelRooms = async (_, { hotelId, paginate }, { authData, store }, info) => {
+    const { accountId } = authData || { accountId: null };
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+
+    const { skip, take } = paginate || {};
 
     const hotelRoomSelect = toHotelRoomSelect(mapSelections(info))?.select;
 
     const myHotels = await store.hotel.findMany({
         where: { id: hotelId || undefined, accountId },
-        select: { rooms: { select: hotelRoomSelect } },
+        select: { rooms: { select: hotelRoomSelect, orderBy: { createdAt: "desc" }, take: take && take + 1, skip } },
         orderBy: { createdAt: "desc" },
     });
 
@@ -33,12 +42,14 @@ const myHotelRooms: MyHotelRooms = async (_, { hotelId }, { authData, store }, i
 
     Log(`hotelId: `, hotelId, `myHotelRooms: `, myHotelRooms);
 
-    return myHotelRooms;
+    return createPaginationResult(myHotelRooms, take, skip);
 };
 
 export const myHotelRoomsTypeDefs = gql`
+    ${createPaginationResultType("MyHotelRoomsResult", "HotelRoomObject")}
+
     type Query {
-        myHotelRooms(hotelId: ID): [HotelRoomObject] @auth(requires: [host])
+        myHotelRooms(hotelId: ID, paginate: PaginationOption): MyHotelRoomsResult @auth(requires: [host])
     }
 `;
 

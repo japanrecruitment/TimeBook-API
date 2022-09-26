@@ -1,29 +1,46 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { Context } from "../../context";
+import {
+    createPaginationResult,
+    createPaginationResultType,
+    PaginationOption,
+    PaginationResult,
+} from "../core/pagination";
 import { SpaceObject, toSpaceSelect } from "./SpaceObject";
 
-type MySpacesArgs = any;
+type MySpacesArgs = {
+    paginate: PaginationOption;
+};
 
-type MySpacesResult = Promise<Array<SpaceObject>>;
+type MySpacesResult = Promise<PaginationResult<SpaceObject>>;
 
 type MySpaces = IFieldResolver<any, Context, MySpacesArgs, MySpacesResult>;
 
-const mySpaces: MySpaces = async (_, __, { store, authData }, info) => {
+const mySpaces: MySpaces = async (_, { paginate }, { store, authData }, info) => {
     const { accountId } = authData;
+
+    const { take, skip } = paginate || {};
 
     const mySpaces = await store.space.findMany({
         where: { accountId, isDeleted: false },
         ...toSpaceSelect(mapSelections(info)),
+        take: take && take + 1,
+        skip,
     });
 
-    return mySpaces || [];
+    Log(mySpaces);
+
+    return createPaginationResult(mySpaces, take, skip);
 };
 
 export const mySpacesTypeDefs = gql`
+    ${createPaginationResultType("MySpacesResult", "SpaceObject")}
+
     type Query {
-        mySpaces: [SpaceObject] @auth(requires: [host])
+        mySpaces(paginate: PaginationOption): MySpacesResult @auth(requires: [host])
     }
 `;
 
