@@ -30,7 +30,7 @@ const myOptions: MyOptions = async (_, { hotelId, packagePlanId, spaceId, pagina
 
     const { skip, take } = paginate || {};
 
-    const optionSelect = toOptionSelect(mapSelections(info))?.select;
+    const optionSelect = toOptionSelect(mapSelections(info)?.data)?.select;
     const options = await store.option.findMany({
         where: {
             accountId,

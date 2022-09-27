@@ -32,7 +32,7 @@ const myHotels: MyHotels = async (_, { filter, paginate }, { authData, store }, 
 
     const { skip, take } = paginate || {};
 
-    const hotelSelect = toHotelSelect(mapSelections(info))?.select;
+    const hotelSelect = toHotelSelect(mapSelections(info)?.data)?.select;
 
     const myHotels = await store.hotel.findMany({
         where: { accountId, status: filter ? { in: filter.status } : undefined },

@@ -26,7 +26,7 @@ const mySpaces: MySpaces = async (_, { paginate }, { store, authData }, info) =>
 
     const mySpaces = await store.space.findMany({
         where: { accountId, isDeleted: false },
-        ...toSpaceSelect(mapSelections(info)),
+        ...toSpaceSelect(mapSelections(info)?.data),
         take: take && take + 1,
         skip,
     });

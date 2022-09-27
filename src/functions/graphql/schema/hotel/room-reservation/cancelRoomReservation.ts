@@ -36,6 +36,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             fromDateTime: true,
             reserveeId: true,
             status: true,
+            subscriptionPrice: true,
+            subscriptionUnit: true,
             reservee: { select: { suspended: true } },
             packagePlan: {
                 select: {
@@ -127,6 +129,14 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
     const paymentIntent = reservation.transaction?.responseReceivedLog as any;
 
+    if (!paymentIntent && !reservation.subscriptionPrice && !reservation.subscriptionUnit) {
+        await store.hotelRoomReservation.update({
+            where: { id: hotelRoomReservationId },
+            data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
+        });
+        return { message: `Successfully canceled reservation.` };
+    }
+
     if (!paymentIntent)
         throw new GqlError({
             code: "BAD_REQUEST",
@@ -151,6 +161,10 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
     await stripe.createPaymentIntent(paymentIntentParams);
 
+    await store.hotelRoomReservation.update({
+        where: { id: hotelRoomReservationId },
+        data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
+    });
     return { message: `Successfully canceled reservation. You have been charged ${amount} as cancellation fees.` };
 };
 

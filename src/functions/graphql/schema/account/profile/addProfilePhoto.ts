@@ -26,7 +26,7 @@ const addProfilePhoto: AddProfilePhoto = async (_, { input }, { authData, store 
             select: { profilePhoto: true },
         });
     } else {
-        updatedProfile = await store.user.update({
+        updatedProfile = await store.company.update({
             where: { id },
             data: { profilePhoto: { create: { mime, type } } },
             select: { profilePhoto: true },
@@ -46,7 +46,7 @@ const addProfilePhoto: AddProfilePhoto = async (_, { input }, { authData, store 
 
 export const addProfilePhotoTypeDefs = gql`
     type Mutation {
-        addProfilePhoto(input: ImageUploadInput!): ImageUploadResult
+        addProfilePhoto(input: ImageUploadInput!): ImageUploadResult @auth(requires: [user, host])
     }
 `;
 

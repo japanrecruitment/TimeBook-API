@@ -5,7 +5,12 @@ import { mapSelections } from "graphql-map-selections";
 import { isEmpty, take } from "lodash";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
-import { createPaginationResult, PaginationOption, PaginationResult } from "../../core/pagination";
+import {
+    createPaginationResult,
+    createPaginationResultType,
+    PaginationOption,
+    PaginationResult,
+} from "../../core/pagination";
 import { PackagePlanObject, toPackagePlanSelect } from "./PackagePlanObject";
 
 type MyPackagePlansArgs = {
@@ -23,7 +28,7 @@ const myPackagePlans: MyPackagePlans = async (_, { hotelId, paginate }, { authDa
 
     const { take, skip } = paginate || {};
 
-    const packagePlanSelect = toPackagePlanSelect(mapSelections(info))?.select;
+    const packagePlanSelect = toPackagePlanSelect(mapSelections(info)?.data)?.select;
 
     const myHotels = await store.hotel.findMany({
         where: { id: hotelId || undefined, accountId },
@@ -42,8 +47,10 @@ const myPackagePlans: MyPackagePlans = async (_, { hotelId, paginate }, { authDa
 };
 
 export const myPackagePlansTypeDefs = gql`
+    ${createPaginationResultType("MyPackagePlansResult", "PackagePlanObject")}
+
     type Query {
-        myPackagePlans(hotelId: ID): [PackagePlanObject] @auth(requires: [host])
+        myPackagePlans(hotelId: ID, paginate: PaginationOption): MyPackagePlansResult @auth(requires: [host])
     }
 `;
 

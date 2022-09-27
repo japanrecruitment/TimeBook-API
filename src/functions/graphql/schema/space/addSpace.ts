@@ -76,7 +76,7 @@ type AddSpaceResult = { space: SpaceObject; result: Result };
 type AddSpace = IFieldResolver<any, Context, AddSpaceArgs, Promise<AddSpaceResult>>;
 
 const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }) => {
-    const { accountId } = authData || {};
+    const { accountId } = authData || { accountId: null };
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const { additionalOptions, cancelPolicyId, includedOptions, ...data } = validateAddSpaceInput(input);

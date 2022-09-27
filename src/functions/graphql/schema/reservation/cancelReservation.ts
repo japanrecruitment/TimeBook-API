@@ -36,6 +36,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             fromDateTime: true,
             reserveeId: true,
             status: true,
+            subscriptionPrice: true,
+            subscriptionUnit: true,
             reservee: { select: { suspended: true } },
             space: {
                 select: {
@@ -117,6 +119,14 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
     const paymentIntent = reservation.transaction?.responseReceivedLog as any;
 
+    if (!paymentIntent && !reservation.subscriptionPrice && !reservation.subscriptionUnit) {
+        await store.reservation.update({
+            where: { id: reservationId },
+            data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
+        });
+        return { message: `Successfully canceled reservation.` };
+    }
+
     if (!paymentIntent)
         throw new GqlError({
             code: "BAD_REQUEST",
@@ -141,6 +151,10 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
     await stripe.createPaymentIntent(paymentIntentParams);
 
+    await store.reservation.update({
+        where: { id: reservationId },
+        data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
+    });
     return { message: `Successfully canceled reservation. You have been charged ${amount} as cancellation fees.` };
 };
 

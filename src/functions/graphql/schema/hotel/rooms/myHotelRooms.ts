@@ -28,7 +28,7 @@ const myHotelRooms: MyHotelRooms = async (_, { hotelId, paginate }, { authData, 
 
     const { skip, take } = paginate || {};
 
-    const hotelRoomSelect = toHotelRoomSelect(mapSelections(info))?.select;
+    const hotelRoomSelect = toHotelRoomSelect(mapSelections(info)?.data)?.select;
 
     const myHotels = await store.hotel.findMany({
         where: { id: hotelId || undefined, accountId },

@@ -22,7 +22,7 @@ const myCancelPolicies: MyCancelPolicies = async (_, { hotelId, spaceId, paginat
 
     const { skip, take } = paginate || {};
 
-    const cancelPolicySelect = toCancelPolicySelect(mapSelections(info))?.select;
+    const cancelPolicySelect = toCancelPolicySelect(mapSelections(info)?.data)?.select;
     const cancelPolices = await store.cancelPolicy.findMany({
         where: {
             accountId,

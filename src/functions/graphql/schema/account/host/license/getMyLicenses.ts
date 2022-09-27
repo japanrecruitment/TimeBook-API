@@ -27,7 +27,9 @@ const getMyLicenses: GetMyLicenses = async (_, { paginate }, { authData, store }
 
     const host = await store.host.findUnique({
         where: { accountId },
-        select: { license: { select: toLicenseSelect(mapSelections(info)).select, take: take && take + 1, skip } },
+        select: {
+            license: { select: toLicenseSelect(mapSelections(info)?.data).select, take: take && take + 1, skip },
+        },
     });
 
     if (!host) throw new GqlError({ code: "NOT_FOUND", message: "Host doesn't exist" });
