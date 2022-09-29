@@ -22,6 +22,8 @@ export type HotelRoomReservationSelect = {
     remarks: boolean;
     approved: boolean;
     approvedOn: boolean;
+    subscriptionUnit: boolean;
+    subscriptionPrice: boolean;
     hotelRoom: PrismaSelect<HotelRoomSelect>;
     packagePlan: PrismaSelect<PackagePlanSelect>;
     reservee: PrismaSelect<ProfileSelect>;
@@ -77,6 +79,8 @@ export const hotelRoomReservationObjectTypeDefs = gql`
         updatedAt: Date
         approved: Boolean
         approvedOn: Date
+        subscriptionUnit: Int
+        subscriptionPrice: Int
         hotelRoom: HotelRoomObject
         packagePlan: PackagePlanObject
         reservee: Profile
