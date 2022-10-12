@@ -11,3 +11,4 @@ export * from "./reservation-completed";
 export * from "./reservation-failed";
 export * from "./reservation-received";
 export * from "./reservation-pending";
+export * from "./contact-form";

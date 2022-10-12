@@ -18,6 +18,7 @@ import * as cancelPolicy from "./cancel-policy";
 import * as options from "./options";
 import * as stockOverride from "./stock-override";
 import * as subscription from "./subscription";
+import { contactFormTypeDefs, contactFormResolvers } from "./contact-form";
 
 const typeDefs = mergeTypeDefs([
     coreTypeDefs,
@@ -37,6 +38,7 @@ const typeDefs = mergeTypeDefs([
     options.typeDefs,
     stockOverride.typeDefs,
     subscription.typeDefs,
+    contactFormTypeDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -57,6 +59,7 @@ const resolvers = mergeResolvers([
     options.resolvers,
     stockOverride.resolvers,
     subscription.resolvers,
+    contactFormResolvers,
 ]);
 
 const schemaDirectives = merge(coreDirectives);
