@@ -22,7 +22,6 @@ const template = `
             <div class="f-fallback">
               <h1>お問い合わせメール</h1>
                 <p>
-                    {{sentDate}}
                     <br />
                     <strong>お客様種別:<strong/>
                     <br />

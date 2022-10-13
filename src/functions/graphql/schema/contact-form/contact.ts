@@ -22,7 +22,7 @@ const contactForm: ContactForm = async (_, { customerType, email, inquiryType, s
     customerType = customerType.trim();
     email = email.trim().toLocaleLowerCase();
     inquiryType = inquiryType.trim();
-    subject = subject.trim() + " " + currentDate;
+    subject = subject.trim();
     description = description.trim();
 
     // contact form email destination
