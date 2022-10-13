@@ -1,9 +1,14 @@
 import { environment } from "@utils/environment";
-import { ContactFormInput } from "src/functions/graphql/schema/contact-form/contact";
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
 
-export type ContactFormData = EmailData & ContactFormInput;
+export type ContactFormData = EmailData & {
+    customerType: string;
+    email: string;
+    inquiryType: string;
+    subject: string;
+    description: string;
+};
 
 const template = `
   ${header}
@@ -17,6 +22,8 @@ const template = `
             <div class="f-fallback">
               <h1>お問い合わせメール</h1>
                 <p>
+                    {{sentDate}}
+                    <br />
                     <strong>お客様種別:<strong/>
                     <br />
                     {{customerType}}

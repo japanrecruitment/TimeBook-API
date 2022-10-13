@@ -2,6 +2,7 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { addEmailToQueue, ContactFormData, ResetPasswordData } from "@utils/email-helper";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
+import moment from "moment";
 import { Context } from "../../context";
 import { Result } from "../core/result";
 
@@ -16,15 +17,18 @@ export type ContactFormInput = {
 type ContactForm = IFieldResolver<any, Context, ContactFormInput, Promise<Result>>;
 
 const contactForm: ContactForm = async (_, { customerType, email, inquiryType, subject, description }, __) => {
+    const currentDate = moment(new Date()).format("YYYY-MM-DD HH:mm");
+
     customerType = customerType.trim();
     email = email.trim().toLocaleLowerCase();
     inquiryType = inquiryType.trim();
-    subject = subject.trim();
+    subject = subject.trim() + " " + currentDate;
     description = description.trim();
 
     // contact form email destination
     // const recipientEmail = "info@pocketseq.com";
     const recipientEmail = "ghale.avinash@gmail.com";
+    // const recipientEmail = "support@pocketseq.com";
     const recipientName = "PocketSeq サポート";
     Log("[STARTED]: adding to queue");
 
@@ -47,6 +51,7 @@ const contactForm: ContactForm = async (_, { customerType, email, inquiryType, s
         inquiryType,
         subject,
         description,
+        sentDate: currentDate,
     });
 
     return {
