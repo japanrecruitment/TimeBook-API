@@ -27,8 +27,8 @@ const contactForm: ContactForm = async (_, { customerType, email, inquiryType, s
 
     // contact form email destination
     // const recipientEmail = "info@pocketseq.com";
-    const recipientEmail = "ghale.avinash@gmail.com";
-    // const recipientEmail = "support@pocketseq.com";
+    // const recipientEmail = "ghale.avinash@gmail.com";
+    const recipientEmail = "support@pocketseq.com";
     const recipientName = "PocketSeq サポート";
     Log("[STARTED]: adding to queue");
 
