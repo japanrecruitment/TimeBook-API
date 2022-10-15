@@ -3,6 +3,7 @@ import { chatObjectResolver, chatObjectTypeDef } from "./ChatObject";
 import { chatTypeResolver, chatTypeTypeDef } from "./ChatType";
 import { createNewChatResolver, createNewChatTypeDef } from "./createNewChat";
 import { messageObjectResolver, messageObjectTypeDef } from "./MessageObject";
+import { messagesByChatResolver, messagesByChatTypeDef } from "./messagesByChat";
 import { myChatsResolver, myChatsTypeDef } from "./myChats";
 import { sendMessageResolver, sendMessageTypeDef } from "./sendMessage";
 
@@ -13,6 +14,7 @@ export const typeDefs = mergeTypeDefs([
     messageObjectTypeDef,
     myChatsTypeDef,
     sendMessageTypeDef,
+    messagesByChatTypeDef,
 ]);
 
 export const resolvers = mergeResolvers([
@@ -22,4 +24,5 @@ export const resolvers = mergeResolvers([
     messageObjectResolver,
     myChatsResolver,
     sendMessageResolver,
+    messagesByChatResolver,
 ]);

@@ -1,37 +1,43 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { S3Lib } from "@libs/S3";
+import { BuildingType } from "@prisma/client";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
+import { isEmpty } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { AddAddressInput, validateAddAddressInput } from "../address";
 import { ImageUploadInput, ImageUploadResult } from "../media";
 import { HotelObject, toHotelSelect } from "./HotelObject";
-import { AddHotelNearestStationInput, validateHotelNearestStationInputList } from "./nearest-stations";
+import { AddHotelNearestStationInput, validateAddHotelNearestStationInputList } from "./nearest-stations";
 
 function validateAddHotelInput(input: AddHotelInput): AddHotelInput {
-    let { address, checkInTime, checkOutTime, description, name, nearestStations, photos } = input;
+    let { address, description, name, nearestStations, ...others } = input;
 
     description = description?.trim();
     name = name?.trim();
 
-    if (!description) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
+    if (isEmpty(description))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Hotel description cannot be empty" });
 
-    if (!name) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
+    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Hotel name cannot be empty" });
 
     address = validateAddAddressInput(address);
 
-    nearestStations = validateHotelNearestStationInputList(nearestStations);
+    nearestStations = validateAddHotelNearestStationInputList(nearestStations);
 
-    return { address, checkInTime, checkOutTime, description, name, nearestStations, photos };
+    return { address, description, name, nearestStations, ...others };
 }
 
 type AddHotelInput = {
     name: string;
     description: string;
+    cancelPolicyId: string;
     checkInTime: string;
     checkOutTime: string;
+    buildingType: BuildingType;
+    isPetAllowed: boolean;
     address: AddAddressInput;
     photos: ImageUploadInput[];
     nearestStations: AddHotelNearestStationInput[];
@@ -47,26 +53,25 @@ type AddHotelResult = {
 
 type AddHotel = IFieldResolver<any, Context, AddHotelArgs, Promise<AddHotelResult>>;
 
-const addHotel: AddHotel = async (_, { input }, { authData, store }, info) => {
+const addHotel: AddHotel = async (_, { input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
-
     if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
 
     const validInput = validateAddHotelInput(input);
-    const { address, checkInTime, checkOutTime, description, name, nearestStations, photos } = validInput;
+    const { address, cancelPolicyId, nearestStations, photos, ...data } = validInput;
+
+    const prefecture = await store.prefecture.findUnique({ where: { id: address.prefectureId } });
+    if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
+    const geoloc = await dataSources.googleMap.getLatLng(prefecture.name, address.city, address.addressLine1);
+    if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid address" });
 
     const hotelSelect = toHotelSelect(mapSelections(info).hotel)?.select;
-
-    Log(accountId, checkInTime, checkOutTime);
-
     const hotel = await store.hotel.create({
         data: {
-            checkInTime,
-            checkOutTime,
-            description,
-            name,
+            ...data,
             account: { connect: { id: accountId } },
-            address: { create: address },
+            address: { create: { ...address, latitude: geoloc.lat, longitude: geoloc.lng } },
+            cancelPolicy: cancelPolicyId ? { connect: { id: cancelPolicyId } } : undefined,
             nearestStations: { createMany: { data: nearestStations } },
             photos: { createMany: { data: photos.map(({ mime }) => ({ mime: mime || "image/jpeg", type: "Cover" })) } },
         },
@@ -85,7 +90,7 @@ const addHotel: AddHotel = async (_, { input }, { authData, store }, info) => {
             return { key, mime, type, url };
         });
 
-    Log(hotel,uploadRes);
+    Log(hotel, uploadRes);
 
     return {
         message: "Successfully added a hotel in a draft",
@@ -98,8 +103,11 @@ export const addHotelTypeDefs = gql`
     input AddHotelInput {
         name: String!
         description: String!
+        cancelPolicyId: ID
         checkInTime: Time
         checkOutTime: Time
+        buildingType: BuildingType
+        isPetAllowed: Boolean
         address: AddAddressInput!
         photos: [ImageUploadInput]!
         nearestStations: [AddHotelNearestStationInput]!

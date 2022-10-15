@@ -24,6 +24,7 @@ export type SpaceIndexRecord = AlgoliaRecord & {
     updatedAt?: number;
     viewCount?: number;
     photo?: string;
+    subcriptionPrice?: number[];
 };
 
 export const spaceIndex = algoliaClient.initIndex(environment.isDev() ? `space_dev` : `space_prod`);
@@ -36,6 +37,7 @@ const settings: Settings = {
         "searchable(availableAmenities)",
         "filterOnly(nearestStations)",
         "filterOnly(price.type)",
+        "filterOnly(subcriptionPrice)",
     ],
     customRanking: ["desc(rating)", "desc(viewCount)"],
     ranking: ["desc(updatedAt)", "typo", "geo", "words", "filters", "proximity", "attribute", "exact", "custom"],

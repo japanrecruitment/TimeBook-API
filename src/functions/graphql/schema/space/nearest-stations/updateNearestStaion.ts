@@ -9,6 +9,7 @@ type UpdateNearestStationInput = {
     stationId: number;
     via?: string;
     time?: number;
+    exit?: string;
 };
 
 type UpdateNearestStationArgs = { input: UpdateNearestStationInput };
@@ -19,7 +20,7 @@ type UpdateNearestStation = IFieldResolver<any, Context, UpdateNearestStationArg
 
 const updateNearestStation: UpdateNearestStation = async (_, { input }, { authData, store }) => {
     const { accountId } = authData;
-    const { spaceId, stationId, time, via } = input;
+    const { spaceId, stationId, time, via, exit } = input;
 
     if (!time && !via)
         throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited nearest station are empty" });
@@ -41,7 +42,7 @@ const updateNearestStation: UpdateNearestStation = async (_, { input }, { authDa
 
     await store.nearestStation.update({
         where: { spaceId_stationId: { spaceId, stationId } },
-        data: { time, via: via?.trim() },
+        data: { time, via: via?.trim(), exit: exit?.trim() },
     });
 
     return { message: `Successfully updated nearest station` };
@@ -53,6 +54,7 @@ export const updateNearestStationTypeDefs = gql`
         stationId: IntID!
         via: String
         time: Int
+        exit: String
     }
 
     type Mutation {

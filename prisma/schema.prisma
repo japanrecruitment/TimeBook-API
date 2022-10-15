@@ -66,6 +66,7 @@ enum PaymentProvider {
 
 enum TransactionAssetType {
   SPACE
+  HOTEL_ROOM
 }
 
 enum TransactionStatus {
@@ -83,6 +84,13 @@ enum ChatType {
   GROUP
 }
 
+enum BuildingType {
+  WHOLE_HOUSE
+  SIMPLE_ACCOMODATION
+  HOTEL
+  INN
+}
+
 enum HotelStatus {
   DRAFTED
   PUBLISHED
@@ -95,32 +103,43 @@ enum HotelPaymentTerm {
   PER_ROOM
 }
 
+enum OptionPaymentTerm {
+  PER_PERSON
+  PER_ROOM
+  PER_USE
+  PER_FLAT
+}
+
 model Account {
-  id             String          @id @default(cuid())
-  approved       Boolean         @default(false)
-  email          String          @unique @db.VarChar(255)
-  emailVerified  Boolean         @default(false)
-  phoneNumber    String?         @db.VarChar(10)
-  phoneVerified  Boolean         @default(false)
-  password       String          @db.VarChar(255)
-  roles          Role[]
-  suspended      Boolean         @default(false)
-  createdAt      DateTime        @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime        @updatedAt
-  profileType    ProfileType
-  userProfile    User?
-  companyProfile Company?
-  session        Session[]
-  myReservation  Reservation[]
-  mySpace        Space[]
-  Credit         Credit[]
-  paymentSource  PaymentSource[]
-  host           Host?
-  chats          Chat[]          @relation("_AccountsChat")
-  sentMessages   Message[]
-  myTransaction  Transaction[]
-  givenRatings   Rating[]
-  hotels         Hotel[]
+  id                      String                 @id @default(cuid())
+  approved                Boolean                @default(false)
+  email                   String                 @unique @db.VarChar(255)
+  emailVerified           Boolean                @default(false)
+  phoneNumber             String?                @db.VarChar(10)
+  phoneVerified           Boolean                @default(false)
+  password                String                 @db.VarChar(255)
+  roles                   Role[]
+  suspended               Boolean                @default(false)
+  createdAt               DateTime               @default(now()) @db.Timestamp(6)
+  updatedAt               DateTime               @updatedAt
+  profileType             ProfileType
+  userProfile             User?
+  companyProfile          Company?
+  session                 Session[]
+  myReservation           Reservation[]
+  myHotelRoomReservations HotelRoomReservation[]
+  mySpace                 Space[]
+  Credit                  Credit[]
+  paymentSource           PaymentSource[]
+  host                    Host?
+  chats                   Chat[]                 @relation("_AccountsChat")
+  sentMessages            Message[]
+  myTransaction           Transaction[]
+  givenRatings            Rating[]
+  hotels                  Hotel[]
+  cancelPolicies          CancelPolicy[]
+  options                 Option[]
+  mySubscriptions         Subscription[]
 }
 
 model PaymentSource {
@@ -243,18 +262,22 @@ model Space {
   isDeleted          Boolean          @default(false)
   suspended          Boolean          @default(false)
   published          Boolean          @default(false)
+  subcriptionPrice   Int?
   updatedAt          DateTime         @updatedAt
   accountId          String
   account            Account          @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cancelPolicyId     String?
+  cancelPolicy       CancelPolicy?    @relation(fields: [cancelPolicyId], references: [id], onDelete: SetNull)
   availableAmenities SpaceAmenities[] @relation("_SpaceAmenities")
   spaceTypes         SpaceType[]      @relation("_SpaceTypes")
+  includedOptions    Option[]         @relation(name: "_SpaceIncludedOptions")
+  additionalOptions  Option[]         @relation(name: "_SpaceAdditionalOptions")
   reservations       Reservation[]
   nearestStations    NearestStation[]
   address            Address?
   photos             Photo[]
   settings           SpaceSetting[]
   pricePlans         SpacePricePlan[]
-  cancelPolicies     CancelPolicy[]
   ratings            Rating[]
 }
 
@@ -340,57 +363,75 @@ model Rating {
 }
 
 model CancelPolicy {
-  id          String   @id @default(cuid())
-  spaceId     String
-  beforeHours Float
-  percentage  Float
-  createdAt   DateTime @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime @updatedAt
-  space       Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id           String             @id @default(cuid())
+  name         String
+  description  String?            @db.Text
+  accountId    String
+  account      Account            @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spaces       Space[]
+  hotels       Hotel[]
+  packagePlans PackagePlan[]
+  rates        CancelPolicyRate[]
+  createdAt    DateTime           @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime           @updatedAt
+}
+
+model CancelPolicyRate {
+  id             String       @id @default(cuid())
+  beforeHours    Float
+  percentage     Float
+  cancelPolicyId String
+  cancelPolicy   CancelPolicy @relation(fields: [cancelPolicyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime     @updatedAt
 }
 
 model Reservation {
-  id            String            @id @default(cuid())
-  reservationId String            @default("TB")
-  fromDateTime  DateTime          @default(now()) @db.Timestamp(6)
-  toDateTime    DateTime
-  status        ReservationStatus @default(PENDING)
-  remarks       String?           @db.Text
-  createdAt     DateTime          @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime          @updatedAt
-  space         Space             @relation(fields: [spaceId], references: [id])
-  spaceId       String
-  reservee      Account           @relation(fields: [reserveeId], references: [id])
-  reserveeId    String
-  approved      Boolean
-  approvedOn    DateTime?         @db.Timestamp(6)
-  transaction   Transaction?
+  id                String            @id @default(cuid())
+  reservationId     String            @unique
+  fromDateTime      DateTime          @default(now()) @db.Timestamp(6)
+  toDateTime        DateTime
+  status            ReservationStatus @default(PENDING)
+  remarks           String?           @db.Text
+  createdAt         DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime          @updatedAt
+  space             Space             @relation(fields: [spaceId], references: [id])
+  spaceId           String
+  reservee          Account           @relation(fields: [reserveeId], references: [id])
+  reserveeId        String
+  approved          Boolean
+  approvedOn        DateTime?         @db.Timestamp(6)
+  subscriptionUnit  Int?
+  subscriptionPrice Int?
+  transaction       Transaction?
 }
 
 model Transaction {
-  id                  String               @id @default(cuid())
-  provider            PaymentProvider      @default(STRIPE)
-  assetType           TransactionAssetType @default(SPACE)
-  assetData           Json
-  description         String               @db.Text
-  amount              Float
-  currency            String
-  brand               String
-  lastAuthorizedDate  DateTime             @db.Date
-  status              TransactionStatus
-  paymentIntentId     String?
-  requestedLog        Json?
-  responseReceivedLog Json?
-  webhookReceivedLog  Json?
-  webhookRespondedLog Json?
-  resultedLog         Json?
-  failedLog           Json?
-  createdAt           DateTime             @default(now()) @db.Timestamp(6)
-  updatedAt           DateTime             @updatedAt
-  accountId           String
-  account             Account              @relation(fields: [accountId], references: [id])
-  reservationId       String               @unique
-  reservation         Reservation          @relation(fields: [reservationId], references: [id])
+  id                     String                @id @default(cuid())
+  provider               PaymentProvider       @default(STRIPE)
+  assetType              TransactionAssetType  @default(SPACE)
+  assetData              Json
+  description            String                @db.Text
+  amount                 Float
+  currency               String
+  brand                  String
+  lastAuthorizedDate     DateTime              @db.Date
+  status                 TransactionStatus
+  paymentIntentId        String?
+  requestedLog           Json?
+  responseReceivedLog    Json?
+  webhookReceivedLog     Json?
+  webhookRespondedLog    Json?
+  resultedLog            Json?
+  failedLog              Json?
+  createdAt              DateTime              @default(now()) @db.Timestamp(6)
+  updatedAt              DateTime              @updatedAt
+  accountId              String
+  account                Account               @relation(fields: [accountId], references: [id])
+  reservationId          String?               @unique
+  reservation            Reservation?          @relation(fields: [reservationId], references: [id])
+  hotelRoomReservationId String?               @unique
+  hotelRoomReservation   HotelRoomReservation? @relation(fields: [hotelRoomReservationId], references: [id])
 }
 
 model TrainLine {
@@ -431,6 +472,7 @@ model NearestStation {
   stationId Int
   time      Int
   via       String
+  exit      String?
 
   @@id([spaceId, stationId])
 }
@@ -457,14 +499,18 @@ model Credit {
   @@unique([accountId], name: "Credit_accountId_date_key")
 }
 
-model SubscriptionPlan {
-  id          String   @id @default(cuid())
-  credit      Float
-  title       String
-  monthlyFees Float
-  yearlyFees  Float
-  createdAt   DateTime @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime @updatedAt
+model Subscription {
+  id              String    @id @default(cuid())
+  isCanceled      Boolean   @default(false)
+  canceledAt      DateTime? @db.Timestamp(6)
+  endsAt          DateTime? @db.Timestamp(6)
+  stripePriceId   String
+  stripeProductId String
+  stripeSubId     String
+  accountId       String
+  account         Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt       DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt
 }
 
 model Photo {
@@ -541,12 +587,18 @@ model Hotel {
   checkInTime     DateTime              @db.Time()
   checkOutTime    DateTime              @db.Time()
   status          HotelStatus           @default(DRAFTED)
+  buildingType    BuildingType          @default(HOTEL)
+  isPetAllowed    Boolean               @default(false)
   address         Address?
-  nearestStations HotelNearestStation[]
   accountId       String
   account         Account               @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cancelPolicyId  String?
+  cancelPolicy    CancelPolicy?         @relation(fields: [cancelPolicyId], references: [id], onDelete: SetNull)
   photos          Photo[]               @relation(name: "HotelPhoto")
   rooms           HotelRoom[]           @relation(name: "HotelRooms")
+  nearestStations HotelNearestStation[]
+  priceSchemes    PriceScheme[]
+  packagePlans    PackagePlan[]
   createdAt       DateTime              @default(now()) @db.Timestamp(6)
   updatedAt       DateTime              @updatedAt
 }
@@ -558,51 +610,69 @@ model HotelNearestStation {
   stationId  Int
   accessType String
   time       Int
+  exit       String?
 
   @@id([hotelId, stationId])
 }
 
 model HotelRoom {
-  id                 String              @id @default(cuid())
+  id                 String                  @id @default(cuid())
   name               String
-  description        String              @db.Text
+  description        String                  @db.Text
   paymentTerm        HotelPaymentTerm
   maxCapacityAdult   Int?
   maxCapacityChild   Int?
   stock              Int?
   hotelId            String
-  hotel              Hotel               @relation(name: "HotelRooms", fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  photos             Photo[]             @relation(name: "HotelRoomPhoto")
+  hotel              Hotel                   @relation(name: "HotelRooms", fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photos             Photo[]                 @relation(name: "HotelRoomPhoto")
   basicPriceSettings BasicPriceSetting[]
   priceOverrides     PriceOverride[]
-  packagePlans       PackagePlan[]
-  createdAt          DateTime            @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime            @updatedAt
+  packagePlans       HotelRoom_PackagePlan[]
+  stockOverrides     StockOverride[]
+  reservations       HotelRoomReservation[]
+  createdAt          DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime                @updatedAt
 }
 
 model BasicPriceSetting {
-  id            String       @id @default(cuid())
-  dayOfWeek     Int
-  priceSchemeId String
-  priceScheme   PriceScheme  @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  hotelRoomId   String?
-  hotelRoom     HotelRoom?   @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  packagePlanId String?
-  packagePlan   PackagePlan? @relation(fields: [packagePlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt     DateTime     @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime     @updatedAt
+  id                       String                 @id @default(cuid())
+  dayOfWeek                Int
+  priceSchemeId            String?
+  priceScheme              PriceScheme?           @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hotelRoomId              String?
+  hotelRoom                HotelRoom?             @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hotelRoom_packagePlan_id String?
+  hotelRoom_packagePlan    HotelRoom_PackagePlan? @relation(fields: [hotelRoom_packagePlan_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt                DateTime               @default(now()) @db.Timestamp(6)
+  updatedAt                DateTime               @updatedAt
 }
 
 model PriceOverride {
+  id                       String                 @id @default(cuid())
+  startDate                DateTime               @db.Timestamp(6)
+  endDate                  DateTime               @db.Timestamp(6)
+  priceSchemeId            String
+  priceScheme              PriceScheme            @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hotelRoomId              String?
+  hotelRoom                HotelRoom?             @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hotelRoom_packagePlan_id String?
+  hotelRoom_packagePlan    HotelRoom_PackagePlan? @relation(fields: [hotelRoom_packagePlan_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt                DateTime               @default(now()) @db.Timestamp(6)
+  updatedAt                DateTime               @updatedAt
+}
+
+model StockOverride {
   id            String       @id @default(cuid())
-  startDate     DateTime     @db.Date
-  endDate       DateTime     @db.Date
-  priceSchemeId String
-  priceScheme   PriceScheme  @relation(fields: [priceSchemeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  startDate     DateTime     @db.Timestamp(6)
+  endDate       DateTime     @db.Timestamp(6)
+  stock         Int
   hotelRoomId   String?
   hotelRoom     HotelRoom?   @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  optionId      String?
+  option        Option?      @relation(fields: [optionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   packagePlanId String?
-  pacakgePlan   PackagePlan? @relation(fields: [packagePlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  packagePlan   PackagePlan? @relation(fields: [packagePlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt     DateTime     @default(now()) @db.Timestamp(6)
   updatedAt     DateTime     @updatedAt
 }
@@ -631,6 +701,8 @@ model PriceScheme {
   eightChildCharge   Int?
   nineChildCharge    Int?
   tenChildCharge     Int?
+  hotelId            String
+  hotel              Hotel               @relation(fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   basicPriceSettings BasicPriceSetting[]
   priceOverrides     PriceOverride[]
   createdAt          DateTime            @default(now()) @db.Timestamp(6)
@@ -638,40 +710,100 @@ model PriceScheme {
 }
 
 model PackagePlan {
-  id                 String              @id @default(cuid())
-  name               String
-  description        String              @db.Text
-  paymentTerm        HotelPaymentTerm
-  stock              Int
-  startUsage         DateTime            @db.Date
-  endUsage           DateTime            @db.Date
-  startReservation   DateTime            @db.Date
-  endReservation     DateTime            @db.Date
-  cutOffBeforeDays   Int
-  cutOffTillTime     DateTime            @db.Time()
-  hotelRoomId        String
-  hotelRoom          HotelRoom           @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  priceSettings      BasicPriceSetting[]
-  photos             Photo[]             @relation(name: "HotelPackagePlanPhoto")
-  optionsAttachments Option[]            @relation(name: "_PackagePlanOptions")
-  priceOverrides     PriceOverride[]
-  createdAt          DateTime            @default(now()) @db.Timestamp(6)
-  updatedAt          DateTime            @updatedAt
+  id                  String                  @id @default(cuid())
+  name                String
+  description         String                  @db.Text
+  paymentTerm         HotelPaymentTerm
+  stock               Int
+  isBreakfastIncluded Boolean                 @default(false)
+  startUsage          DateTime?               @db.Timestamp(6)
+  endUsage            DateTime?               @db.Timestamp(6)
+  startReservation    DateTime?               @db.Timestamp(6)
+  endReservation      DateTime?               @db.Timestamp(6)
+  cutOffBeforeDays    Int?
+  cutOffTillTime      DateTime?               @db.Time()
+  subcriptionPrice    Int?
+  hotelId             String
+  hotel               Hotel                   @relation(fields: [hotelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cancelPolicyId      String?
+  cancelPolicy        CancelPolicy?           @relation(fields: [cancelPolicyId], references: [id], onDelete: SetNull)
+  photos              Photo[]                 @relation(name: "HotelPackagePlanPhoto")
+  includedOptions     Option[]                @relation(name: "_PackagePlanIncludedOptions")
+  additionalOptions   Option[]                @relation(name: "_PackagePlanAdditionalOptions")
+  roomTypes           HotelRoom_PackagePlan[]
+  stockOverrides      StockOverride[]
+  reservations        HotelRoomReservation[]
+  createdAt           DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt           DateTime                @updatedAt
+}
+
+model HotelRoom_PackagePlan {
+  id             String              @id @default(cuid())
+  packagePlanId  String
+  packagePlan    PackagePlan         @relation(fields: [packagePlanId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hotelRoomId    String
+  hotelRoom      HotelRoom           @relation(fields: [hotelRoomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  priceSettings  BasicPriceSetting[]
+  priceOverrides PriceOverride[]
+  createdAt      DateTime            @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime            @updatedAt
 }
 
 model Option {
-  id               String        @id @default(cuid())
+  id               String                @id @default(cuid())
   name             String
-  description      String        @db.Text
-  startUsage       DateTime      @db.Date
-  endUsage         DateTime      @db.Date
-  startReservation DateTime      @db.Date
-  endReservation   DateTime      @db.Date
-  cutOffBeforeDays Int
-  cutOffTillTime   DateTime      @db.Time()
-  aditionalPrice   Float
-  photos           Photo[]       @relation(name: "OptionPhoto")
-  packagePlans     PackagePlan[] @relation(name: "_PackagePlanOptions")
-  createdAt        DateTime      @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime      @updatedAt
+  description      String                @db.Text
+  startUsage       DateTime?             @db.Timestamp(6)
+  endUsage         DateTime?             @db.Timestamp(6)
+  startReservation DateTime?             @db.Timestamp(6)
+  endReservation   DateTime?             @db.Timestamp(6)
+  cutOffBeforeDays Int?
+  cutOffTillTime   DateTime?             @db.Time()
+  paymentTerm      OptionPaymentTerm?
+  additionalPrice  Int?
+  stock            Int?
+  accountId        String
+  account          Account               @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photos           Photo[]               @relation(name: "OptionPhoto")
+  inPackagePlans   PackagePlan[]         @relation(name: "_PackagePlanIncludedOptions")
+  adPackagePlans   PackagePlan[]         @relation(name: "_PackagePlanAdditionalOptions")
+  inSpaces         Space[]               @relation(name: "_SpaceIncludedOptions")
+  adSpaces         Space[]               @relation(name: "_SpaceAdditionalOptions")
+  priceOverrides   OptionPriceOverride[]
+  stockOverrides   StockOverride[]
+  createdAt        DateTime              @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime              @updatedAt
+}
+
+model OptionPriceOverride {
+  id        String   @id @default(cuid())
+  startDate DateTime @db.Timestamp(6)
+  endDate   DateTime @db.Timestamp(6)
+  price     Int
+  optionId  String
+  option    Option   @relation(fields: [optionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+}
+
+model HotelRoomReservation {
+  id                String            @id @default(cuid())
+  reservationId     String            @unique 
+  fromDateTime      DateTime          @default(now()) @db.Timestamp(6)
+  toDateTime        DateTime          @db.Timestamp(6)
+  status            ReservationStatus @default(PENDING)
+  remarks           String?           @db.Text
+  approved          Boolean
+  approvedOn        DateTime?         @db.Timestamp(6)
+  subscriptionUnit  Int?
+  subscriptionPrice Int?
+  hotelRoomId       String
+  hotelRoom         HotelRoom         @relation(fields: [hotelRoomId], references: [id])
+  packagePlanId     String
+  packagePlan       PackagePlan       @relation(fields: [packagePlanId], references: [id])
+  reserveeId        String
+  reservee          Account           @relation(fields: [reserveeId], references: [id])
+  transaction       Transaction?
+  createdAt         DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime          @updatedAt
 }

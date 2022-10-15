@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { environment, Log } from "@utils/index";
+import { isEmpty, uniqWith } from "lodash";
 
 const returnURL = environment.STRIPE_CONNECT_ACCOUNT_RETURN_URL;
 const refreshURL = environment.STRIPE_CONNECT_ACCOUNT_REFRESH_URL;
@@ -7,6 +8,15 @@ const refreshURL = environment.STRIPE_CONNECT_ACCOUNT_REFRESH_URL;
 const stripe = new Stripe(process.env.STRIPE_SK, {
     apiVersion: "2020-08-27",
 });
+
+const subcriptionProductsIds = [
+    "prod_MHKkvxYDSR3Utl",
+    "prod_MHL3nbPl5b5I7y",
+    "prod_MHL95AQUXuIU5P",
+    "prod_MHLC0GjKiwd7oN",
+    "prod_MHLEuTMpuVEuDh",
+    "prod_MHLHPCH1h6bU6V",
+];
 
 interface CreateConnectAccountInput {
     email: string;
@@ -31,11 +41,19 @@ type Balance = {
     currency: string;
     amount: number;
 };
+
 export type AccountBalance = {
     available: Balance[];
     pending: Balance[];
 };
 
+export type StripeInvoice = Omit<Stripe.Invoice, "subscription"> & { subscription: StripeSubscription };
+
+export type StripePrice = Omit<Stripe.Price, "product"> & { product: Stripe.Product };
+
+export type StripeSubscriptionItem = Omit<Stripe.SubscriptionItem, "price"> & { price: StripePrice };
+
+export type StripeSubscription = Omit<Stripe.Subscription, "items"> & { items: Stripe.ApiList<StripeSubscriptionItem> };
 export class StripeLib implements IStripeUtil {
     async createConnectAccount({ email }: CreateConnectAccountInput): Promise<Stripe.Account> {
         try {
@@ -85,7 +103,7 @@ export class StripeLib implements IStripeUtil {
     async getStripeAccount(accountId: string): Promise<AccountLink> {
         // Check stripe account requirement hash
         const stripeAccount = await this.getConnectAccount(accountId);
-        if (!stripeAccount.details_submitted) {
+        if (!stripeAccount.details_submitted || stripeAccount.requirements.currently_due.length !== 0) {
             // detail submission isn't completed yet
             const accountLink = await this.createAccountLinks({
                 account: accountId,
@@ -129,10 +147,25 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
-    async getCustomer(customerId: string) {
+    async getCustomer(customerId: string): Promise<Stripe.Response<Stripe.Customer>> {
         try {
             const customer = await stripe.customers.retrieve(customerId);
-            return customer;
+            if (customer.deleted) return null;
+            return customer as any;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async setDefaultPaymentSource(
+        customerId: string,
+        paymentMethodId: string
+    ): Promise<Stripe.Response<Stripe.Customer>> {
+        try {
+            const customer = await stripe.customers.update(customerId, {
+                invoice_settings: { default_payment_method: paymentMethodId },
+            });
+            return customer as any;
         } catch (error) {
             console.log(error);
         }
@@ -143,6 +176,15 @@ export class StripeLib implements IStripeUtil {
             const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
                 customer: customerId,
             });
+            return paymentMethod;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async detachPaymentMethodToCustomer(paymentMethodId: string) {
+        try {
+            const paymentMethod = await stripe.paymentMethods.detach(paymentMethodId);
             return paymentMethod;
         } catch (error) {
             console.log(error);
@@ -167,7 +209,7 @@ export class StripeLib implements IStripeUtil {
 
     async retrieveCard(customerId: string) {
         try {
-            const cards = (await (await this.listSources(customerId, "card")).data) as Array<Stripe.PaymentMethod>;
+            const cards = (await this.listSources(customerId, "card")).data as Array<Stripe.PaymentMethod>;
             Log("retriveCard cards", cards);
             return cards;
         } catch (error) {
@@ -247,6 +289,184 @@ export class StripeLib implements IStripeUtil {
             return intent;
         } catch (error) {
             Log("[FAILED]: Capturing stripe payment intent", error);
+            return error;
+        }
+    }
+
+    async createSubscription(
+        customerId: string,
+        priceId: string,
+        productType: string,
+        accountId: string
+    ): Promise<Stripe.Response<Stripe.Subscription>> {
+        try {
+            Log("[STARTED]: Creating subscription");
+            const subscription = await stripe.subscriptions.create({
+                customer: customerId,
+                items: [{ price: priceId }],
+                collection_method: "charge_automatically",
+                metadata: { productType, accountId },
+                // payment_behavior: "default_incomplete",
+                // expand: ["latest_invoice.payment_intent"],
+            });
+            Log("[COMPLETED]: Creating subscription", subscription);
+            return subscription as any;
+        } catch (error) {
+            Log("[FAILED]: Creating subscription", error);
+            throw error;
+        }
+    }
+
+    async updateSubscriptionMetadata(
+        subscriptionId: string,
+        metadata: object
+    ): Promise<Stripe.Response<Stripe.Subscription>> {
+        try {
+            Log("[STARTED]: Updating subscription");
+            const subscription = await stripe.subscriptions.update(subscriptionId, { metadata: { ...metadata } });
+            Log("[COMPLETED]: Updating subscription", subscription);
+            return subscription as any;
+        } catch (error) {
+            Log("[FAILED]: Updating subscription", error);
+            throw error;
+        }
+    }
+
+    async cancelSubscription(subscriptionId: string): Promise<Stripe.Response<Stripe.Subscription>> {
+        try {
+            Log("[STARTED]: Canceling subscription");
+            const subscription = await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true });
+            Log("[COMPLETED]: Canceling subscription", subscription);
+            return subscription as any;
+        } catch (error) {
+            Log("[FAILED]: Canceling subscription", error);
+            return error;
+        }
+    }
+
+    async retrieveSubscription(subscriptionId: string): Promise<StripeSubscription> {
+        try {
+            if (!subscriptionId) return;
+            Log("[STARTED]: Retrieving stripe subscription");
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            if (!subscription) return;
+            const productIds = subscription.items.data.flatMap(({ price }) => price.product as string);
+            const products = await stripe.products.list({ ids: productIds });
+            const result: StripeSubscription = {
+                ...subscription,
+                items: {
+                    ...subscription.items,
+                    data: subscription.items.data.map((subItem) => ({
+                        ...subItem,
+                        price: {
+                            ...subItem.price,
+                            product: products.data.find((product) => product.id === subItem.price.product),
+                        },
+                    })),
+                },
+            };
+            Log("[COMPLETED]: Retrieving stripe subscription", result);
+            return result;
+        } catch (error) {
+            Log("[FAILED]: Retrieving stripe subscription", error);
+            return error;
+        }
+    }
+
+    async listSubscriptions(accountId: string, productType?: string): Promise<StripeSubscription[]> {
+        try {
+            Log("[STARTED]: Retrieving stripe subscription list");
+            let query = `metadata['accountId']: '${accountId}' AND status: 'active'`;
+            query = productType ? `${query} AND metadata['productType']: '${productType}'` : query;
+            const subscriptions = await stripe.subscriptions.search({ query });
+            if (isEmpty(subscriptions.data)) return [];
+            const productIds = subscriptions.data
+                .flatMap(({ items }) => items.data)
+                .flatMap(({ price }) => price.product as string);
+            const products = await stripe.products.list({ ids: productIds });
+            Log("[COMPLETED]: Retrieving stripe subscription list", subscriptions);
+            return subscriptions.data.map((sub) => ({
+                ...sub,
+                items: {
+                    ...sub.items,
+                    data: sub.items.data.map((subItem) => ({
+                        ...subItem,
+                        price: {
+                            ...subItem.price,
+                            product: products.data.find((product) => product.id === subItem.price.product),
+                        },
+                    })),
+                },
+            }));
+        } catch (error) {
+            Log("[FAILED]: Retrieving stripe subscription list", error);
+            return error;
+        }
+    }
+
+    async retrievePrice(priceId: string): Promise<Stripe.Response<StripePrice>> {
+        try {
+            Log("[STARTED]: Retrieving stripe price");
+            const price = await stripe.prices.retrieve(priceId, { expand: ["product"] });
+            Log("[COMPLETED]: Retrieving stripe price", price);
+            return price as any;
+        } catch (error) {
+            Log("[FAILED]: Retrieving stripe price", error);
+            return error;
+        }
+    }
+
+    async listPrices(): Promise<Stripe.Response<StripePrice[]>> {
+        try {
+            Log("[STARTED]: Fetching stripe subscription prices");
+            const prices = await stripe.prices.search({
+                query: subcriptionProductsIds.map((id) => `product: '${id}'`).join(" OR "),
+                expand: ["data.product"],
+                limit: 18,
+            });
+            Log("[COMPLETED]: Fetching stripe subscription prices", prices);
+            return prices.data as any;
+        } catch (error) {
+            Log("[FAILED]: Fetching stripe subscription prices", error);
+            return error;
+        }
+    }
+
+    async listInvoices(customerId: string, after?: string, take: number = 10): Promise<StripeInvoice[]> {
+        try {
+            Log("[STARTED]: Fetching stripe invoices");
+            const invoices = await stripe.invoices.list({
+                customer: customerId,
+                status: "paid",
+                expand: ["data.subscription"],
+                limit: take,
+                starting_after: after,
+            });
+            if (isEmpty(invoices) || isEmpty(invoices.data)) return;
+            const products = await stripe.products.list({ ids: subcriptionProductsIds });
+            const result: StripeInvoice[] = invoices.data.map((invoice) => {
+                const subscription = invoice.subscription as Stripe.Subscription;
+                return {
+                    ...invoice,
+                    subscription: {
+                        ...subscription,
+                        items: {
+                            ...subscription.items,
+                            data: subscription.items.data.map((subItem) => ({
+                                ...subItem,
+                                price: {
+                                    ...subItem.price,
+                                    product: products.data.find((product) => product.id === subItem.price.product),
+                                },
+                            })),
+                        },
+                    },
+                };
+            });
+            Log("[COMPLETED]: Fetching stripe invoices", result);
+            return result;
+        } catch (error) {
+            Log("[FAILED]: Fetching stripe invoices", error);
             return error;
         }
     }

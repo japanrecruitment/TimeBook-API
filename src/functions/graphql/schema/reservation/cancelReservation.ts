@@ -3,6 +3,7 @@ import { StripeLib } from "@libs/paymentProvider";
 import { appConfig } from "@utils/appConfig";
 import { environment } from "@utils/environment";
 import { gql } from "apollo-server-core";
+import { isEmpty } from "lodash";
 import moment from "moment";
 import Stripe from "stripe";
 import { Context } from "../../context";
@@ -35,14 +36,13 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             fromDateTime: true,
             reserveeId: true,
             status: true,
+            subscriptionPrice: true,
+            subscriptionUnit: true,
             reservee: { select: { suspended: true } },
             space: {
                 select: {
                     account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } },
-                    cancelPolicies: {
-                        orderBy: { beforeHours: "asc" },
-                        select: { id: true, beforeHours: true, percentage: true },
-                    },
+                    cancelPolicy: { select: { rates: { orderBy: { beforeHours: "asc" } } } },
                 },
             },
             transaction: { select: { amount: true, paymentIntentId: true, responseReceivedLog: true } },
@@ -84,8 +84,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
 
     if (!isHost) {
-        const cancelPolicies = reservation.space.cancelPolicies;
-        if (cancelPolicies.length <= 0) {
+        const cancelPolicyRates = reservation.space.cancelPolicy?.rates;
+        if (isEmpty(cancelPolicyRates)) {
             await store.reservation.update({
                 where: { id: reservationId },
                 data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
@@ -94,7 +94,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
         }
 
         const currDateMillis = Date.now();
-        for (const { beforeHours, percentage } of cancelPolicies) {
+        for (const { beforeHours, percentage } of cancelPolicyRates) {
             const beforeHrsDateMillis = moment(reservation.fromDateTime)
                 .subtract(beforeHours, "hours")
                 .toDate()
@@ -117,7 +117,21 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     const amount = cancellationChargeRate * reservation.transaction.amount;
     const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
 
-    const paymentIntent = reservation.transaction.responseReceivedLog as any;
+    const paymentIntent = reservation.transaction?.responseReceivedLog as any;
+
+    if (!paymentIntent && !reservation.subscriptionPrice && !reservation.subscriptionUnit) {
+        await store.reservation.update({
+            where: { id: reservationId },
+            data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
+        });
+        return { message: `Successfully canceled reservation.` };
+    }
+
+    if (!paymentIntent)
+        throw new GqlError({
+            code: "BAD_REQUEST",
+            message: "Payment intent not found in your reservation transaction.",
+        });
 
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
         amount,
@@ -137,6 +151,10 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
     await stripe.createPaymentIntent(paymentIntentParams);
 
+    await store.reservation.update({
+        where: { id: reservationId },
+        data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
+    });
     return { message: `Successfully canceled reservation. You have been charged ${amount} as cancellation fees.` };
 };
 

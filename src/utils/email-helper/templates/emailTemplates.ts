@@ -9,6 +9,7 @@ import reservationReceived from "./reservation-received";
 import reservationCompleted from "./reservation-completed";
 import reservationFailed from "./reservation-failed";
 import reservationPending from "./reservation-pending";
+import contactForm from "./contact-form";
 
 export const emailTemplates = {
     "email-verification": emailVerification,
@@ -22,6 +23,7 @@ export const emailTemplates = {
     "reservation-completed": reservationCompleted,
     "reservation-failed": reservationFailed,
     "reservation-pending": reservationPending,
+    "contact-form": contactForm,
 };
 
 export type EmailTemplates = keyof typeof emailTemplates;

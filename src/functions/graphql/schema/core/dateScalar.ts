@@ -1,3 +1,4 @@
+import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { GraphQLScalarType, Kind } from "graphql";
 

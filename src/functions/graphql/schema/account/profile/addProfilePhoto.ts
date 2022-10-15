@@ -1,37 +1,50 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { S3Lib } from "@libs/index";
 import { gql } from "apollo-server-core";
+import { GqlError } from "../../../error";
 import { Context } from "../../../context";
 import { ImageUploadInput, ImageUploadResult } from "../../media";
 
-type AddProfilePhotoArgs = { input: ImageUploadInput };
+type AddProfilePhotoArgs = { input: ImageUploadInput; uploadInHost: boolean };
 
 type AddProfilePhotoResult = Promise<ImageUploadResult>;
 
 type AddProfilePhoto = IFieldResolver<any, Context, AddProfilePhotoArgs, AddProfilePhotoResult>;
 
-const addProfilePhoto: AddProfilePhoto = async (_, { input }, { authData, store }, info) => {
+const addProfilePhoto: AddProfilePhoto = async (_, { input, uploadInHost }, { authData, store }, info) => {
+    const { accountId, id, profileType, roles } = authData || {};
+    if (!accountId || !id) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+
     // check input
     const type = "Profile";
     const mime = input.mime || "image/jpeg";
 
-    const { id, profileType } = authData;
-
     // add record in DB
     let updatedProfile;
-    if (profileType === "UserProfile") {
-        updatedProfile = await store.user.update({
-            where: { id },
+    if (uploadInHost) {
+        if (!roles.includes("host")) throw new GqlError({ code: "FORBIDDEN", message: "You are not authorized!!" });
+        updatedProfile = await store.host.update({
+            where: { accountId },
             data: { profilePhoto: { create: { mime, type } } },
             select: { profilePhoto: true },
         });
     } else {
-        updatedProfile = await store.user.update({
-            where: { id },
-            data: { profilePhoto: { create: { mime, type } } },
-            select: { profilePhoto: true },
-        });
+        if (profileType === "UserProfile") {
+            updatedProfile = await store.user.update({
+                where: { id },
+                data: { profilePhoto: { create: { mime, type } } },
+                select: { profilePhoto: true },
+            });
+        } else {
+            updatedProfile = await store.company.update({
+                where: { id },
+                data: { profilePhoto: { create: { mime, type } } },
+                select: { profilePhoto: true },
+            });
+        }
     }
+
+    if (!updatedProfile) throw new GqlError({ code: "FORBIDDEN", message: "Profile not found!!" });
 
     const { profilePhoto } = updatedProfile;
 
@@ -46,7 +59,8 @@ const addProfilePhoto: AddProfilePhoto = async (_, { input }, { authData, store 
 
 export const addProfilePhotoTypeDefs = gql`
     type Mutation {
-        addProfilePhoto(input: ImageUploadInput!): ImageUploadResult
+        addProfilePhoto(input: ImageUploadInput!, uploadInHost: Boolean): ImageUploadResult
+            @auth(requires: [user, host])
     }
 `;
 

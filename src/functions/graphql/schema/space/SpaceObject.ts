@@ -2,7 +2,7 @@ import { gql } from "apollo-server-core";
 import { Space } from "@prisma/client";
 import { AddressObject, AddressSelect, toAddressSelect } from "../address";
 import { PrismaSelect } from "graphql-map-selections";
-import { isEmpty } from "lodash";
+import { isEmpty, uniqWith } from "lodash";
 import { omit } from "@utils/object-helper";
 import { NearestStationObject, NearestStationSelect, toNearestStationSelect } from "./nearest-stations";
 import { SpacePricePlanObject, SpacePricePlanSelect, toSpacePricePlanSelect } from "./space-price-plans";
@@ -15,6 +15,10 @@ import { SpaceTypeObject, SpaceTypeSelect, toSpaceTypeSelect } from "./space-typ
 import { SpaceAmenitiesObject, SpaceAmenitiesSelect, toSpaceAmenitiesSelect } from "./space-amenities";
 import { SpaceSettingObject, SpaceSettingSelect, toSpaceSettingSelect } from "./space-setting";
 import { RatingObject, RatingSelect, toRatingSelect } from "./ratings/RatingObject";
+import { OptionObject, OptionSelect, toOptionSelect } from "../options";
+import { CancelPolicyObject, CancelPolicySelect, toCancelPolicySelect } from "../cancel-policy/CancelPolicyObject";
+import { StripeLib, StripePrice } from "@libs/paymentProvider";
+import { stripePricesToSubscriptionProducts } from "../subscription/SubscriptionProductObject";
 
 export type SpaceObject = Partial<Space> & {
     nearestStations?: Partial<NearestStationObject>[];
@@ -27,6 +31,9 @@ export type SpaceObject = Partial<Space> & {
     pricePlans?: Partial<SpacePricePlanObject>[];
     settings?: Partial<SpaceSettingObject>[];
     ratings?: Partial<RatingObject>[];
+    includedOptions?: Partial<OptionObject>[];
+    additionalOptions?: Partial<OptionObject>[];
+    cancelPolicy?: Partial<CancelPolicyObject>;
 };
 
 export type SpaceSelect = {
@@ -39,6 +46,7 @@ export type SpaceSelect = {
     needApproval: boolean;
     published: boolean;
     isDeleted: boolean;
+    subcriptionPrice: boolean;
     nearestStations: PrismaSelect<NearestStationSelect>;
     availableAmenities: PrismaSelect<SpaceAmenitiesSelect>;
     pricePlans: PrismaSelect<SpacePricePlanSelect> & { where: { isDeleted: false } };
@@ -49,6 +57,9 @@ export type SpaceSelect = {
     account: { select: { host: PrismaSelect<HostSelect> } };
     reservations: { where: any; select: { fromDateTime: boolean; toDateTime: boolean } };
     ratings: PrismaSelect<RatingSelect>;
+    includedOptions: PrismaSelect<OptionSelect>;
+    additionalOptions: PrismaSelect<OptionSelect>;
+    cancelPolicy: PrismaSelect<CancelPolicySelect>;
 };
 
 export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSelect<SpaceSelect> => {
@@ -65,6 +76,9 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         ? { where: { fromDateTime: { gte: new Date() } }, select: { fromDateTime: true, toDateTime: true } }
         : false;
     const ratingSelect = toRatingSelect(selections.ratings);
+    const includedOptionSelect = toOptionSelect(selections.includedOptions);
+    const additionalOptionSelect = toOptionSelect(selections.additionalOptions);
+    const cancelPolicySelect = toCancelPolicySelect(selections.cancelPolicy);
     const spaceSelect = omit(
         selections,
         "nearestStations",
@@ -76,7 +90,11 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         "photos",
         "host",
         "reservedDates",
-        "ratings"
+        "ratings",
+        "includedOptions",
+        "additionalOptions",
+        "cancelPolicy",
+        "subscriptionProducts"
     );
 
     console.log(spaceSelect);
@@ -91,7 +109,10 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
         !addressSelect &&
         !photosSelect &&
         !hostSelect &&
-        !reservationsSelect
+        !reservationsSelect &&
+        !includedOptionSelect &&
+        !additionalOptionSelect &&
+        !cancelPolicySelect
     )
         return defaultValue;
 
@@ -112,6 +133,10 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
             account: hostSelect ? { select: { host: hostSelect } } : false,
             reservations: reservationsSelect,
             ratings: ratingSelect,
+            includedOptions: includedOptionSelect,
+            additionalOptions: additionalOptionSelect,
+            cancelPolicy: cancelPolicySelect,
+            subcriptionPrice: true,
         } as SpaceSelect,
     };
 };
@@ -119,6 +144,19 @@ export const toSpaceSelect = (selections, defaultValue: any = false): PrismaSele
 const spaceObjectResolver: IObjectTypeResolver<SpaceObject, Context> = {
     host: ({ account }) => account?.host,
     reservedDates: ({ reservations }) => reservations,
+    subscriptionProducts: async ({ subcriptionPrice }, __, { dataSources }) => {
+        const cacheKey = `subscription:price:all`;
+        let prices = await dataSources.redis.fetch<StripePrice[]>(cacheKey);
+        if (!prices) {
+            const stripe = new StripeLib();
+            prices = await stripe.listPrices();
+            dataSources.redis.store(cacheKey, prices, 86400);
+        }
+        const products = stripePricesToSubscriptionProducts(
+            prices.filter(({ metadata }) => parseInt(metadata.priceRange) <= subcriptionPrice)
+        ).filter(({ type }) => type === "rental-space");
+        return products;
+    },
 };
 
 export const spaceObjectTypeDefs = gql`
@@ -136,6 +174,7 @@ export const spaceObjectTypeDefs = gql`
         spaceSize: Float
         needApproval: Boolean
         published: Boolean
+        subcriptionPrice: Int
         nearestStations: [NearestStationObject]
         spaceTypes: [SpaceTypeObject]
         address: AddressObject
@@ -146,6 +185,10 @@ export const spaceObjectTypeDefs = gql`
         settings: [SpaceSettingObject]
         reservedDates: [ReservedDates]
         ratings: [RatingObject]
+        includedOptions: [OptionObject]
+        additionalOptions: [OptionObject]
+        cancelPolicy: CancelPolicyObject
+        subscriptionProducts: [SubscriptionProductObject]
     }
 `;
 

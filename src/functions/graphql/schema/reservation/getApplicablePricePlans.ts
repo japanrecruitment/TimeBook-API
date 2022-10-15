@@ -1,10 +1,18 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { SpacePricePlanType } from "@prisma/client";
+import { getDurationsBetn } from "@utils/date-utils";
+import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
+import { differenceWith, isEmpty } from "lodash";
 import moment from "moment";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import ReservationPriceCalculator from "./ReservationPriceCalculator";
+
+type SelectedAdditionalOption = {
+    optionId: string;
+    quantity: number;
+};
 
 type ApplicablePricePlan = {
     title: string;
@@ -19,6 +27,8 @@ type ApplicablePricePlan = {
 };
 
 type GetApplicablePricePlansResult = {
+    spaceAmount: number;
+    optionAmount: number;
     total: number;
     duration: number;
     durationType: SpacePricePlanType;
@@ -30,6 +40,7 @@ type GetApplicablePricePlansInput = {
     durationType: SpacePricePlanType;
     fromDateTime: Date;
     spaceId: string;
+    additionalOptions?: SelectedAdditionalOption[];
 };
 
 type GetApplicablePricePlansArgs = { input: GetApplicablePricePlansInput };
@@ -42,11 +53,16 @@ type GetApplicablePricePlans = IFieldResolver<
 >;
 
 const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { store }) => {
-    const { duration, durationType, fromDateTime, spaceId } = input;
+    const { duration, durationType, fromDateTime, spaceId, additionalOptions } = input;
     if (fromDateTime.getTime() < Date.now())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid from date." });
 
     if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration." });
+
+    additionalOptions?.forEach(({ quantity }) => {
+        if (quantity && quantity < 0)
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
+    });
 
     const durationUnit: Record<SpacePricePlanType, "days" | "hours" | "minutes"> = {
         DAILY: "days",
@@ -56,31 +72,87 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
 
     const toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
 
-    const pricePlans = await store.spacePricePlan.findMany({
-        where: {
-            AND: [
-                { isDeleted: false, type: durationType, duration: { lte: duration }, spaceId },
-                { OR: [{ isDefault: true }, { fromDate: { lte: toDateTime } }, { toDate: { lte: toDateTime } }] },
-            ],
+    const { days, hours, minutes } = getDurationsBetn(fromDateTime, toDateTime);
+
+    Log("reserveSpace: durations:", days, hours, minutes);
+
+    if (days <= 0 && hours <= 0 && minutes < 5)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selection" });
+
+    const space = await store.space.findUnique({
+        where: { id: spaceId },
+        select: {
+            pricePlans: {
+                where: {
+                    AND: [
+                        { isDeleted: false, type: durationType, duration: { lte: duration }, spaceId },
+                        {
+                            OR: [
+                                { isDefault: true },
+                                { fromDate: { lte: toDateTime } },
+                                { toDate: { lte: toDateTime } },
+                            ],
+                        },
+                    ],
+                },
+                include: { overrides: true },
+            },
+            additionalOptions: additionalOptions
+                ? { where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } } }
+                : undefined,
         },
-        include: { overrides: true },
     });
 
     const { appliedReservationPlans, price } = new ReservationPriceCalculator({
         checkIn: fromDateTime,
         checkOut: toDateTime,
-        pricePlans,
+        pricePlans: space.pricePlans,
+    });
+
+    let selectedOptions = [];
+    if (!isEmpty(additionalOptions) && !isEmpty(space.additionalOptions)) {
+        differenceWith(additionalOptions, space.additionalOptions, ({ optionId }, { id }) => optionId === id).forEach(
+            ({ optionId }) => {
+                throw new GqlError({
+                    code: "BAD_USER_INPUT",
+                    message: `Option with id ${optionId} not found in the plan.`,
+                });
+            }
+        );
+        selectedOptions = space.additionalOptions.map((aOpts) => {
+            const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
+            if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
+                throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+            }
+            return { ...aOpts, quantity: bOpt.quantity };
+        });
+    }
+
+    let optionPrice = 0;
+    // Calculating option price
+    selectedOptions.forEach(({ paymentTerm, quantity, additionalPrice }) => {
+        if (additionalPrice && additionalPrice > 0) {
+            if (paymentTerm === "PER_PERSON" || paymentTerm === "PER_USE") optionPrice += quantity * additionalPrice;
+            else optionPrice += additionalPrice;
+        }
     });
 
     return {
         duration,
         durationType,
-        total: price,
+        spaceAmount: price,
+        optionAmount: optionPrice,
+        total: price + optionPrice,
         applicablePricePlans: appliedReservationPlans,
     };
 };
 
 export const getApplicablePricePlansTypeDefs = gql`
+    input SelectedAdditionalOption {
+        optionId: ID!
+        quantity: Int
+    }
+
     type ApplicablePricePlan {
         id: ID!
         title: String
@@ -96,6 +168,8 @@ export const getApplicablePricePlansTypeDefs = gql`
     }
 
     type GetApplicablePricePlansResult {
+        spaceAmount: Float
+        optionAmount: Float
         total: Float
         duration: Int
         durationType: SpacePricePlanType
@@ -107,6 +181,7 @@ export const getApplicablePricePlansTypeDefs = gql`
         durationType: SpacePricePlanType!
         fromDateTime: Date!
         spaceId: ID!
+        additionalOptions: [SelectedAdditionalOption]
     }
 
     type Query {

@@ -1,35 +1,32 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
+import { isEmpty } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
 import { SpaceObject } from "./SpaceObject";
 
-type AddSpaceInput = {
-    name: string;
-    description: string;
-    maximumCapacity?: number;
-    needApproval?: boolean;
-    numberOfSeats?: number;
-    spaceSize?: number;
-};
+function validateAddSpaceInput(input: AddSpaceInput): AddSpaceInput {
+    let {
+        description,
+        name,
+        additionalOptions,
+        cancelPolicyId,
+        includedOptions,
+        maximumCapacity,
+        needApproval,
+        numberOfSeats,
+        spaceSize,
+        subcriptionPrice,
+    } = input;
 
-type AddSpaceArgs = { input: AddSpaceInput };
+    description = description?.trim();
+    name = name?.trim();
 
-type AddSpaceResult = { space: SpaceObject; result: Result };
-
-type AddSpace = IFieldResolver<any, Context, AddSpaceArgs, Promise<AddSpaceResult>>;
-
-const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }) => {
-    const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
-
-    const { description, name, maximumCapacity, numberOfSeats, spaceSize } = input;
-
-    if (!description || !description.trim())
+    if (isEmpty(description))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
 
-    if (!name || !name.trim()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
+    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
 
     if (maximumCapacity && maximumCapacity < 0)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum capacity" });
@@ -39,26 +36,92 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
 
     if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
 
+    if (subcriptionPrice && subcriptionPrice < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid subscription price" });
+
+    if (!additionalOptions) additionalOptions = [];
+    if (!includedOptions) includedOptions = [];
+
+    return {
+        description,
+        name,
+        additionalOptions,
+        cancelPolicyId,
+        includedOptions,
+        maximumCapacity,
+        needApproval,
+        numberOfSeats,
+        spaceSize,
+        subcriptionPrice,
+    };
+}
+
+type AddSpaceInput = {
+    name: string;
+    description: string;
+    maximumCapacity?: number;
+    needApproval?: boolean;
+    numberOfSeats?: number;
+    spaceSize?: number;
+    cancelPolicyId?: string;
+    includedOptions?: string[];
+    additionalOptions?: string[];
+    subcriptionPrice?: number;
+};
+
+type AddSpaceArgs = { input: AddSpaceInput };
+
+type AddSpaceResult = { space: SpaceObject; result: Result };
+
+type AddSpace = IFieldResolver<any, Context, AddSpaceArgs, Promise<AddSpaceResult>>;
+
+const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }) => {
+    const { accountId } = authData || { accountId: null };
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+
+    const { additionalOptions, cancelPolicyId, includedOptions, ...data } = validateAddSpaceInput(input);
+
     const space = await store.space.create({
         data: {
-            ...input,
-            name: name.trim(),
-            description: description?.trim(),
+            ...data,
+            cancelPolicy: cancelPolicyId ? { connect: { id: cancelPolicyId } } : undefined,
             account: { connect: { id: accountId } },
         },
     });
 
+    let _includedOptions = [];
+    if (!isEmpty(includedOptions)) {
+        _includedOptions = await Promise.all(
+            includedOptions.map((id) =>
+                store.option.update({ where: { id: id }, data: { inSpaces: { connect: { id: space.id } } } })
+            )
+        );
+    }
+
+    let _additionalOptions = [];
+    if (!isEmpty(additionalOptions)) {
+        _additionalOptions = await Promise.all(
+            additionalOptions.map((id) =>
+                store.option.update({ where: { id: id }, data: { adSpaces: { connect: { id: space.id } } } })
+            )
+        );
+    }
+
     if (space.published) {
         await dataSources.spaceAlgolia.saveObject({
             objectID: space.id,
-            name,
-            maximumCapacity,
-            numberOfSeats,
-            spaceSize,
+            name: space.name,
+            maximumCapacity: space.maximumCapacity,
+            numberOfSeats: space.numberOfSeats,
+            spaceSize: space.spaceSize,
+            subcriptionPrice: [space.subcriptionPrice],
         });
     }
 
-    return { space, result: { message: "Successfully added a new space" } };
+    return {
+        space: { ...space, includedOptions: _includedOptions, additionalOptions: _additionalOptions },
+        result: { message: "Successfully added a new space" },
+    };
 };
 
 export const addSpaceTypeDefs = gql`
@@ -69,6 +132,10 @@ export const addSpaceTypeDefs = gql`
         needApproval: Boolean
         numberOfSeats: Int
         spaceSize: Float
+        cancelPolicyId: ID
+        includedOptions: [ID]
+        additionalOptions: [ID]
+        subcriptionPrice: Int
     }
 
     type AddSpaceResult {

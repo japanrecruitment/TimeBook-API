@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Option" ALTER COLUMN "startUsage" DROP NOT NULL,
+ALTER COLUMN "endUsage" DROP NOT NULL,
+ALTER COLUMN "startReservation" DROP NOT NULL,
+ALTER COLUMN "endReservation" DROP NOT NULL,
+ALTER COLUMN "cutOffBeforeDays" DROP NOT NULL,
+ALTER COLUMN "cutOffTillTime" DROP NOT NULL;

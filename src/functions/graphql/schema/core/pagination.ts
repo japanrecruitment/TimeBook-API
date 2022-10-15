@@ -50,11 +50,12 @@ export const createPaginationResultType = (typeName: string, resultType: string)
 export const createPaginationResult = <T extends PaginatedData>(
     data: Array<T>,
     take?: number,
-    skip?: number
+    skip?: number,
+    after?: string | number
 ): PaginationResult<T> => {
     const paginatedData = take ? data.slice(0, take) : data;
     const hasNext = take ? data.length > take : false;
-    const hasPrevious = skip ? skip > 0 : false;
+    const hasPrevious = after ? true : skip ? skip > 0 : false;
     const nextCursor = hasNext ? paginatedData[paginatedData.length - 1]?.id : undefined;
     return {
         data: paginatedData,

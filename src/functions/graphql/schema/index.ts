@@ -14,6 +14,11 @@ import * as chat from "./chat";
 import * as reservation from "./reservation";
 import * as transaction from "./transaction";
 import * as hotel from "./hotel";
+import * as cancelPolicy from "./cancel-policy";
+import * as options from "./options";
+import * as stockOverride from "./stock-override";
+import * as subscription from "./subscription";
+import { contactFormTypeDefs, contactFormResolvers } from "./contact-form";
 
 const typeDefs = mergeTypeDefs([
     coreTypeDefs,
@@ -29,6 +34,11 @@ const typeDefs = mergeTypeDefs([
     reservation.typeDefs,
     transaction.typeDefs,
     hotel.typeDefs,
+    cancelPolicy.typeDefs,
+    options.typeDefs,
+    stockOverride.typeDefs,
+    subscription.typeDefs,
+    contactFormTypeDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -45,6 +55,11 @@ const resolvers = mergeResolvers([
     reservation.resolvers,
     transaction.resolvers,
     hotel.resolvers,
+    cancelPolicy.resolvers,
+    options.resolvers,
+    stockOverride.resolvers,
+    subscription.resolvers,
+    contactFormResolvers,
 ]);
 
 const schemaDirectives = merge(coreDirectives);

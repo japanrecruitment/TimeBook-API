@@ -1,6 +1,5 @@
 import { IObjectTypeResolver } from "@graphql-tools/utils";
 import { Reservation } from "@prisma/client";
-import { Log } from "@utils/logger";
 import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import { PrismaSelect } from "graphql-map-selections";
@@ -22,6 +21,8 @@ export type ReservationSelect = {
     updatedAt: boolean;
     approved: boolean;
     approvedOn: boolean;
+    subscriptionUnit: boolean;
+    subscriptionPrice: boolean;
     reservee: PrismaSelect<ProfileSelect>;
     transaction: PrismaSelect<TransactionSelect>;
     space: PrismaSelect<SpaceSelect>;
@@ -68,6 +69,8 @@ export const reservationObjectTypeDefs = gql`
         updatedAt: Date
         approved: Boolean
         approvedOn: Date
+        subscriptionUnit: Int
+        subscriptionPrice: Int
         reservee: Profile
         space: SpaceObject
         transaction: TransactionObject

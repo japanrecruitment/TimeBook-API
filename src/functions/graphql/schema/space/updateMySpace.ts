@@ -3,6 +3,72 @@ import { Context } from "../../context";
 import { IFieldResolver } from "@graphql-tools/utils";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
+import { differenceWith, isEmpty } from "lodash";
+
+function validateUpdateMySpaceInput(input: UpdateMySpaceInput): UpdateMySpaceInput {
+    let {
+        id,
+        description,
+        name,
+        additionalOptions,
+        cancelPolicyId,
+        includedOptions,
+        maximumCapacity,
+        needApproval,
+        numberOfSeats,
+        spaceSize,
+        subcriptionPrice,
+    } = input;
+
+    description = description?.trim();
+    name = name?.trim();
+
+    if (isEmpty(description)) description = undefined;
+    if (isEmpty(name)) name = undefined;
+    if (!cancelPolicyId) cancelPolicyId = null;
+    if (!maximumCapacity) maximumCapacity = null;
+    if (!needApproval) needApproval = null;
+    if (!numberOfSeats) numberOfSeats = null;
+    if (!spaceSize) spaceSize = null;
+    if (!subcriptionPrice) subcriptionPrice = null;
+
+    if (
+        !additionalOptions &&
+        !description &&
+        !includedOptions &&
+        !maximumCapacity &&
+        !name &&
+        !numberOfSeats &&
+        !spaceSize
+    ) {
+        throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited space are empty" });
+    }
+
+    if (maximumCapacity && maximumCapacity < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum capacity" });
+
+    if (numberOfSeats && numberOfSeats < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of seats" });
+
+    if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
+
+    if (subcriptionPrice && subcriptionPrice < 0)
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid subscription price" });
+
+    return {
+        id,
+        description,
+        name,
+        additionalOptions,
+        cancelPolicyId,
+        includedOptions,
+        maximumCapacity,
+        needApproval,
+        numberOfSeats,
+        spaceSize,
+        subcriptionPrice,
+    };
+}
 
 type UpdateMySpaceInput = {
     id: string;
@@ -12,6 +78,10 @@ type UpdateMySpaceInput = {
     needApproval?: boolean;
     numberOfSeats?: number;
     spaceSize?: number;
+    cancelPolicyId?: string;
+    includedOptions?: string[];
+    additionalOptions?: string[];
+    subcriptionPrice?: number;
 };
 
 type UpdateMySpaceArgs = { input: UpdateMySpaceInput };
@@ -22,34 +92,26 @@ type UpdateMySpace = IFieldResolver<any, Context, UpdateMySpaceArgs, UpdateMySpa
 
 const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dataSources }) => {
     const { accountId } = authData;
-    const { id, description, name, maximumCapacity, numberOfSeats, spaceSize } = input;
+    const { id, additionalOptions, includedOptions, ...data } = validateUpdateMySpaceInput(input);
 
-    if (!description && !name && !maximumCapacity && !numberOfSeats && !spaceSize)
-        throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited space are empty" });
-
-    const space = await store.space.findFirst({ where: { id, isDeleted: false }, select: { accountId: true } });
+    const space = await store.space.findFirst({
+        where: { id, isDeleted: false },
+        select: {
+            id: true,
+            accountId: true,
+            additionalOptions: { select: { id: true } },
+            includedOptions: { select: { id: true } },
+        },
+    });
 
     if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
 
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    if (description?.trim() === "")
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
-
-    if (name?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
-
-    if (maximumCapacity && maximumCapacity < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum capacity" });
-
-    if (numberOfSeats && numberOfSeats < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of seats" });
-
-    if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
-
     const updatedSpace = await store.space.update({
         where: { id },
-        data: { ...input, name: name?.trim(), description: description?.trim() },
+        data,
     });
 
     if (updatedSpace.published) {
@@ -59,7 +121,44 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
             maximumCapacity: updatedSpace.maximumCapacity,
             numberOfSeats: updatedSpace.numberOfSeats,
             spaceSize: updatedSpace.spaceSize,
+            subcriptionPrice: [updatedSpace.subcriptionPrice],
         });
+    }
+
+    const includedOptionsToAdd = differenceWith(includedOptions, space.includedOptions, (a, b) => a === b.id);
+    const includedOptionsToRemove = differenceWith(space.includedOptions, includedOptions, (a, b) => a.id === b);
+    let includedOptionsResult = [];
+    if (!isEmpty(includedOptionsToAdd)) {
+        includedOptionsResult = await Promise.all(
+            includedOptionsToAdd.map((id) =>
+                store.option.update({ where: { id }, data: { inSpaces: { connect: { id: space.id } } } })
+            )
+        );
+    }
+    if (!isEmpty(includedOptionsToRemove)) {
+        await Promise.all(
+            includedOptionsToRemove.map(({ id }) =>
+                store.option.update({ where: { id }, data: { inSpaces: { disconnect: { id: space.id } } } })
+            )
+        );
+    }
+
+    const additionalOptionsToAdd = differenceWith(additionalOptions, space.additionalOptions, (a, b) => a === b.id);
+    const additionalOptionsToRemove = differenceWith(space.additionalOptions, additionalOptions, (a, b) => a.id === b);
+    let additionalOptionsResult = [];
+    if (!isEmpty(additionalOptionsToAdd)) {
+        additionalOptionsResult = await Promise.all(
+            additionalOptionsToAdd.map((id) =>
+                store.option.update({ where: { id }, data: { adSpaces: { connect: { id: space.id } } } })
+            )
+        );
+    }
+    if (!isEmpty(additionalOptionsToRemove)) {
+        await Promise.all(
+            additionalOptionsToRemove.map(({ id }) =>
+                store.option.update({ where: { id }, data: { adSpaces: { disconnect: { id: space.id } } } })
+            )
+        );
     }
 
     return { message: `Successfully updated space` };
@@ -74,6 +173,10 @@ export const updateMySpaceTypeDefs = gql`
         needApproval: Boolean
         numberOfSeats: Int
         spaceSize: Float
+        cancelPolicyId: ID
+        includedOptions: [ID]
+        additionalOptions: [ID]
+        subcriptionPrice: Int
     }
 
     type Mutation {

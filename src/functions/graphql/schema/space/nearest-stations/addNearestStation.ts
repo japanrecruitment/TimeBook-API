@@ -11,6 +11,7 @@ type AddNearestStationInput = {
     stationId: number;
     via: string;
     time: number;
+    exit: string;
 };
 
 type AddNearestStationsArgs = { spaceId: string; stations: AddNearestStationInput[] };
@@ -55,7 +56,7 @@ const addNearestStations: AddNearestStations = async (
     const nearestStationsIds = space?.nearestStations?.map(({ stationId }) => stationId);
     const nearestStationToAdd = stations
         .filter(({ stationId }) => !nearestStationsIds.includes(stationId))
-        .map(({ stationId, time, via }) => ({ stationId, time, via: via?.trim() }));
+        .map(({ stationId, time, via, exit }) => ({ stationId, time, via: via?.trim(), exit: exit?.trim() }));
 
     if (nearestStationToAdd.length <= 0)
         throw new GqlError({ message: `No new station found from submitted station list to add` });
@@ -90,6 +91,7 @@ export const addNearestStationsTypeDefs = gql`
         stationId: IntID!
         via: String!
         time: Int!
+        exit: String
     }
 
     type AddNearestStationsResult {

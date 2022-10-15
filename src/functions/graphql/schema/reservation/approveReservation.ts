@@ -20,6 +20,7 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
     const reservation = await store.reservation.findFirst({
         where: { id: reservationId },
         select: {
+            id: true,
             reservee: { select: { email: true } },
             space: { select: { id: true, accountId: true } },
             transaction: { select: { paymentIntentId: true } },
@@ -31,11 +32,8 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
     if (reservation.space.accountId !== accountId)
         throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorize to modify this reservation" });
 
-    if (!reservation.transaction.paymentIntentId)
-        throw new GqlError({ code: "FORBIDDEN", message: "Payment intent id not found" });
-
     await store.reservation.update({
-        where: { id: reservationId },
+        where: { id: reservation.id },
         data: { status: "RESERVED", approved: true, approvedOn: new Date() },
     });
 
