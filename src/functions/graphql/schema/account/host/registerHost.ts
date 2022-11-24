@@ -6,7 +6,14 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
-import { Log, encodePassword, randomNumberOfNDigits, addEmailToQueue, EmailVerificationData } from "@utils/index";
+import {
+    Log,
+    encodePassword,
+    randomNumberOfNDigits,
+    addEmailToQueue,
+    EmailVerificationData,
+    HostRegisterNotificationData,
+} from "@utils/index";
 import { StripeLib } from "@libs/index";
 
 type RegisterHostStrategy<T = any> = (input: T, context: Context) => Promise<Result>;
@@ -64,6 +71,14 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
             recipientName: name,
             verificationCode,
         }),
+        addEmailToQueue<HostRegisterNotificationData>({
+            template: "host-registration-notification",
+            recipientEmail: "support@pocketseq.com",
+            recipientName: "PocketseQ",
+            customerType: "法人",
+            name,
+            email,
+        }),
     ]);
 
     return {
@@ -119,6 +134,14 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
             recipientEmail: email,
             recipientName: `${lastName} ${firstName}`,
             verificationCode,
+        }),
+        addEmailToQueue<HostRegisterNotificationData>({
+            template: "host-registration-notification",
+            recipientEmail: "support@pocketseq.com",
+            recipientName: "PocketseQ",
+            customerType: "個人",
+            name: `${lastName} ${firstName}`,
+            email,
         }),
     ]);
 

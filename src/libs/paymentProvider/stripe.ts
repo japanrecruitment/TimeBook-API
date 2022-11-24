@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SK, {
     apiVersion: "2020-08-27",
 });
 
-const subcriptionProductsIds = [
+const subcriptionProductsIdsDev = [
     "prod_MHKkvxYDSR3Utl",
     "prod_MHL3nbPl5b5I7y",
     "prod_MHL95AQUXuIU5P",
@@ -17,6 +17,16 @@ const subcriptionProductsIds = [
     "prod_MHLEuTMpuVEuDh",
     "prod_MHLHPCH1h6bU6V",
 ];
+const subcriptionProductsIdsProd = [
+    "prod_MdnMVMcyknwVaj",
+    "prod_MdnMDFYT320DhG",
+    "prod_MdnMHjLshi1CYr",
+    "prod_MdnMLtieQrM5tl",
+    "prod_MdnMGttA1kazXy",
+    "prod_MdnME0bwFLqSdy",
+];
+
+const subcriptionProductsIds = process.env.NODE_ENV === "dev" ? subcriptionProductsIdsDev : subcriptionProductsIdsProd;
 
 interface CreateConnectAccountInput {
     email: string;
@@ -424,7 +434,7 @@ export class StripeLib implements IStripeUtil {
                 expand: ["data.product"],
                 limit: 18,
             });
-            Log("[COMPLETED]: Fetching stripe subscription prices", prices);
+            // Log("[COMPLETED]: Fetching stripe subscription prices", prices);
             return prices.data as any;
         } catch (error) {
             Log("[FAILED]: Fetching stripe subscription prices", error);

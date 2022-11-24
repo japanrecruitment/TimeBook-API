@@ -10,6 +10,7 @@ import reservationCompleted from "./reservation-completed";
 import reservationFailed from "./reservation-failed";
 import reservationPending from "./reservation-pending";
 import contactForm from "./contact-form";
+import hostRegistrationNotification from "./host-registration-notification";
 
 export const emailTemplates = {
     "email-verification": emailVerification,
@@ -24,6 +25,7 @@ export const emailTemplates = {
     "reservation-failed": reservationFailed,
     "reservation-pending": reservationPending,
     "contact-form": contactForm,
+    "host-registration-notification": hostRegistrationNotification,
 };
 
 export type EmailTemplates = keyof typeof emailTemplates;

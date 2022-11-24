@@ -12,6 +12,7 @@ type AllSubscriptionProducts = IFieldResolver<any, Context, any, Promise<AllSubs
 
 const allSubscriptionProducts: AllSubscriptionProducts = async (_, __, { dataSources }) => {
     const cacheKey = `subscription:price:all`;
+    Log(process.env.NODE_ENV);
     let prices = await dataSources.redis.fetch<StripePrice[]>(cacheKey);
     if (!prices) {
         const stripe = new StripeLib();
@@ -20,7 +21,7 @@ const allSubscriptionProducts: AllSubscriptionProducts = async (_, __, { dataSou
     }
     const products = stripePricesToSubscriptionProducts(prices);
 
-    Log(`SubscriptionPriceObject`, products);
+    // Log(`SubscriptionPriceObject`, products);
 
     return products;
 };
