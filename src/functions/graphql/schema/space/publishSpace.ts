@@ -31,7 +31,10 @@ const publishSpace: PublishSpace = async (_, { id, publish }, { authData, store,
     if (accountId !== space.accountId)
         throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
 
-    if (space.published) throw new GqlError({ code: "BAD_REQUEST", message: "Space already published" });
+    if (publish === true && space.published === true) throw new GqlError({ code: "BAD_REQUEST", message: "Space already published" });
+
+    if (publish === false && space.published === false)
+        throw new GqlError({ code: "BAD_REQUEST", message: "Space already unpublished" });
 
     if (!space.name) throw new GqlError({ code: "BAD_REQUEST", message: "Found empty space name" });
 
