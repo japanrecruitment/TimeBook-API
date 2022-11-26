@@ -190,7 +190,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             }
         }
 
-        const totalReservationHours = (fromDateTime.getTime() - toDateTime.getTime()) / 3600000;
+        const totalReservationHours = (toDateTime.getTime() - fromDateTime.getTime()) / 3600000;
         const subscriptionUnit = remSubscriptionUnit
             ? remSubscriptionUnit < Math.ceil(totalReservationHours)
                 ? remSubscriptionUnit
@@ -204,6 +204,11 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         let amount = 0;
 
         const hasRemDates = totalReservationHours - (subscriptionUnit || 0) > 0;
+
+        Log("hasRemDates", hasRemDates);
+        Log("totalReservationHours", totalReservationHours);
+        Log("subscriptionUnit", subscriptionUnit);
+
         if (hasRemDates) {
             const newFromDateTime = moment(fromDateTime).add(subscriptionUnit, "hours").toDate();
             const pricePlans = await store.spacePricePlan.findMany({
