@@ -18,14 +18,16 @@ export function expoSendNotification(notifications: NotificationObject[]) {
 
         for (let token of tokens) {
             // Check that all your push tokens appear to be valid Expo push tokens
-            if (!Expo.isExpoPushToken(token)) {
-                Log(`Push token ${token} is not a valid Expo push token`);
+            const expoToken = `ExponentPushToken[${token}]`;
+
+            if (!Expo.isExpoPushToken(expoToken)) {
+                Log(`Push token ${expoToken} is not a valid Expo push token`);
                 continue;
             }
 
             // Construct a message (see https://docs.expo.io/push-notifications/sending-notifications/)
             messages.push({
-                to: token,
+                to: expoToken ,
                 sound: "default",
                 body,
                 data,

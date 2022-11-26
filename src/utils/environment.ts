@@ -30,5 +30,5 @@ export const environment = {
     EMAIL_QUEUE_URL: process.env.EMAIL_QUEUE_URL,
     REDIS_HOST: process.env.REDIS_HOST,
     REDIS_PORT: process.env.REDIS_PORT,
-    EXPO_ACCESS_TOKEN:process.env.EXPO_ACCESS_TOKEN
+    EXPO_ACCESS_TOKEN: process.env.EXPO_ACCESS_TOKEN
 };
