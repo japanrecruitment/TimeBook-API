@@ -208,6 +208,7 @@ model Session {
   id        String   @id @default(cuid())
   revoked   Boolean  @default(false)
   userAgent String
+  deviceID  String?
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @updatedAt
   accountId String
@@ -788,7 +789,7 @@ model OptionPriceOverride {
 
 model HotelRoomReservation {
   id                String            @id @default(cuid())
-  reservationId     String            @unique 
+  reservationId     String            @unique
   fromDateTime      DateTime          @default(now()) @db.Timestamp(6)
   toDateTime        DateTime          @db.Timestamp(6)
   status            ReservationStatus @default(PENDING)

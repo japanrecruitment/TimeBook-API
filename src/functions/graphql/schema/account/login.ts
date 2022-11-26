@@ -11,6 +11,7 @@ import { ProfileObject, toCompanyProfileSelect, toUserProfileSelect } from "./pr
 type LoginInput = {
     email: string;
     password: string;
+    deviceID?: string;
 };
 
 type LoginResult = {
@@ -24,7 +25,7 @@ type LoginArgs = { input: LoginInput };
 type Login = IFieldResolver<any, Context, LoginArgs, Promise<LoginResult>>;
 
 const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
-    let { email, password } = input;
+    let { email, password, deviceID } = input;
 
     email = email.toLocaleLowerCase(); // change email to lowercase
 
@@ -56,6 +57,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     const session = await store.session.create({
         data: {
             userAgent,
+            deviceID,
             accountId: account.id,
             ipData: {
                 connectOrCreate: {
@@ -81,6 +83,7 @@ export const loginTypeDefs = gql`
     input LoginInput {
         email: String!
         password: String!
+        deviceID: String
     }
 
     type LoginResult {
