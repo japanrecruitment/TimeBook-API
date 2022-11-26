@@ -5,7 +5,7 @@ import { Log } from "../logger";
 const expo = new Expo({ accessToken: environment.EXPO_ACCESS_TOKEN });
 
 type NotificationObject<T = any> = {
-    tokens: string;
+    tokens: string[];
     body: string;
     data?: T;
 };
