@@ -14,3 +14,4 @@ export * from "./ip-helper";
 export * from "./redis";
 export * from "./stringHelper";
 export * from "./notification";
+export * from "./social-login-helper";

@@ -1,5 +1,4 @@
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
-import { merge } from "lodash";
 import { forgotPasswordResolvers, forgotPasswordTypeDefs } from "./forgotPassword";
 import { loginResolvers, loginTypeDefs } from "./login";
 import { mySessionsResolvers, mySessionsTypeDefs } from "./mySessions";

@@ -11,6 +11,7 @@ import { updateMyProfileResolvers, updateMyProfileTypeDefs } from "./updateMyPro
 import { userProfileObjectTypeDefs } from "./UserProfileObject";
 import { registerUserResolvers, registerUserTypeDefs } from "./registerUser";
 import { registerCompanyResolvers, registerCompanyTypeDefs } from "./registerCompany";
+import { socialLoginResolvers, socialLoginTypeDefs } from "./socialLogin";
 
 export const profileTypeDefs = mergeTypeDefs([
     userProfileObjectTypeDefs,
@@ -25,6 +26,7 @@ export const profileTypeDefs = mergeTypeDefs([
     approveAccountTypeDefs,
     registerUserTypeDefs,
     registerCompanyTypeDefs,
+    socialLoginTypeDefs,
 ]);
 
 export const profileResolvers = mergeResolvers([
@@ -38,6 +40,7 @@ export const profileResolvers = mergeResolvers([
     approveAccountResolvers,
     registerUserResolvers,
     registerCompanyResolvers,
+    socialLoginResolvers,
 ]);
 
 export * from "./UserProfileObject";

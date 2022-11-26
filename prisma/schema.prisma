@@ -122,6 +122,8 @@ model Account {
   suspended               Boolean                @default(false)
   createdAt               DateTime               @default(now()) @db.Timestamp(6)
   updatedAt               DateTime               @updatedAt
+  providerAccountId       String?                
+  provider                String?
   profileType             ProfileType
   userProfile             User?
   companyProfile          Company?
@@ -140,6 +142,8 @@ model Account {
   cancelPolicies          CancelPolicy[]
   options                 Option[]
   mySubscriptions         Subscription[]
+
+  @@unique([provider, providerAccountId])
 }
 
 model PaymentSource {
