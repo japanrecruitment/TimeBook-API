@@ -20,6 +20,8 @@ import { SpacePricePlanType } from "@prisma/client";
 import moment from "moment";
 import { environment } from "@utils/environment";
 import { differenceWith, isEmpty, sum } from "lodash";
+import { expoSendNotification } from "@utils/notification";
+import { fetchDeviceId } from "@utils/notification/fetch-device-id";
 
 type SelectedAdditionalOption = {
     optionId: string;
@@ -279,6 +281,8 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         // Create unique reservation Id
         const reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);
 
+        const notificationTokens = await fetchDeviceId([accountId, space.accountId]);
+
         await Promise.all([
             addEmailToQueue<ReservationReceivedData>({
                 template: "reservation-received",
@@ -294,6 +298,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 spaceId,
                 reservationId,
             }),
+            expoSendNotification([{ tokens: notificationTokens, body: "Reservation Received" }]),
         ]);
 
         const transaction = await store.transaction.create({
@@ -385,13 +390,16 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         }
 
         if (!space.needApproval) {
-            await addEmailToQueue<ReservationCompletedData>({
-                template: "reservation-completed",
-                recipientEmail: email,
-                recipientName: "",
-                spaceId,
-                reservationId,
-            });
+            await Promise.all([
+                addEmailToQueue<ReservationCompletedData>({
+                    template: "reservation-completed",
+                    recipientEmail: email,
+                    recipientName: "",
+                    spaceId,
+                    reservationId,
+                }),
+                expoSendNotification([{ tokens: notificationTokens, body: "Reservation Complete" }]),
+            ]);
         } else {
             await Promise.all([
                 addEmailToQueue<ReservationPendingData>({
@@ -408,6 +416,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     spaceId,
                     reservationId,
                 }),
+                expoSendNotification([{ tokens: notificationTokens, body: "Reservation Pending" }]),
             ]);
         }
 
@@ -424,12 +433,14 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             subscriptionUnit,
         };
     } catch (error) {
-        await addEmailToQueue<ReservationFailedData>({
-            template: "reservation-failed",
-            recipientEmail: email,
-            recipientName: "",
-            spaceId,
-        });
+        await Promise.all([
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
+                recipientEmail: email,
+                recipientName: "",
+                spaceId,
+            }),
+        ]);
         throw error;
     }
 };
