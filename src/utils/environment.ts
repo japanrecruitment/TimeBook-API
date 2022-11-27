@@ -32,4 +32,6 @@ export const environment = {
     REDIS_PORT: process.env.REDIS_PORT,
     EXPO_ACCESS_TOKEN: process.env.EXPO_ACCESS_TOKEN,
     GOOGLE_AUTH_CLIENT_ID: process.env.GOOGLE_AUTH_CLIENT_ID,
+    FACEBOOK_CLIENT_ID: process.env.FACEBOOK_CLIENT_ID,
+    FACEBOOK_CLIENT_SECRET: process.env.FACEBOOK_CLIENT_SECRET,
 };
