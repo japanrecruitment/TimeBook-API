@@ -5,6 +5,10 @@ import { VerifySocialLoginResponse } from "..";
 
 export const verifyFacebook = async (idToken: string): Promise<VerifySocialLoginResponse> => {
     try {
+        Log(
+            "VerifyToken Request URL",
+            `https://graph.facebook.com/debug_token?input_token=${idToken}&access_token=${environment.FACEBOOK_CLIENT_ID}}|${environment.FACEBOOK_CLIENT_SECRET}`
+        );
         const verifyToken = await axios.get(
             `https://graph.facebook.com/debug_token?input_token=${idToken}&access_token=${environment.FACEBOOK_CLIENT_ID}}|${environment.FACEBOOK_CLIENT_SECRET}`
         );
