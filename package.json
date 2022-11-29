@@ -9,6 +9,7 @@
         "deploy": "serverless deploy",
         "postinstall": "npm run schema:generate",
         "schema:migrate": "npx prisma migrate dev --skip-seed",
+        "schema:deploy": "npx prisma migrate deploy",
         "schema:reset": "npx prisma migrate reset --skip-seed",
         "schema:seed": "npx prisma db seed",
         "schema:generate": "npx prisma generate",
