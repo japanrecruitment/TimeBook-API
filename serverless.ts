@@ -54,6 +54,10 @@ const serverlessConfiguration: AWS = {
             ALGOLIA_SEARCH_API_KEY: "${env:ALGOLIA_SEARCH_API_KEY}",
             FRONTEND_BASE_URL: "${env:FRONTEND_BASE_URL}",
             GOOGLE_MAP_API_KEY: "${env:GOOGLE_MAP_API_KEY}",
+            EXPO_ACCESS_TOKEN: "${env:EXPO_ACCESS_TOKEN}",
+            GOOGLE_AUTH_CLIENT_ID: "${env:GOOGLE_AUTH_CLIENT_ID}",
+            FACEBOOK_CLIENT_ID: "${env:FACEBOOK_CLIENT_ID}",
+            FACEBOOK_CLIENT_SECRET: "${env:FACEBOOK_CLIENT_SECRET}",
         },
         apiGateway: {
             shouldStartNameWithService: true,

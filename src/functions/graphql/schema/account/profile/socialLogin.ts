@@ -1,10 +1,11 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { StripeLib } from "@libs/paymentProvider";
 import { ProfileType, Role } from "@prisma/client";
 import { randomNumberOfNDigits } from "@utils/compute";
-import { encodeToken, omit, pick } from "@utils/index";
+import { encodePassword, encodeToken, omit, pick } from "@utils/index";
 import { getIpData } from "@utils/ip-helper";
 import { Log } from "@utils/logger";
-import { verifySocialLogin, VerifySocialLoginResponse } from "@utils/social-login-helper";
+import { SocialProviders, verifySocialLogin, VerifySocialLoginResponse } from "@utils/social-login-helper";
 import { gql } from "apollo-server-core";
 import { merge } from "lodash";
 import { Context } from "../../../context";
@@ -12,7 +13,7 @@ import { GqlError } from "../../../error";
 import { ProfileObject } from "./ProfileObject";
 
 export type SocialLoginInput = {
-    provider: string;
+    provider: SocialProviders;
     providerAccountId: string;
     id_token: string;
     deviceID?: string;
@@ -32,7 +33,7 @@ const socialLogin: SocialLogin = async (_, { input }, { store, sourceIp, userAge
     Log("Started: social login");
     try {
         const socialAccount: VerifySocialLoginResponse = await verifySocialLogin({
-            provider: "google",
+            provider,
             token: id_token,
         });
         if (!socialAccount) throw new GqlError({ code: "BAD_USER_INPUT", message: "Wrong credentials" });
@@ -86,14 +87,29 @@ const socialLogin: SocialLogin = async (_, { input }, { store, sourceIp, userAge
                     data: {
                         email,
                         emailVerified: true,
-                        password: `${randomNumberOfNDigits(8)}`,
+                        password: encodePassword(`${randomNumberOfNDigits(8)}`),
                         profileType: ProfileType.UserProfile,
                         roles: [Role.user],
                         userProfile: {
                             create: { firstName, lastName, firstNameKana: firstName, lastNameKana: lastName },
                         },
+                        provider,
+                        providerAccountId,
                     },
                     include: { userProfile: true, companyProfile: true, host: true },
+                });
+                // stripe customer does not exists so we will make one
+                const stripe = new StripeLib();
+                const customerId = await stripe.createCustomer(newAccount.id, email);
+                await store.account.update({
+                    where: { id: newAccount.id },
+                    data: {
+                        userProfile: {
+                            update: {
+                                stripeCustomerId: customerId,
+                            },
+                        },
+                    },
                 });
             }
             Log("NEW ACCOUNT FOR SOCIAL LOGIN", newAccount);
@@ -112,7 +128,7 @@ const socialLogin: SocialLogin = async (_, { input }, { store, sourceIp, userAge
             data: {
                 userAgent,
                 deviceID,
-                accountId: account.id,
+                accountId: newAccount.id,
                 ipData: {
                     connectOrCreate: {
                         where: { ipAddress: sourceIp },
@@ -123,15 +139,16 @@ const socialLogin: SocialLogin = async (_, { input }, { store, sourceIp, userAge
         });
 
         let profile: ProfileObject = merge(
-            pick(account, "email", "phoneNumber", "profileType", "roles"),
-            account.userProfile || account.companyProfile
+            pick(newAccount, "email", "phoneNumber", "profileType", "roles"),
+            newAccount.userProfile || newAccount.companyProfile
         );
-        const accessToken = encodeToken({ accountId: account.id, ...profile }, "access", { jwtid: account.id });
-        const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
+        const accessToken = encodeToken({ accountId: newAccount.id, ...profile }, "access", { jwtid: newAccount.id });
+        const refreshToken = encodeToken({ accountId: newAccount.id }, "refresh", { jwtid: session.id });
 
-        profile = merge(profile, omit(account, "userProfile", "companyProfile"));
+        profile = merge(profile, omit(newAccount, "userProfile", "companyProfile"));
         return { profile, accessToken, refreshToken };
     } catch (error) {
+        Log(error.message);
         throw new GqlError({ code: "INTERNAL_SERVER_ERROR", message: "Something went wrong" });
     }
 };

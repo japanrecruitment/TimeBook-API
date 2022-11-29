@@ -1,8 +1,11 @@
 import { Log } from "@utils/logger";
+import { verifyFacebook } from "./providers/facebook";
 import { verifyGoogle } from "./providers/google";
 
+export type SocialProviders = "google" | "facebook";
+
 type VerifySocialLoginArgs = {
-    provider: "google";
+    provider: SocialProviders;
     token: string;
 };
 
@@ -22,6 +25,15 @@ export const verifySocialLogin = async ({
     if (provider === "google") {
         try {
             const data = verifyGoogle(token);
+            return data;
+        } catch (error) {
+            Log(error);
+            return null;
+        }
+    }
+    if (provider === "facebook") {
+        try {
+            const data = verifyFacebook(token);
             return data;
         } catch (error) {
             Log(error);

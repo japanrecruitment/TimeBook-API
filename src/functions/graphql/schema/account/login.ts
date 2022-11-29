@@ -1,5 +1,14 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { getIpData, Log, matchPassword, omit, pick, encodeToken } from "@utils/index";
+import {
+    getIpData,
+    Log,
+    matchPassword,
+    omit,
+    pick,
+    encodeToken,
+    expoSendNotification,
+    environment,
+} from "@utils/index";
 import { gql } from "apollo-server-core";
 import { mapSelections } from "graphql-map-selections";
 import { merge } from "lodash";
@@ -74,6 +83,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     );
     const accessToken = encodeToken({ accountId: account.id, ...profile }, "access", { jwtid: account.id });
     const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
+    if (deviceID) expoSendNotification([{ tokens: [deviceID], body: `Welcome to ${environment.APP_READABLE_NAME}` }]);
 
     profile = merge(profile, omit(account, "userProfile", "companyProfile"));
     return { profile, accessToken, refreshToken };
