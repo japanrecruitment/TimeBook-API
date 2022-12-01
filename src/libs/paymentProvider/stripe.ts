@@ -26,7 +26,10 @@ const subcriptionProductsIdsProd = [
     "prod_MdnME0bwFLqSdy",
 ];
 
-const subcriptionProductsIds = process.env.NODE_ENV === "dev" ? subcriptionProductsIdsDev : subcriptionProductsIdsProd;
+const subcriptionProductsIds =
+    process.env.NODE_ENV === "dev" || process.env.NODE_ENV === "development"
+        ? subcriptionProductsIdsDev
+        : subcriptionProductsIdsProd;
 
 interface CreateConnectAccountInput {
     email: string;
@@ -429,12 +432,14 @@ export class StripeLib implements IStripeUtil {
     async listPrices(): Promise<Stripe.Response<StripePrice[]>> {
         try {
             Log("[STARTED]: Fetching stripe subscription prices");
+            Log("subcriptionProductsIds", subcriptionProductsIds);
+            Log("process.env.NODE_ENV", process.env.NODE_ENV);
             const prices = await stripe.prices.search({
                 query: subcriptionProductsIds.map((id) => `product: '${id}'`).join(" OR "),
                 expand: ["data.product"],
                 limit: 18,
             });
-            // Log("[COMPLETED]: Fetching stripe subscription prices", prices);
+            Log("[COMPLETED]: Fetching stripe subscription prices", prices);
             return prices.data as any;
         } catch (error) {
             Log("[FAILED]: Fetching stripe subscription prices", error);

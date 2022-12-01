@@ -1,4 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { StripeLib } from "@libs/paymentProvider";
 import { ProfileType, Role } from "@prisma/client";
 import { encodePassword } from "@utils/authUtils";
 import { randomNumberOfNDigits } from "@utils/compute";
@@ -44,6 +45,20 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
     });
 
     Log(newAccount);
+
+    // stripe customer does not exists so we will make one
+    const stripe = new StripeLib();
+    const customerId = await stripe.createCustomer(newAccount.id, email);
+    await store.account.update({
+        where: { id: newAccount.id },
+        data: {
+            userProfile: {
+                update: {
+                    stripeCustomerId: customerId,
+                },
+            },
+        },
+    });
 
     const verificationCode = randomNumberOfNDigits(6);
     await Promise.all([
