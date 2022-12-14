@@ -27,10 +27,11 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
         },
     });
 
-    if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "Reservation doesn't exist" });
+    // Reservation not found
+    if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "予約が見つかりませんでした。" });
 
-    if (reservation.space.accountId !== accountId)
-        throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorize to modify this reservation" });
+    // unauthorized access
+    if (reservation.space.accountId !== accountId) throw new GqlError({ code: "UNAUTHORIZED", message: "無許可" });
 
     await store.reservation.update({
         where: { id: reservation.id },
@@ -45,8 +46,9 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
         reservationId,
     });
 
+    // reservation approved.
     return {
-        message: "Successfully approved reservation.",
+        message: "ご予約が成立いたしました。",
     };
 };
 

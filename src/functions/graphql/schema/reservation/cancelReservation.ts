@@ -49,26 +49,31 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
         },
     });
 
-    if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "Reservation not found" });
+    // Reservation not found
+    if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "予約が見つかりませんでした。" });
 
+    // Unauthorized
     if (reservation.reserveeId !== accountId && reservation.space.account.id !== accountId)
-        throw new GqlError({ code: "UNAUTHORIZED", message: "Not Authorized" });
+        throw new GqlError({ code: "UNAUTHORIZED", message: "無許可" });
 
     if (reservation.status === "CANCELED")
-        throw new GqlError({ code: "BAD_REQUEST", message: "Reservation already canceled" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "予約はすでにキャンセルされています。" });
 
     if (reservation.status === "DISAPPROVED")
-        throw new GqlError({ code: "BAD_REQUEST", message: "Cannot cancel a disapproved reservation" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "承認されなかった予約をキャンセルすることはできません。" });
 
     if (reservation.status === "FAILED")
-        throw new GqlError({ code: "BAD_REQUEST", message: "Cannot cancel a failed reservation" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "失敗した予約をキャンセルすることはできません。" });
 
     const isHost = reservation.space.account.id === accountId;
 
     if (isHost && (reservation.space.account.suspended || reservation.space.account.host.suspended))
-        throw new GqlError({ code: "FORBIDDEN", message: "You are suspended. Please contact our support team." });
+        throw new GqlError({
+            code: "FORBIDDEN",
+            message: "あなたのアカウントは停止されました。 サポートまでご連絡ください。",
+        });
     else if (!isHost && reservation.reservee.suspended)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are suspended. Please contact our support team." });
+        throw new GqlError({ code: "FORBIDDEN", message: "ユーザーは停止されています。" });
 
     const stripe = new StripeLib();
     await stripe.cancelPaymentIntent(reservation.transaction.paymentIntentId);
@@ -78,7 +83,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             where: { id: reservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
-        return { message: "Successfully canceled reservation." };
+        return { message: "予約がキャンセルされました。" };
     }
 
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
@@ -90,7 +95,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
                 where: { id: reservationId },
                 data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
             });
-            return { message: "Successfully canceled reservation." };
+            return { message: "予約がキャンセルされました。" };
         }
 
         const currDateMillis = Date.now();
@@ -111,7 +116,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             where: { id: reservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
-        return { message: "Successfully canceled reservation." };
+        return { message: "予約がキャンセルされました。" };
     }
 
     const amount = cancellationChargeRate * reservation.transaction.amount;
@@ -124,7 +129,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             where: { id: reservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
-        return { message: `Successfully canceled reservation.` };
+        return { message: `予約がキャンセルされました。` };
     }
 
     if (!paymentIntent)
@@ -155,7 +160,9 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
         where: { id: reservationId },
         data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
     });
-    return { message: `Successfully canceled reservation. You have been charged ${amount} as cancellation fees.` };
+    return {
+        message: `予約がキャンセルされました。キャンセル料として${amount}円いただきました。`,
+    };
 };
 
 export const cancelReservationTypeDefs = gql`
