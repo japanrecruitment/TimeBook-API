@@ -26,10 +26,7 @@ const subcriptionProductsIdsProd = [
     "prod_MdnME0bwFLqSdy",
 ];
 
-const subcriptionProductsIds =
-    process.env.NODE_ENV === "dev" || process.env.NODE_ENV === "development"
-        ? subcriptionProductsIdsDev
-        : subcriptionProductsIdsProd;
+const subcriptionProductsIds = process.env.ENV === "dev" ? subcriptionProductsIdsDev : subcriptionProductsIdsProd;
 
 interface CreateConnectAccountInput {
     email: string;

@@ -32,6 +32,7 @@ const serverlessConfiguration: AWS = {
         },
         environment: {
             NODE_ENV: "${opt:stage, 'dev'}",
+            ENV: "${env:ENV}",
             DB_URL: "${env:DB_URL}",
             TOKEN_SECRET: "${env:TOKEN_SECRET}",
             REFRESH_TOKEN_SECRET: "${env:REFRESH_TOKEN_SECRET}",
@@ -55,7 +56,9 @@ const serverlessConfiguration: AWS = {
             FRONTEND_BASE_URL: "${env:FRONTEND_BASE_URL}",
             GOOGLE_MAP_API_KEY: "${env:GOOGLE_MAP_API_KEY}",
             EXPO_ACCESS_TOKEN: "${env:EXPO_ACCESS_TOKEN}",
-            GOOGLE_AUTH_CLIENT_ID: "${env:GOOGLE_AUTH_CLIENT_ID}",
+            GOOGLE_AUTH_WEB_CLIENT_ID: "${env:GOOGLE_AUTH_WEB_CLIENT_ID}",
+            GOOGLE_AUTH_IOS_CLIENT_ID: "${env:GOOGLE_AUTH_IOS_CLIENT_ID}",
+            GOOGLE_AUTH_ANDROID_CLIENT_ID: "${env:GOOGLE_AUTH_ANDROID_CLIENT_ID}",
             FACEBOOK_CLIENT_ID: "${env:FACEBOOK_CLIENT_ID}",
             FACEBOOK_CLIENT_SECRET: "${env:FACEBOOK_CLIENT_SECRET}",
         },

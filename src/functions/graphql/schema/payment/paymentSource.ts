@@ -25,6 +25,11 @@ const paymentSource: TPaymentSource = async (_, __, { authData, store }, info) =
     try {
         const { accountId } = authData;
 
+        const test = await store.account.findUnique({
+            where: { id: accountId },
+            select: { userProfile: { select: { stripeCustomerId: true } } },
+        });
+
         const account = await store.account.findUnique({
             where: { id: accountId },
             select: { userProfile: { select: { stripeCustomerId: true } } },

@@ -17,7 +17,7 @@ const allSubscriptionProducts: AllSubscriptionProducts = async (_, __, { dataSou
     if (!prices) {
         const stripe = new StripeLib();
         prices = await stripe.listPrices();
-        Log("Prices from stripe", prices);
+        // Log("Prices from stripe", prices);
         dataSources.redis.store(cacheKey, prices, 86400);
     }
     Log("Prices sent for parsing...", prices);
