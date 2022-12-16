@@ -3,7 +3,7 @@ export default {
     events: [
         {
             schedule: {
-                rate: "cron(0 5 * * ? *)",
+                rate: "cron(0 1 * * ? *)",
             },
         },
     ],

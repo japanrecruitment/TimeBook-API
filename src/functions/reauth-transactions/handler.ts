@@ -26,12 +26,39 @@ const reauthTransactions = async (event) => {
             select: { id: true },
         });
 
-        Log("checkTransaction", transactions);
+        const fromDate = moment().startOf("day").toDate();
+        const toDate = moment().endOf("day").toDate();
+        const reservations = await store.reservation.findMany({
+            where: {
+                AND: [{ fromDateTime: { gte: fromDate } }, { fromDateTime: { lte: toDate } }],
+            },
+            select: { id: true, transaction: { select: { id: true } } },
+        });
+        const hotelReservations = await store.hotelRoomReservation.findMany({
+            where: {
+                AND: [{ fromDateTime: { gte: fromDate } }, { fromDateTime: { lte: toDate } }],
+            },
+            select: { id: true, transaction: { select: { id: true } } },
+        });
+        const captureTransactions = reservations
+            .map(({ transaction }) => transaction)
+            .concat(hotelReservations.map(({ transaction }) => transaction));
 
-        if (!transactions || transactions.length <= 0) return;
+        Log("checkTransaction", transactions);
+        Log("checkCaptureTransaction", captureTransactions);
 
         for (const transaction of transactions) {
             const body = { action: "reauthorize", transaction };
+            const result = await SQS.sendMessage({
+                DelaySeconds: 0,
+                QueueUrl: environment.TRANSACTION_QUEUE,
+                MessageBody: JSON.stringify(body),
+            }).promise();
+            Log(transaction.id, result);
+        }
+
+        for (const transaction of captureTransactions) {
+            const body = { action: "capture", transaction };
             const result = await SQS.sendMessage({
                 DelaySeconds: 0,
                 QueueUrl: environment.TRANSACTION_QUEUE,
