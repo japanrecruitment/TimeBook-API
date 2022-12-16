@@ -444,6 +444,23 @@ export class StripeLib implements IStripeUtil {
         }
     }
 
+    async transferToConnect(destination: string, amount: number, reservationId: string) {
+        try {
+            Log(`[STARTED]: Transferring ${amount} to ${destination}`);
+            const transfer = await stripe.transfers.create({
+                amount,
+                currency: "jpy",
+                destination,
+                description: reservationId,
+            });
+            Log("[COMPLETED]: Transferring amount to destination", transfer);
+            return transfer as any;
+        } catch (error) {
+            Log("[FAILED]: Transferring amount to destination", error);
+            return error;
+        }
+    }
+
     async listInvoices(customerId: string, after?: string, take: number = 10): Promise<StripeInvoice[]> {
         try {
             Log("[STARTED]: Fetching stripe invoices");

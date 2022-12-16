@@ -7,3 +7,8 @@ export const Log = (...args): void => {
         console.log(...args);
     }
 };
+
+export const ForceLog = (...args): void => {
+    args = args.map((arg) => inspect(arg, false, null, true));
+    console.log(...args);
+};
