@@ -12,15 +12,22 @@ const reauthTransactions = async (event) => {
         const sub29Days = new Date(moment().subtract(29, "days").format("YYYY/MM/DD"));
         const transactions = await store.transaction.findMany({
             where: {
-                OR: [
+                AND: [
                     {
-                        brand: "amex",
-                        lastAuthorizedDate: { equals: sub6Days },
+                        OR: [
+                            {
+                                brand: "amex",
+                                lastAuthorizedDate: { equals: sub6Days },
+                            },
+                            {
+                                brand: {
+                                    in: ["diners", "discover", "jcb", "mastercard", "unionpay", "visa", "unknown"],
+                                },
+                                lastAuthorizedDate: { equals: sub29Days },
+                            },
+                        ],
                     },
-                    {
-                        brand: { in: ["diners", "discover", "jcb", "mastercard", "unionpay", "visa", "unknown"] },
-                        lastAuthorizedDate: { equals: sub29Days },
-                    },
+                    { OR: [{ status: { not: "CANCELED" } }, { status: { not: "FAILED" } }] },
                 ],
             },
             select: { id: true },
@@ -30,13 +37,21 @@ const reauthTransactions = async (event) => {
         const toDate = moment().endOf("day").toDate();
         const reservations = await store.reservation.findMany({
             where: {
-                AND: [{ fromDateTime: { gte: fromDate } }, { fromDateTime: { lte: toDate } }],
+                AND: [
+                    { fromDateTime: { gte: fromDate } },
+                    { fromDateTime: { lte: toDate } },
+                    { OR: [{ status: { not: "CANCELED" } }, { status: { not: "FAILED" } }] },
+                ],
             },
             select: { id: true, transaction: { select: { id: true } } },
         });
         const hotelReservations = await store.hotelRoomReservation.findMany({
             where: {
-                AND: [{ fromDateTime: { gte: fromDate } }, { fromDateTime: { lte: toDate } }],
+                AND: [
+                    { fromDateTime: { gte: fromDate } },
+                    { fromDateTime: { lte: toDate } },
+                    { OR: [{ status: { not: "CANCELED" } }, { status: { not: "FAILED" } }] },
+                ],
             },
             select: { id: true, transaction: { select: { id: true } } },
         });
