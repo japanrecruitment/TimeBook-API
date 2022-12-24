@@ -1,5 +1,6 @@
 import { SQSHandler } from "aws-lambda";
-import { middyfy } from "@middlewares/index";
+import middy from "@middy/core";
+import doNotWaitForEmptyEventLoop from "@middy/do-not-wait-for-empty-event-loop";
 import { ForceLog, Log } from "@utils/logger";
 import { Transaction } from "@prisma/client";
 import { StripeLib } from "@libs/paymentProvider";
@@ -128,4 +129,4 @@ const transactionQueueWorker: SQSHandler = async (event) => {
     Log("INVALID ACTION");
 };
 
-export const main = middyfy(transactionQueueWorker, true);
+export const main = middy(transactionQueueWorker).use(doNotWaitForEmptyEventLoop());
