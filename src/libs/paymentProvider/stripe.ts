@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { environment, Log } from "@utils/index";
 import { isEmpty, uniqWith } from "lodash";
+import moment from "moment";
 
 const returnURL = environment.STRIPE_CONNECT_ACCOUNT_RETURN_URL;
 const refreshURL = environment.STRIPE_CONNECT_ACCOUNT_REFRESH_URL;
@@ -311,15 +312,49 @@ export class StripeLib implements IStripeUtil {
     ): Promise<Stripe.Response<Stripe.Subscription>> {
         try {
             Log("[STARTED]: Creating subscription");
+            const startOfNextMonth = moment().add(1, "month").startOf("month").utc();
+            const billing_cycle_anchor = startOfNextMonth.valueOf() / 1000;
+            Log("billing_cycle_anchor", startOfNextMonth.format("YYYY/MM/DD"), billing_cycle_anchor);
             const subscription = await stripe.subscriptions.create({
                 customer: customerId,
                 items: [{ price: priceId }],
                 collection_method: "charge_automatically",
                 metadata: { productType, accountId },
-                // payment_behavior: "default_incomplete",
-                // expand: ["latest_invoice.payment_intent"],
+                billing_cycle_anchor,
+                proration_behavior: "none",
             });
-            Log("[COMPLETED]: Creating subscription", subscription);
+            Log("[COMPLETED]: Creating subscription");
+
+            Log("[STARTED]: Add invoice item");
+            await stripe.invoiceItems.create({
+                customer: customerId,
+                amount: subscription.items.data[0].plan.amount,
+                currency: subscription.items.data[0].plan.currency,
+                description: `PocketseQサブスクリップション`,
+                subscription: subscription.id,
+            });
+
+            Log("[COMPLETED]: Add invoice item");
+
+            Log("[STARTED]: Creating invoice for current month");
+
+            Log("subscription", subscription.id);
+
+            const invoice = await stripe.invoices.create({
+                auto_advance: true,
+                customer: customerId,
+                collection_method: "charge_automatically",
+            });
+
+            Log("[COMPLETED]: Creating invoice for current month");
+
+            Log("[STARTED]: Finalize invoice");
+
+            await stripe.invoices.finalizeInvoice(invoice.id);
+            await stripe.invoices.pay(invoice.id);
+
+            Log("[COMPLETED]: Finalize invoice");
+
             return subscription as any;
         } catch (error) {
             Log("[FAILED]: Creating subscription", error);

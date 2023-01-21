@@ -109,7 +109,7 @@ const transactionQueueWorker: SQSHandler = async (event) => {
     if (action === "capture") {
         try {
             if (transaction.paymentIntentId) await stripe.capturePayment(transaction.paymentIntentId);
-            if (transaction.hotelRoomReservation.subscriptionPrice || transaction.reservation.subscriptionPrice) {
+            if (transaction.hotelRoomReservation?.subscriptionPrice || transaction.reservation?.subscriptionPrice) {
                 const destination =
                     transaction.hotelRoomReservation?.hotelRoom.hotel.account.host.stripeAccountId ||
                     transaction.reservation?.space.account.host.stripeAccountId;
