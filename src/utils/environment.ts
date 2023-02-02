@@ -25,7 +25,7 @@ export const environment = {
     S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
     GOOGLE_MAP_API_KEY: process.env.GOOGLE_MAP_API_KEY,
     isDev() {
-        return !this.NODE_ENV || !["production"].includes(this.NODE_ENV);
+        return process.env.ENV === "dev";
     },
     EMAIL_QUEUE_URL: process.env.EMAIL_QUEUE_URL,
     REDIS_HOST: process.env.REDIS_HOST,
