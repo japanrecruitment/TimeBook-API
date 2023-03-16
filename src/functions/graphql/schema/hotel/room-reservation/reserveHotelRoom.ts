@@ -457,7 +457,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                     userId: accountId,
                     hotelRoomId: hotelRoom.id,
                 },
-                statement_descriptor: `AUTH_${environment.APP_READABLE_NAME}`.substring(0, 22),
+                statement_descriptor: `${environment.APP_READABLE_NAME}`.substring(0, 22),
                 application_fee_amount: applicationFeeAmount,
                 transfer_data: { destination: hotelRoom.hotel.account.host.stripeAccountId },
                 confirm: true,

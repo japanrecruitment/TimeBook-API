@@ -8,6 +8,15 @@ generator client {
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
 }
 
+generator erd {
+  provider = "prisma-erd-generator"
+  tableOnly = false
+  includeRelationFromFields = false
+}
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
 enum Role {
   admin
   host

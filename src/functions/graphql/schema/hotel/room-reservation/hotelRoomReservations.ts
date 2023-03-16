@@ -40,8 +40,8 @@ const hotelRoomReservations: Reservations = async (_, { hotelId: id, paginate, f
                 select: {
                     reservations: {
                         where: { status: status ? { in: status } : undefined },
-                        select: { ...hotelRoomReservationSelect, updatedAt: true },
-                        orderBy: { updatedAt: sortOrder },
+                        select: { ...hotelRoomReservationSelect, createdAt: true },
+                        orderBy: { createdAt: sortOrder },
                         take: take && take + 1,
                         skip,
                     },
@@ -51,8 +51,8 @@ const hotelRoomReservations: Reservations = async (_, { hotelId: id, paginate, f
                 select: {
                     reservations: {
                         where: { status: status ? { in: status } : undefined },
-                        select: { ...hotelRoomReservationSelect, updatedAt: true },
-                        orderBy: { updatedAt: sortOrder },
+                        select: { ...hotelRoomReservationSelect, createdAt: true },
+                        orderBy: { createdAt: sortOrder },
                         take: take && take + 1,
                         skip,
                     },
@@ -72,8 +72,8 @@ const hotelRoomReservations: Reservations = async (_, { hotelId: id, paginate, f
         })
         .sort((a, b) => {
             return sortOrder === "desc"
-                ? b.updatedAt?.getTime() - a.updatedAt?.getTime()
-                : a.updatedAt?.getTime() - b.updatedAt?.getTime();
+                ? b.createdAt?.getTime() - a.createdAt?.getTime()
+                : a.createdAt?.getTime() - b.createdAt?.getTime();
         });
 
     Log(hotelRoomReservations);

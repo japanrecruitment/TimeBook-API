@@ -33,7 +33,7 @@ const myReservations: MyReservations = async (_, { paginate, filter }, { authDat
     const myReservations = await store.reservation.findMany({
         where: { reserveeId: accountId, status: status ? { in: status } : undefined },
         ...toReservationSelect(mapSelections(info).data),
-        orderBy: { updatedAt: sortOrder },
+        orderBy: { createdAt: sortOrder },
         take: take && take + 1,
         skip,
     });

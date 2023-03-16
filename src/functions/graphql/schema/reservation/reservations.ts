@@ -37,7 +37,7 @@ const reservations: Reservations = async (_, { spaceId: id, paginate, filter }, 
             reservations: {
                 where: { status: status ? { in: status } : undefined },
                 ...toReservationSelect(mapSelections(info).data),
-                orderBy: { updatedAt: sortOrder },
+                orderBy: { createdAt: sortOrder },
                 take: take && take + 1,
                 skip,
             },
@@ -50,8 +50,8 @@ const reservations: Reservations = async (_, { spaceId: id, paginate, filter }, 
         .flatMap((space) => space.reservations)
         .sort((a, b) =>
             sortOrder === "desc"
-                ? b.updatedAt.getTime() - a.updatedAt.getTime()
-                : a.updatedAt.getTime() - b.updatedAt.getTime()
+                ? b.createdAt.getTime() - a.createdAt.getTime()
+                : a.createdAt.getTime() - b.createdAt.getTime()
         );
 
     Log(reservations);

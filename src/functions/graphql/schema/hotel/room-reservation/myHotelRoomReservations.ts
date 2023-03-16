@@ -34,7 +34,7 @@ const myHotelRoomReservation: MyHotelRoomReservation = async (_, { paginate, fil
     const myHotelRoomReservation = await store.hotelRoomReservation.findMany({
         where: { reserveeId: accountId, status: status ? { in: status } : undefined },
         select: hotelRoomReservationSelect,
-        orderBy: { updatedAt: sortOrder },
+        orderBy: { createdAt: sortOrder },
         take: take && take + 1,
         skip,
     });

@@ -1,0 +1,985 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Account {
+  id String [pk]
+  approved Boolean [not null, default: false]
+  email String [unique, not null]
+  emailVerified Boolean [not null, default: false]
+  phoneNumber String
+  phoneVerified Boolean [not null, default: false]
+  password String [not null]
+  roles Role[] [not null]
+  suspended Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  providerAccountId String
+  provider String
+  profileType ProfileType [not null]
+  userProfile User
+  companyProfile Company
+  session Session [not null]
+  myReservation Reservation [not null]
+  myHotelRoomReservations HotelRoomReservation [not null]
+  mySpace Space [not null]
+  Credit Credit [not null]
+  paymentSource PaymentSource [not null]
+  host Host
+  chats Chat [not null]
+  sentMessages Message [not null]
+  myTransaction Transaction [not null]
+  givenRatings Rating [not null]
+  hotels Hotel [not null]
+  cancelPolicies CancelPolicy [not null]
+  options Option [not null]
+  mySubscriptions Subscription [not null]
+
+  indexes {
+    (provider, providerAccountId) [unique]
+  }
+}
+
+Table PaymentSource {
+  id String [pk]
+  token String [not null]
+  type PaymentSourceType [not null]
+  expMonth Int [not null]
+  expYear Int [not null]
+  last4 String [not null]
+  brand String [not null]
+  country String [not null]
+  customer String [not null]
+  rawData Json [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  accountId String [not null]
+  account Account [not null]
+}
+
+Table User {
+  id String [pk]
+  dob DateTime
+  firstName String [not null]
+  firstNameKana String [not null]
+  lastName String [not null]
+  lastNameKana String [not null]
+  stripeCustomerId String [not null, default: '']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  accountId String [unique, not null]
+  account Account [not null]
+  address Address
+  profilePhoto Photo
+}
+
+Table Company {
+  id String [pk]
+  name String [not null]
+  nameKana String [not null]
+  registrationNumber String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  accountId String [unique, not null]
+  account Account [not null]
+  address Address
+  profilePhoto Photo
+}
+
+Table Host {
+  id String [pk]
+  type HostType [not null]
+  name String [not null]
+  stripeAccountId String
+  approved Boolean [not null, default: false]
+  suspended Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  accountId String [unique, not null]
+  account Account [not null]
+  profilePhoto Photo
+  photoId Photo
+  license License [not null]
+}
+
+Table Session {
+  id String [pk]
+  revoked Boolean [not null, default: false]
+  userAgent String [not null]
+  deviceID String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  accountId String [not null]
+  account Account [not null]
+  ipData IpData [not null]
+}
+
+Table IpData {
+  id String [pk]
+  city String
+  country String
+  countryCode String
+  data Json
+  ipAddress String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  sessionId String [not null]
+  session Session [not null]
+}
+
+Table Address {
+  id String [pk]
+  addressLine1 String [not null]
+  addressLine2 String
+  city String [not null]
+  longitude Float
+  latitude Float
+  postalCode String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  prefectureId Int [not null]
+  prefecture Prefecture [not null]
+  userId String [unique]
+  user User
+  companyId String [unique]
+  company Company
+  spaceId String [unique]
+  space Space
+  hotelId String [unique]
+  hotel Hotel
+}
+
+Table Space {
+  id String [pk]
+  name String [not null]
+  description String [not null]
+  maximumCapacity Int [not null, default: 0]
+  numberOfSeats Int [not null, default: 0]
+  spaceSize Float [not null, default: 0]
+  needApproval Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  isDeleted Boolean [not null, default: false]
+  suspended Boolean [not null, default: false]
+  published Boolean [not null, default: false]
+  subcriptionPrice Int
+  updatedAt DateTime [not null]
+  accountId String [not null]
+  account Account [not null]
+  cancelPolicyId String
+  cancelPolicy CancelPolicy
+  availableAmenities SpaceAmenities [not null]
+  spaceTypes SpaceType [not null]
+  includedOptions Option [not null]
+  additionalOptions Option [not null]
+  reservations Reservation [not null]
+  nearestStations NearestStation [not null]
+  address Address
+  photos Photo [not null]
+  settings SpaceSetting [not null]
+  pricePlans SpacePricePlan [not null]
+  ratings Rating [not null]
+}
+
+Table SpaceType {
+  id String [pk]
+  title String [not null]
+  description String [not null]
+  available Boolean [not null, default: false]
+  photo Photo
+  spaces Space [not null]
+}
+
+Table SpaceAmenities {
+  id String [pk]
+  name String [not null]
+  spaces Space [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table SpaceSetting {
+  id String [pk]
+  spaceId String [not null]
+  totalStock Int [not null, default: 1]
+  isDefault Boolean [not null, default: false]
+  closed Boolean [not null, default: false]
+  businessDays Int[] [not null]
+  openingHr Float
+  closingHr Float
+  breakFromHr Float
+  breakToHr Float
+  fromDate DateTime
+  toDate DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  space Space [not null]
+}
+
+Table SpacePricePlan {
+  id String [pk]
+  spaceId String [not null]
+  title String [not null]
+  isDefault Boolean [not null, default: false]
+  isDeleted Boolean [not null, default: false]
+  type SpacePricePlanType [not null]
+  duration Float [not null]
+  amount Float [not null]
+  maintenanceFee Float [not null, default: 0]
+  lastMinuteDiscount Float [not null, default: 0]
+  cooldownTime Int [not null, default: 0]
+  fromDate DateTime
+  toDate DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  space Space [not null]
+  overrides PricePlanOverride [not null]
+}
+
+Table PricePlanOverride {
+  id String [pk]
+  pricePlanId String [not null]
+  type PricePlanOverrideType [not null]
+  amount Float [not null]
+  daysOfWeek Int[] [not null]
+  isDeleted Boolean [not null, default: false]
+  fromDate DateTime
+  toDate DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  pricePlan SpacePricePlan [not null]
+}
+
+Table Rating {
+  id String [pk]
+  rating Float [not null]
+  comment String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  spaceId String [not null]
+  space Space [not null]
+  byAccountId String [not null]
+  byAccount Account [not null]
+}
+
+Table CancelPolicy {
+  id String [pk]
+  name String [not null]
+  description String
+  accountId String [not null]
+  account Account [not null]
+  spaces Space [not null]
+  hotels Hotel [not null]
+  packagePlans PackagePlan [not null]
+  rates CancelPolicyRate [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table CancelPolicyRate {
+  id String [pk]
+  beforeHours Float [not null]
+  percentage Float [not null]
+  cancelPolicyId String [not null]
+  cancelPolicy CancelPolicy [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Reservation {
+  id String [pk]
+  reservationId String [unique, not null]
+  fromDateTime DateTime [default: `now()`, not null]
+  toDateTime DateTime [not null]
+  status ReservationStatus [not null, default: 'PENDING']
+  remarks String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  space Space [not null]
+  spaceId String [not null]
+  reservee Account [not null]
+  reserveeId String [not null]
+  approved Boolean [not null]
+  approvedOn DateTime
+  subscriptionUnit Int
+  subscriptionPrice Int
+  transaction Transaction
+}
+
+Table Transaction {
+  id String [pk]
+  provider PaymentProvider [not null, default: 'STRIPE']
+  assetType TransactionAssetType [not null, default: 'SPACE']
+  assetData Json [not null]
+  description String [not null]
+  amount Float [not null]
+  currency String [not null]
+  brand String [not null]
+  lastAuthorizedDate DateTime [not null]
+  status TransactionStatus [not null]
+  paymentIntentId String
+  requestedLog Json
+  responseReceivedLog Json
+  webhookReceivedLog Json
+  webhookRespondedLog Json
+  resultedLog Json
+  failedLog Json
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  accountId String [not null]
+  account Account [not null]
+  reservationId String [unique]
+  reservation Reservation
+  hotelRoomReservationId String [unique]
+  hotelRoomReservation HotelRoomReservation
+}
+
+Table TrainLine {
+  id Int [pk]
+  name String [not null]
+  nameKana String
+  nameOfficial String
+  color String
+  longitude Float
+  latitude Float
+  zoom Int
+  status Int
+  order Int [not null]
+  stations Station [not null]
+}
+
+Table Station {
+  id Int [pk]
+  stationName String [not null]
+  stationZipCode String
+  address String
+  longitude Float
+  latitude Float
+  status Int
+  order Int
+  prefectureCode Int [not null]
+  prefecture Prefecture [not null]
+  lineCode Int [not null]
+  line TrainLine [not null]
+  nearestStations NearestStation [not null]
+  hotelNearestStations HotelNearestStation [not null]
+}
+
+Table NearestStation {
+  space Space [not null]
+  spaceId String [not null]
+  station Station [not null]
+  stationId Int [not null]
+  time Int [not null]
+  via String [not null]
+  exit String
+
+  indexes {
+    (spaceId, stationId) [pk]
+  }
+}
+
+Table Prefecture {
+  id Int [pk]
+  name String [not null]
+  nameKana String [not null]
+  nameRomaji String [not null]
+  available Boolean [not null, default: false]
+  station Station [not null]
+  Address Address [not null]
+}
+
+Table Credit {
+  id String [pk]
+  accountId String [unique]
+  account Account
+  remainingCredit Int [default: 0]
+  expiryDate DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Subscription {
+  id String [pk]
+  isCanceled Boolean [not null, default: false]
+  canceledAt DateTime
+  endsAt DateTime
+  stripePriceId String [not null]
+  stripeProductId String [not null]
+  stripeSubId String [not null]
+  accountId String [not null]
+  account Account [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Photo {
+  id String [pk]
+  mime String [not null]
+  type PhotoType [not null]
+  thumbnail Json
+  medium Json
+  small Json
+  large Json
+  postUploadInfo Json
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  space Space
+  spaceId String
+  spaceType SpaceType
+  spaceTypeId String [unique]
+  user User
+  userId String [unique]
+  company Company
+  companyId String [unique]
+  host Host
+  hostId String [unique]
+  photo Host
+  photoId String [unique]
+  license License
+  licenseId String
+  hotel Hotel
+  hotelId String
+  HotelRoom HotelRoom
+  hotelRoomId String
+  packagePlan PackagePlan
+  packagePlanId String
+  option Option
+  optionId String
+}
+
+Table License {
+  id String [pk]
+  host Host [not null]
+  hostId String [not null]
+  type String
+  approved Boolean [not null]
+  remarks String
+  photos Photo [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Chat {
+  createdAt DateTime [default: `now()`, not null]
+  id String [pk]
+  members Account [not null]
+  messages Message [not null]
+  type ChatType [not null]
+  updatedAt DateTime [not null]
+}
+
+Table Message {
+  createdAt DateTime [default: `now()`, not null]
+  chatId String [not null]
+  chat Chat [not null]
+  id String [pk]
+  message String [not null]
+  senderId String [not null]
+  sender Account [not null]
+  updatedAt DateTime [not null]
+}
+
+Table Hotel {
+  id String [pk]
+  name String [not null]
+  description String [not null]
+  checkInTime DateTime [not null]
+  checkOutTime DateTime [not null]
+  status HotelStatus [not null, default: 'DRAFTED']
+  buildingType BuildingType [not null, default: 'HOTEL']
+  isPetAllowed Boolean [not null, default: false]
+  address Address
+  accountId String [not null]
+  account Account [not null]
+  cancelPolicyId String
+  cancelPolicy CancelPolicy
+  photos Photo [not null]
+  rooms HotelRoom [not null]
+  nearestStations HotelNearestStation [not null]
+  priceSchemes PriceScheme [not null]
+  packagePlans PackagePlan [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table HotelNearestStation {
+  hotel Hotel [not null]
+  hotelId String [not null]
+  station Station [not null]
+  stationId Int [not null]
+  accessType String [not null]
+  time Int [not null]
+  exit String
+
+  indexes {
+    (hotelId, stationId) [pk]
+  }
+}
+
+Table HotelRoom {
+  id String [pk]
+  name String [not null]
+  description String [not null]
+  paymentTerm HotelPaymentTerm [not null]
+  maxCapacityAdult Int
+  maxCapacityChild Int
+  stock Int
+  hotelId String [not null]
+  hotel Hotel [not null]
+  photos Photo [not null]
+  basicPriceSettings BasicPriceSetting [not null]
+  priceOverrides PriceOverride [not null]
+  packagePlans HotelRoom_PackagePlan [not null]
+  stockOverrides StockOverride [not null]
+  reservations HotelRoomReservation [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table BasicPriceSetting {
+  id String [pk]
+  dayOfWeek Int [not null]
+  priceSchemeId String
+  priceScheme PriceScheme
+  hotelRoomId String
+  hotelRoom HotelRoom
+  hotelRoom_packagePlan_id String
+  hotelRoom_packagePlan HotelRoom_PackagePlan
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table PriceOverride {
+  id String [pk]
+  startDate DateTime [not null]
+  endDate DateTime [not null]
+  priceSchemeId String [not null]
+  priceScheme PriceScheme [not null]
+  hotelRoomId String
+  hotelRoom HotelRoom
+  hotelRoom_packagePlan_id String
+  hotelRoom_packagePlan HotelRoom_PackagePlan
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table StockOverride {
+  id String [pk]
+  startDate DateTime [not null]
+  endDate DateTime [not null]
+  stock Int [not null]
+  hotelRoomId String
+  hotelRoom HotelRoom
+  optionId String
+  option Option
+  packagePlanId String
+  packagePlan PackagePlan
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table PriceScheme {
+  id String [pk]
+  name String [not null]
+  roomCharge Int [not null]
+  oneAdultCharge Int
+  twoAdultCharge Int
+  threeAdultCharge Int
+  fourAdultCharge Int
+  fiveAdultCharge Int
+  sixAdultCharge Int
+  sevenAdultCharge Int
+  eightAdultCharge Int
+  nineAdultCharge Int
+  tenAdultCharge Int
+  oneChildCharge Int
+  twoChildCharge Int
+  threeChildCharge Int
+  fourChildCharge Int
+  fiveChildCharge Int
+  sixChildCharge Int
+  sevenChildCharge Int
+  eightChildCharge Int
+  nineChildCharge Int
+  tenChildCharge Int
+  hotelId String [not null]
+  hotel Hotel [not null]
+  basicPriceSettings BasicPriceSetting [not null]
+  priceOverrides PriceOverride [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table PackagePlan {
+  id String [pk]
+  name String [not null]
+  description String [not null]
+  paymentTerm HotelPaymentTerm [not null]
+  stock Int [not null]
+  isBreakfastIncluded Boolean [not null, default: false]
+  startUsage DateTime
+  endUsage DateTime
+  startReservation DateTime
+  endReservation DateTime
+  cutOffBeforeDays Int
+  cutOffTillTime DateTime
+  subcriptionPrice Int
+  hotelId String [not null]
+  hotel Hotel [not null]
+  cancelPolicyId String
+  cancelPolicy CancelPolicy
+  photos Photo [not null]
+  includedOptions Option [not null]
+  additionalOptions Option [not null]
+  roomTypes HotelRoom_PackagePlan [not null]
+  stockOverrides StockOverride [not null]
+  reservations HotelRoomReservation [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table HotelRoom_PackagePlan {
+  id String [pk]
+  packagePlanId String [not null]
+  packagePlan PackagePlan [not null]
+  hotelRoomId String [not null]
+  hotelRoom HotelRoom [not null]
+  priceSettings BasicPriceSetting [not null]
+  priceOverrides PriceOverride [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Option {
+  id String [pk]
+  name String [not null]
+  description String [not null]
+  startUsage DateTime
+  endUsage DateTime
+  startReservation DateTime
+  endReservation DateTime
+  cutOffBeforeDays Int
+  cutOffTillTime DateTime
+  paymentTerm OptionPaymentTerm
+  additionalPrice Int
+  stock Int
+  accountId String [not null]
+  account Account [not null]
+  photos Photo [not null]
+  inPackagePlans PackagePlan [not null]
+  adPackagePlans PackagePlan [not null]
+  inSpaces Space [not null]
+  adSpaces Space [not null]
+  priceOverrides OptionPriceOverride [not null]
+  stockOverrides StockOverride [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table OptionPriceOverride {
+  id String [pk]
+  startDate DateTime [not null]
+  endDate DateTime [not null]
+  price Int [not null]
+  optionId String [not null]
+  option Option [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table HotelRoomReservation {
+  id String [pk]
+  reservationId String [unique, not null]
+  fromDateTime DateTime [default: `now()`, not null]
+  toDateTime DateTime [not null]
+  status ReservationStatus [not null, default: 'PENDING']
+  remarks String
+  approved Boolean [not null]
+  approvedOn DateTime
+  subscriptionUnit Int
+  subscriptionPrice Int
+  hotelRoomId String [not null]
+  hotelRoom HotelRoom [not null]
+  packagePlanId String [not null]
+  packagePlan PackagePlan [not null]
+  reserveeId String [not null]
+  reservee Account [not null]
+  transaction Transaction
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table _AccountsChat {
+  chatsId String [ref: > Chat.id]
+  membersId String [ref: > Account.id]
+}
+
+Table _SpaceAmenities {
+  availableamenitiesId String [ref: > SpaceAmenities.id]
+  spacesId String [ref: > Space.id]
+}
+
+Table _SpaceTypes {
+  spacetypesId String [ref: > SpaceType.id]
+  spacesId String [ref: > Space.id]
+}
+
+Table _SpaceIncludedOptions {
+  includedoptionsId String [ref: > Option.id]
+  inspacesId String [ref: > Space.id]
+}
+
+Table _SpaceAdditionalOptions {
+  additionaloptionsId String [ref: > Option.id]
+  adspacesId String [ref: > Space.id]
+}
+
+Table _PackagePlanIncludedOptions {
+  includedoptionsId String [ref: > Option.id]
+  inpackageplansId String [ref: > PackagePlan.id]
+}
+
+Table _PackagePlanAdditionalOptions {
+  additionaloptionsId String [ref: > Option.id]
+  adpackageplansId String [ref: > PackagePlan.id]
+}
+
+Enum Role {
+  admin
+  host
+  user
+}
+
+Enum ProfileType {
+  UserProfile
+  CompanyProfile
+}
+
+Enum HostType {
+  Individual
+  Corporate
+}
+
+Enum Gender {
+  Male
+  Female
+  Other
+}
+
+Enum ReservationStatus {
+  RESERVED
+  HOLD
+  PENDING
+  FAILED
+  DISAPPROVED
+  CANCELED
+}
+
+Enum PhotoType {
+  Profile
+  Cover
+  General
+}
+
+Enum SpacePricePlanType {
+  DAILY
+  HOURLY
+  MINUTES
+}
+
+Enum PricePlanOverrideType {
+  DAY_OF_WEEK
+  DATE_TIME
+}
+
+Enum PaymentSourceType {
+  Card
+}
+
+Enum PaymentProvider {
+  STRIPE
+}
+
+Enum TransactionAssetType {
+  SPACE
+  HOTEL_ROOM
+}
+
+Enum TransactionStatus {
+  CREATED
+  REQUESTED
+  REQUEST_SUCCESSFULL
+  WEBHOOK_RECEIVED
+  SUCCESSFULL
+  FAILED
+  CANCELED
+}
+
+Enum ChatType {
+  SINGLE
+  GROUP
+}
+
+Enum BuildingType {
+  WHOLE_HOUSE
+  SIMPLE_ACCOMODATION
+  HOTEL
+  INN
+}
+
+Enum HotelStatus {
+  DRAFTED
+  PUBLISHED
+  HIDDEN
+  DELETED
+}
+
+Enum HotelPaymentTerm {
+  PER_PERSON
+  PER_ROOM
+}
+
+Enum OptionPaymentTerm {
+  PER_PERSON
+  PER_ROOM
+  PER_USE
+  PER_FLAT
+}
+
+Ref: PaymentSource.accountId > Account.id [delete: Cascade]
+
+Ref: User.accountId - Account.id [delete: Cascade]
+
+Ref: Company.accountId - Account.id [delete: Cascade]
+
+Ref: Host.accountId - Account.id [delete: Cascade]
+
+Ref: Session.accountId > Account.id [delete: Cascade]
+
+Ref: IpData.sessionId > Session.id [delete: Cascade]
+
+Ref: Address.prefectureId > Prefecture.id [delete: Cascade]
+
+Ref: Address.userId - User.id [delete: Cascade]
+
+Ref: Address.companyId - Company.id [delete: Cascade]
+
+Ref: Address.spaceId - Space.id [delete: Cascade]
+
+Ref: Address.hotelId - Hotel.id [delete: Cascade]
+
+Ref: Space.accountId > Account.id [delete: Cascade]
+
+Ref: Space.cancelPolicyId > CancelPolicy.id [delete: Set Null]
+
+Ref: SpaceSetting.spaceId > Space.id [delete: Cascade]
+
+Ref: SpacePricePlan.spaceId > Space.id [delete: Cascade]
+
+Ref: PricePlanOverride.pricePlanId > SpacePricePlan.id [delete: Cascade]
+
+Ref: Rating.spaceId > Space.id [delete: Cascade]
+
+Ref: Rating.byAccountId > Account.id [delete: Cascade]
+
+Ref: CancelPolicy.accountId > Account.id [delete: Cascade]
+
+Ref: CancelPolicyRate.cancelPolicyId > CancelPolicy.id [delete: Cascade]
+
+Ref: Reservation.spaceId > Space.id
+
+Ref: Reservation.reserveeId > Account.id
+
+Ref: Transaction.accountId > Account.id
+
+Ref: Transaction.reservationId - Reservation.id
+
+Ref: Transaction.hotelRoomReservationId - HotelRoomReservation.id
+
+Ref: Station.prefectureCode > Prefecture.id
+
+Ref: Station.lineCode > TrainLine.id
+
+Ref: NearestStation.spaceId > Space.id [delete: Cascade]
+
+Ref: NearestStation.stationId > Station.id [delete: Cascade]
+
+Ref: Credit.accountId > Account.id [delete: Cascade]
+
+Ref: Subscription.accountId > Account.id [delete: Cascade]
+
+Ref: Photo.spaceId > Space.id [delete: Cascade]
+
+Ref: Photo.spaceTypeId - SpaceType.id [delete: Cascade]
+
+Ref: Photo.userId - User.id [delete: Cascade]
+
+Ref: Photo.companyId - Company.id [delete: Cascade]
+
+Ref: Photo.hostId - Host.id [delete: Cascade]
+
+Ref: Photo.photoId - Host.id [delete: Cascade]
+
+Ref: Photo.licenseId > License.id [delete: Cascade]
+
+Ref: Photo.hotelId > Hotel.id [delete: Cascade]
+
+Ref: Photo.hotelRoomId > HotelRoom.id [delete: Cascade]
+
+Ref: Photo.packagePlanId > PackagePlan.id [delete: Cascade]
+
+Ref: Photo.optionId > Option.id [delete: Cascade]
+
+Ref: License.hostId > Host.id [delete: Cascade]
+
+Ref: Message.chatId > Chat.id [delete: Cascade]
+
+Ref: Message.senderId > Account.id
+
+Ref: Hotel.accountId > Account.id [delete: Cascade]
+
+Ref: Hotel.cancelPolicyId > CancelPolicy.id [delete: Set Null]
+
+Ref: HotelNearestStation.hotelId > Hotel.id [delete: Cascade]
+
+Ref: HotelNearestStation.stationId > Station.id [delete: Cascade]
+
+Ref: HotelRoom.hotelId > Hotel.id [delete: Cascade]
+
+Ref: BasicPriceSetting.priceSchemeId > PriceScheme.id [delete: Cascade]
+
+Ref: BasicPriceSetting.hotelRoomId > HotelRoom.id [delete: Cascade]
+
+Ref: BasicPriceSetting.hotelRoom_packagePlan_id > HotelRoom_PackagePlan.id [delete: Cascade]
+
+Ref: PriceOverride.priceSchemeId > PriceScheme.id [delete: Cascade]
+
+Ref: PriceOverride.hotelRoomId > HotelRoom.id [delete: Cascade]
+
+Ref: PriceOverride.hotelRoom_packagePlan_id > HotelRoom_PackagePlan.id [delete: Cascade]
+
+Ref: StockOverride.hotelRoomId > HotelRoom.id [delete: Cascade]
+
+Ref: StockOverride.optionId > Option.id [delete: Cascade]
+
+Ref: StockOverride.packagePlanId > PackagePlan.id [delete: Cascade]
+
+Ref: PriceScheme.hotelId > Hotel.id [delete: Cascade]
+
+Ref: PackagePlan.hotelId > Hotel.id [delete: Cascade]
+
+Ref: PackagePlan.cancelPolicyId > CancelPolicy.id [delete: Set Null]
+
+Ref: HotelRoom_PackagePlan.packagePlanId > PackagePlan.id [delete: Cascade]
+
+Ref: HotelRoom_PackagePlan.hotelRoomId > HotelRoom.id [delete: Cascade]
+
+Ref: Option.accountId > Account.id [delete: Cascade]
+
+Ref: OptionPriceOverride.optionId > Option.id [delete: Cascade]
+
+Ref: HotelRoomReservation.hotelRoomId > HotelRoom.id
+
+Ref: HotelRoomReservation.packagePlanId > PackagePlan.id
+
+Ref: HotelRoomReservation.reserveeId > Account.id

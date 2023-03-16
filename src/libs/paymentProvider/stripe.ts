@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { environment, Log } from "@utils/index";
-import { isEmpty, uniqWith } from "lodash";
+import { isEmpty } from "lodash";
 import moment from "moment";
 
 const returnURL = environment.STRIPE_CONNECT_ACCOUNT_RETURN_URL;
@@ -79,6 +79,9 @@ export class StripeLib implements IStripeUtil {
                     transfers: {
                         requested: true,
                     },
+                },
+                settings: {
+                    card_payments: { statement_descriptor_prefix: `${environment.APP_READABLE_NAME}`.substring(0, 22) },
                 },
             });
             return account;
