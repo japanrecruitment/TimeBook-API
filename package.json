@@ -5,7 +5,7 @@
     "main": "serverless.ts",
     "scripts": {
         "lint": "tslint -p tsconfig.json -c tslint.json",
-        "local": "serverless offline --host 0.0.0.0 --httpPort 3001",
+        "local": "serverless offline --host 0.0.0.0 --httpPort 3001 --useChildProcesses",
         "deploy": "serverless deploy",
         "postinstall": "npm run schema:generate",
         "schema:migrate": "npx prisma migrate dev --skip-seed",

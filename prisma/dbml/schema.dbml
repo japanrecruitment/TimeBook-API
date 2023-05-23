@@ -414,6 +414,7 @@ Table Subscription {
 
 Table Photo {
   id String [pk]
+  isDefault Boolean
   mime String [not null]
   type PhotoType [not null]
   thumbnail Json

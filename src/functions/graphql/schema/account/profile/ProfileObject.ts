@@ -62,7 +62,7 @@ export const toProfileSelect = (selections, defaultValue: any = false): PrismaSe
 
 const Profile: IUnionTypeResolver = {
     __resolveType: (obj) => {
-        if (obj.registrationNumber) return "CompanyProfile";
+        if (obj.registrationNumber || obj.name) return "CompanyProfile";
         return "UserProfile";
     },
 };

@@ -56,7 +56,8 @@ const publishSpace: PublishSpace = async (_, { id, publish }, { authData, store,
 
         if (publish) {
             // publish object to Algolia
-            const thumbnailPhoto = space.photos[0];
+            const defaultPhoto = space.photos.filter((photo) => photo.isDefault);
+            const thumbnailPhoto = defaultPhoto.length > 0 ? defaultPhoto[0] : space.photos[0];
             const publicBucketName = environment.PUBLIC_MEDIA_BUCKET;
             const awsRegion = "ap-northeast-1";
             const imageSize = "medium";

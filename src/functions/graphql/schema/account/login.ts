@@ -10,11 +10,9 @@ import {
     environment,
 } from "@utils/index";
 import { gql } from "apollo-server-core";
-import { mapSelections } from "graphql-map-selections";
 import { merge } from "lodash";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
-import { toHostSelect } from "./host/HostObject";
 import { ProfileObject, toCompanyProfileSelect, toUserProfileSelect } from "./profile";
 
 type LoginInput = {
@@ -83,7 +81,8 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     );
     const accessToken = encodeToken({ accountId: account.id, ...profile }, "access", { jwtid: account.id });
     const refreshToken = encodeToken({ accountId: account.id }, "refresh", { jwtid: session.id });
-    if (deviceID) expoSendNotification([{ tokens: [deviceID], body: `Welcome to ${environment.APP_READABLE_NAME}` }]);
+    if (deviceID)
+        expoSendNotification([{ tokens: [deviceID], body: `Welcome back to ${environment.APP_READABLE_NAME}` }]);
 
     profile = merge(profile, omit(account, "userProfile", "companyProfile"));
     return { profile, accessToken, refreshToken };
