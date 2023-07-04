@@ -85,6 +85,7 @@ const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (
                                       id: true,
                                       packagePlans: {
                                           select: {
+                                              name: true,
                                               paymentTerm: true,
                                               roomTypes: {
                                                   select: { priceSettings: { select: { priceScheme: true } } },
@@ -100,22 +101,22 @@ const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (
         },
     });
 
-    Log(updatedRoomType);
+    Log({ updatedRoomType });
 
     const hotel = updatedRoomType?.packagePlan?.hotel;
     if (hotel && hotel.status === "PUBLISHED") {
         let highestPrice = 0;
-        let lowestPrice = 0;
+        let lowestPrice = 9999999999;
         hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
             const selector = paymentTerm === "PER_PERSON" ? "oneAdultCharge" : "roomCharge";
-            roomTypes.forEach(({ priceSettings }, index) => {
+            roomTypes.forEach(({ priceSettings }) => {
                 priceSettings.forEach(({ priceScheme }) => {
-                    if (index === 0) lowestPrice = priceScheme[selector];
                     if (priceScheme[selector] > highestPrice) highestPrice = priceScheme[selector];
                     if (priceScheme[selector] < lowestPrice) lowestPrice = priceScheme[selector];
                 });
             });
         });
+
         await dataSources.hotelAlgolia.partialUpdateObject({
             objectID: hotel.id,
             highestPrice,

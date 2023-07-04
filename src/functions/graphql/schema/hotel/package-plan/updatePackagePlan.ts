@@ -226,8 +226,8 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
         let lowestPrice = 0;
         hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
             const selector = paymentTerm === "PER_PERSON" ? "oneAdultCharge" : "roomCharge";
-            roomTypes.forEach(({ priceSettings }, index) => {
-                priceSettings.forEach(({ priceScheme }) => {
+            roomTypes.forEach(({ priceSettings }) => {
+                priceSettings.forEach(({ priceScheme }, index) => {
                     if (index === 0) lowestPrice = priceScheme[selector];
                     if (priceScheme[selector] > highestPrice) highestPrice = priceScheme[selector];
                     if (priceScheme[selector] < lowestPrice) lowestPrice = priceScheme[selector];
