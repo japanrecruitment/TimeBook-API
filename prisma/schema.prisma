@@ -130,6 +130,7 @@ model Account {
     password                String                 @db.VarChar(255)
     roles                   Role[]
     suspended               Boolean                @default(false)
+    deactivated             Boolean                @default(false)
     createdAt               DateTime               @default(now()) @db.Timestamp(6)
     updatedAt               DateTime               @updatedAt
     providerAccountId       String?

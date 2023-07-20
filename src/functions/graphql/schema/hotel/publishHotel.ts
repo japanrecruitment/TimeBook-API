@@ -83,12 +83,11 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
     const mediumImageUrl = `https://${publicBucketName}.s3.${awsRegion}.amazonaws.com/${imageSize}/${imageKey}`;
 
     let highestPrice = 0;
-    let lowestPrice = 0;
+    let lowestPrice = 9999999999;
     hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
         const selector = paymentTerm === "PER_PERSON" ? "oneAdultCharge" : "roomCharge";
         roomTypes.forEach(({ priceSettings }) => {
-            priceSettings.forEach(({ priceScheme }, index) => {
-                if (index === 0) lowestPrice = priceScheme[selector];
+            priceSettings.forEach(({ priceScheme }) => {
                 if (priceScheme[selector] > highestPrice) highestPrice = priceScheme[selector];
                 if (priceScheme[selector] < lowestPrice) lowestPrice = priceScheme[selector];
             });

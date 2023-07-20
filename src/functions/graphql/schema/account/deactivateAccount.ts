@@ -1,0 +1,104 @@
+import { IFieldResolver } from "@graphql-tools/utils";
+import { matchPassword } from "@utils/authUtils";
+import { gql } from "apollo-server-core";
+import { Context } from "../../context";
+import { GqlError } from "../../error";
+import { Result } from "../core/result";
+import { Log } from "@utils/logger";
+import { ReservationStatus } from "@prisma/client";
+
+type DeactivateAccountInput = {
+    password: string;
+};
+
+type DeactivateAccount = IFieldResolver<any, Context, Record<"input", DeactivateAccountInput>, Promise<Result>>;
+
+const deactivateAccount: DeactivateAccount = async (_, { input }, { store, authData }) => {
+    const { password } = input;
+    const { accountId } = authData;
+
+    const account = await store.account.findUnique({
+        where: { id: accountId },
+        select: { password: true, roles: true },
+    });
+
+    // check if account exists
+    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "ユーザーが見つかりません" });
+
+    // Check if password match
+    const passwordMatched = matchPassword(password, account.password);
+    if (!passwordMatched) throw new GqlError({ code: "FORBIDDEN", message: "パスワードが一致しません" });
+
+    // check if host (return error if host)
+    Log(account.roles);
+
+    // if not host check if any pending reservations
+    const spaceReservations = await store.reservation.findMany({
+        where: {
+            AND: [
+                { reserveeId: accountId },
+                { fromDateTime: { gte: new Date() } },
+                {
+                    OR: [
+                        { status: ReservationStatus.HOLD },
+                        { status: ReservationStatus.PENDING },
+                        { status: ReservationStatus.RESERVED },
+                    ],
+                },
+            ],
+        },
+        select: { id: true, status: true, fromDateTime: true },
+    });
+
+    const hotelReservations = await store.hotelRoomReservation.findMany({
+        where: {
+            AND: [
+                { reserveeId: accountId },
+                { fromDateTime: { gte: new Date() } },
+                {
+                    OR: [
+                        { status: ReservationStatus.HOLD },
+                        { status: ReservationStatus.PENDING },
+                        { status: ReservationStatus.RESERVED },
+                    ],
+                },
+            ],
+        },
+        select: { id: true, status: true, fromDateTime: true },
+    });
+
+    // check if reservations exists
+    if (spaceReservations.length > 0 || hotelReservations.length > 0) {
+        throw new GqlError({
+            code: "FORBIDDEN",
+            message:
+                "今後の保留中または確認済みの予約があるため、現在アカウントを削除できません。 後でもう一度試してください。",
+        });
+    }
+
+    const accountUpdate = await store.account.update({
+        where: { id: accountId },
+        data: { deactivated: true },
+    });
+    if (!accountUpdate)
+        throw new GqlError({ code: "INTERNAL_SERVER_ERROR", message: "リクエストの処理に失敗しました。" });
+
+    return {
+        message: `アカウントは削除されました。`,
+        action: null,
+    };
+};
+
+export const deactivateAccountTypeDefs = gql`
+    input DeactivateAccountInput {
+        password: String!
+    }
+
+    type Mutation {
+        deactivateAccount(input: DeactivateAccountInput!): Result! @auth(requires: [user])
+    }
+`;
+
+export const deactivateAccountResolvers = {
+    Mutation: { deactivateAccount: deactivateAccount },
+};

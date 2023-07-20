@@ -113,7 +113,6 @@ const socialLogin: SocialLogin = async (_, { input }, { store, sourceIp, userAge
                 });
             }
             Log("NEW ACCOUNT FOR SOCIAL LOGIN", newAccount);
-            // New Account login garne
         }
 
         if (newAccount.suspended)
@@ -121,6 +120,8 @@ const socialLogin: SocialLogin = async (_, { input }, { store, sourceIp, userAge
                 code: "FORBIDDEN",
                 message: "Your account has been suspended. Please contact support team",
             });
+
+        if (newAccount.deactivated) throw new GqlError({ code: "ACTIVE_ACCOUNT_NOT_FOUND", message: "User not found" });
 
         let ipData = await getIpData(sourceIp);
 

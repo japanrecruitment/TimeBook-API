@@ -121,12 +121,11 @@ const addRoomTypesInPackagePlan: AddRoomTypesInPackagePlan = async (
             },
         });
         let highestPrice = 0;
-        let lowestPrice = 0;
+        let lowestPrice = 9999999999;
         hotel.packagePlans.forEach(({ paymentTerm, roomTypes }) => {
             const selector = paymentTerm === "PER_PERSON" ? "oneAdultCharge" : "roomCharge";
             roomTypes.forEach(({ priceSettings }, index) => {
                 priceSettings.forEach(({ priceScheme }) => {
-                    if (index === 0) lowestPrice = priceScheme[selector];
                     if (priceScheme[selector] > highestPrice) highestPrice = priceScheme[selector];
                     if (priceScheme[selector] < lowestPrice) lowestPrice = priceScheme[selector];
                 });

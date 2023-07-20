@@ -10,6 +10,7 @@ import { changePasswordResolvers, changePasswordTypeDefs } from "./changePasswor
 import { verifyEmailResolvers, verifyEmailTypeDefs } from "./verifyEmail";
 import { verifyResetPasswordRequestResolvers, verifyResetPasswordRequestTypeDefs } from "./verifyResetPasswordRequest";
 import { hostResolvers, hostTypeDefs } from "./host";
+import { deactivateAccountResolvers, deactivateAccountTypeDefs } from "./deactivateAccount";
 
 export const accountTypeDefs = mergeTypeDefs([
     forgotPasswordTypeDefs,
@@ -23,6 +24,7 @@ export const accountTypeDefs = mergeTypeDefs([
     verifyResetPasswordRequestTypeDefs,
     hostTypeDefs,
     changePasswordTypeDefs,
+    deactivateAccountTypeDefs,
 ]);
 
 export const accountResolvers = mergeResolvers([
@@ -37,4 +39,5 @@ export const accountResolvers = mergeResolvers([
     verifyResetPasswordRequestResolvers,
     hostResolvers,
     changePasswordResolvers,
+    deactivateAccountResolvers,
 ]);

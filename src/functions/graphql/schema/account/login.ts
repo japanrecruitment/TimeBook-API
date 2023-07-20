@@ -59,6 +59,8 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     if (!account.emailVerified)
         throw new GqlError({ code: "FORBIDDEN", message: "Please verify email first", action: "verify-email" });
 
+    if (account.deactivated) throw new GqlError({ code: "ACTIVE_ACCOUNT_NOT_FOUND", message: "User not found" });
+
     let ipData = await getIpData(sourceIp);
 
     const session = await store.session.create({
