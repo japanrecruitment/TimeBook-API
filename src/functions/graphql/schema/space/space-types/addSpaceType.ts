@@ -26,15 +26,16 @@ const addSpaceType: AddSpaceType = async (_, { input }, { dataSources, store }, 
     description = description.trim();
     coverPhotoMime = coverPhotoMime.trim() || "image/jpeg";
 
-    if (!title) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid title" });
+    if (!title) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なタイトル" });
 
-    if (!description) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid description" });
+    if (!description) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な説明" });
 
-    if (!coverPhotoMime) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid mime" });
+    if (!coverPhotoMime) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な写真の種類" });
 
     const spaceType = await store.spaceType.findFirst({ where: { title } });
 
-    if (spaceType) throw new GqlError({ code: "BAD_REQUEST", message: "The title for space type is already in use" });
+    if (spaceType)
+        throw new GqlError({ code: "BAD_REQUEST", message: "スペースタイプのタイトルはすでに使用されています" });
 
     const newSpaceType = await store.spaceType.create({
         data: {
@@ -53,7 +54,7 @@ const addSpaceType: AddSpaceType = async (_, { input }, { dataSources, store }, 
     const signedURL = S3.getUploadUrl(key, coverPhotoMime, 60 * 10);
 
     return {
-        message: `Successfully added ${title} space type`,
+        message: `「${title}」スペースタイプが追加されました`,
         action: "upload-cover-photo",
         upload: { type: "Cover", mime: coverPhotoMime, url: signedURL, key },
     };

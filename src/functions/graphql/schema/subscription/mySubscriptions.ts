@@ -14,11 +14,12 @@ type MySubscriptions = IFieldResolver<any, Context, MySubscriptionsArgs, Promise
 
 const mySubscriptions: MySubscriptions = async (_, __, { authData, store }) => {
     const { accountId, id: userId } = authData;
-    if (!accountId || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId || !userId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
-    if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
-    if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
+    if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "ユーザーが見つかりません" });
+    if (!user.stripeCustomerId)
+        throw new GqlError({ code: "BAD_REQUEST", message: "ストライプアカウントが見つかりません" });
 
     const stripe = new StripeLib();
     const stripeSubscriptions = await stripe.listSubscriptions(accountId);

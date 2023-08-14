@@ -37,7 +37,7 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     email = email.toLocaleLowerCase(); // change email to lowercase
 
     const isEmpty = !email.trim() || !password.trim();
-    if (isEmpty) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
+    if (isEmpty) throw new GqlError({ code: "BAD_USER_INPUT", message: "必要な情報をすべて入力してください。" });
 
     const account = await store.account.findUnique({
         where: { email },
@@ -45,19 +45,25 @@ const login: Login = async (_, { input }, { store, sourceIp, userAgent }) => {
     });
 
     Log(account);
-    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
+    if (!account)
+        throw new GqlError({ code: "NOT_FOUND", message: "メールアドレスまたはパスワードが間違っています。" });
 
     const passwordMatched = matchPassword(password, account.password);
-    if (!passwordMatched) throw new GqlError({ code: "FORBIDDEN", message: "Incorrect email or password" });
+    if (!passwordMatched)
+        throw new GqlError({ code: "FORBIDDEN", message: "メールアドレスまたはパスワードが間違っています。" });
 
     if (account.suspended)
         throw new GqlError({
             code: "FORBIDDEN",
-            message: "Your account has been suspended. Please contact support team",
+            message: "あなたのアカウントは停止されました。 サポートチームにお問い合わせください。",
         });
 
     if (!account.emailVerified)
-        throw new GqlError({ code: "FORBIDDEN", message: "Please verify email first", action: "verify-email" });
+        throw new GqlError({
+            code: "FORBIDDEN",
+            message: "アカウントのメールアドレスが確認されていません。 まずメールを確認してください。",
+            action: "verify-email",
+        });
 
     if (account.deactivated) throw new GqlError({ code: "ACTIVE_ACCOUNT_NOT_FOUND", message: "User not found" });
 

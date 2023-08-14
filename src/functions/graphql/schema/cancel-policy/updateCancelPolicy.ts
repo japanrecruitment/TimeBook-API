@@ -13,16 +13,16 @@ function validateUpdateCancelPolicyInput(input: UpdateCancelPolicyInput): Update
     id = id?.trim();
     name = name?.trim();
     description = description?.trim();
-    
-    if (isEmpty(id)) throw new GqlError({ code: "BAD_REQUEST", message: "Please provide cancel policy id" });
 
-    if (name && isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid name" });
+    if (isEmpty(id)) throw new GqlError({ code: "BAD_REQUEST", message: "キャンセルポリシーIDを入力してください" });
+
+    if (name && isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な名前" });
 
     if (!isEmpty(rates)) {
         rates.forEach(({ beforeHours, percentage }) => {
-            if (beforeHours < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid before hours" });
+            if (beforeHours < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "営業時間前は無効" });
             if (percentage < 0 || percentage > 100)
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid percentage" });
+                throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なパーセンテージ" });
         });
 
         differenceWith(
@@ -32,7 +32,7 @@ function validateUpdateCancelPolicyInput(input: UpdateCancelPolicyInput): Update
         ).forEach(({ beforeHours }) => {
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: `Multiple rates with same before hours (${beforeHours}) found`,
+                message: `営業時間前 (${beforeHours}) が同じである複数の料金が見つかりました`,
             });
         });
     }
@@ -71,10 +71,9 @@ const updateCancelPolicy: UpdateCancelPolicy = async (_, { input }, { authData, 
         select: { accountId: true },
     });
 
-    if (!cancelPolicy) throw new GqlError({ code: "NOT_FOUND", message: "Cancel policy not found" });
+    if (!cancelPolicy) throw new GqlError({ code: "NOT_FOUND", message: "キャンセルポリシーが見つかりません" });
 
-    if (accountId !== cancelPolicy.accountId)
-        throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorized to modify this space" });
+    if (accountId !== cancelPolicy.accountId) throw new GqlError({ code: "UNAUTHORIZED", message: "無効なリクエスト" });
 
     const cancelPolicySelect = toCancelPolicySelect(mapSelections(info)?.cancelPolicy)?.select;
     const updatedCancelPolicy = await store.cancelPolicy.update({
@@ -90,7 +89,7 @@ const updateCancelPolicy: UpdateCancelPolicy = async (_, { input }, { authData, 
     Log("updateCancelPolicy", updatedCancelPolicy);
 
     return {
-        message: `Updated Cancel Policy`,
+        message: `キャンセルポリシーを更新しました`,
         cancelPolicy: updatedCancelPolicy,
     };
 };

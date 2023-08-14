@@ -20,7 +20,7 @@ function validateUpdateHotelInput(input: UpdateHotelInput): UpdateHotelInput {
     if (isEmpty(name)) name = undefined;
 
     if (!buildingType && !description && !checkInTime && !checkOutTime && !name)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Empty Input" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "必要な情報は全て入力して下さい。" });
 
     return { id, buildingType, description, cancelPolicyId, checkInTime, checkOutTime, isPetAllowed, name };
 }
@@ -47,12 +47,12 @@ type UpdateHotel = IFieldResolver<any, Context, UpdateHotelArgs, Promise<UpdateH
 
 const updateHotel: UpdateHotel = async (_, { input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { id, ...data } = validateUpdateHotelInput(input);
 
     const hotel = await store.hotel.findFirst({ where: { id, accountId } });
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません。" });
 
     const hotelSelect = toHotelSelect(mapSelections(info)?.hotel)?.select || { id: true };
     const updatedHotel = await store.hotel.update({
@@ -77,7 +77,7 @@ const updateHotel: UpdateHotel = async (_, { input }, { authData, dataSources, s
     }
 
     return {
-        message: `Successfully updated hotel`,
+        message: `宿泊施設が更新されました。`,
         hotel: updatedHotel,
     };
 };

@@ -4,9 +4,9 @@ import { GqlError } from "../../../error";
 export function validateAddPriceOverrideInput(input: AddPriceOverrideInput): AddPriceOverrideInput {
     let { endDate, priceSchemeId, startDate } = input;
 
-    if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+    if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
-    if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+    if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
     return { endDate, priceSchemeId, startDate };
 }

@@ -21,13 +21,13 @@ const updateSpaceTypePhoto: UpdateSpaceTypePhoto = async (_, { input }, { dataSo
     const type = "Cover";
     mime = mime || "image/jpeg";
 
-    if (!spaceTypeId) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space type" });
+    if (!spaceTypeId) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なスペースタイプ" });
 
-    if (!mime) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid mime" });
+    if (!mime) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な写真の種類" });
 
     const spaceType = await store.spaceType.findFirst({ where: { id: spaceTypeId } });
 
-    if (!spaceType) throw new GqlError({ code: "BAD_REQUEST", message: "SpaceType does not exists" });
+    if (!spaceType) throw new GqlError({ code: "BAD_REQUEST", message: "スペースタイプが見つかりません" });
 
     const updatedSpaceType = await store.spaceType.update({
         where: { id: spaceTypeId },

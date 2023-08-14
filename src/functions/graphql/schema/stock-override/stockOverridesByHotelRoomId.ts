@@ -29,7 +29,7 @@ const stockOverridesByHotelRoomId: StockOverridesByHotelRoomId = async (
         where: { id: hotelRoomId },
         select: { stockOverrides: stockOverrideSelect },
     });
-    if (!hotelRoom) throw new GqlError({ code: "NOT_FOUND", message: "Hotel room not found" });
+    if (!hotelRoom) throw new GqlError({ code: "NOT_FOUND", message: "部屋が見つかりません" });
 
     let stockOverrides = hotelRoom.stockOverrides;
     if (isEmpty(hotelRoom.stockOverrides)) stockOverrides = [];

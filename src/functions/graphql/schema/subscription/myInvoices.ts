@@ -19,13 +19,14 @@ type MyInvoices = IFieldResolver<any, Context, MyInvoicesArgs, MyInvoicesResult>
 
 const myInvoices: MyInvoices = async (_, { paginate }, { authData, store }) => {
     const { accountId, id: userId } = authData;
-    if (!accountId || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId || !userId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { after, skip, take } = paginate || {};
 
     const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
-    if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
-    if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
+    if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "ユーザーが見つかりません" });
+    if (!user.stripeCustomerId)
+        throw new GqlError({ code: "BAD_REQUEST", message: "ストライプアカウントが見つかりません" });
 
     const stripe = new StripeLib();
     const stripeInvoices = await stripe.listInvoices(user.stripeCustomerId, after as string, take);

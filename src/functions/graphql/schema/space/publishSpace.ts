@@ -28,29 +28,32 @@ const publishSpace: PublishSpace = async (_, { id, publish }, { authData, store,
             },
         });
 
-        if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+        if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-        if (accountId !== space.accountId)
-            throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+        if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
         if (publish === true && space.published === true)
-            throw new GqlError({ code: "BAD_REQUEST", message: "Space already published" });
+            throw new GqlError({ code: "BAD_REQUEST", message: "スペースはすでに公開されています" });
 
         if (publish === false && space.published === false)
-            throw new GqlError({ code: "BAD_REQUEST", message: "Space already unpublished" });
+            throw new GqlError({ code: "BAD_REQUEST", message: "スペースはすでに非公開になっています" });
 
-        if (!space.name) throw new GqlError({ code: "BAD_REQUEST", message: "Found empty space name" });
+        if (!space.name) throw new GqlError({ code: "BAD_REQUEST", message: "スペースのタイトルが空です" });
 
-        if (!space.address?.id) throw new GqlError({ code: "BAD_REQUEST", message: "Space address not provided yet" });
+        if (!space.address?.id)
+            throw new GqlError({ code: "BAD_REQUEST", message: "スペースの住所が指定されていません" });
 
         if (!space.pricePlans || space.pricePlans.length <= 0)
-            throw new GqlError({ code: "BAD_REQUEST", message: "A space must have atleast one price plan" });
+            throw new GqlError({ code: "BAD_REQUEST", message: "スペースには少なくとも 1 つの料金プランが必要です" });
 
         if (!space.spaceTypes || space.spaceTypes.length <= 0)
-            throw new GqlError({ code: "BAD_REQUEST", message: "A space must have atleast one space type" });
+            throw new GqlError({
+                code: "BAD_REQUEST",
+                message: "スペースには少なくとも 1 つのスペース タイプが必要です",
+            });
 
         if (!space.photos || space.photos.length <= 0)
-            throw new GqlError({ code: "BAD_REQUEST", message: "A space must have atleast one photo" });
+            throw new GqlError({ code: "BAD_REQUEST", message: "スペースには少なくとも 1 枚の写真が必要です" });
 
         await store.space.update({ where: { id }, data: { published: publish } });
 
@@ -80,11 +83,11 @@ const publishSpace: PublishSpace = async (_, { id, publish }, { authData, store,
                 thumbnail: mediumImageUrl,
                 _geoloc: { lat: space.address?.latitude, lng: space.address?.longitude },
             });
-            return { message: `Successfully published space` };
+            return { message: `スペースが公開されました` };
         } else {
             // unpublish object from Algolia
             await dataSources.spaceAlgolia.deleteObject(id);
-            return { message: `Successfully unpublished space` };
+            return { message: `スペースは非公開になりました` };
         }
     } catch (error) {
         Log(error);

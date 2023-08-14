@@ -23,7 +23,7 @@ const removePriceOverrideFromRoomPlan: RemovePriceOverrideFromRoomPlan = async (
     { authData, store }
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     priceOverrideIds = compact(priceOverrideIds);
     priceOverrideIds = isEmpty(priceOverrideIds) ? undefined : priceOverrideIds;
@@ -36,11 +36,11 @@ const removePriceOverrideFromRoomPlan: RemovePriceOverrideFromRoomPlan = async (
         },
     });
     if (!roomPlan || !roomPlan.hotelRoom?.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Room plan not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
     if (accountId !== roomPlan.hotelRoom.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (isEmpty(roomPlan.priceOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Price override not found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "料金の上書きが見つかりません。" });
 
     const priceOverridesToRemove = priceOverrideIds
         ? intersectionWith(priceOverrideIds, roomPlan.priceOverrides, (a, b) => a === b.id)
@@ -58,7 +58,7 @@ const removePriceOverrideFromRoomPlan: RemovePriceOverrideFromRoomPlan = async (
     Log(updatedHotelRoom);
 
     return {
-        message: `Successfully removed ${priceOverridesToRemove.length} price overrides from your hotel room`,
+        message: `料金の上書きが削除しました。`,
         priceOverride: updatedHotelRoom,
     };
 };

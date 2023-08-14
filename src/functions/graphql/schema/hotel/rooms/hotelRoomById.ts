@@ -24,7 +24,7 @@ const hotelRoomById: HotelRoomById = async (_, { id }, { authData, store }, info
 
     Log(`id: `, id, `hotelRoomById: `, hotelRoom);
 
-    if (!hotelRoom) throw new GqlError({ code: "NOT_FOUND", message: "Hotel room not found" });
+    if (!hotelRoom) throw new GqlError({ code: "NOT_FOUND", message: "部屋が見つかりません" });
 
     return hotelRoom;
 };

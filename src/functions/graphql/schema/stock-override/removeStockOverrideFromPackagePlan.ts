@@ -23,7 +23,7 @@ const removeStockOverrideFromPackagePlan: RemoveStockOverrideFromPackagePlan = a
     { authData, store }
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     stockOverrideIds = compact(stockOverrideIds);
     stockOverrideIds = isEmpty(stockOverrideIds) ? undefined : stockOverrideIds;
@@ -36,11 +36,11 @@ const removeStockOverrideFromPackagePlan: RemoveStockOverrideFromPackagePlan = a
         },
     });
     if (!packagePlan || !packagePlan.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
     if (accountId !== packagePlan.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel package" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (isEmpty(packagePlan.stockOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Stock override not found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "在庫の上書きが見つかりません" });
 
     const stockOverridesToRemove = stockOverrideIds
         ? intersectionWith(stockOverrideIds, packagePlan.stockOverrides, (a, b) => a === b.id)
@@ -58,7 +58,7 @@ const removeStockOverrideFromPackagePlan: RemoveStockOverrideFromPackagePlan = a
     Log(updatedHotelPackage);
 
     return {
-        message: `Successfully removed ${stockOverridesToRemove.length} stock overrides from your hotel package`,
+        message: `「${stockOverridesToRemove.length}」在庫の上書きを削除しました`,
     };
 };
 

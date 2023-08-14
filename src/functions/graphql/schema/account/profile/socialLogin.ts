@@ -36,11 +36,12 @@ const socialLogin: SocialLogin = async (_, { input }, { store, sourceIp, userAge
             provider,
             token: id_token,
         });
-        if (!socialAccount) throw new GqlError({ code: "BAD_USER_INPUT", message: "Wrong credentials" });
+        if (!socialAccount) throw new GqlError({ code: "BAD_USER_INPUT", message: "間違った認証情報" });
 
         const { email, emailVerified, firstName, lastName, profilePhoto } = socialAccount;
 
-        if (!emailVerified) throw new GqlError({ code: "BAD_USER_INPUT", message: "Your email is not verified" });
+        if (!emailVerified)
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "メールアドレスは認証されていません" });
 
         const account = await store.account.findUnique({
             where: { provider_providerAccountId: { provider, providerAccountId } },
@@ -68,7 +69,7 @@ const socialLogin: SocialLogin = async (_, { input }, { store, sourceIp, userAge
                 if (existingAccount.suspended)
                     throw new GqlError({
                         code: "FORBIDDEN",
-                        message: "Your account has been suspended. Please contact support team",
+                        message: "アカウントは停止されました。 サポートチームにお問い合わせください",
                     });
 
                 newAccount = await store.account.update({
@@ -118,10 +119,11 @@ const socialLogin: SocialLogin = async (_, { input }, { store, sourceIp, userAge
         if (newAccount.suspended)
             throw new GqlError({
                 code: "FORBIDDEN",
-                message: "Your account has been suspended. Please contact support team",
+                message: "アカウントは停止されました。 サポートチームにお問い合わせください",
             });
 
-        if (newAccount.deactivated) throw new GqlError({ code: "ACTIVE_ACCOUNT_NOT_FOUND", message: "User not found" });
+        if (newAccount.deactivated)
+            throw new GqlError({ code: "ACTIVE_ACCOUNT_NOT_FOUND", message: "ユーザーが見つかりません" });
 
         let ipData = await getIpData(sourceIp);
 
@@ -150,7 +152,7 @@ const socialLogin: SocialLogin = async (_, { input }, { store, sourceIp, userAge
         return { profile, accessToken, refreshToken };
     } catch (error) {
         Log(error.message);
-        throw new GqlError({ code: "INTERNAL_SERVER_ERROR", message: "Something went wrong" });
+        throw new GqlError({ code: "INTERNAL_SERVER_ERROR", message: "問題が発生しました" });
     }
 };
 

@@ -23,17 +23,18 @@ const changePassword: ChangePassword = async (_, { input }, { store, authData })
     });
 
     // check if account exists
-    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
+    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "ユーザーが見つかりません。" });
 
     // Check if password match
     const passwordMatched = matchPassword(currentPassword, account.password);
-    if (!passwordMatched) throw new GqlError({ code: "FORBIDDEN", message: "Incorrent current password" });
+    if (!passwordMatched) throw new GqlError({ code: "FORBIDDEN", message: "パスワードが間違っています。" });
 
     const accountUpdate = await store.account.update({
         where: { id: accountId },
         data: { password: encodePassword(newPassword) },
     });
-    if (!accountUpdate) throw new GqlError({ code: "INTERNAL_SERVER_ERROR", message: "Could not update password." });
+    if (!accountUpdate)
+        throw new GqlError({ code: "INTERNAL_SERVER_ERROR", message: "パスワードを更新できませんでした。" });
 
     await addEmailToQueue<PasswordChangeEmailData>({
         template: "password-changed",
@@ -42,7 +43,7 @@ const changePassword: ChangePassword = async (_, { input }, { store, authData })
     });
 
     return {
-        message: `Your password has been changed.`,
+        message: `パスワードが変更されました。`,
         action: null,
     };
 };

@@ -38,10 +38,10 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
     let { email, password, name, nameKana, registrationNumber } = input;
 
     const isValid = email?.trim() && password?.trim() && name?.trim() && nameKana?.trim() && registrationNumber?.trim();
-    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
+    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "必要な情報を入力してください。" });
 
     const account = await store.account.findUnique({ where: { email } });
-    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
+    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "すでに登録されたメール。" });
 
     password = encodePassword(password);
     email = email.toLocaleLowerCase(); // change email to lowercase
@@ -82,7 +82,7 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
     ]);
 
     return {
-        message: `Successfully registered a corporate host account with email: ${email}`,
+        message: `ホストの登録が成功しました。`,
         action: `verify-email`,
     };
 };
@@ -91,11 +91,11 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
     let { email, password, firstName, lastName, firstNameKana, lastNameKana } = input;
 
     const isValid = email?.trim() && password?.trim() && firstName?.trim() && lastName?.trim();
-    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
+    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "必要な情報を入力してください。" });
 
     const account = await store.account.findUnique({ where: { email } });
     Log(account);
-    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
+    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "すでに登録されたメール。" });
 
     password = encodePassword(password);
     email = email.toLocaleLowerCase(); // change email to lowercase
@@ -146,7 +146,7 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
     ]);
 
     return {
-        message: `Successfully registered an individual host account with email: ${email}`,
+        message: `ホストの登録が成功しました。`,
         action: `verify-email`,
     };
 };

@@ -23,7 +23,7 @@ const removeStockOverrideFromHotelRoom: RemoveStockOverrideFromHotelRoom = async
     { authData, store }
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     stockOverrideIds = compact(stockOverrideIds);
     stockOverrideIds = isEmpty(stockOverrideIds) ? undefined : stockOverrideIds;
@@ -35,11 +35,10 @@ const removeStockOverrideFromHotelRoom: RemoveStockOverrideFromHotelRoom = async
             stockOverrides: { where: { id: { in: stockOverrideIds } }, select: { id: true } },
         },
     });
-    if (!hotelRoom || !hotelRoom.hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel room not found" });
-    if (accountId !== hotelRoom.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
+    if (!hotelRoom || !hotelRoom.hotel) throw new GqlError({ code: "NOT_FOUND", message: "部屋が見つかりません" });
+    if (accountId !== hotelRoom.hotel.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (isEmpty(hotelRoom.stockOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Stock override not found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "在庫の上書きが見つかりません" });
 
     const stockOverridesToRemove = stockOverrideIds
         ? intersectionWith(stockOverrideIds, hotelRoom.stockOverrides, (a, b) => a === b.id)
@@ -53,7 +52,7 @@ const removeStockOverrideFromHotelRoom: RemoveStockOverrideFromHotelRoom = async
     Log(updatedHotelRoom);
 
     return {
-        message: `Successfully removed ${stockOverridesToRemove.length} stock overrides from your hotel room`,
+        message: `「${stockOverridesToRemove.length}」在庫の上書きが削除されました`,
     };
 };
 

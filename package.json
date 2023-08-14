@@ -87,6 +87,7 @@
         "serverless": "^3.19.0",
         "serverless-domain-manager": "^5.8.0",
         "serverless-offline": "^8.7.0",
+        "serverless-prune-plugin": "^2.0.2",
         "serverless-webpack": "^5.2.0",
         "serverless-webpack-prisma": "^1.1.0",
         "sinon": "^9.0.0",

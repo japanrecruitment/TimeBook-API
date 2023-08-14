@@ -17,11 +17,11 @@ const cancelPolicyById: CancelPolicyById = async (_, { id }, { authData, store }
     const { accountId } = authData;
 
     id = id?.trim();
-    if (isEmpty(id)) throw new GqlError({ code: "BAD_REQUEST", message: "Please provide cancel policy id" });
+    if (isEmpty(id)) throw new GqlError({ code: "BAD_REQUEST", message: "キャンセルポリシーIDを入力してください" });
 
     const cancelPolicySelect = toCancelPolicySelect(mapSelections(info))?.select;
     const cancelPolicy = await store.cancelPolicy.findFirst({ where: { id, accountId }, select: cancelPolicySelect });
-    if (!cancelPolicy) throw new GqlError({ code: "NOT_FOUND", message: "Cancel policy not found" });
+    if (!cancelPolicy) throw new GqlError({ code: "NOT_FOUND", message: "キャンセルポリシーが見つかりません" });
 
     Log("cancelPolicyById", cancelPolicy);
 

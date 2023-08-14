@@ -15,22 +15,22 @@ type PublishHotel = IFieldResolver<any, Context, PublishHotelArgs, Promise<Publi
 
 const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSources, store }) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     if (!publish) {
         const hotel = await store.hotel.findFirst({
             where: { id, accountId },
             select: { status: true },
         });
-        if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+        if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません。" });
 
-        if (hotel.status !== "PUBLISHED") return { message: `Successfully unpublished hotel` };
+        if (hotel.status !== "PUBLISHED") return { message: `宿泊施設が非公開化に成功しました` };
 
         await store.hotel.update({ where: { id }, data: { status: "DRAFTED" } });
 
         await dataSources.hotelAlgolia.deleteObject(id);
 
-        return { message: `Successfully unpublished hotel` };
+        return { message: `宿泊施設が非公開化に成功しました` };
     }
 
     const hotel = await store.hotel.findFirst({
@@ -56,22 +56,23 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
             status: true,
         },
     });
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません。" });
 
-    if (hotel.status === "PUBLISHED") throw new GqlError({ code: "BAD_REQUEST", message: "Hotel already published" });
+    if (hotel.status === "PUBLISHED")
+        throw new GqlError({ code: "BAD_REQUEST", message: "宿泊施設はすでに公開されています。" });
 
-    if (!hotel.name) throw new GqlError({ code: "BAD_REQUEST", message: "Found empty hotel name" });
+    if (!hotel.name) throw new GqlError({ code: "BAD_REQUEST", message: "名前が空です。" });
 
-    if (!hotel.address) throw new GqlError({ code: "BAD_REQUEST", message: "Hotel address not provided yet" });
+    if (!hotel.address) throw new GqlError({ code: "BAD_REQUEST", message: "住所は提供されていません。" });
 
     if (isEmpty(hotel.rooms))
-        throw new GqlError({ code: "BAD_REQUEST", message: "A hotel must have atleast one room" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "宿泊施設には少なくとも 1 つの部屋が必要です" });
 
     if (isEmpty(hotel.photos))
-        throw new GqlError({ code: "BAD_REQUEST", message: "A hotel must have atleast one photo" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "宿泊施設には少なくとも 1 つの写真が必要です" });
 
     if (isEmpty(hotel.packagePlans))
-        throw new GqlError({ code: "BAD_REQUEST", message: "A hotel must have atleast one package plan" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "宿泊施設には少なくとも 1 つのプランが必要です" });
 
     await store.hotel.update({ where: { id }, data: { status: "PUBLISHED" } });
 
@@ -120,7 +121,7 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
         _geoloc: { lat: hotel.address.latitude, lng: hotel.address.longitude },
     });
 
-    return { message: `Successfully published hotel` };
+    return { message: `宿泊施設を公開しました。` };
 };
 
 export const publishHotelTypeDefs = gql`

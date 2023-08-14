@@ -29,7 +29,7 @@ const stockOverridesByPackagePlanId: StockOverridesByPackagePlanId = async (
         where: { id: packagePlanId },
         select: { stockOverrides: stockOverrideSelect },
     });
-    if (!packagePlan) throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
+    if (!packagePlan) throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
 
     let stockOverrides = packagePlan.stockOverrides;
     if (isEmpty(packagePlan.stockOverrides)) stockOverrides = [];

@@ -17,10 +17,10 @@ const verifyResetPasswordRequest: VerifyResetPasswordRequest = async (_, { input
     email = email.toLocaleLowerCase(); // change email to lower case
 
     const cacheCode = await dataSources.redis.fetch(`reset-password-verification-code-${email}`);
-    if (cacheCode !== code) throw new GqlError({ code: "FORBIDDEN", message: "Reset password code expired" });
+    if (cacheCode !== code) throw new GqlError({ code: "FORBIDDEN", message: "コードの有効期限が切れました" });
 
     return {
-        message: `Request for reset password has been verified.`,
+        message: `パスワードのリセットのリクエストが確認されました。`,
         action: "reset-password",
     };
 };

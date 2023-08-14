@@ -18,18 +18,17 @@ function validateAddHotelInput(input: AddHotelRoomInput): AddHotelRoomInput {
     description = description?.trim();
     name = name?.trim();
 
-    if (isEmpty(description))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Hotel description cannot be empty" });
+    if (isEmpty(description)) throw new GqlError({ code: "BAD_USER_INPUT", message: "説明は空にできません" });
 
-    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Hotel name cannot be empty" });
+    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "名前は空にはできません" });
 
     if (maxCapacityAdult && maxCapacityAdult < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum adult capacity" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "大人の最大収容人数が無効です" });
 
     if (maxCapacityChild && maxCapacityChild < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum child capacity" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "子最大容量が無効です" });
 
-    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
+    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "在庫数が無効です" });
 
     basicPriceSettings = validateAddBasicPriceSettingInputList(basicPriceSettings);
 
@@ -59,14 +58,14 @@ type AddHotelRoom = IFieldResolver<any, Context, AddHotelRoomArgs, Promise<AddHo
 
 const addHotelRoom: AddHotelRoom = async (_, { hotelId, input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const validInput = validateAddHotelInput(input);
     const { basicPriceSettings, description, maxCapacityAdult, maxCapacityChild, name, paymentTerm, photos, stock } =
         validInput;
 
     const hotel = await store.hotel.findFirst({ where: { id: hotelId, accountId } });
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "ホテルが見つかりません" });
 
     const hotelRoomSelect = toHotelRoomSelect(mapSelections(info).hotelRoom)?.select || { id: true };
     const hotelRoom = await store.hotelRoom.create({
@@ -121,7 +120,7 @@ const addHotelRoom: AddHotelRoom = async (_, { hotelId, input }, { authData, dat
     Log(hotelRoom, uploadRes);
 
     return {
-        message: "Successfully added a hotel room",
+        message: "ホテルの部屋が追加されました",
         hotelRoom,
         uploadRes,
     };

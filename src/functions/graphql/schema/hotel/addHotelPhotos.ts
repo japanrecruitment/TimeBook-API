@@ -21,13 +21,13 @@ type AddHotelPhotos = IFieldResolver<any, Context, AddHotelPhotosArgs, Promise<A
 
 const addHotelPhotos: AddHotelPhotos = async (_, { hotelId, photos }, { authData, store }) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const hotel = await store.hotel.findFirst({
         where: { id: hotelId, accountId },
         select: { photos: { select: { id: true } } },
     });
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません" });
 
     const updatedHotel = await store.hotel.update({
         where: { id: hotelId },
@@ -51,7 +51,7 @@ const addHotelPhotos: AddHotelPhotos = async (_, { hotelId, photos }, { authData
     Log(updatedHotel, uploadRes);
 
     return {
-        message: `Photo uploaded sucessfully!!`,
+        message: `写真アップロードしました。`,
         uploadRes,
     };
 };

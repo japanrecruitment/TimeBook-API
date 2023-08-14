@@ -56,7 +56,7 @@ type ReserveSpace = IFieldResolver<any, Context, ReserveSpaceArgs, Promise<Reser
 
 const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => {
     const { id: userId, accountId, email } = authData;
-    if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { paymentSourceId, spaceId, duration, durationType, additionalOptions, useSubscription } = input;
     const fromDateTime = input.fromDateTime;
@@ -64,9 +64,9 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
     try {
         Log(fromDateTime, duration);
         if (fromDateTime.getTime() < Date.now())
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid from date." });
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "開始日が無効です" });
 
-        if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration." });
+        if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な期間" });
 
         const durationUnit: Record<SpacePricePlanType, "days" | "hours" | "minutes"> = {
             DAILY: "days",
@@ -81,16 +81,16 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         Log("reserveSpace: durations:", days, hours, minutes);
 
         if (days <= 0 && hours <= 0 && minutes < 5)
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selection" });
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択です" });
 
         additionalOptions?.forEach(({ quantity }) => {
             if (quantity && quantity < 0)
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
+                throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なオプション数量" });
         });
 
         const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
-        if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
-        if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
+        if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "ユーザーが見つかりません" });
+        if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "アカウントが見つかりません" });
 
         const space = await store.space.findFirst({
             where: { id: spaceId, isDeleted: false, published: true },
@@ -142,7 +142,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             },
         });
 
-        if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+        if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
         Log("reserveSpace: space:", space);
 
@@ -153,14 +153,14 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         if (reservations && reservations.length >= totalStock)
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: "Reservation is not available for this space in the selected time frame",
+                message: "選択した時間枠では予約ができません",
             });
 
         const stripe = new StripeLib();
         const paymentMethod = await stripe.retrievePaymentMethod(paymentSourceId);
         const customerId = user.stripeCustomerId;
         if (paymentMethod.customer !== customerId)
-            throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
+            throw new GqlError({ code: "NOT_FOUND", message: "無効な支払い方法です" });
 
         let remSubscriptionUnit: number = undefined;
         if (useSubscription) {
@@ -169,7 +169,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 throw new GqlError({
                     code: "FORBIDDEN",
                     message:
-                        "Multiple subscription of space type found in your account. Please contact our support team",
+                        "アカウント内でスペース タイプの複数のサブスクリプションが見つかりました。 弊社のサポートチームにお問い合わせください",
                 });
             }
             if (stripeSubs.length === 1) {
@@ -237,7 +237,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             if (!pricePlans || pricePlans.length <= 0)
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
-                    message: "Selected time frame doesn't satisfy the minimum required duration to book this space.",
+                    message: "選択した時間枠は、このスペースを予約するために必要な最小期間を満たしていません。",
                 });
 
             // Calculate reservation price
@@ -257,13 +257,13 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             ).forEach(({ optionId }) => {
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
-                    message: `Option with id ${optionId} not found in the plan.`,
+                    message: `オプションが見つかりません`,
                 });
             });
             const selectedOptions = space.additionalOptions.map((aOpts) => {
                 const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
                 if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
-                    throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+                    throw new GqlError({ code: "BAD_USER_INPUT", message: "オプション数量がありません" });
                 }
                 return { ...aOpts, quantity: bOpt.quantity };
             });
@@ -376,7 +376,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                         reservation: { update: { status: "FAILED" } },
                     },
                 });
-                throw new GqlError({ code: "BAD_REQUEST", message: "Couldn't create a payment intent" });
+                throw new GqlError({ code: "BAD_REQUEST", message: "支払いインテントを作成できませんでした" });
             }
 
             await store.transaction.update({

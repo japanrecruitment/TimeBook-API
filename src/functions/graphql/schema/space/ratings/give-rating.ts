@@ -35,10 +35,9 @@ const giveRating: GiveRating = async (_, { input }, { authData, store }) => {
         },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-    if (accountId === space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "Trying to rate your own space" });
+    if (accountId === space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     if (space.ratings && space.ratings.length > 0) {
         const previousRatingId = space.ratings[0].id;
@@ -49,11 +48,11 @@ const giveRating: GiveRating = async (_, { input }, { authData, store }) => {
     if (!space.reservations || space.reservations.length <= 0)
         throw new GqlError({
             code: "FORBIDDEN",
-            message: "You must make a reservation before giving a rating and a review.",
+            message: "評価とレビューを行う前に予約する必要があります",
         });
 
     if (space.reservations[0].toDateTime.getTime() >= Date.now())
-        throw new GqlError({ code: "FORBIDDEN", message: "You must checkout before giving a rating and a review." });
+        throw new GqlError({ code: "FORBIDDEN", message: "評価とレビューを行う前に予約を完了する必要があります" });
 
     const newRating = await store.rating.create({
         data: { rating, comment, byAccount: { connect: { id: accountId } }, space: { connect: { id: spaceId } } },

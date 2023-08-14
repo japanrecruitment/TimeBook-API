@@ -18,7 +18,7 @@ const getLicensesByAccountId: GetLicensesByAccountId = async (_, { accountId }, 
         select: { license: { select: toLicenseSelect(mapSelections(info)).select } },
     });
 
-    if (!host) throw new GqlError({ code: "NOT_FOUND", message: "Host doesn't exist" });
+    if (!host) throw new GqlError({ code: "NOT_FOUND", message: "ホストが見つかりませんでした。" });
 
     Log(host);
 

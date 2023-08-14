@@ -50,7 +50,7 @@ const addRoomTypesInPackagePlan: AddRoomTypesInPackagePlan = async (
     info
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const validRoomTypes = validateAddRoomTypesInPackagePlanInputList(roomTypes);
 
@@ -62,9 +62,9 @@ const addRoomTypesInPackagePlan: AddRoomTypesInPackagePlan = async (
         },
     });
     if (!packagePlan || !packagePlan.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません。" });
     if (accountId !== packagePlan.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel package plan" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const hotelRooms = await store.hotelRoom.findMany({
         where: { id: { in: validRoomTypes.map(({ hotelRoomId }) => hotelRoomId) } },
@@ -74,7 +74,7 @@ const addRoomTypesInPackagePlan: AddRoomTypesInPackagePlan = async (
         ({ hotelRoomId }) => {
             throw new GqlError({
                 code: "NOT_FOUND",
-                message: `Hotel room with id ${hotelRoomId} not found!`,
+                message: `部屋が見つかりません。`,
             });
         }
     );
@@ -86,7 +86,7 @@ const addRoomTypesInPackagePlan: AddRoomTypesInPackagePlan = async (
     );
 
     if (roomTypesToAdd.length <= 0)
-        throw new GqlError({ message: `No new room type found from submitted list to add` });
+        throw new GqlError({ message: `送信されたリストに追加する新しい部屋タイプが見つかりませんでした` });
 
     const packagePlanRoomTypeSelect = toPackagePlanRoomTypeSelect(mapSelections(info)?.roomTypes)?.select || {
         id: true,
@@ -139,7 +139,7 @@ const addRoomTypesInPackagePlan: AddRoomTypesInPackagePlan = async (
     }
 
     return {
-        message: `Successfully added room type is package plan`,
+        message: `プランに部屋を追加しました`,
         roomTypes: newRoomTypes,
     };
 };

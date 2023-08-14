@@ -13,7 +13,7 @@ type AddProfilePhoto = IFieldResolver<any, Context, AddProfilePhotoArgs, AddProf
 
 const addProfilePhoto: AddProfilePhoto = async (_, { input, uploadInHost }, { authData, store }, info) => {
     const { accountId, id, profileType, roles } = authData || {};
-    if (!accountId || !id) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId || !id) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     // check input
     const type = "Profile";
@@ -22,7 +22,7 @@ const addProfilePhoto: AddProfilePhoto = async (_, { input, uploadInHost }, { au
     // add record in DB
     let updatedProfile;
     if (uploadInHost) {
-        if (!roles.includes("host")) throw new GqlError({ code: "FORBIDDEN", message: "You are not authorized!!" });
+        if (!roles.includes("host")) throw new GqlError({ code: "FORBIDDEN", message: "無許可。" });
         updatedProfile = await store.host.update({
             where: { accountId },
             data: { profilePhoto: { create: { mime, type } } },
@@ -44,7 +44,7 @@ const addProfilePhoto: AddProfilePhoto = async (_, { input, uploadInHost }, { au
         }
     }
 
-    if (!updatedProfile) throw new GqlError({ code: "FORBIDDEN", message: "Profile not found!!" });
+    if (!updatedProfile) throw new GqlError({ code: "FORBIDDEN", message: "アカウントが見つかりませんでした。" });
 
     const { profilePhoto } = updatedProfile;
 

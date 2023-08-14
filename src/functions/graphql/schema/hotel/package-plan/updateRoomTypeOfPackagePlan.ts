@@ -42,7 +42,7 @@ const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (
     info
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const validRoomType = validateUpdateRoomTypeOfPackagePlanInput(input);
     const { id, priceSettings } = validRoomType;
@@ -55,12 +55,12 @@ const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (
         },
     });
     if (!roomType || !roomType.packagePlan?.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません。" });
     if (accountId !== roomType.packagePlan.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel package plan" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     differenceWith(priceSettings, roomType.priceSettings, (a, b) => a.id === b.id).forEach((id) => {
-        throw new GqlError({ code: "NOT_FOUND", message: `Basic setting with id: ${id} not found in this room type` });
+        throw new GqlError({ code: "NOT_FOUND", message: `基本設定が見つかりません` });
     });
 
     await Promise.all(
@@ -125,7 +125,7 @@ const updateRoomTypeOfPackagePlan: UpdateRoomTypeOfPackagePlan = async (
     }
 
     return {
-        message: `Successfully added room type is package plan`,
+        message: `プランには部屋を追加しました。`,
         roomType: updatedRoomType,
     };
 };

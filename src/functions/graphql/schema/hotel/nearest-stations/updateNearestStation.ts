@@ -16,15 +16,15 @@ export function validateUpdateHotelNearestStationInput(
     accessType = accessType?.trim();
     exit = exit?.trim();
 
-    if (isEmpty(hotelId)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid hotel id provided" });
+    if (isEmpty(hotelId)) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なリクエスト" });
 
-    if (isNaN(stationId)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid station id provided" });
+    if (isNaN(stationId)) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な最寄駅" });
 
     if (accessType === "") accessType = undefined;
 
-    if (time && time < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid time" });
+    if (time && time < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な時間" });
 
-    if (!accessType && !time) throw new GqlError({ code: "BAD_USER_INPUT", message: "Empty Input" });
+    if (!accessType && !time) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なリクエスト" });
 
     return { accessType, hotelId, stationId, time, exit };
 }
@@ -53,7 +53,7 @@ type UpdateHotelNearestStation = IFieldResolver<
 
 const updateHotelNearestStation: UpdateHotelNearestStation = async (_, { input }, { authData, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const validInput = validateUpdateHotelNearestStationInput(input);
     const { hotelId, stationId, accessType, time, exit } = validInput;
@@ -62,10 +62,10 @@ const updateHotelNearestStation: UpdateHotelNearestStation = async (_, { input }
         where: { hotelId_stationId: { hotelId, stationId } },
         select: { hotel: { select: { accountId: true } } },
     });
-    if (!nearestStation) throw new GqlError({ code: "NOT_FOUND", message: "Nearest station not found" });
+    if (!nearestStation) throw new GqlError({ code: "NOT_FOUND", message: "最寄駅が見つかりません" });
 
     if (accountId !== nearestStation.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const nearestStationSelect = toHotelNearestStationSelect(mapSelections(info)?.nearestStation).select;
     const updatedNearestStation = await store.hotelNearestStation.update({
@@ -76,7 +76,7 @@ const updateHotelNearestStation: UpdateHotelNearestStation = async (_, { input }
 
     Log(updatedNearestStation);
 
-    return { message: `Successfully updated nearest station`, nearestStation: updatedNearestStation };
+    return { message: `最寄駅を更新しました。`, nearestStation: updatedNearestStation };
 };
 
 export const updateHotelNearestStationTypeDefs = gql`

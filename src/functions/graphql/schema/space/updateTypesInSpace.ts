@@ -24,10 +24,9 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
         select: { id: true, accountId: true, spaceTypes: { select: { id: true } } },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const types = await store.spaceType.findMany({
         where: { id: { in: spaceTypeIds }, available: true },
@@ -37,7 +36,7 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
     const prevTypeIds = space.spaceTypes?.map(({ id }) => id);
     const currTypeIds = types?.map(({ id }) => id);
 
-    if (prevTypeIds === currTypeIds) return { message: "No changes found in the selected space types" };
+    if (prevTypeIds === currTypeIds) return { message: "変更は見つかりませんでした" };
 
     const typesToConnect = currTypeIds?.filter((id) => !prevTypeIds?.includes(id)).map((id) => ({ id }));
     const typesToDisconnect = prevTypeIds?.filter((id) => !currTypeIds?.includes(id)).map((id) => ({ id }));
@@ -45,7 +44,7 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
     const toConnectLength = typesToConnect?.length;
     const toDisconnectLength = typesToDisconnect?.length;
 
-    if (toConnectLength <= 0 && toDisconnectLength <= 0) return { message: `No changes found in submited space types` };
+    if (toConnectLength <= 0 && toDisconnectLength <= 0) return { message: `変更は見つかりませんでした` };
 
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
@@ -66,7 +65,7 @@ const updateTypesInSpace: UpdateTypesInSpace = async (_, { input }, { authData, 
     }
 
     return {
-        message: `Successfull added ${toConnectLength} types and removed ${toDisconnectLength} types from your space`,
+        message: `スペースタイプが更新されました`,
     };
 };
 

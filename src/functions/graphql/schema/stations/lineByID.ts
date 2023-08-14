@@ -10,7 +10,7 @@ const lineByID: LineByID = async (_, { id }, { store, dataSources }) => {
     const cacheDoc = await dataSources.redis.fetch(`line:id:${id}`);
     if (cacheDoc) return cacheDoc;
     const line = await store.trainLine.findUnique({ where: { id } });
-    if (!line) throw new GqlError({ code: "NOT_FOUND", message: "Couldn't find the train line" });
+    if (!line) throw new GqlError({ code: "NOT_FOUND", message: "路線が見つかりません" });
     dataSources.redis.store(`line:id:${id}`, line, 600);
     return line;
 };

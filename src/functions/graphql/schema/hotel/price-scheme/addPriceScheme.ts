@@ -11,7 +11,7 @@ function validateAddPriceSchemeInput(input: AddPriceSchemeInput): AddPriceScheme
     let { roomCharge } = input;
 
     if (roomCharge <= 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Room charge cannot be less than or equal to zero." });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "料金を０以下にすることはできません。" });
 
     return input;
 }
@@ -51,7 +51,7 @@ type AddPriceScheme = IFieldResolver<any, Context, AddPriceSchemeArgs, Promise<A
 
 const addPriceScheme: AddPriceScheme = async (_, { hotelId, input }, { authData, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const validInput = validateAddPriceSchemeInput(input);
 
@@ -59,7 +59,7 @@ const addPriceScheme: AddPriceScheme = async (_, { hotelId, input }, { authData,
         where: { id: hotelId, accountId },
         select: { _count: { select: { priceSchemes: true } } },
     });
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません。" });
 
     Log("addPriceScheme: hotel: ", hotel);
 
@@ -76,7 +76,7 @@ const addPriceScheme: AddPriceScheme = async (_, { hotelId, input }, { authData,
     Log("addPriceScheme: ", priceScheme);
 
     return {
-        message: "Successfully added a Price Scheme!!",
+        message: "料金プランが追加しました。",
         priceScheme,
     };
 };

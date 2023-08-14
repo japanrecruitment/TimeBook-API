@@ -28,7 +28,7 @@ type MyHotels = IFieldResolver<any, Context, MyHotelsArgs, Promise<MyHotelsResul
 
 const myHotels: MyHotels = async (_, { filter, paginate }, { authData, store }, info) => {
     const { accountId } = authData || { accountId: null };
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { skip, take } = paginate || {};
 

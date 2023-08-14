@@ -24,7 +24,7 @@ type MyHotelRooms = IFieldResolver<any, Context, MyHotelRoomsArgs, Promise<MyHot
 
 const myHotelRooms: MyHotelRooms = async (_, { hotelId, paginate }, { authData, store }, info) => {
     const { accountId } = authData || { accountId: null };
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { skip, take } = paginate || {};
 
@@ -36,7 +36,7 @@ const myHotelRooms: MyHotelRooms = async (_, { hotelId, paginate }, { authData, 
         orderBy: { createdAt: "desc" },
     });
 
-    if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "ホテルが見つかりません" });
 
     const myHotelRooms = myHotels.flatMap(({ rooms }) => rooms).filter((room) => room);
 

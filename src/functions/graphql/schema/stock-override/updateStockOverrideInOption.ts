@@ -26,7 +26,7 @@ type UpdateStockOverrideInOption = IFieldResolver<
 
 const updateStockOverrideInOption: UpdateStockOverrideInOption = async (_, { input }, { authData, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { id, endDate, startDate, stock } = validateUpdateStockOverrideInput(input);
 
@@ -53,11 +53,11 @@ const updateStockOverrideInOption: UpdateStockOverrideInOption = async (_, { inp
         },
     });
     if (!stockOverride || !stockOverride.option)
-        throw new GqlError({ code: "NOT_FOUND", message: "Stock override not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "在庫の上書きが見つかりません" });
     if (accountId !== stockOverride.option.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this option" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (!isEmpty(stockOverride.option.stockOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Overlapping stock override found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "重複する在庫の上書きが見つかりました" });
 
     const stockOverrideSelect = toStockOverrideSelect(mapSelections(info)?.stockOverride)?.select;
     const newStockOverride = await store.stockOverride.update({
@@ -69,7 +69,7 @@ const updateStockOverrideInOption: UpdateStockOverrideInOption = async (_, { inp
     Log(newStockOverride);
 
     return {
-        message: "Successfully updated stock override in option",
+        message: "在庫の上書きが更新されました",
         stockOverride: newStockOverride,
     };
 };

@@ -13,13 +13,13 @@ type SuspendAccount = IFieldResolver<any, Context, SuspendAccountArgs, SuspendAc
 const suspendAccount: SuspendAccount = async (_, { accountId }, { store }) => {
     const account = await store.account.findUnique({ where: { id: accountId }, select: { suspended: true } });
 
-    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "Account not found" });
+    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "アカウントが見つかりません" });
 
-    if (account.suspended) throw new GqlError({ code: "BAD_REQUEST", message: "Account already suspended" });
+    if (account.suspended) throw new GqlError({ code: "BAD_REQUEST", message: "アカウントはすでに停止されています" });
 
     await store.account.update({ where: { id: accountId }, data: { suspended: true } });
 
-    return { message: `Successfully suspended an account` };
+    return { message: `アカウントが一時停止されました` };
 };
 
 export const suspendAccountTypeDefs = gql`

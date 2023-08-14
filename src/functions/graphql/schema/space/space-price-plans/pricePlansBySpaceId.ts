@@ -19,7 +19,7 @@ type PricePlanBySpaceId = IFieldResolver<any, Context, PricePlanBySpaceIdArgs, P
 const pricePlanBySpaceId: PricePlanBySpaceId = async (_, { spaceId, filter }, { store }, info) => {
     const space = await store.space.findFirst({ where: { id: spaceId, isDeleted: false } });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
     let { fromDate, toDate, types } = filter;
 

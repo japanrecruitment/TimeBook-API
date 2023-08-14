@@ -34,29 +34,27 @@ type AddPricePlan = IFieldResolver<any, Context, AddPricePlanArgs, Promise<AddPr
 const validateInput = (input: AddPricePlanInput) => {
     const { amount, duration, title, type, cooldownTime, fromDate, lastMinuteDiscount, maintenanceFee, toDate } = input;
 
-    if (!amount || amount <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
+    if (!amount || amount <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な料金" });
 
-    if (!duration || duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration" });
+    if (!duration || duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な期間" });
 
-    if (!title || title.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid title" });
+    if (!title || title.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なタイトル" });
 
     if (!Object.values(SpacePricePlanType).includes(type))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space type" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なスペースタイプ" });
 
-    if (cooldownTime && cooldownTime < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cooldown time" });
+    if (cooldownTime && cooldownTime < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なリセット時間" });
 
     if (fromDate && (fromDate.getTime() < Date.now() || (toDate && fromDate.getTime() > toDate.getTime())))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid start date" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "開始日が無効です" });
 
     if (lastMinuteDiscount && lastMinuteDiscount < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid last minute discount" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な直前割引" });
 
-    if (maintenanceFee && maintenanceFee < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maintenance fee" });
+    if (maintenanceFee && maintenanceFee < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な手数料" });
 
     if (toDate && (toDate.getTime() < Date.now() || (fromDate && toDate.getTime() < fromDate.getTime())))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid end date" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な終了日です" });
 };
 
 const addPricePlan: AddPricePlan = async (_, { pricePlan, spaceId }, { store, authData, dataSources }, info) => {
@@ -100,16 +98,15 @@ const addPricePlan: AddPricePlan = async (_, { pricePlan, spaceId }, { store, au
         },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     space.pricePlans?.forEach(({ type, duration }) => {
         if (pricePlan.type === type && pricePlan.duration === duration) {
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: `This space already has a price plan of type ${type} and duration ${duration}`,
+                message: `このスペースには、「${type}」タイプと「${duration}」期間の料金プランがすでにあります`,
             });
         }
     });
@@ -139,7 +136,7 @@ const addPricePlan: AddPricePlan = async (_, { pricePlan, spaceId }, { store, au
     }
 
     return {
-        result: { message: `Successfully added a new price plans in your space` },
+        result: { message: `料金プランを追加しました` },
         pricePlan: newPricePlan,
     };
 };

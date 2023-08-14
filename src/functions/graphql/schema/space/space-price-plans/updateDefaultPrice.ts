@@ -49,7 +49,7 @@ const validateInput = (input: UpdateDefaultPriceInput) => {
         !tenMinuteAmount &&
         !thirtyMinuteAmount
     ) {
-        throw new GqlError({ code: "BAD_REQUEST", message: "Add atleast one price plan" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "少なくとも 1 つの料金プランを追加します" });
     }
 };
 
@@ -88,10 +88,9 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
         },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const pricePlansToAdd: Array<Pick<SpacePricePlan, "amount" | "duration" | "title" | "type" | "isDefault">> = [];
     const pricePlansToUpdate: Array<Pick<SpacePricePlan, "id" | "amount" | "isDeleted">> = [];
@@ -103,7 +102,7 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
             pricePlansToAdd.push({
                 amount: input.dailyAmount,
                 duration: 1,
-                title: "default 1 day",
+                title: "基本料金１日",
                 type: "DAILY",
                 isDefault: true,
             });
@@ -117,7 +116,7 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
             pricePlansToAdd.push({
                 amount: input.hourlyAmount,
                 duration: 1,
-                title: "default 1 hour",
+                title: "基本料金1時間",
                 type: "HOURLY",
                 isDefault: true,
             });
@@ -135,7 +134,7 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
             pricePlansToAdd.push({
                 amount: input.fiveMinuteAmount,
                 duration: 5,
-                title: "default 5 minutes",
+                title: "基本料金5分",
                 type: "MINUTES",
                 isDefault: true,
             });
@@ -153,7 +152,7 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
             pricePlansToAdd.push({
                 amount: input.tenMinuteAmount,
                 duration: 10,
-                title: "default 10 minutes",
+                title: "基本料金10分",
                 type: "MINUTES",
                 isDefault: true,
             });
@@ -171,7 +170,7 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
             pricePlansToAdd.push({
                 amount: input.fifteenMinuteAmount,
                 duration: 15,
-                title: "default 15 minutes",
+                title: "基本料金15分",
                 type: "MINUTES",
                 isDefault: true,
             });
@@ -189,7 +188,7 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
             pricePlansToAdd.push({
                 amount: input.thirtyMinuteAmount,
                 duration: 30,
-                title: "default 30 minutes",
+                title: "基本料金30分",
                 type: "MINUTES",
                 isDefault: true,
             });
@@ -207,7 +206,7 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
             pricePlansToAdd.push({
                 amount: input.fortyFiveMinuteAmount,
                 duration: 45,
-                title: "default 45 minutes",
+                title: "基本料金45分",
                 type: "MINUTES",
                 isDefault: true,
             });
@@ -259,7 +258,7 @@ const updateDefaultPrice: UpdateDefaultPrice = async (
 
     return {
         result: {
-            message: `Successfully updated ${updatePlansCount} added ${addPlansCount} default price plans in your space`,
+            message: `「${updatePlansCount}」料金プランを更新しました、「${addPlansCount}」料金プランを追加しました`,
         },
         pricePlans: updatedSpace.pricePlans,
     };

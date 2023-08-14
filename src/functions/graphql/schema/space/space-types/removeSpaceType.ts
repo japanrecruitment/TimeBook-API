@@ -19,13 +19,13 @@ const removeSpaceType: RemoveSpaceType = async (_, { input }, { dataSources, sto
 
     const spaceType = await store.spaceType.findUnique({ where: { id } });
 
-    if (!spaceType) throw new GqlError({ code: "BAD_REQUEST", message: "Space type not found" });
+    if (!spaceType) throw new GqlError({ code: "BAD_REQUEST", message: "スペースタイプが見つかりません" });
 
     await store.spaceType.delete({ where: { id } });
 
     dataSources.redis.deleteMany("space-types:*");
 
-    return { message: `Successfully updated ${spaceType.title} space type` };
+    return { message: `「${spaceType.title}」スペースタイプが更新されました` };
 };
 
 export const removeSpaceTypeTypeDefs = gql`

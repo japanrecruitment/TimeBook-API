@@ -23,7 +23,7 @@ const removeRoomTypesFromPackagePlan: RemoveRoomTypesFromPackagePlan = async (
     { authData, dataSources, store }
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     roomTypesIds = roomTypesIds && roomTypesIds.length > 0 ? roomTypesIds : undefined;
 
@@ -35,11 +35,11 @@ const removeRoomTypesFromPackagePlan: RemoveRoomTypesFromPackagePlan = async (
         },
     });
     if (!packagePlan || !packagePlan.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません。" });
     if (accountId !== packagePlan.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel package plan" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
-    if (isEmpty(packagePlan.roomTypes)) throw new GqlError({ code: "NOT_FOUND", message: "Nearest station not found" });
+    if (isEmpty(packagePlan.roomTypes)) throw new GqlError({ code: "NOT_FOUND", message: "無効な部屋タイプ" });
 
     const roomTypesToRemove = roomTypesIds
         ? intersectionWith(roomTypesIds, packagePlan.roomTypes, (a, b) => a === b.id)
@@ -90,7 +90,7 @@ const removeRoomTypesFromPackagePlan: RemoveRoomTypesFromPackagePlan = async (
         });
     }
 
-    return { message: `Successfully removed ${roomTypesToRemove.length} room type from package plan` };
+    return { message: `${roomTypesToRemove.length}部屋タイプをパッケージ プランから削除しました` };
 };
 
 export const removeRoomTypesFromPackagePlanTypeDefs = gql`

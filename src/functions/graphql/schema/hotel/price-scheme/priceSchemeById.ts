@@ -24,7 +24,7 @@ const priceSchemeById: PriceSchemeById = async (_, { id }, { authData, store }, 
 
     Log(`id: `, id, `priceSchemeById: `, priceScheme);
 
-    if (!priceScheme) throw new GqlError({ code: "NOT_FOUND", message: "Price scheme room not found" });
+    if (!priceScheme) throw new GqlError({ code: "NOT_FOUND", message: "料金プランが見つかりません。" });
 
     return priceScheme;
 };

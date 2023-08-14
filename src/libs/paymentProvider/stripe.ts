@@ -124,7 +124,7 @@ export class StripeLib implements IStripeUtil {
                 type: "account_onboarding",
             });
             return {
-                message: `Provide neccessary information.`,
+                message: `必要な情報をご提供してください`,
                 url: accountLink.url,
                 balance: null,
             };
@@ -136,7 +136,7 @@ export class StripeLib implements IStripeUtil {
             Log(available, pending);
 
             return {
-                message: `View account details.`,
+                message: `アカウントの詳細を表示する`,
                 url: loginLink.url,
                 balance: {
                     available,

@@ -12,7 +12,8 @@ export function validateAddHotelNearestStationInput(input: AddHotelNearestStatio
 
     accessType = accessType.trim();
 
-    if (isEmpty(accessType)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Access type cannot be empty" });
+    if (isEmpty(accessType))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "アクセスタイプを空にすることはできません" });
 
     exit = exit?.trim();
 
@@ -23,7 +24,7 @@ export function validateAddHotelNearestStationInputList(
     input: AddHotelNearestStationInput[]
 ): AddHotelNearestStationInput[] {
     if (!input || input.length <= 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Please select some stations to add" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "追加する駅をいくつか選択してください" });
 
     const duplicateStations = differenceWith(
         input,
@@ -34,7 +35,7 @@ export function validateAddHotelNearestStationInputList(
         const duplicateIds = duplicateStations.map(({ stationId }) => stationId);
         throw new GqlError({
             code: "BAD_USER_INPUT",
-            message: `Multiple station with the same ids: ${duplicateIds} found in the selection`,
+            message: `同じ ID を持つ複数のステーション: ${duplicateIds} が選択範囲内に見つかりました`,
         });
     }
 
@@ -67,7 +68,7 @@ const addHotelNearestStations: AddHotelNearestStations = async (
     info
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const validStations = validateAddHotelNearestStationInputList(stations);
 
@@ -75,7 +76,7 @@ const addHotelNearestStations: AddHotelNearestStations = async (
         where: { id: hotelId, accountId },
         select: { address: { select: { prefectureId: true } }, nearestStations: { select: { stationId: true } } },
     });
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません。" });
 
     const mStations = await store.station.findMany({
         where: {
@@ -87,7 +88,7 @@ const addHotelNearestStations: AddHotelNearestStations = async (
     differenceWith(validStations, mStations, ({ stationId }, { id }) => stationId === id).forEach(({ stationId }) => {
         throw new GqlError({
             code: "NOT_FOUND",
-            message: `Cannot find station with id: ${stationId} in your prefecture`,
+            message: `ID: ${stationId} の駅が都道府県で見つかりません`,
         });
     });
 
@@ -98,7 +99,9 @@ const addHotelNearestStations: AddHotelNearestStations = async (
     );
 
     if (nearestStationsToAdd.length <= 0)
-        throw new GqlError({ message: `No new station found from submitted station list to add` });
+        throw new GqlError({
+            message: `送信されたステーション リストに追加する新しい駅が見つかりませんでした`,
+        });
 
     const nearestStationSelect = toHotelNearestStationSelect(mapSelections(info)?.nearestStations)?.select || {
         station: true,
@@ -118,7 +121,7 @@ const addHotelNearestStations: AddHotelNearestStations = async (
     }
 
     return {
-        message: `Succesfully added ${nearestStationsToAdd.length} new nearest stations in your hotel`,
+        message: `宿泊施設に ${nearestStationsToAdd.length} 個の新しい最寄り駅が正常に追加されました`,
         nearestStations: updatedHotel.nearestStations,
     };
 };

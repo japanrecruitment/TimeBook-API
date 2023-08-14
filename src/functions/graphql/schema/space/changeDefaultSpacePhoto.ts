@@ -23,16 +23,15 @@ const changeDefaultSpacePhoto: ChangeDefaultSpacePhoto = async (
     { authData, store, dataSources }
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const photo = await store.photo.findUnique({
         where: { id: photoId },
         include: { space: { select: { accountId: true } } },
     });
-    if (!photo || !photo.space) throw new GqlError({ code: "NOT_FOUND", message: "Photo not found" });
+    if (!photo || !photo.space) throw new GqlError({ code: "NOT_FOUND", message: "写真が見つかりません" });
 
-    if (accountId !== photo.space?.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to remove this space photo" });
+    if (accountId !== photo.space?.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const [__, defaultPhoto] = await store.$transaction([
         store.photo.updateMany({
@@ -63,7 +62,7 @@ const changeDefaultSpacePhoto: ChangeDefaultSpacePhoto = async (
         thumbnail: mediumImageUrl,
     });
 
-    return { message: `Successfully removed space photo` };
+    return { message: `写真が削除されました` };
 };
 
 export const changeDefaultSpacePhotoTypeDefs = gql`

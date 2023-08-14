@@ -41,33 +41,32 @@ const overrideSpaceSetting: OverrideSpaceSetting = async (_, { spaceSetting, spa
         select: { accountId: true, settings: { where: { isDefault: true } } },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "施設が見つかりませんでした" });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "この施設は変更できません" });
 
     if (space.settings.length <= 0)
-        throw new GqlError({ code: "FORBIDDEN", message: "Please add default setting before overriding" });
+        throw new GqlError({ code: "FORBIDDEN", message: "上書きを適用する前に基本設定を追加してください" });
 
     let { closingHr, openingHr, breakFromHr, breakToHr, businessDays, fromDate, toDate } = spaceSetting;
 
     if (fromDate.getTime() < Date.now() || fromDate.getTime() >= toDate.getTime())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid start date" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "開始日が無効です" });
 
     if (toDate.getTime() < Date.now() || toDate.getTime() <= fromDate.getTime())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid end date" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "終了日が無効です" });
 
     if (closingHr && (closingHr < 0 || closingHr > 24 || (openingHr && closingHr < openingHr)))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid closing hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "閉店時間が無効です" });
 
     if (openingHr && (openingHr < 0 || openingHr > 24 || (closingHr && openingHr > closingHr)))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid opening hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "開始時間が無効です" });
 
     if (breakFromHr && (breakFromHr > closingHr || breakFromHr < openingHr || (breakToHr && breakFromHr > breakToHr)))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid break start hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "休憩開始時間が無効です" });
 
     if (breakToHr && (breakToHr > closingHr || breakToHr < openingHr || (breakFromHr && breakToHr < breakFromHr)))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid break end hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "休憩終了時間無効です" });
 
     if (businessDays) {
         businessDays = businessDays.filter((d) => d < 7).sort();
@@ -89,7 +88,7 @@ const overrideSpaceSetting: OverrideSpaceSetting = async (_, { spaceSetting, spa
         ...select,
     });
 
-    return { result: { message: `Successfully added default setting in your space` }, setting };
+    return { result: { message: `設定の上書きが追加されました` }, setting };
 };
 
 export const overrideSpaceSettingTypeDefs = gql`

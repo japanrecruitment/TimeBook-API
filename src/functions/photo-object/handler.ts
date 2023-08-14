@@ -18,7 +18,7 @@ const photoObject: ValidatedEventAPIGatewayProxyEvent<typeof getSchema & typeof 
 
     Log(photoId);
 
-    if (!photoId) return formatJSONResponse(400, { message: "Invalid photo id" });
+    if (!photoId) return formatJSONResponse(400, { message: "無効なID" });
 
     const photo = await store.photo.findUnique({
         where: { id: photoId },
@@ -27,7 +27,7 @@ const photoObject: ValidatedEventAPIGatewayProxyEvent<typeof getSchema & typeof 
 
     Log(photo);
 
-    if (!photo) return formatJSONResponse(400, { message: "Invalid photo id" });
+    if (!photo) return formatJSONResponse(400, { message: "無効なID" });
 
     const { id, mime, type, postUploadInfo, spaceId } = photo;
 
@@ -35,10 +35,10 @@ const photoObject: ValidatedEventAPIGatewayProxyEvent<typeof getSchema & typeof 
 
     const processedImages: ProcessedImage[] = event.body?.processedImages as ProcessedImage[];
 
-    if (!processedImages) return formatJSONResponse(400, { message: "Invalid processed images" });
+    if (!processedImages) return formatJSONResponse(400, { message: "無効な処理済み画像" });
     for (let image of processedImages) {
         if (!image.height || !image.width || !image.size)
-            return formatJSONResponse(400, { message: "Invalid processed images" });
+            return formatJSONResponse(400, { message: "無効な処理済み画像" });
     }
 
     const { cacheKey } =
@@ -73,7 +73,7 @@ const photoObject: ValidatedEventAPIGatewayProxyEvent<typeof getSchema & typeof 
 
     await store.photo.update({ where: { id }, data: imageUpdateData });
 
-    return formatJSONResponse(200, { message: "Photo updated", updated: true });
+    return formatJSONResponse(200, { message: "写真を更新しました", updated: true });
 };
 
 export const main = middyfy(photoObject, true);

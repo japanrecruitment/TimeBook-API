@@ -15,16 +15,15 @@ function isEqualDate(a: Date, b: Date) {
 function validateCalculateRoomPlanInput(input: CalculateRoomPlanInput): CalculateRoomPlanInput {
     let { checkInDate, checkOutDate, additionalOptions, ...others } = input;
 
-    if (checkOutDate < checkInDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+    if (checkOutDate < checkInDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
     if (checkInDate < moment().subtract(1, "days").toDate())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
     checkOutDate = moment(checkOutDate).subtract(1, "days").endOf("day").toDate();
 
     additionalOptions?.forEach(({ quantity }) => {
-        if (quantity && quantity < 0)
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
+        if (quantity && quantity < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なオプション数量" });
     });
 
     return { checkInDate, checkOutDate, additionalOptions, ...others };
@@ -131,7 +130,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
             },
         },
     });
-    if (!plan) throw new GqlError({ code: "NOT_FOUND", message: "Plan not found" });
+    if (!plan) throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
 
     Log("calculateRoomPlanPrice:", "packagePlan:", plan);
 
@@ -140,7 +139,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
     if (packagePlan.paymentTerm === "PER_PERSON" && !nAdult && !nChild) {
         throw new GqlError({
             code: "BAD_USER_INPUT",
-            message: "Missing number of adults or number of child",
+            message: "大人の人数または子供の人数が不足しています",
         });
     }
 
@@ -153,13 +152,13 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         ).forEach(({ optionId }) => {
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: `Option with id ${optionId} not found in the plan.`,
+                message: `オプションが見つかりません`,
             });
         });
         selectedOptions = packagePlan.additionalOptions.map((aOpts) => {
             const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
             if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+                throw new GqlError({ code: "BAD_USER_INPUT", message: "オプションの数量が不足しています" });
             }
             return { ...aOpts, quantity: bOpt.quantity };
         });
@@ -171,14 +170,14 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
     if (hotelRoom.reservations.length >= roomTotalStocks) {
         throw new GqlError({
             code: "BAD_USER_INPUT",
-            message: "Reservation is not available for this hotel room in the selected time frame",
+            message: "選択された時間枠では、この施設は予約できません",
         });
     }
 
     if (packagePlan.reservations.length >= planTotalStocks) {
         throw new GqlError({
             code: "BAD_USER_INPUT",
-            message: "This plan has already out of stock.",
+            message: "このプランは在庫切れです。",
         });
     }
 

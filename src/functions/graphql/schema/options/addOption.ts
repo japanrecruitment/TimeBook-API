@@ -29,27 +29,26 @@ function validateAddOptionInput(input: AddOptionInput): AddOptionInput {
     description = description?.trim();
     name = name?.trim();
 
-    if (isEmpty(description))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Option description cannot be empty" });
+    if (isEmpty(description)) throw new GqlError({ code: "BAD_USER_INPUT", message: "説明は空にできません" });
 
-    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Option name cannot be empty" });
+    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "名前は空にできません" });
 
     if (startUsage?.getTime() > endUsage?.getTime())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid usage period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な使用期間" });
 
     if (startReservation?.getTime() > endReservation?.getTime())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid reservation period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な予約期間" });
 
     if (cutOffBeforeDays && cutOffBeforeDays < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cut off before days" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な締め切り日" });
 
     if ((additionalPrice && !paymentTerm) || (!additionalPrice && paymentTerm))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both payment term and additional price" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "支払い条件と追加料金を入力してください" });
 
     if (additionalPrice && additionalPrice < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid addtional price" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な追加料金" });
 
-    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid stock" });
+    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "在庫数が無効です" });
 
     if (!photos) photos = [];
 
@@ -96,7 +95,7 @@ type AddOption = IFieldResolver<any, Context, AddOptionArgs, Promise<AddOptionRe
 
 const addOption: AddOption = async (_, { input }, { authData, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const validInput = validateAddOptionInput(input);
     const { photos, ...data } = validInput;
@@ -123,7 +122,7 @@ const addOption: AddOption = async (_, { input }, { authData, store }, info) => 
     Log(option, uploadRes);
 
     return {
-        message: "Successfully added a option",
+        message: "オプションが追加されました",
         option,
         uploadRes,
     };

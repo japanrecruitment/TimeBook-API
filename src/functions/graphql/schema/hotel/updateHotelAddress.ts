@@ -19,7 +19,7 @@ type UpdateHotelAddress = IFieldResolver<any, Context, UpdateHotelAddressArgs, P
 
 const updateHotelAddress: UpdateHotelAddress = async (_, { input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const validInput = validateUpdateAddressInput(input);
     const { id, addressLine1, addressLine2, city, postalCode, prefectureId } = validInput;
@@ -28,14 +28,13 @@ const updateHotelAddress: UpdateHotelAddress = async (_, { input }, { authData, 
         where: { id },
         include: { hotel: { select: { id: true, accountId: true, status: true } }, prefecture: true },
     });
-    if (!address || !address.hotel) throw new GqlError({ code: "NOT_FOUND", message: "Address not found" });
-    if (accountId !== address.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel address" });
+    if (!address || !address.hotel) throw new GqlError({ code: "NOT_FOUND", message: "住所が見つかりません。" });
+    if (accountId !== address.hotel.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     let mPrefecture = address.prefecture;
     if (prefectureId) {
         const prefecture = await store.prefecture.findFirst({ where: { id: prefectureId, available: true } });
-        if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
+        if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な都道府県が選択されました" });
         mPrefecture = prefecture;
     }
 
@@ -46,7 +45,7 @@ const updateHotelAddress: UpdateHotelAddress = async (_, { input }, { authData, 
         (prefectureId && address.prefectureId !== prefectureId)
     ) {
         geoloc = await dataSources.googleMap.getLatLng(mPrefecture.name, city, addressLine1);
-        if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid address" });
+        if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な住所" });
     }
 
     const addressSelect = toAddressSelect(mapSelections(info)?.address)?.select || { id: true };
@@ -88,7 +87,7 @@ const updateHotelAddress: UpdateHotelAddress = async (_, { input }, { authData, 
     }
 
     return {
-        message: "Successfully update hotel address",
+        message: "住所が更新しました。",
         address: updatedAddress,
     };
 };

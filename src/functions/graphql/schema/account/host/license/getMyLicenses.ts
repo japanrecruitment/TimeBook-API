@@ -32,7 +32,7 @@ const getMyLicenses: GetMyLicenses = async (_, { paginate }, { authData, store }
         },
     });
 
-    if (!host) throw new GqlError({ code: "NOT_FOUND", message: "Host doesn't exist" });
+    if (!host) throw new GqlError({ code: "NOT_FOUND", message: "ホストが見つかりませんでした。" });
 
     Log(host);
 

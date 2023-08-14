@@ -44,7 +44,7 @@ const reservations: Reservations = async (_, { spaceId: id, paginate, filter }, 
         },
     });
 
-    if (!spaces) throw new GqlError({ code: "NOT_FOUND", message: "You don't have any hosted spaces" });
+    if (!spaces) throw new GqlError({ code: "NOT_FOUND", message: "スペースがありません" });
 
     const reservations = spaces
         .flatMap((space) => space.reservations)

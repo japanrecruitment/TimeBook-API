@@ -54,14 +54,12 @@ type GetApplicablePricePlans = IFieldResolver<
 
 const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { store }) => {
     const { duration, durationType, fromDateTime, spaceId, additionalOptions } = input;
-    if (fromDateTime.getTime() < Date.now())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid from date." });
+    if (fromDateTime.getTime() < Date.now()) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な開始日" });
 
-    if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration." });
+    if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な期間" });
 
     additionalOptions?.forEach(({ quantity }) => {
-        if (quantity && quantity < 0)
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
+        if (quantity && quantity < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なオプション数量" });
     });
 
     const durationUnit: Record<SpacePricePlanType, "days" | "hours" | "minutes"> = {
@@ -77,7 +75,7 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
     Log("reserveSpace: durations:", days, hours, minutes);
 
     if (days <= 0 && hours <= 0 && minutes < 5)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selection" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
     const space = await store.space.findUnique({
         where: { id: spaceId },
@@ -115,14 +113,14 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
             ({ optionId }) => {
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
-                    message: `Option with id ${optionId} not found in the plan.`,
+                    message: `オプションが見つかりません`,
                 });
             }
         );
         selectedOptions = space.additionalOptions.map((aOpts) => {
             const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
             if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+                throw new GqlError({ code: "BAD_USER_INPUT", message: "オプション在庫数が必要です" });
             }
             return { ...aOpts, quantity: bOpt.quantity };
         });

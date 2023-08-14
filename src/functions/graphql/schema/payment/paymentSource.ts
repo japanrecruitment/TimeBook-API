@@ -36,7 +36,7 @@ const paymentSource: TPaymentSource = async (_, __, { authData, store }, info) =
         });
 
         if (!account.userProfile) {
-            throw new GqlError({ code: "FORBIDDEN", message: "Not authorized" });
+            throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
         }
 
         const { stripeCustomerId } = account.userProfile;
@@ -49,7 +49,7 @@ const paymentSource: TPaymentSource = async (_, __, { authData, store }, info) =
         const stripe = new StripeLib();
         const customer = await stripe.getCustomer(stripeCustomerId);
 
-        if (!customer) throw new GqlError({ code: "BAD_REQUEST", message: "Invalid customer id found" });
+        if (!customer) throw new GqlError({ code: "BAD_REQUEST", message: "顧客IDが見つかりません" });
 
         const paymentSources = await stripe.retrieveCard(stripeCustomerId);
 
@@ -72,7 +72,7 @@ const paymentSource: TPaymentSource = async (_, __, { authData, store }, info) =
         return result;
     } catch (error) {
         Log("[paymentSource error]: ", error);
-        throw new GqlError({ code: "INTERNAL ERROR", message: "Internal Server Error" });
+        throw new GqlError({ code: "INTERNAL ERROR", message: "不明なエラーです" });
     }
 };
 

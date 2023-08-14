@@ -86,7 +86,7 @@ const serverlessConfiguration: AWS = {
         uploadMediaBucket: "timebook-api-${sls:stage}-media-upload",
         publicMediaBucket: "timebook-public-media",
     },
-    plugins: ["serverless-webpack", "serverless-webpack-prisma", "serverless-offline"],
+    plugins: ["serverless-webpack", "serverless-webpack-prisma", "serverless-prune-plugin", "serverless-offline"],
     // package: {
     //     patterns: [
     //         "!node_modules/.prisma/client/libquery_engine-*",

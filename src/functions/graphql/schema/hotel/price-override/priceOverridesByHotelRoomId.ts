@@ -29,7 +29,7 @@ const priceOverridesByHotelRoomId: PriceOverridesByHotelRoomId = async (
         where: { id: hotelRoomId },
         select: { priceOverrides: priceOverrideSelect },
     });
-    if (!hotelRoom) throw new GqlError({ code: "NOT_FOUND", message: "Hotel room not found" });
+    if (!hotelRoom) throw new GqlError({ code: "NOT_FOUND", message: "部屋が見つかりません" });
 
     let priceOverrides = hotelRoom.priceOverrides;
     if (isEmpty(hotelRoom.priceOverrides)) priceOverrides = [];

@@ -28,7 +28,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     const { reservationId, cancelCharge = 0, remarks } = input;
 
     if (cancelCharge > 100 || cancelCharge < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cancellation charge" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なキャンセル料" });
 
     const reservation = await store.reservation.findUnique({
         where: { id: reservationId },
@@ -135,7 +135,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     if (!paymentIntent)
         throw new GqlError({
             code: "BAD_REQUEST",
-            message: "Payment intent not found in your reservation transaction.",
+            message: "支払い情報が見つかりません",
         });
 
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {

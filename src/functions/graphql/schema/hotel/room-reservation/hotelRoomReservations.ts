@@ -61,7 +61,7 @@ const hotelRoomReservations: Reservations = async (_, { hotelId: id, paginate, f
         },
     });
 
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "You don't have any hosted spaces" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "スペースがありません" });
 
     const hotelRoomReservations = hotel
         .flatMap(({ packagePlans, rooms }) => {

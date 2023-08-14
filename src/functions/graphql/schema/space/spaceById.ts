@@ -14,7 +14,7 @@ const spaceById: SpaceById = async (_, { id }, { store }, info) => {
         ...toSpaceSelect(mapSelections(info)),
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
     Log(space);
 

@@ -23,27 +23,26 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
         select: { accountId: true, published: true },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     if (addressLine1?.trim() === "")
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Address line 1 cannot be empty" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "住所行 1 を空にすることはできません" });
 
-    if (city?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "City cannot be empty" });
+    if (city?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "街を空にすることはできない" });
 
     if (postalCode?.trim() === "")
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Postal code cannot be empty" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "郵便番号を空白にすることはできません" });
 
-    if (!prefectureId) throw new GqlError({ code: "BAD_USER_INPUT", message: "Prefecture is required" });
+    if (!prefectureId) throw new GqlError({ code: "BAD_USER_INPUT", message: "都道府県を空白にすることはできません" });
 
     const prefecture = await store.prefecture.findUnique({ where: { id: prefectureId } });
 
-    if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
+    if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な都道府県が選択されました" });
 
     const geoloc = await dataSources.googleMap.getLatLng(prefecture.name, city, addressLine1);
-    if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid address" });
+    if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な住所" });
 
     const newAddress = await store.address.create({
         data: {
@@ -76,7 +75,7 @@ const addSpaceAddress: AddSpaceAddress = async (_, { spaceId, address }, { authD
         });
     }
 
-    return { address: newAddress, result: { message: `Successfully added address in your space` } };
+    return { address: newAddress, result: { message: `アドレスが追加されました` } };
 };
 
 export const addSpaceAddressTypeDefs = gql`

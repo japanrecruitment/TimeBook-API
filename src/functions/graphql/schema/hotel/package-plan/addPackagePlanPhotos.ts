@@ -21,17 +21,17 @@ type AddPackagePlanPhotos = IFieldResolver<any, Context, AddPackagePlanPhotosArg
 
 const addPackagePlanPhotos: AddPackagePlanPhotos = async (_, { packagePlanId, photos }, { authData, store }) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const packagePlan = await store.packagePlan.findUnique({
         where: { id: packagePlanId },
         select: { hotel: { select: { accountId: true } }, photos: { select: { id: true } } },
     });
     if (!packagePlan || !packagePlan.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません。" });
 
     if (accountId !== packagePlan.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this package plan" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const updatedPackagePlan = await store.packagePlan.update({
         where: { id: packagePlanId },
@@ -55,7 +55,7 @@ const addPackagePlanPhotos: AddPackagePlanPhotos = async (_, { packagePlanId, ph
     Log(updatedPackagePlan, uploadRes);
 
     return {
-        message: `Photo uploaded sucessfully!!`,
+        message: `写真がアップロードされました。`,
         uploadRes,
     };
 };

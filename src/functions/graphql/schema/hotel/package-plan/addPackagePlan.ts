@@ -36,23 +36,23 @@ function validateAddPackagePlanInput(input: AddPackagePlanInput): AddPackagePlan
     name = name?.trim();
 
     if (isEmpty(description))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Plan description cannot be empty" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "プランの説明を空にすることはできません" });
 
-    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Plan name cannot be empty" });
+    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "プラン名を空にすることはできません" });
 
     if (startUsage?.getTime() > endUsage?.getTime())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid usage period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "利用期間が無効です" });
 
     if (startReservation?.getTime() > endReservation?.getTime())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid reservation period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "予約期間が無効です" });
 
     if (cutOffBeforeDays && cutOffBeforeDays < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cut off before days" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "数日前の無効なカットオフ" });
 
-    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
+    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "在庫数が無効です" });
 
     if (subcriptionPrice && subcriptionPrice < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid subscription price" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なサブスクリプション価格" });
 
     if (!additionalOptions) additionalOptions = [];
     if (!includedOptions) includedOptions = [];
@@ -111,7 +111,7 @@ type AddPackagePlan = IFieldResolver<any, Context, AddPackagePlanArgs, Promise<A
 
 const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const validInput = validateAddPackagePlanInput(input);
     const {
@@ -136,10 +136,10 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         where: { id: hotelId, accountId },
         select: { priceSchemes: { select: { id: true } }, rooms: { select: { id: true } }, status: true },
     });
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません" });
     differenceWith(roomTypes, hotel.rooms, ({ hotelRoomId }, { id }) => hotelRoomId === id).forEach(
         ({ hotelRoomId }) => {
-            throw new GqlError({ code: "NOT_FOUND", message: `Hotel doesn't have room with id: ${hotelRoomId}` });
+            throw new GqlError({ code: "NOT_FOUND", message: `部屋が見つかりません` });
         }
     );
     differenceWith(
@@ -147,7 +147,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
         hotel.priceSchemes,
         ({ priceSchemeId }, { id }) => priceSchemeId === id
     ).forEach(({ priceSchemeId }) => {
-        throw new GqlError({ code: "NOT_FOUND", message: `Hotel doesn't have price scheme with id: ${priceSchemeId}` });
+        throw new GqlError({ code: "NOT_FOUND", message: `料金プランが見つかりません。` });
     });
 
     const packagePlanSelect = toPackagePlanSelect(mapSelections(info).packagePlan)?.select || {
@@ -271,7 +271,7 @@ const addPackagePlan: AddPackagePlan = async (_, { hotelId, input }, { authData,
     }
 
     return {
-        message: "Successfully added a package plan",
+        message: "プランを追加されました。",
         packagePlan: { ...packagePlan, additionalOptions, includedOptions, roomTypes: roomPlans },
         uploadRes,
     };

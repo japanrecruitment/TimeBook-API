@@ -11,7 +11,7 @@ function validateUpdatePriceSchemeInput(input: UpdatePriceSchemeInput): UpdatePr
     let { roomCharge } = input;
 
     if (roomCharge && roomCharge <= 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Room charge cannot be less than or equal to zero." });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "料金を０以下にすることはできません。" });
 
     return input;
 }
@@ -52,7 +52,7 @@ type UpdatePriceScheme = IFieldResolver<any, Context, UpdatePriceSchemeArgs, Pro
 
 const updatePriceScheme: UpdatePriceScheme = async (_, { input }, { authData, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { id, ...data } = validateUpdatePriceSchemeInput(input);
 
@@ -61,9 +61,9 @@ const updatePriceScheme: UpdatePriceScheme = async (_, { input }, { authData, st
         select: { hotel: { select: { accountId: true } } },
     });
     if (!priceScheme || !priceScheme.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Price scheme not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "料金プランが見つかりません。" });
     if (accountId !== priceScheme.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const priceSchemeSelect = toPriceSchemeSelect(mapSelections(info)?.priceScheme)?.select;
     const updatedPriceScheme = await store.priceScheme.update({ where: { id }, data, select: priceSchemeSelect });
@@ -71,7 +71,7 @@ const updatePriceScheme: UpdatePriceScheme = async (_, { input }, { authData, st
     Log("updatePriceScheme: ", updatedPriceScheme);
 
     return {
-        message: "Successfully updated a Price Scheme!!",
+        message: "料金プランが更新しました。",
         priceScheme: updatedPriceScheme,
     };
 };

@@ -39,27 +39,27 @@ function validateUpdateOptionInput(input: UpdateOptionInput): UpdateOptionInput 
     if (!stock) stock = null;
 
     if ((startUsage && !endUsage) || (!startUsage && endUsage))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end usage period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "使用開始期間と終了期間を入力してください" });
 
     if (startUsage?.getTime() > endUsage?.getTime())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid usage period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "利用期間が無効です" });
 
     if ((startReservation && !endReservation) || (!startReservation && endReservation))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end reservation period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "予約の開始期間と終了期間を入力してください" });
 
     if (startReservation?.getTime() > endReservation?.getTime())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid reservation period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "予約期間が無効です" });
 
     if (cutOffBeforeDays && cutOffBeforeDays < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cut off before days" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な締め切り日" });
 
     if ((additionalPrice && !paymentTerm) || (!additionalPrice && paymentTerm))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both payment term and additional price" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "支払い期間と追加料金を入力してください" });
 
     if (additionalPrice && additionalPrice < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid addtional price" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な追加料金" });
 
-    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid stock" });
+    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "在庫数が無効です" });
 
     return {
         id,
@@ -103,14 +103,13 @@ type UpdateOption = IFieldResolver<any, Context, UpdateOptionArgs, Promise<Updat
 
 const updateOption: UpdateOption = async (_, { input }, { authData, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { id, ...data } = validateUpdateOptionInput(input);
 
     const option = await store.option.findUnique({ where: { id }, select: { accountId: true } });
-    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "Option not found" });
-    if (accountId !== option.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this option" });
+    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "オプションが見つかりません" });
+    if (accountId !== option.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const optionSelect = toOptionSelect(mapSelections(info)?.option)?.select;
     const updatedOption = await store.option.update({
@@ -122,7 +121,7 @@ const updateOption: UpdateOption = async (_, { input }, { authData, store }, inf
     Log("updateOption: ", updatedOption);
 
     return {
-        message: `Successfully updated option`,
+        message: `オプションが更新されました`,
         option: updatedOption,
     };
 };

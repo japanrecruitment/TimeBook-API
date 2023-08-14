@@ -24,7 +24,7 @@ const stockOverridesByOptionId: StockOverridesByOptionId = async (_, { optionId 
         where: { id: optionId },
         select: { stockOverrides: stockOverrideSelect },
     });
-    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "Option not found" });
+    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "オプションが見つかりません" });
 
     let stockOverrides = option.stockOverrides;
     if (isEmpty(option.stockOverrides)) stockOverrides = [];

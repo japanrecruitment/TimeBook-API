@@ -39,25 +39,24 @@ const validateInput = (input: UpdatePricePlanOverrideInput) => {
 
     if (type === "DAY_OF_WEEK") {
         if (!daysOfWeek || daysOfWeek.length <= 0)
-            throw new GqlError({ code: "BAD_USER_INPUT", message: `Missing required field day of week` });
+            throw new GqlError({ code: "BAD_USER_INPUT", message: `曜日がありません` });
 
         daysOfWeek.forEach((d) => {
             if (d > 6 || d < 0) {
-                throw new GqlError({ code: "BAD_USER_INPUT", message: `Invalid day of week ${d}` });
+                throw new GqlError({ code: "BAD_USER_INPUT", message: `曜日が無効です` });
             }
         });
     } else if (type === "DATE_TIME") {
-        if (!fromDate || !toDate)
-            throw new GqlError({ code: "BAD_USER_INPUT", message: `Missing required fields from date and to date` });
+        if (!fromDate || !toDate) throw new GqlError({ code: "BAD_USER_INPUT", message: `開始日と終了日は必須です` });
 
         if (fromDate.getTime() < Date.now() || fromDate.getTime() > toDate.getTime())
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid start date" });
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な開始日" });
 
         if (toDate.getTime() < Date.now() || toDate.getTime() < fromDate.getTime())
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid end date" });
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な終了日" });
     }
 
-    if (!amount || amount <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid amount" });
+    if (!amount || amount <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な料金" });
 };
 
 const updatePricePlanOverride: UpdatePricePlanOverride = async (_, { input }, { authData, store }, info) => {
@@ -74,10 +73,10 @@ const updatePricePlanOverride: UpdatePricePlanOverride = async (_, { input }, { 
 
     Log("updatePricePlanOverride: ", pricePlanOverride);
 
-    if (!pricePlanOverride) throw new GqlError({ code: "NOT_FOUND", message: "Price plan override not found" });
+    if (!pricePlanOverride) throw new GqlError({ code: "NOT_FOUND", message: "料金プランの上書きが見つかりません" });
 
     if (accountId !== pricePlanOverride.pricePlan.space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this price plan" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     if (type === "DATE_TIME") {
         if (pricePlanOverride.pricePlan.fromDate || pricePlanOverride.pricePlan.toDate) {
@@ -89,7 +88,7 @@ const updatePricePlanOverride: UpdatePricePlanOverride = async (_, { input }, { 
             ) {
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
-                    message: `Start date cannot be less than or greater than that of the price plan`,
+                    message: `開始日は、料金プランの開始日よりも前またはそれ以降にすることはできません`,
                 });
             }
             if (
@@ -100,7 +99,7 @@ const updatePricePlanOverride: UpdatePricePlanOverride = async (_, { input }, { 
             ) {
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
-                    message: `End date cannot be less than or  greater than that of the price plan`,
+                    message: `終了日は料金プランの終了日より前またはそれ以降にすることはできません`,
                 });
             }
         }
@@ -115,7 +114,7 @@ const updatePricePlanOverride: UpdatePricePlanOverride = async (_, { input }, { 
                 if (!days.includes(d)) {
                     throw new GqlError({
                         code: "BAD_USER_INPUT",
-                        message: `Cannot add override this price plan as with ${daysOfWeek} as it doesn't include some of them in it's duration`,
+                        message: `${daysOfWeek} の場合と同様に、この料金プランの一部が期間に含まれていないため、この料金プランの上書きを追加することはできません`,
                     });
                 }
             });
@@ -126,7 +125,7 @@ const updatePricePlanOverride: UpdatePricePlanOverride = async (_, { input }, { 
     const updatedPricePlanOverride = await store.pricePlanOverride.update({ where: { id }, data });
 
     return {
-        result: { message: `Successfully updated a override in price plan` },
+        result: { message: `料金プランの上書きが更新されました` },
         pricePlanOverride: updatedPricePlanOverride,
     };
 };

@@ -25,11 +25,11 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
     let { email, password, firstName, lastName, firstNameKana, lastNameKana } = input;
 
     const isValid = email.trim() && password.trim() && firstName.trim() && lastName.trim();
-    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
+    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "必要な情報をすべて提供してください。" });
 
     const account = await store.account.findUnique({ where: { email } });
     Log(account);
-    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
+    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "すでに使用中のメール。" });
 
     password = encodePassword(password);
     email = email.toLocaleLowerCase(); // change email to lowercase
@@ -72,7 +72,7 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
     ]);
 
     return {
-        message: `Successfully registered an user account with email: ${email}`,
+        message: `アカウント登録が成功しました。`,
         action: `verify-email`,
     };
 };

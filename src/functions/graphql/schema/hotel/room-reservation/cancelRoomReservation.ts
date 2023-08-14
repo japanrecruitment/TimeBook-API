@@ -28,7 +28,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     const { hotelRoomReservationId, cancelCharge = 0, remarks } = input;
 
     if (cancelCharge > 100 || cancelCharge < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cancellation charge" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なキャンセル料" });
 
     const reservation = await store.hotelRoomReservation.findUnique({
         where: { id: hotelRoomReservationId },
@@ -55,22 +55,22 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
         },
     });
 
-    if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "Reservation not found" });
+    if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "予約が見つかりません" });
 
     if (!reservation.packagePlan || !reservation.packagePlan.hotel || !reservation.packagePlan.hotel.account)
-        throw new GqlError({ code: "FORBIDDEN", message: "Invalid reservation found" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効な予約です" });
 
     if (reservation.reserveeId !== accountId && reservation.packagePlan.hotel.account.id !== accountId)
-        throw new GqlError({ code: "UNAUTHORIZED", message: "Not Authorized" });
+        throw new GqlError({ code: "UNAUTHORIZED", message: "無効なリクエスト" });
 
     if (reservation.status === "CANCELED")
-        throw new GqlError({ code: "BAD_REQUEST", message: "Reservation already canceled" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "予約はすでにキャンセルされています" });
 
     if (reservation.status === "DISAPPROVED")
-        throw new GqlError({ code: "BAD_REQUEST", message: "Cannot cancel a disapproved reservation" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "不承認となった予約はキャンセルできません" });
 
     if (reservation.status === "FAILED")
-        throw new GqlError({ code: "BAD_REQUEST", message: "Cannot cancel a failed reservation" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "失敗した予約はキャンセルできません" });
 
     const isHost = reservation.packagePlan.hotel.account.id === accountId;
 
@@ -78,7 +78,10 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
         ? reservation.packagePlan.hotel.account.suspended || reservation.packagePlan.hotel.account.host.suspended
         : reservation.reservee.suspended;
     if (isSuspended)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are suspended. Please contact our support team." });
+        throw new GqlError({
+            code: "FORBIDDEN",
+            message: "あなたは停学処分を受けています。 弊社サポートチームまでご連絡ください。",
+        });
 
     const stripe = new StripeLib();
     await stripe.cancelPaymentIntent(reservation.transaction.paymentIntentId);
@@ -88,7 +91,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             where: { id: hotelRoomReservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
-        return { message: "Successfully canceled reservation." };
+        return { message: "予約がキャンセルされました。" };
     }
 
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
@@ -100,7 +103,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                 where: { id: hotelRoomReservationId },
                 data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
             });
-            return { message: "Successfully canceled reservation." };
+            return { message: "予約がキャンセルされました。" };
         }
 
         const currDateMillis = Date.now();
@@ -121,7 +124,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             where: { id: hotelRoomReservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
-        return { message: "Successfully canceled reservation." };
+        return { message: "予約がキャンセルされました。" };
     }
 
     const amount = cancellationChargeRate * reservation.transaction.amount;
@@ -134,13 +137,13 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             where: { id: hotelRoomReservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
-        return { message: `Successfully canceled reservation.` };
+        return { message: `予約がキャンセルされました。` };
     }
 
     if (!paymentIntent)
         throw new GqlError({
             code: "BAD_REQUEST",
-            message: "Payment intent not found in your reservation transaction.",
+            message: "予約に「支払いの情報」が見つかりません。",
         });
 
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
@@ -165,7 +168,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
         where: { id: hotelRoomReservationId },
         data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
     });
-    return { message: `Successfully canceled reservation. You have been charged ${amount} as cancellation fees.` };
+    return { message: `予約がキャンセルされました. キャンセル料として ${amount} が請求されました。` };
 };
 
 export const cancelRoomReservationTypeDefs = gql`

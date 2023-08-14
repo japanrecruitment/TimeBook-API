@@ -13,16 +13,16 @@ type ApproveAccount = IFieldResolver<any, Context, ApproveAccountArgs, ApproveAc
 const approveAccount: ApproveAccount = async (_, { accountId }, { store }) => {
     const account = await store.account.findUnique({ where: { id: accountId }, select: { approved: true } });
 
-    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "Account not found" });
+    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "アカウントが見つかりませんでした。" });
 
-    if (account.approved) throw new GqlError({ code: "BAD_REQUEST", message: "Account already approved" });
+    if (account.approved) throw new GqlError({ code: "BAD_REQUEST", message: "アカウントはすでに承認されています。" });
 
     await store.account.update({
         where: { id: accountId },
         data: { approved: true, host: { update: { approved: true } } },
     });
 
-    return { message: `Successfully approved an account` };
+    return { message: `アカウントが承認されました。` };
 };
 
 export const approveAccountTypeDefs = gql`

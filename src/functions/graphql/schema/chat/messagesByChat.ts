@@ -31,7 +31,7 @@ const messagesByChat: MessagesByChat = async (_, { chatId, paginate }, { authDat
     });
 
     if (!chat.members.map(({ id }) => id).includes(accountId))
-        throw new GqlError({ code: "UNAUTHORIZED", message: "You do not have access to this chat" });
+        throw new GqlError({ code: "UNAUTHORIZED", message: "無効なリクエスト" });
 
     Log(chat.messages);
 

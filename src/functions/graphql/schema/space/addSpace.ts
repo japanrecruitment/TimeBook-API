@@ -23,21 +23,20 @@ function validateAddSpaceInput(input: AddSpaceInput): AddSpaceInput {
     description = description?.trim();
     name = name?.trim();
 
-    if (isEmpty(description))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Space description cannot be empty" });
+    if (isEmpty(description)) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な説明" });
 
-    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Space name cannot be empty" });
+    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "" });
 
     if (maximumCapacity && maximumCapacity < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum capacity" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "最大人数が無効です" });
 
     if (numberOfSeats && numberOfSeats < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of seats" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な最大シート数" });
 
-    if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
+    if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なスペースサイズ" });
 
     if (subcriptionPrice && subcriptionPrice < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid subscription price" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なサブスクリプション料金" });
 
     if (!additionalOptions) additionalOptions = [];
     if (!includedOptions) includedOptions = [];
@@ -77,7 +76,7 @@ type AddSpace = IFieldResolver<any, Context, AddSpaceArgs, Promise<AddSpaceResul
 
 const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }) => {
     const { accountId } = authData || { accountId: null };
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { additionalOptions, cancelPolicyId, includedOptions, ...data } = validateAddSpaceInput(input);
 
@@ -120,7 +119,7 @@ const addSpace: AddSpace = async (_, { input }, { authData, dataSources, store }
 
     return {
         space: { ...space, includedOptions: _includedOptions, additionalOptions: _additionalOptions },
-        result: { message: "Successfully added a new space" },
+        result: { message: "スペースが追加されました" },
     };
 };
 

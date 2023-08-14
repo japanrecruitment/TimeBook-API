@@ -41,24 +41,24 @@ function validateUpdatePackagePlanInput(input: UpdatePackagePlanInput): UpdatePa
     if (!subcriptionPrice) subcriptionPrice = null;
 
     if ((startUsage && !endUsage) || (!startUsage && endUsage))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end usage period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "使用開始期間と終了期間の両方を提供する" });
 
     if (startUsage?.getTime() > endUsage?.getTime())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid usage period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "利用期間が無効です" });
 
     if ((startReservation && !endReservation) || (!startReservation && endReservation))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide both start and end reservation period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "予約開始期間と予約終了期間の両方を提供する" });
 
     if (startReservation?.getTime() > endReservation?.getTime())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid reservation period" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "予約期間が無効です" });
 
     if (cutOffBeforeDays && cutOffBeforeDays < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid cut off before days" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "数日前の無効なカットオフ" });
 
-    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
+    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "在庫数が無効です" });
 
     if (subcriptionPrice && subcriptionPrice < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid subscription price" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なサブスクリプション価格" });
 
     return {
         additionalOptions,
@@ -108,7 +108,7 @@ type UpdatePackagePlan = IFieldResolver<any, Context, UpdatePackagePlanArgs, Pro
 
 const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { id, additionalOptions, includedOptions, ...data } = validateUpdatePackagePlanInput(input);
 
@@ -121,9 +121,9 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
         },
     });
     if (!packagePlan || !packagePlan.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
     if (accountId !== packagePlan.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel package plan" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const packagePlanSelect = toPackagePlanSelect(mapSelections(info)?.packagePlan)?.select || {
         id: true,
@@ -243,7 +243,7 @@ const updatePackagePlan: UpdatePackagePlan = async (_, { input }, { authData, da
     }
 
     return {
-        message: `Successfully updated package plan`,
+        message: `プランが更新されました`,
         packagePlan: {
             ...updatedPackagePlan,
             additionalOptions: additionalOptionsResult,
