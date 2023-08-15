@@ -18,6 +18,7 @@ import {
 type AccountFilterOptions = {
     approved?: boolean;
     suspended?: boolean;
+    deactivated?: boolean;
     profileTypes?: Array<ProfileType>;
     roles?: Array<Role>;
 };
@@ -32,7 +33,7 @@ type AllAccountsResult = Promise<PaginationResult<ProfileObject>>;
 type AllAccounts = IFieldResolver<any, Context, AllAccountsArgs, AllAccountsResult>;
 
 const allAccounts: AllAccounts = async (_, { filters, paginate }, { authData, store }, info) => {
-    const { approved, profileTypes, roles, suspended } = filters || {};
+    const { approved, profileTypes, roles, suspended, deactivated } = filters || {};
     const { take, skip } = paginate || {};
 
     const selections = mapSelections(info).data;
@@ -45,6 +46,7 @@ const allAccounts: AllAccounts = async (_, { filters, paginate }, { authData, st
             profileType: profileTypes?.length > 0 ? { in: profileTypes } : undefined,
             roles: roles?.length > 0 ? { hasEvery: roles.filter((r) => !r.endsWith("unknown")) } : undefined,
             suspended,
+            deactivated,
         },
         ...profileSelect,
         take: take && take + 1,
@@ -68,6 +70,7 @@ export const allAccountsTypeDefs = gql`
     input AccountFilterOptions {
         approved: Boolean
         suspended: Boolean
+        deactivated: Boolean
         profileTypes: [ProfileType]
         roles: [Role]
     }

@@ -131,6 +131,7 @@ model Account {
     roles                   Role[]
     suspended               Boolean                @default(false)
     deactivated             Boolean                @default(false)
+    deactivationReason      String?
     createdAt               DateTime               @default(now()) @db.Timestamp(6)
     updatedAt               DateTime               @updatedAt
     providerAccountId       String?

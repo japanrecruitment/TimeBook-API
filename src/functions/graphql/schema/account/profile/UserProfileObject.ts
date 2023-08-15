@@ -72,6 +72,8 @@ export const userProfileObjectTypeDefs = gql`
         host: Host @auth(requires: [admin], allowSelf: true)
         approved: Boolean @auth(requires: [admin], allowSelf: true)
         suspended: Boolean @auth(requires: [admin], allowSelf: true)
+        deactivated: Boolean @auth(requires: [admin], allowSelf: true)
+        deactivationReason: String @auth(requires: [admin], allowSelf: true)
         createdAt: Date @auth(requires: [admin], allowSelf: true)
         updatedAt: Date @auth(requires: [admin], allowSelf: true)
     }

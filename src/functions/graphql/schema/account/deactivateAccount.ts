@@ -6,20 +6,27 @@ import { GqlError } from "../../error";
 import { Result } from "../core/result";
 import { Log } from "@utils/logger";
 import { ReservationStatus } from "@prisma/client";
+import { addEmailToQueue } from "@utils/index";
+import { AccountDeactivated } from "@utils/email-helper/templates/account-deactivated";
 
 type DeactivateAccountInput = {
     password: string;
+    reason: string;
 };
 
 type DeactivateAccount = IFieldResolver<any, Context, Record<"input", DeactivateAccountInput>, Promise<Result>>;
 
 const deactivateAccount: DeactivateAccount = async (_, { input }, { store, authData }) => {
-    const { password } = input;
+    const { password, reason } = input;
     const { accountId } = authData;
+
+    // validate user input
+    if (!password || !reason || password.length < 6 || reason.trim().length === 0)
+        throw new GqlError({ code: "NOT_FOUND", message: "無効なリクエスト" });
 
     const account = await store.account.findUnique({
         where: { id: accountId },
-        select: { password: true, roles: true },
+        select: { email: true, password: true, roles: true },
     });
 
     // check if account exists
@@ -30,7 +37,8 @@ const deactivateAccount: DeactivateAccount = async (_, { input }, { store, authD
     if (!passwordMatched) throw new GqlError({ code: "FORBIDDEN", message: "パスワードが一致しません" });
 
     // check if host (return error if host)
-    Log(account.roles);
+    if (account.roles.includes("host"))
+        throw new GqlError({ code: "FORBIDDEN", message: "ホストアカウントは退会できません" });
 
     // if not host check if any pending reservations
     const spaceReservations = await store.reservation.findMany({
@@ -78,10 +86,19 @@ const deactivateAccount: DeactivateAccount = async (_, { input }, { store, authD
 
     const accountUpdate = await store.account.update({
         where: { id: accountId },
-        data: { deactivated: true },
+        data: { deactivated: true, deactivationReason: reason },
     });
+
     if (!accountUpdate)
         throw new GqlError({ code: "INTERNAL_SERVER_ERROR", message: "リクエストの処理に失敗しました。" });
+
+    // Send email to user
+    // account.email
+    await addEmailToQueue<AccountDeactivated>({
+        template: "account-deactivated",
+        recipientEmail: account.email,
+        recipientName: "",
+    });
 
     return {
         message: `アカウントは削除されました。`,
@@ -92,6 +109,7 @@ const deactivateAccount: DeactivateAccount = async (_, { input }, { store, authD
 export const deactivateAccountTypeDefs = gql`
     input DeactivateAccountInput {
         password: String!
+        reason: String!
     }
 
     type Mutation {

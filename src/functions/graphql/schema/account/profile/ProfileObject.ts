@@ -22,6 +22,8 @@ export type ProfileSelect = {
     roles: boolean;
     approved: boolean;
     suspended: boolean;
+    deactivated: boolean;
+    deactivationReason: boolean;
     createdAt: boolean;
     updatedAt: boolean;
     userProfile: PrismaSelect<UserProfileSelect>;
@@ -45,6 +47,8 @@ export const toProfileSelect = (selections, defaultValue: any = false): PrismaSe
         "roles",
         "approved",
         "suspended",
+        "deactivated",
+        "deactivationReason",
         "createdAt",
         "updatedAt"
     );

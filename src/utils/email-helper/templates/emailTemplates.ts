@@ -11,6 +11,7 @@ import reservationFailed from "./reservation-failed";
 import reservationPending from "./reservation-pending";
 import contactForm from "./contact-form";
 import hostRegistrationNotification from "./host-registration-notification";
+import accountDeactivated from "./account-deactivated";
 
 export const emailTemplates = {
     "email-verification": emailVerification,
@@ -26,6 +27,7 @@ export const emailTemplates = {
     "reservation-pending": reservationPending,
     "contact-form": contactForm,
     "host-registration-notification": hostRegistrationNotification,
+    "account-deactivated": accountDeactivated,
 };
 
 export type EmailTemplates = keyof typeof emailTemplates;
