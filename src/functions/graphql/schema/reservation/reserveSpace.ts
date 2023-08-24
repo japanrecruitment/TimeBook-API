@@ -17,7 +17,7 @@ import { GqlError } from "../../error";
 import { getDurationsBetn } from "@utils/date-utils";
 import ReservationPriceCalculator from "./ReservationPriceCalculator";
 import { SpacePricePlanType } from "@prisma/client";
-import moment from "moment";
+import moment from "moment-timezone";
 import { environment } from "@utils/environment";
 import { differenceWith, isEmpty, sum } from "lodash";
 import { expoSendNotification } from "@utils/notification";
@@ -58,12 +58,13 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
     const { id: userId, accountId, email } = authData;
     if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
-    const { paymentSourceId, spaceId, duration, durationType, additionalOptions, useSubscription } = input;
-    const fromDateTime = input.fromDateTime;
+    const { paymentSourceId, spaceId, duration, fromDateTime, durationType, additionalOptions, useSubscription } =
+        input;
+
+    const utcFromDateTime = moment.tz(fromDateTime, "Asia/Tokyo");
 
     try {
-        Log(fromDateTime, duration);
-        if (fromDateTime.getTime() < Date.now())
+        if (utcFromDateTime.isBefore(moment().utc()))
             throw new GqlError({ code: "BAD_USER_INPUT", message: "開始日が無効です" });
 
         if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な期間" });
@@ -74,9 +75,11 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             MINUTES: "minutes",
         };
 
-        let toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
+        // let toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
+        let _fromDateTime: moment.Moment = utcFromDateTime.clone();
+        let _toDateTime: moment.Moment | null = null;
 
-        const { days, hours, minutes } = getDurationsBetn(fromDateTime, toDateTime);
+        const { days, hours, minutes } = getDurationsBetn(_fromDateTime.toDate(), _toDateTime.toDate());
 
         Log("reserveSpace: durations:", days, hours, minutes);
 
@@ -108,20 +111,20 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                                 OR: [
                                     {
                                         AND: [
-                                            { fromDateTime: { lte: fromDateTime } },
-                                            { toDateTime: { gte: toDateTime } },
+                                            { fromDateTime: { lte: _fromDateTime.toDate() } },
+                                            { toDateTime: { gte: _toDateTime.toDate() } },
                                         ],
                                     },
                                     {
                                         AND: [
-                                            { fromDateTime: { gte: fromDateTime } },
-                                            { fromDateTime: { lte: toDateTime } },
+                                            { fromDateTime: { gte: _fromDateTime.toDate() } },
+                                            { fromDateTime: { lte: _toDateTime.toDate() } },
                                         ],
                                     },
                                     {
                                         AND: [
-                                            { toDateTime: { gte: fromDateTime } },
-                                            { toDateTime: { lte: toDateTime } },
+                                            { toDateTime: { gte: _fromDateTime.toDate() } },
+                                            { toDateTime: { lte: _toDateTime.toDate() } },
                                         ],
                                     },
                                 ],
@@ -133,9 +136,24 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     where: {
                         OR: [
                             { isDefault: true },
-                            { AND: [{ fromDate: { lte: fromDateTime } }, { toDate: { gte: toDateTime } }] },
-                            { AND: [{ fromDate: { gte: fromDateTime } }, { fromDate: { lte: toDateTime } }] },
-                            { AND: [{ toDate: { gte: fromDateTime } }, { toDate: { lte: toDateTime } }] },
+                            {
+                                AND: [
+                                    { fromDate: { lte: _fromDateTime.toDate() } },
+                                    { toDate: { gte: _toDateTime.toDate() } },
+                                ],
+                            },
+                            {
+                                AND: [
+                                    { fromDate: { gte: _fromDateTime.toDate() } },
+                                    { fromDate: { lte: _toDateTime.toDate() } },
+                                ],
+                            },
+                            {
+                                AND: [
+                                    { toDate: { gte: _fromDateTime.toDate() } },
+                                    { toDate: { lte: _toDateTime.toDate() } },
+                                ],
+                            },
                         ],
                     },
                 },
@@ -192,7 +210,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             }
         }
 
-        const totalReservationHours = (toDateTime.getTime() - fromDateTime.getTime()) / 3600000;
+        const totalReservationHours = (_toDateTime.toDate().getTime() - _fromDateTime.toDate().getTime()) / 3600000;
         const subscriptionUnit = remSubscriptionUnit
             ? remSubscriptionUnit < Math.ceil(totalReservationHours)
                 ? remSubscriptionUnit
@@ -212,7 +230,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         Log("subscriptionUnit", subscriptionUnit);
 
         if (hasRemDates) {
-            const newFromDateTime = moment(fromDateTime).add(subscriptionUnit, "hours").toDate();
+            const newFromDateTime = _fromDateTime.clone().add(subscriptionUnit, "hours").toDate();
             const pricePlans = await store.spacePricePlan.findMany({
                 where: {
                     spaceId,
@@ -222,10 +240,10 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     OR: [
                         { isDefault: true },
                         {
-                            AND: [{ fromDate: { gte: newFromDateTime } }, { fromDate: { lte: toDateTime } }],
+                            AND: [{ fromDate: { gte: newFromDateTime } }, { fromDate: { lte: _toDateTime.toDate() } }],
                         },
                         {
-                            AND: [{ toDate: { gte: newFromDateTime } }, { toDate: { lte: toDateTime } }],
+                            AND: [{ toDate: { gte: newFromDateTime } }, { toDate: { lte: _toDateTime.toDate() } }],
                         },
                     ],
                 },
@@ -243,7 +261,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             // Calculate reservation price
             const { price } = new ReservationPriceCalculator({
                 checkIn: newFromDateTime,
-                checkOut: toDateTime,
+                checkOut: _toDateTime.toDate(),
                 pricePlans,
             });
             amount = price;
@@ -326,7 +344,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                         approved: !space.needApproval,
                         approvedOn: !space.needApproval ? new Date() : null,
                         fromDateTime,
-                        toDateTime,
+                        toDateTime: _toDateTime.toDate(),
                         status: "PENDING",
                         space: { connect: { id: spaceId } },
                         reservee: { connect: { id: accountId } },

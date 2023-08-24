@@ -5,7 +5,7 @@ import { getDurationsBetn } from "@utils/date-utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { differenceWith, isEmpty } from "lodash";
-import moment from "moment";
+import moment from "moment-timezone";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import ReservationPriceCalculator from "./ReservationPriceCalculator";
