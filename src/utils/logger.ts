@@ -1,11 +1,15 @@
 import { inspect } from "util";
-import { environment } from "./environment";
 
 export const Log = (...args): void => {
-    // if (environment.isDev()) {
-    args = args.map((arg) => inspect(arg, false, null, true));
+    args = args.map((arg) => {
+        const inspected = inspect(arg, { colors: false, depth: null });
+        // Remove single quotes around strings
+        if (typeof arg === "string") {
+            return inspected.slice(1, inspected.length - 1); // Remove the first and last characters
+        }
+        return inspected;
+    });
     console.log(...args);
-    // }
 };
 
 export const ForceLog = (...args): void => {

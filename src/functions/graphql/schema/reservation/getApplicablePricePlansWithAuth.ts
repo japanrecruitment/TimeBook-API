@@ -61,9 +61,17 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
     if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { duration, durationType, fromDateTime, spaceId, additionalOptions, useSubscription } = input;
-    if (fromDateTime.getTime() < Date.now()) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な開始日" });
+
+    const utcFromDateTime = moment.tz(fromDateTime, "Asia/Tokyo");
+
+    if (utcFromDateTime.isBefore(moment().utc()))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な開始日" });
 
     if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な期間" });
+
+    additionalOptions?.forEach(({ quantity }) => {
+        if (quantity && quantity < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なオプション数量" });
+    });
 
     const durationUnit: Record<SpacePricePlanType, "days" | "hours" | "minutes"> = {
         DAILY: "days",
@@ -71,18 +79,30 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
         MINUTES: "minutes",
     };
 
-    const toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
+    let _fromDateTime: moment.Moment = utcFromDateTime.clone();
+    let _toDateTime: moment.Moment | null = null;
 
-    const { days, hours, minutes } = getDurationsBetn(fromDateTime, toDateTime);
+    if (durationType === "DAILY") {
+        _fromDateTime = utcFromDateTime.clone().startOf("day");
+
+        if (duration === 1) {
+            _toDateTime = _fromDateTime.clone().endOf("day");
+        } else {
+            _toDateTime = _fromDateTime
+                .clone()
+                .add(duration - 1, durationUnit[durationType])
+                .endOf("day");
+        }
+    } else {
+        _toDateTime = _fromDateTime.clone().add(duration, durationUnit[durationType]);
+    }
+
+    const { days, hours, minutes } = getDurationsBetn(_fromDateTime.toDate(), _toDateTime.toDate());
 
     Log("reserveSpace: durations:", days, hours, minutes);
 
     if (days <= 0 && hours <= 0 && minutes < 5)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
-
-    additionalOptions?.forEach(({ quantity }) => {
-        if (quantity && quantity < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なオプション数量" });
-    });
 
     if (useSubscription) {
         const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
@@ -135,7 +155,7 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
         }
     }
 
-    const totalReservationHours = (toDateTime.getTime() - fromDateTime.getTime()) / 3600000;
+    const totalReservationHours = (_toDateTime.toDate().getTime() - _fromDateTime.toDate().getTime()) / 3600000;
     const subscriptionUnit = remSubscriptionUnit
         ? remSubscriptionUnit < Math.ceil(totalReservationHours)
             ? remSubscriptionUnit
@@ -151,7 +171,7 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
 
     const hasRemDates = totalReservationHours - (subscriptionUnit || 0) > 0;
     if (hasRemDates) {
-        const newFromDateTime = moment(fromDateTime).add(subscriptionUnit, "hours").toDate();
+        const newFromDateTime = _fromDateTime.clone().add(subscriptionUnit, "hours").toDate();
         const pricePlans = await store.spacePricePlan.findMany({
             where: {
                 spaceId,
@@ -161,17 +181,23 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
                 OR: [
                     { isDefault: true },
                     {
-                        AND: [{ fromDate: { gte: newFromDateTime } }, { fromDate: { lte: toDateTime } }],
+                        AND: [{ fromDate: { gte: newFromDateTime } }, { fromDate: { lte: _toDateTime.toDate() } }],
                     },
                     {
-                        AND: [{ toDate: { gte: newFromDateTime } }, { toDate: { lte: toDateTime } }],
+                        AND: [{ toDate: { gte: newFromDateTime } }, { toDate: { lte: _toDateTime.toDate() } }],
                     },
                 ],
             },
             include: { overrides: true },
         });
 
-        Log("price plans: ", pricePlans);
+        // price plans may be deleted so need to filter it
+        const filteredPricePlans = pricePlans.map((plan) => {
+            if (!plan.isDeleted) {
+                const filteredOverrides = plan.overrides.filter((override) => !override.isDeleted);
+                return { ...plan, overrides: filteredOverrides };
+            }
+        });
 
         if (!pricePlans || pricePlans.length <= 0)
             throw new GqlError({
@@ -182,8 +208,8 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
         // Calculate reservation price
         const { appliedReservationPlans, price } = new ReservationPriceCalculator({
             checkIn: newFromDateTime,
-            checkOut: toDateTime,
-            pricePlans,
+            checkOut: _toDateTime.toDate(),
+            pricePlans: filteredPricePlans,
         });
         applicablePricePlans = appliedReservationPlans;
         amount = price;
