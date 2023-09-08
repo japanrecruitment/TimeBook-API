@@ -79,6 +79,23 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         let _fromDateTime: moment.Moment = utcFromDateTime.clone();
         let _toDateTime: moment.Moment | null = null;
 
+        if (durationType === "DAILY") {
+            _fromDateTime = utcFromDateTime.clone().startOf("day");
+
+            if (duration === 1) {
+                _toDateTime = _fromDateTime.clone().endOf("day");
+            } else {
+                _toDateTime = _fromDateTime
+                    .clone()
+                    .add(duration - 1, durationUnit[durationType])
+                    .endOf("day");
+            }
+        } else {
+            _toDateTime = _fromDateTime.clone().add(duration, durationUnit[durationType]);
+        }
+
+        console.log({ _fromDateTime, _toDateTime });
+
         const { days, hours, minutes } = getDurationsBetn(_fromDateTime.toDate(), _toDateTime.toDate());
 
         Log("reserveSpace: durations:", days, hours, minutes);
@@ -434,7 +451,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     spaceId,
                     reservationId,
                 }),
-                expoSendNotification([{ tokens: notificationTokens, body: "Reservation Pending" }]),
+                // expoSendNotification([{ tokens: notificationTokens, body: "Reservation Pending" }]),
             ]);
         }
 
@@ -451,6 +468,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             subscriptionUnit,
         };
     } catch (error) {
+        console.log(error);
         await Promise.all([
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
