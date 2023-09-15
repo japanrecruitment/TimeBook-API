@@ -371,6 +371,10 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     },
                 },
             },
+            select: {
+                id: true,
+                reservation: true,
+            },
         });
 
         let paymentIntent: Stripe.PaymentIntent;
@@ -455,7 +459,10 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             ]);
         }
 
+        Log("TRANSACTION INFO", { transaction });
+
         return {
+            id: transaction.reservation.id,
             transactionId: transaction.id,
             intentId: paymentIntent?.id,
             intentCode: paymentIntent?.client_secret,
@@ -498,6 +505,7 @@ export const reserveSpaceTypeDefs = gql`
     }
 
     type ReserveSpaceResult {
+        id: ID
         transactionId: ID
         intentId: ID
         intentCode: String
