@@ -6,12 +6,19 @@ export default function getDurationsBetn(start: Date, end: Date): Durations {
     const from = moment(start);
     const to = moment(end);
 
-    const dayDiff = moment.duration(to.diff(from)).asDays();
-    const days = Math.floor(dayDiff < 0 ? 0 : dayDiff);
-    const remainingHrs = (dayDiff - days) * 24;
-    const hours = Math.floor(remainingHrs < 0 ? 0 : remainingHrs);
-    const remainingMinutes = (remainingHrs - hours) * 60;
-    const minutes = Math.round(remainingMinutes < 0 ? 0 : remainingMinutes);
+    const totalMinutes = moment.duration(to.diff(from)).asMinutes(); 
+    let days = Math.floor(totalMinutes / (24 * 60)); 
+    const remainingMinutesAfterDays = totalMinutes % (24 * 60); 
+    let hours = Math.floor(remainingMinutesAfterDays / 60); 
+    let minutes = Math.round(remainingMinutesAfterDays % 60); 
+    if (minutes === 60) {
+        hours += 1;
+        minutes = 0;
+    }
+    if (hours === 24) {
+        days += 1;
+        hours = 0;
+    }
 
     return { days, hours, minutes };
 }
