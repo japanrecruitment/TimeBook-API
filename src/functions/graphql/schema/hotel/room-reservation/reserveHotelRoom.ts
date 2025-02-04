@@ -146,17 +146,28 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                             : undefined,
                         reservations: {
                             where: {
-                                OR: [
+                                AND: [
+                                    { status: { not: "CANCELED" } },  
                                     {
-                                        AND: [
-                                            { fromDateTime: { gte: checkInDate } },
-                                            { fromDateTime: { lte: checkOutDate } },
-                                        ],
-                                    },
-                                    {
-                                        AND: [
-                                            { toDateTime: { gte: checkInDate } },
-                                            { toDateTime: { lte: checkOutDate } },
+                                        OR: [
+                                            {
+                                                AND: [
+                                                    { fromDateTime: { gte: checkInDate } },
+                                                    { fromDateTime: { lte: checkOutDate } },
+                                                ],
+                                            },
+                                            {
+                                                AND: [
+                                                    { toDateTime: { gte: checkInDate } },
+                                                    { toDateTime: { lte: checkOutDate } },
+                                                ],
+                                            },
+                                            {
+                                                AND: [
+                                                    { fromDateTime: { lte: checkInDate } },
+                                                    { toDateTime: { gte: checkOutDate } },
+                                                ],
+                                            },
                                         ],
                                     },
                                 ],
@@ -186,17 +197,28 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                         hotel: { select: { account: { select: { id: true, email: true, host: true } }, status: true } },
                         reservations: {
                             where: {
-                                OR: [
+                                AND: [
+                                    { status: { not: "CANCELED" } },  
                                     {
-                                        AND: [
-                                            { fromDateTime: { gte: checkInDate } },
-                                            { fromDateTime: { lte: checkOutDate } },
-                                        ],
-                                    },
-                                    {
-                                        AND: [
-                                            { toDateTime: { gte: checkInDate } },
-                                            { toDateTime: { lte: checkOutDate } },
+                                        OR: [
+                                            {
+                                                AND: [
+                                                    { fromDateTime: { gte: checkInDate } },
+                                                    { fromDateTime: { lte: checkOutDate } },
+                                                ],
+                                            },
+                                            {
+                                                AND: [
+                                                    { toDateTime: { gte: checkInDate } },
+                                                    { toDateTime: { lte: checkOutDate } },
+                                                ],
+                                            },
+                                            {
+                                                AND: [
+                                                    { fromDateTime: { lte: checkInDate } },
+                                                    { toDateTime: { gte: checkOutDate } },
+                                                ],
+                                            },
                                         ],
                                     },
                                 ],
@@ -347,24 +369,31 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             const remWeekDays = remDates.map((d) => d.getDay());
             const remPriceSettings = priceSettings.filter(({ dayOfWeek }) => remWeekDays.includes(dayOfWeek));
             if (packagePlan.paymentTerm === "PER_ROOM") {
-                amount = sum(remPriceSettings.map(({ priceScheme }) => priceScheme.roomCharge));
+                amount = sum(
+                    remDates.map(d => {
+                        const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                        return priceSetting ? priceSetting.priceScheme.roomCharge : 0;
+                    })
+                );
             } else {
                 let adultPrice = 0;
                 let childPrice = 0;
                 if (nAdult) {
                     let numAdultField = mapNumAdultField(nAdult);
                     adultPrice = sum(
-                        remPriceSettings.map(
-                            ({ priceScheme }) => (priceScheme[numAdultField] || priceScheme.oneAdultCharge) * nAdult
-                        )
+                        remDates.map(d => {
+                            const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                            return priceSetting ? (priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge) * nAdult : 0;
+                        })
                     );
                 }
                 if (nChild) {
                     let numChildField = mapNumChildField(nChild);
                     childPrice = sum(
-                        remPriceSettings.map(
-                            ({ priceScheme }) => (priceScheme[numChildField] || priceScheme.oneChildCharge) * nChild
-                        )
+                        remDates.map(d => {
+                            const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                            return priceSetting ? (priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge) * nChild : 0;
+                        })
                     );
                 }
                 amount = adultPrice + childPrice;

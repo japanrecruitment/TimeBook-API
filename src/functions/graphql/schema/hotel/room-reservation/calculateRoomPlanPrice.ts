@@ -78,14 +78,30 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                         : undefined,
                     reservations: {
                         where: {
-                            OR: [
+                            AND: [
+                                { status: { not: "CANCELED" } },  
                                 {
-                                    AND: [
-                                        { fromDateTime: { gte: checkInDate } },
-                                        { fromDateTime: { lte: checkOutDate } },
+                                    OR: [
+                                        {
+                                            AND: [
+                                                { fromDateTime: { gte: checkInDate } },
+                                                { fromDateTime: { lte: checkOutDate } },
+                                            ],
+                                        },
+                                        {
+                                            AND: [
+                                                { toDateTime: { gte: checkInDate } },
+                                                { toDateTime: { lte: checkOutDate } },
+                                            ],
+                                        },
+                                        {
+                                            AND: [
+                                                { fromDateTime: { lte: checkInDate } },
+                                                { toDateTime: { gte: checkOutDate } },
+                                            ],
+                                        },
                                     ],
                                 },
-                                { AND: [{ toDateTime: { gte: checkInDate } }, { toDateTime: { lte: checkOutDate } }] },
                             ],
                         },
                         select: { id: true },
@@ -99,14 +115,30 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                     hotel: { select: { account: { select: { id: true, email: true, host: true } } } },
                     reservations: {
                         where: {
-                            OR: [
+                            AND: [
+                                { status: { not: "CANCELED" } },  
                                 {
-                                    AND: [
-                                        { fromDateTime: { gte: checkInDate } },
-                                        { fromDateTime: { lte: checkOutDate } },
+                                    OR: [
+                                        {
+                                            AND: [
+                                                { fromDateTime: { gte: checkInDate } },
+                                                { fromDateTime: { lte: checkOutDate } },
+                                            ],
+                                        },
+                                        {
+                                            AND: [
+                                                { toDateTime: { gte: checkInDate } },
+                                                { toDateTime: { lte: checkOutDate } },
+                                            ],
+                                        },
+                                        {
+                                            AND: [
+                                                { fromDateTime: { lte: checkInDate } },
+                                                { toDateTime: { gte: checkOutDate } },
+                                            ],
+                                        },
                                     ],
                                 },
-                                { AND: [{ toDateTime: { gte: checkInDate } }, { toDateTime: { lte: checkOutDate } }] },
                             ],
                         },
                         select: { id: true },
@@ -166,6 +198,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
 
     const planTotalStocks = packagePlan.stock;
     const roomTotalStocks = hotelRoom.stock;
+    Log("plan",planTotalStocks, roomTotalStocks, hotelRoom.reservations.length)
 
     if (hotelRoom.reservations.length >= roomTotalStocks) {
         throw new GqlError({
@@ -215,25 +248,35 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         const remWeekDays = remDates.map((d) => d.getDay());
         const remPriceSettings = priceSettings.filter(({ dayOfWeek }) => remWeekDays.includes(dayOfWeek));
         if (packagePlan.paymentTerm === "PER_ROOM") {
-            planAmount = sum(remPriceSettings.map(({ priceScheme }) => priceScheme.roomCharge));
+            planAmount = sum(
+                remDates.map(d => {
+                    const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                    return priceSetting ? priceSetting.priceScheme.roomCharge : 0;
+                })
+            );
+            
         } else {
             let adultPrice = 0;
             let childPrice = 0;
             if (nAdult) {
                 let numAdultField = mapNumAdultField(nAdult);
                 adultPrice = sum(
-                    remPriceSettings.map(
-                        ({ priceScheme }) => (priceScheme[numAdultField] || priceScheme.oneAdultCharge) * nAdult
-                    )
+                    remDates.map(d => {
+                        const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                        return priceSetting ? (priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge) * nAdult : 0;
+                    })
                 );
+                
             }
             if (nChild) {
                 let numChildField = mapNumChildField(nChild);
                 childPrice = sum(
-                    remPriceSettings.map(
-                        ({ priceScheme }) => (priceScheme[numChildField] || priceScheme.oneChildCharge) * nChild
-                    )
+                    remDates.map(d => {
+                        const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                        return priceSetting ? (priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge) * nChild : 0;
+                    })
                 );
+                
             }
             planAmount = adultPrice + childPrice;
         }
@@ -249,7 +292,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         }
     });
 
-    Log(remDates, appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings, planAmount, optionAmount);
+    // Log(remDates, appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings, planAmount, optionAmount);
 
     return {
         appliedRoomPlanPriceOverrides,

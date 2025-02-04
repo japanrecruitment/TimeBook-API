@@ -9,6 +9,7 @@ import Stripe from "stripe";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
+import { Log } from "@utils/logger";
 
 type CancelRoomReservationInput = {
     hotelRoomReservationId: string;
@@ -46,14 +47,15 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                         select: {
                             id: true,
                             account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } },
-                            cancelPolicy: { select: { rates: { orderBy: { beforeHours: "asc" } } } },
                         },
                     },
+                    cancelPolicy: { select: { rates: { orderBy: { beforeHours: "asc" } } } },
                 },
             },
             transaction: { select: { amount: true, paymentIntentId: true, responseReceivedLog: true } },
         },
     });
+    Log( "reservation", reservation)
 
     if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "予約が見つかりません" });
 
@@ -97,7 +99,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
 
     if (!isHost) {
-        const cancelPolicyRates = reservation.packagePlan.hotel.cancelPolicy?.rates;
+        const cancelPolicyRates = reservation.packagePlan.cancelPolicy?.rates;
         if (isEmpty(cancelPolicyRates)) {
             await store.hotelRoomReservation.update({
                 where: { id: hotelRoomReservationId },
@@ -112,11 +114,13 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                 .subtract(beforeHours, "hours")
                 .toDate()
                 .getTime();
+            Log(currDateMillis, beforeHrsDateMillis, percentage);
             if (currDateMillis >= beforeHrsDateMillis) {
                 cancellationChargeRate = percentage / 100;
                 break;
             }
         }
+        Log("Cncellation",cancellationChargeRate)
     }
 
     if (cancellationChargeRate <= 0) {
@@ -127,8 +131,9 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
         return { message: "予約がキャンセルされました。" };
     }
 
-    const amount = cancellationChargeRate * reservation.transaction.amount;
+    const amount = reservation.transaction.amount - cancellationChargeRate * reservation.transaction.amount;
     const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+    Log(amount, "Amount")
 
     const paymentIntent = reservation.transaction?.responseReceivedLog as any;
 
@@ -161,7 +166,6 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
         transfer_data: paymentIntent.transfer_data,
         confirm: true,
     };
-
     await stripe.createPaymentIntent(paymentIntentParams);
 
     await store.hotelRoomReservation.update({
