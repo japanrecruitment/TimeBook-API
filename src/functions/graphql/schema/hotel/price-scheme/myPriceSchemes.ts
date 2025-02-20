@@ -17,7 +17,7 @@ type MyPriceSchemes = IFieldResolver<any, Context, MyPriceSchemesArgs, Promise<M
 
 const myPriceSchemes: MyPriceSchemes = async (_, { hotelId }, { authData, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const priceSchemeSelect = toPriceSchemeSelect(mapSelections(info))?.select;
 
@@ -26,7 +26,8 @@ const myPriceSchemes: MyPriceSchemes = async (_, { hotelId }, { authData, store 
         select: { priceSchemes: { select: priceSchemeSelect, orderBy: { createdAt: "asc" } } },
     });
 
-    if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "Price schemes not found" });
+    if (hotelId && isEmpty(myHotels))
+        throw new GqlError({ code: "NOT_FOUND", message: "料金プランが見つかりません。" });
 
     const myPriceSchemes = myHotels.flatMap(({ priceSchemes }) => priceSchemes).filter((priceScheme) => priceScheme);
 

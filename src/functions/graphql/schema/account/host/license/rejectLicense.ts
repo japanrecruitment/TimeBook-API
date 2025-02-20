@@ -13,9 +13,9 @@ type ApproveLicense = IFieldResolver<any, Context, ApproveLicenseArgs, ApproveLi
 const rejectLicense: ApproveLicense = async (_, { id, remarks }, { store }) => {
     const license = await store.license.update({ where: { id }, data: { approved: false, remarks } });
 
-    if (!license) throw new GqlError({ code: "NOT_FOUND", message: "License doesn't exist" });
+    if (!license) throw new GqlError({ code: "NOT_FOUND", message: "ライセンスが見つかりませんでした。" });
 
-    return { message: `License rejected` };
+    return { message: `ライセンスが拒否されました。` };
 };
 
 export const rejectLicenseTypeDefs = gql`

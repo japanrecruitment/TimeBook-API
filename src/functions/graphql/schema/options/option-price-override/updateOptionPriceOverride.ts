@@ -14,16 +14,17 @@ export function validateUpdateOptionPriceOverrideInput(
     let { id, endDate, price, startDate } = input;
 
     if (endDate && startDate) {
-        if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
-        if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+        if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "選択された日付が無効です" });
+        if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "選択された日付が無効です" });
     } else {
         endDate = undefined;
         startDate = undefined;
     }
 
-    if (price && price < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
+    if (price && price < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "在庫数が無効です" });
 
-    if (!endDate && price && !startDate) throw new GqlError({ code: "BAD_REQUEST", message: "Empty fields provided" });
+    if (!endDate && price && !startDate)
+        throw new GqlError({ code: "BAD_REQUEST", message: "必要な情報をすべて入力してください" });
 
     return { id, endDate, price, startDate };
 }
@@ -59,7 +60,7 @@ const updateOptionPriceOverride: UpdateOptionPriceOverride = async (
     info
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { id, endDate, price, startDate } = validateUpdateOptionPriceOverrideInput(input);
 
@@ -81,11 +82,10 @@ const updateOptionPriceOverride: UpdateOptionPriceOverride = async (
                     : undefined,
         },
     });
-    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "Option not found" });
-    if (accountId !== option.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this option" });
+    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "オプションが見つかりません" });
+    if (accountId !== option.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (!isEmpty(option.priceOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Overlapping price override found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "重複する料金の上書きが見つかりました" });
 
     const optionPriceOverrideSelect = toOptionPriceOverrideSelect(mapSelections(info)?.optionPriceOverride)?.select;
     const newOptionPriceOverride = await store.optionPriceOverride.update({
@@ -101,7 +101,7 @@ const updateOptionPriceOverride: UpdateOptionPriceOverride = async (
     Log(newOptionPriceOverride);
 
     return {
-        message: `Updated option price override`,
+        message: `料金の上書きが更新されました`,
         optionPriceOverride: newOptionPriceOverride,
     };
 };

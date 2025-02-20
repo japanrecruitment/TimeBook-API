@@ -52,11 +52,14 @@ export const chatObjectResolver = {
     ChatObject: {
         members: ({ members }) => {
             return members?.map((account) => {
-                return merge(
+                const preppedAccount = merge(
                     omit(account, "userProfile", "companyProfile"),
                     { accountId: account.id },
                     account.userProfile || account.companyProfile
                 );
+                console.log("UserProfile", account.userProfile, "CompanyProfile", account.companyProfile);
+                console.log("PREPPED", preppedAccount);
+                return preppedAccount;
             });
         },
     },

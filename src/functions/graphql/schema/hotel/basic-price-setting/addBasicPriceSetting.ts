@@ -4,7 +4,7 @@ import { GqlError } from "src/functions/graphql/error";
 export function validateAddBasicPriceSettingInput(input: AddBasicPriceSettingInput): AddBasicPriceSettingInput {
     let { dayOfWeek, priceSchemeId } = input;
 
-    if (dayOfWeek < 0 || dayOfWeek > 6) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid day of week" });
+    if (dayOfWeek < 0 || dayOfWeek > 6) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な曜日" });
 
     return { dayOfWeek, priceSchemeId };
 }
@@ -15,7 +15,7 @@ export function validateAddBasicPriceSettingInputList(input: AddBasicPriceSettin
         if (hasDuplicateSetting)
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: "Repeated input with same day of week found",
+                message: "同じ曜日の繰り返し入力が見つかりました",
             });
     });
 

@@ -27,7 +27,7 @@ const executeStrategy = async (requiredRoles, requestData, throwError = true): P
 
     if (!requestData) {
         if (!throwError) return false;
-        throw new GqlError({ code: "UNAUTHORIZED", message: "Not authorized" });
+        throw new GqlError({ code: "UNAUTHORIZED", message: "無許可" });
     }
 
     for (let role of requiredRoles) {
@@ -37,7 +37,7 @@ const executeStrategy = async (requiredRoles, requestData, throwError = true): P
 
     if (!throwError) return false;
 
-    throw new GqlError({ code: "UNAUTHORIZED", message: "Not authorized" });
+    throw new GqlError({ code: "UNAUTHORIZED", message: "無許可" });
 };
 
 const executeSelfStrategy = async (path, allowedRoles, account, authData): Promise<boolean> => {

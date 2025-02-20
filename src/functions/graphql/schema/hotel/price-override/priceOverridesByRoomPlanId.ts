@@ -24,7 +24,7 @@ const priceOverridesByRoomPlanId: PriceOverridesByRoomPlanId = async (_, { roomP
         where: { id: roomPlanId },
         select: { priceOverrides: priceOverrideSelect },
     });
-    if (!roomPlan) throw new GqlError({ code: "NOT_FOUND", message: "Room plan not found" });
+    if (!roomPlan) throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
 
     let priceOverrides = roomPlan.priceOverrides;
     if (isEmpty(roomPlan.priceOverrides)) priceOverrides = [];

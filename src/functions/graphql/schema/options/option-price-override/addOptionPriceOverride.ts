@@ -11,11 +11,11 @@ import { OptionPriceOverrideObject, toOptionPriceOverrideSelect } from "./Option
 function validateAddOptionPriceOverrideInput(input: AddOptionPriceOverrideInput): AddOptionPriceOverrideInput {
     let { endDate, price, startDate } = input;
 
-    if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+    if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "選択した日付が無効です" });
 
-    if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+    if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "選択した日付が無効です" });
 
-    if (price < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of additional price" });
+    if (price < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な追加料金" });
 
     return { endDate, price, startDate };
 }
@@ -45,7 +45,7 @@ type AddOptionPriceOverride = IFieldResolver<
 
 const addOptionPriceOverride: AddOptionPriceOverride = async (_, { input, optionId }, { authData, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { endDate, price, startDate } = validateAddOptionPriceOverrideInput(input);
 
@@ -64,11 +64,10 @@ const addOptionPriceOverride: AddOptionPriceOverride = async (_, { input, option
             },
         },
     });
-    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "Option not found" });
-    if (accountId !== option.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this option" });
+    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "オプションが見つかりません" });
+    if (accountId !== option.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (!isEmpty(option.priceOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Overlapping price override found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "重複する料金の上書きが見つかりました" });
 
     const optionPriceOverrideSelect = toOptionPriceOverrideSelect(mapSelections(info)?.optionPriceOverride)?.select;
     const newOptionPriceOverride = await store.optionPriceOverride.create({
@@ -84,7 +83,7 @@ const addOptionPriceOverride: AddOptionPriceOverride = async (_, { input, option
     Log(newOptionPriceOverride);
 
     return {
-        message: `Added option price override`,
+        message: `オプション料金の上書きが追加されました`,
         optionPriceOverride: newOptionPriceOverride,
     };
 };

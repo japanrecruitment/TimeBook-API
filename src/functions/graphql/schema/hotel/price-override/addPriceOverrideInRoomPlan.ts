@@ -32,7 +32,7 @@ const addPriceOverrideInRoomPlan: AddPriceOverrideInRoomPlan = async (
     info
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { endDate, priceSchemeId, startDate } = validateAddPriceOverrideInput(priceOverride);
 
@@ -53,13 +53,13 @@ const addPriceOverrideInRoomPlan: AddPriceOverrideInRoomPlan = async (
         },
     });
     if (!roomPlan || !roomPlan.hotelRoom?.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Room plan not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません。" });
     if (accountId !== roomPlan.hotelRoom.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (!isEmpty(roomPlan.priceOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Overlapping price override found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "重複する価格の上書きが見つかりました。" });
     if (isEmpty(roomPlan.hotelRoom.hotel.priceSchemes))
-        throw new GqlError({ code: "NOT_FOUND", message: "Price scheme not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "料金プランが見つかりません。" });
 
     const priceOverrideSelect = toPriceOverrideSelect(mapSelections(info)?.priceOverride)?.select;
     const newPriceOverride = await store.priceOverride.create({
@@ -75,7 +75,7 @@ const addPriceOverrideInRoomPlan: AddPriceOverrideInRoomPlan = async (
     Log(newPriceOverride);
 
     return {
-        message: "Successfully added price override in room plan",
+        message: "料金の上書きを追加しました",
         priceOverride: newPriceOverride,
     };
 };

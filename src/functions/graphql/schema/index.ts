@@ -19,6 +19,7 @@ import * as options from "./options";
 import * as stockOverride from "./stock-override";
 import * as subscription from "./subscription";
 import { contactFormTypeDefs, contactFormResolvers } from "./contact-form";
+import { searchAreaTypeDefs, searchAreaResolvers } from "./search";
 
 const typeDefs = mergeTypeDefs([
     coreTypeDefs,
@@ -39,6 +40,7 @@ const typeDefs = mergeTypeDefs([
     stockOverride.typeDefs,
     subscription.typeDefs,
     contactFormTypeDefs,
+    searchAreaTypeDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -60,6 +62,7 @@ const resolvers = mergeResolvers([
     stockOverride.resolvers,
     subscription.resolvers,
     contactFormResolvers,
+    searchAreaResolvers,
 ]);
 
 const schemaDirectives = merge(coreDirectives);

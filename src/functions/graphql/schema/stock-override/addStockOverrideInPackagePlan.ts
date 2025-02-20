@@ -32,7 +32,7 @@ const addStockOverrideInPackagePlan: AddStockOverrideInPackagePlan = async (
     info
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { endDate, stock, startDate } = validateAddStockOverrideInput(stockOverride);
 
@@ -52,11 +52,11 @@ const addStockOverrideInPackagePlan: AddStockOverrideInPackagePlan = async (
         },
     });
     if (!packagePlan || !packagePlan.hotel)
-        throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
     if (accountId !== packagePlan.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel package" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (!isEmpty(packagePlan.stockOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Overlapping stock override found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "重複する在庫の上書きが見つかりました。" });
 
     const stockOverrideSelect = toStockOverrideSelect(mapSelections(info)?.stockOverride)?.select;
     const newStockOverride = await store.stockOverride.create({
@@ -72,7 +72,7 @@ const addStockOverrideInPackagePlan: AddStockOverrideInPackagePlan = async (
     Log(newStockOverride);
 
     return {
-        message: "Successfully added stock override in package plan",
+        message: "在庫の上書きを追加しました",
         stockOverride: newStockOverride,
     };
 };

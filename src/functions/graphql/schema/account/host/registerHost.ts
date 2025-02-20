@@ -6,7 +6,14 @@ import { IFieldResolver } from "@graphql-tools/utils";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
-import { Log, encodePassword, randomNumberOfNDigits, addEmailToQueue, EmailVerificationData } from "@utils/index";
+import {
+    Log,
+    encodePassword,
+    randomNumberOfNDigits,
+    addEmailToQueue,
+    EmailVerificationData,
+    HostRegisterNotificationData,
+} from "@utils/index";
 import { StripeLib } from "@libs/index";
 
 type RegisterHostStrategy<T = any> = (input: T, context: Context) => Promise<Result>;
@@ -31,10 +38,10 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
     let { email, password, name, nameKana, registrationNumber } = input;
 
     const isValid = email?.trim() && password?.trim() && name?.trim() && nameKana?.trim() && registrationNumber?.trim();
-    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
+    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "必要な情報を入力してください。" });
 
     const account = await store.account.findUnique({ where: { email } });
-    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
+    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "すでに登録されたメール。" });
 
     password = encodePassword(password);
     email = email.toLocaleLowerCase(); // change email to lowercase
@@ -64,10 +71,18 @@ const registerCorporateHost: RegisterHostStrategy<RegisterCompanyInput> = async 
             recipientName: name,
             verificationCode,
         }),
+        addEmailToQueue<HostRegisterNotificationData>({
+            template: "host-registration-notification",
+            recipientEmail: "support@pocketseq.com",
+            recipientName: "PocketseQ",
+            customerType: "法人",
+            name,
+            email,
+        }),
     ]);
 
     return {
-        message: `Successfully registered a corporate host account with email: ${email}`,
+        message: `ホストの登録が成功しました。`,
         action: `verify-email`,
     };
 };
@@ -76,11 +91,11 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
     let { email, password, firstName, lastName, firstNameKana, lastNameKana } = input;
 
     const isValid = email?.trim() && password?.trim() && firstName?.trim() && lastName?.trim();
-    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
+    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "必要な情報を入力してください。" });
 
     const account = await store.account.findUnique({ where: { email } });
     Log(account);
-    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
+    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "すでに登録されたメール。" });
 
     password = encodePassword(password);
     email = email.toLocaleLowerCase(); // change email to lowercase
@@ -120,10 +135,18 @@ const registerIndividualHost: RegisterHostStrategy<RegisterUserInput> = async (i
             recipientName: `${lastName} ${firstName}`,
             verificationCode,
         }),
+        addEmailToQueue<HostRegisterNotificationData>({
+            template: "host-registration-notification",
+            recipientEmail: "support@pocketseq.com",
+            recipientName: "PocketseQ",
+            customerType: "個人",
+            name: `${lastName} ${firstName}`,
+            email,
+        }),
     ]);
 
     return {
-        message: `Successfully registered an individual host account with email: ${email}`,
+        message: `ホストの登録が成功しました。`,
         action: `verify-email`,
     };
 };

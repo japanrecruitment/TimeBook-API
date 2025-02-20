@@ -24,7 +24,7 @@ const packagePlanById: PackagePlanById = async (_, { id }, { authData, store }, 
 
     Log(`id: `, id, `packagePlanById: `, packagePlan);
 
-    if (!packagePlan) throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
+    if (!packagePlan) throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
 
     return packagePlan;
 };

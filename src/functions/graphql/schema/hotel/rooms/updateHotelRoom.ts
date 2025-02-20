@@ -19,12 +19,12 @@ function validateUpdateHotelRoomInput(input: UpdateHotelRoomInput): UpdateHotelR
     if (isEmpty(name)) name = undefined;
 
     if (maxCapacityAdult && maxCapacityAdult < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum adult capacity" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "大人の最大収容人数が無効です" });
 
     if (maxCapacityChild && maxCapacityChild < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum child capacity" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "子最大容量が無効です" });
 
-    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
+    if (stock && stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "在庫数が無効です" });
 
     if (!description && !maxCapacityAdult && !maxCapacityChild && !name && !paymentTerm && !stock)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "Empty Input" });

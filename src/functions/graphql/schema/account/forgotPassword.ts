@@ -16,7 +16,7 @@ const forgotPassword: ForgotPassword = async (_, { email }, { store, dataSources
         where: { email },
         include: { userProfile: true, companyProfile: true },
     });
-    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User with the given email not found" });
+    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "ユーザーが見つかりません。" });
 
     Log(account);
     let recipientName = "";
@@ -37,7 +37,7 @@ const forgotPassword: ForgotPassword = async (_, { email }, { store, dataSources
     });
 
     return {
-        message: `Verificaiton code sent successfully to ${email}. Please check your email.`,
+        message: `確認コードが「${email}」に送信されました。 メールを確認してください。`,
         action: "veriy-reset-password-code",
     };
 };

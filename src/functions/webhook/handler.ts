@@ -64,13 +64,13 @@ const webhook: ValidatedEventAPIGatewayProxyEvent<any> = async (event) => {
         });
         Log("isCancelled: ", isCanceled);
 
-        if (!transactionStatus) return formatJSONResponse(404, { message: "Signature verification failed." });
+        if (!transactionStatus) return formatJSONResponse(404, { message: "サインの検証に失敗しました" });
 
         if (transactionStatus === TransactionStatus.FAILED)
-            return formatJSONResponse(200, { message: "Signature verification failed." });
+            return formatJSONResponse(200, { message: "サインの検証に失敗しました" });
 
         if (!transactionId || !reservationId || !userId || (!spaceId && !hotelRoomId))
-            return formatJSONResponse(500, { message: "Could not validate transaction on our end." });
+            return formatJSONResponse(500, { message: "トランザクションを検証できませんでした" });
 
         if (hotelRoomId) {
             return await handleHotelRoomReservation({
@@ -114,14 +114,14 @@ async function handleHotelRoomReservation({
 }: WebhookHotelRoomMetadata) {
     const transaction = await store.transaction.findUnique({ where: { id: transactionId } });
 
-    if (!transaction) return formatJSONResponse(404, { message: "Transaction not found." });
+    if (!transaction) return formatJSONResponse(404, { message: "トランザクションが見つかりません" });
 
     const reservation = await store.hotelRoomReservation.findUnique({ where: { id: reservationId } });
 
-    if (!reservation) return formatJSONResponse(404, { message: "Reservation not found." });
+    if (!reservation) return formatJSONResponse(404, { message: "予約が見つかりません" });
 
     if (transaction.status === TransactionStatus.SUCCESSFULL)
-        return formatJSONResponse(500, { message: "Webhook already received." });
+        return formatJSONResponse(500, { message: "Webhookはすでに受信済みです" });
 
     await store.transaction.update({
         where: { id: transactionId },
@@ -137,7 +137,7 @@ async function handleHotelRoomReservation({
             data: { status: "FAILED", webhookRespondedLog: webhookStatusLog },
         });
         await store.hotelRoomReservation.update({ where: { id: reservationId }, data: { status: "FAILED" } });
-        return formatJSONResponse(400, { message: "Could not validate webhook data with our record." });
+        return formatJSONResponse(400, { message: "Webhookデータを検証できませんでした" });
     }
 
     const updatedReservation = await store.hotelRoomReservation.update({
@@ -153,7 +153,7 @@ async function handleHotelRoomReservation({
         data: { status: isCanceled ? "CANCELED" : "SUCCESSFULL", resultedLog: updatedReservation },
     });
 
-    return formatJSONResponse(200, { message: "Operation successful." });
+    return formatJSONResponse(200, { message: "操作は成功しました" });
 }
 
 async function handleSpaceReservation({
@@ -167,17 +167,17 @@ async function handleSpaceReservation({
 }: WebhookSpaceMetadata) {
     const transaction = await store.transaction.findUnique({ where: { id: transactionId } });
 
-    if (!transaction) return formatJSONResponse(404, { message: "Transaction not found." });
+    if (!transaction) return formatJSONResponse(404, { message: "トランザクションが見つかりません" });
 
     const reservation = await store.reservation.findUnique({
         where: { id: reservationId },
         include: { space: true },
     });
 
-    if (!reservation) return formatJSONResponse(404, { message: "Reservation not found." });
+    if (!reservation) return formatJSONResponse(404, { message: "予約が見つかりません" });
 
     if (transaction.status === TransactionStatus.SUCCESSFULL)
-        return formatJSONResponse(500, { message: "Webhook already received." });
+        return formatJSONResponse(500, { message: "Webhookはすでに受信済みです" });
 
     await store.transaction.update({
         where: { id: transactionId },
@@ -193,7 +193,7 @@ async function handleSpaceReservation({
             data: { status: "FAILED", webhookRespondedLog: webhookStatusLog },
         });
         await store.reservation.update({ where: { id: reservationId }, data: { status: "FAILED" } });
-        return formatJSONResponse(400, { message: "Could not validate webhook data with our record." });
+        return formatJSONResponse(400, { message: "Webhookデータを検証できませんでした" });
     }
 
     const updatedReservation = await store.reservation.update({
@@ -213,7 +213,7 @@ async function handleSpaceReservation({
         data: { status: isCanceled ? "CANCELED" : "SUCCESSFULL", resultedLog: updatedReservation },
     });
 
-    return formatJSONResponse(200, { message: "Operation successful." });
+    return formatJSONResponse(200, { message: "操作は成功しました" });
 }
 
 export const main = webhook;

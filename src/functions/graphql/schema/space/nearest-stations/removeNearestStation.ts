@@ -28,10 +28,10 @@ const removeNearestStation: RemoveNearestStation = async (_, { input }, { authDa
     });
 
     if (!nearestStation || nearestStation.space.isDeleted)
-        throw new GqlError({ code: "NOT_FOUND", message: "Nearest station not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "最寄りの駅が見つかりません" });
 
     if (accountId !== nearestStation.space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
@@ -46,7 +46,7 @@ const removeNearestStation: RemoveNearestStation = async (_, { input }, { authDa
         });
     }
 
-    return { message: `Successfully removed ${nearestStation.station.stationName} as nearest station from your space` };
+    return { message: `最寄りの駅が削除されました` };
 };
 
 export const removeNearestStationTypeDefs = gql`

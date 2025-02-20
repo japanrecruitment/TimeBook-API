@@ -1,4 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
+import { StripeLib } from "@libs/paymentProvider";
 import { ProfileType, Role } from "@prisma/client";
 import { encodePassword } from "@utils/authUtils";
 import { randomNumberOfNDigits } from "@utils/compute";
@@ -24,11 +25,11 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
     let { email, password, firstName, lastName, firstNameKana, lastNameKana } = input;
 
     const isValid = email.trim() && password.trim() && firstName.trim() && lastName.trim();
-    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
+    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "必要な情報をすべて提供してください。" });
 
     const account = await store.account.findUnique({ where: { email } });
     Log(account);
-    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
+    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "すでに使用中のメール。" });
 
     password = encodePassword(password);
     email = email.toLocaleLowerCase(); // change email to lowercase
@@ -45,6 +46,20 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
 
     Log(newAccount);
 
+    // stripe customer does not exists so we will make one
+    const stripe = new StripeLib();
+    const customerId = await stripe.createCustomer(newAccount.id, email);
+    await store.account.update({
+        where: { id: newAccount.id },
+        data: {
+            userProfile: {
+                update: {
+                    stripeCustomerId: customerId,
+                },
+            },
+        },
+    });
+
     const verificationCode = randomNumberOfNDigits(6);
     await Promise.all([
         dataSources.redis.store(`email-verification-code-${email}`, verificationCode, 600),
@@ -57,7 +72,7 @@ const registerUser: RegisterUser = async (_, { input }, { store, dataSources }) 
     ]);
 
     return {
-        message: `Successfully registered an user account with email: ${email}`,
+        message: `アカウント登録が成功しました。`,
         action: `verify-email`,
     };
 };

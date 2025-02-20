@@ -14,11 +14,12 @@ type CreateSubscription = IFieldResolver<any, Context, CreateSubscriptionArgs, P
 
 const createSubscription: CreateSubscription = async (_, { priceId }, { authData, dataSources, store }) => {
     const { accountId, id: userId } = authData;
-    if (!accountId || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId || !userId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
-    if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
-    if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
+    if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "ユーザーが見つかりません" });
+    if (!user.stripeCustomerId)
+        throw new GqlError({ code: "BAD_REQUEST", message: "ストライプアカウントが見つかりません" });
 
     const stripe = new StripeLib();
 
@@ -30,7 +31,7 @@ const createSubscription: CreateSubscription = async (_, { priceId }, { authData
     }
     const stripePrice = stripePrices?.find((price) => price.id === priceId);
 
-    if (!stripePrice) throw new GqlError({ code: "BAD_REQUEST", message: "Subscription plan not found" });
+    if (!stripePrice) throw new GqlError({ code: "BAD_REQUEST", message: "サブスクリプションプランが見つかりません" });
 
     const subscriptions = await stripe.listSubscriptions(accountId);
 
@@ -40,7 +41,7 @@ const createSubscription: CreateSubscription = async (_, { priceId }, { authData
             if (product.metadata.type === stripePrice.product.metadata.type) {
                 throw new GqlError({
                     code: "FORBIDDEN",
-                    message: `You have already subscribed to ${stripePrice.product.metadata.type} subscription`,
+                    message: `すでに「${stripePrice.product.metadata.type}」サブスクリプションプランに登録しています`,
                 });
             }
         });

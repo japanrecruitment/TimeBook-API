@@ -10,7 +10,7 @@ const stationByID: StationsByID = async (_, { id }, { store, dataSources }) => {
     const cacheDoc = await dataSources.redis.fetch(`station:id:${id}`);
     if (cacheDoc) return cacheDoc;
     const station = await store.station.findUnique({ where: { id } });
-    if (!station) throw new GqlError({ code: "NOT_FOUND", message: "Couldn't find the station" });
+    if (!station) throw new GqlError({ code: "NOT_FOUND", message: "駅が見つかりません" });
     dataSources.redis.store(`station:id:${id}`, station, 600);
     return station;
 };

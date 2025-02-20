@@ -23,7 +23,7 @@ const removeOptionPriceOverride: RemoveOptionPriceOverride = async (
     { authData, store }
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     optionPriceOverrideIds = compact(optionPriceOverrideIds);
     optionPriceOverrideIds = isEmpty(optionPriceOverrideIds) ? undefined : optionPriceOverrideIds;
@@ -35,11 +35,10 @@ const removeOptionPriceOverride: RemoveOptionPriceOverride = async (
             priceOverrides: { where: { id: { in: optionPriceOverrideIds } }, select: { id: true } },
         },
     });
-    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "Option not found" });
-    if (accountId !== option.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this option" });
+    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "オプションが見つかりません" });
+    if (accountId !== option.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (isEmpty(option.priceOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Option price override not found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "オプション料金の上書きが見つかりません" });
 
     const optionPriceOverridesToRemove = optionPriceOverrideIds
         ? intersectionWith(optionPriceOverrideIds, option.priceOverrides, (a, b) => a === b.id)
@@ -53,7 +52,7 @@ const removeOptionPriceOverride: RemoveOptionPriceOverride = async (
     Log(updatedOption);
 
     return {
-        message: `Successfully removed ${optionPriceOverridesToRemove.length} option price overrides from your option`,
+        message: `オプション料金の上書きが削除されました`,
     };
 };
 

@@ -10,14 +10,14 @@ export function validateAddAddressInput(input: AddAddressInput): AddAddressInput
     postalCode = postalCode?.trim();
     addressLine2 = addressLine2?.trim();
 
-    if (isEmpty(addressLine1))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Address line 1 cannot be empty" });
+    if (isEmpty(addressLine1)) throw new GqlError({ code: "BAD_USER_INPUT", message: "住所が空白です。" });
 
-    if (isEmpty(city)) throw new GqlError({ code: "BAD_USER_INPUT", message: "City cannot be empty" });
+    if (isEmpty(city)) throw new GqlError({ code: "BAD_USER_INPUT", message: "都市を空にすることはできません" });
 
-    if (isEmpty(postalCode)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Postal code cannot be empty" });
+    if (isEmpty(postalCode))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "郵便番号を空白にすることはできません" });
 
-    if (!prefectureId) throw new GqlError({ code: "BAD_USER_INPUT", message: "Prefecture is required" });
+    if (!prefectureId) throw new GqlError({ code: "BAD_USER_INPUT", message: "都道府県は必須です" });
 
     return { addressLine1, city, postalCode, prefectureId, addressLine2 };
 }

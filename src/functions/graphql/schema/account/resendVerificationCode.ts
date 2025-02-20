@@ -12,7 +12,8 @@ const resendVerificationCode: ResendVerificationCode = async (_, { email }, { st
     email = email.toLocaleLowerCase(); // change email to lower case
 
     const account = await store.account.findUnique({ where: { email } });
-    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User with the given email not found" });
+    if (!account)
+        throw new GqlError({ code: "NOT_FOUND", message: "メールアドレスまたはパスワードが間違っています。" });
 
     const verificationCode = randomNumberOfNDigits(6);
     dataSources.redis.store(`email-verification-code-${email}`, verificationCode, 600);
@@ -23,7 +24,7 @@ const resendVerificationCode: ResendVerificationCode = async (_, { email }, { st
         verificationCode,
     });
 
-    return { message: `Verificaiton code sent successfully to ${email}. Please check your email.` };
+    return { message: `確認コードが「${email}」に送信されました。 メールを確認してください。` };
 };
 
 export const resendVerificationCodeTypeDefs = gql`

@@ -23,10 +23,10 @@ const registerCompany: RegisterCompany = async (_, { input }, { store, dataSourc
     let { email, password, name, nameKana, registrationNumber } = input;
 
     const isValid = email.trim() && password.trim() && name.trim() && nameKana.trim() && registrationNumber.trim();
-    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "Provide all neccessary fields" });
+    if (!isValid) throw new GqlError({ code: "BAD_USER_INPUT", message: "必要な情報をすべて提供してください。" });
 
     const account = await store.account.findUnique({ where: { email } });
-    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "Email already in use" });
+    if (account) throw new GqlError({ code: "BAD_USER_INPUT", message: "すでに使用中のメール。" });
 
     password = encodePassword(password);
     email = email.toLocaleLowerCase(); // change email to lowercase
@@ -55,7 +55,7 @@ const registerCompany: RegisterCompany = async (_, { input }, { store, dataSourc
     ]);
 
     return {
-        message: `Successfully registered a company account with email: ${email}`,
+        message: `アカウント登録が成功しました。`,
         action: `verify-email`,
     };
 };

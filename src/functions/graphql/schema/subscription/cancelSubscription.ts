@@ -13,13 +13,14 @@ type CancelSubscription = IFieldResolver<any, Context, CancelSubscriptionArgs, P
 
 const cancelSubscription: CancelSubscription = async (_, { id }, { authData, store }) => {
     const { accountId } = authData;
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const subscription = await store.subscription.findUnique({ where: { id } });
 
-    if (!subscription) throw new GqlError({ code: "BAD_REQUEST", message: "Subscription not found" });
+    if (!subscription) throw new GqlError({ code: "BAD_REQUEST", message: "サブスクリプションが見つかりません" });
 
-    if (subscription.isCanceled) throw new GqlError({ code: "BAD_REQUEST", message: "Subscription already canceled" });
+    if (subscription.isCanceled)
+        throw new GqlError({ code: "BAD_REQUEST", message: "サブスクリプションはすでにキャンセルされています" });
 
     const stripe = new StripeLib();
 
@@ -35,7 +36,7 @@ const cancelSubscription: CancelSubscription = async (_, { id }, { authData, sto
 
     Log(`cancelSubscription: `, subscription);
 
-    return { message: "Subscription canceled" };
+    return { message: "サブスクリプションがキャンセルされました" };
 };
 
 export const cancelSubscriptionTypeDefs = gql`

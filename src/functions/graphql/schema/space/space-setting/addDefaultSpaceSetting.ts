@@ -45,27 +45,26 @@ const addDefaultSpaceSetting: AddDefaultSpaceSetting = async (
         },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "施設が見つかりませんでした。" });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "この施設は変更できません" });
 
     if (space.settings.some(({ isDefault }) => isDefault))
-        throw new GqlError({ code: "BAD_REQUEST", message: "You already have an active default setting" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "すでに基本設定が存在されています" });
 
     let { closingHr, openingHr, breakFromHr, breakToHr, businessDays } = spaceSetting;
 
     if (closingHr && (closingHr < 0 || closingHr > 24 || (openingHr && closingHr < openingHr)))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid closing hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "閉店時間が無効です" });
 
     if (openingHr && (openingHr < 0 || openingHr > 24 || (closingHr && openingHr > closingHr)))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid opening hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "開始時間が無効です" });
 
     if (breakFromHr && (breakFromHr > closingHr || breakFromHr < openingHr || (breakToHr && breakFromHr > breakToHr)))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid break start hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "休憩開始時間が無効です" });
 
     if (breakToHr && (breakToHr > closingHr || breakToHr < openingHr || (breakFromHr && breakToHr < breakFromHr)))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid break end hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "休憩終了時間無効です" });
 
     if (businessDays) {
         businessDays = businessDays.filter((d) => d < 7).sort();
@@ -78,7 +77,7 @@ const addDefaultSpaceSetting: AddDefaultSpaceSetting = async (
         ...select,
     });
 
-    return { result: { message: `Successfully added default setting in your space` }, setting };
+    return { result: { message: `施設基本設定が保存されました` }, setting };
 };
 
 export const addDefaultSpaceSettingTypeDefs = gql`

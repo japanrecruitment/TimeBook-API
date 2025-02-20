@@ -1,4 +1,5 @@
 import { environment } from "@utils/environment";
+import moment from "moment";
 import generateTemplate, { EmailData } from "./generateTemplate";
 import { footer, header } from "./share";
 
@@ -9,6 +10,8 @@ export type ContactFormData = EmailData & {
     subject: string;
     description: string;
 };
+
+const currentDate = moment(new Date()).format("YYYY年MM月DD日 HH:mm");
 
 const template = `
   ${header}
@@ -21,29 +24,28 @@ const template = `
           <td class="content-cell">
             <div class="f-fallback">
               <h1>お問い合わせメール</h1>
+            </div>
                 <p>
-                    <br />
-                    <strong>お客様種別:<strong/>
+                    <strong>お客様種別:</strong>
                     <br />
                     {{customerType}}
                     <br /><br />
-                    <strong>メールアドレス:<strong/>
+                    <strong>メールアドレス:</strong>
                     <br />
                     {{email}}
                     <br /><br />
-                    <strong>問い合わせ種別:<strong/>
+                    <strong>問い合わせ種別:</strong>
                     <br />
                     {{inquiryType}}
                     <br /><br />
-                    <strong>件名:<strong/>
+                    <strong>件名:</strong>
                     <br />
                     {{subject}}
                     <br /><br />
-                    <strong>お問い合わせ内容:<strong/>
+                    <strong>お問い合わせ内容:</strong>
                     <br />
                     {{description}}
                 </p>
-            </div>
           </td>
         </tr>
       </table>
@@ -52,4 +54,7 @@ const template = `
   ${footer}
 `;
 
-export default generateTemplate<ContactFormData>(template, `【${environment.APP_READABLE_NAME}】お問合せ`);
+export default generateTemplate<ContactFormData>(
+    template,
+    `【${environment.APP_READABLE_NAME}】お問合せ - ${currentDate}`
+);

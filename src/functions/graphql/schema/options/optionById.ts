@@ -24,7 +24,7 @@ const optionById: OptionById = async (_, { id }, { store }, info) => {
 
     Log(`id: `, id, `optionById: `, option);
 
-    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "Option not found" });
+    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "オプションが見つかりません" });
 
     return option;
 };

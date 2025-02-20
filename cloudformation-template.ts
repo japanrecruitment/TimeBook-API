@@ -277,7 +277,7 @@ const resources: AWS["resources"] = {
         ...securityGroup,
         ...elasticCache,
         ...emailQueue,
-        // ...transactionQueue,
+        ...transactionQueue,
     },
 };
 

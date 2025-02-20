@@ -26,16 +26,16 @@ function isEqualDate(a: Date, b: Date) {
 function validateReserveHotelRoomInput(input: ReserveHotelRoomInput): ReserveHotelRoomInput {
     let { checkInDate, checkOutDate, additionalOptions, ...others } = input;
 
-    if (checkOutDate < checkInDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+    if (checkOutDate < checkInDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
     if (checkInDate < moment().subtract(1, "days").toDate())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
     checkOutDate = moment(checkOutDate).subtract(1, "days").toDate();
 
     additionalOptions?.forEach(({ quantity }) => {
         if (quantity && quantity < 0)
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "オプションの数量が無効です" });
     });
 
     return { checkInDate, checkOutDate, additionalOptions, ...others };
@@ -76,7 +76,7 @@ type ReserveHotelRoom = IFieldResolver<any, Context, ReserveHotelRoomArgs, Promi
 
 const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, store }) => {
     const { accountId, email, id: userId } = authData;
-    if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const validInput = validateReserveHotelRoomInput(input);
     Log(validInput);
@@ -84,8 +84,9 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
 
     try {
         const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
-        if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
-        if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
+        if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "無効なリクエスト" });
+        if (!user.stripeCustomerId)
+            throw new GqlError({ code: "BAD_REQUEST", message: "Stripe アカウントが見つかりません" });
 
         const stripe = new StripeLib();
         let remSubscriptionUnit: number = undefined;
@@ -95,7 +96,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 throw new GqlError({
                     code: "FORBIDDEN",
                     message:
-                        "Multiple subscription of space type found in your account. Please contact our support team",
+                        "アカウント内でスペース タイプの複数のサブスクリプションが見つかりました。 弊社のサポートチームにお問い合わせください",
                 });
             }
             if (stripeSubs.length === 1) {
@@ -145,17 +146,28 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                             : undefined,
                         reservations: {
                             where: {
-                                OR: [
+                                AND: [
+                                    { status: { not: "CANCELED" } },  
                                     {
-                                        AND: [
-                                            { fromDateTime: { gte: checkInDate } },
-                                            { fromDateTime: { lte: checkOutDate } },
-                                        ],
-                                    },
-                                    {
-                                        AND: [
-                                            { toDateTime: { gte: checkInDate } },
-                                            { toDateTime: { lte: checkOutDate } },
+                                        OR: [
+                                            {
+                                                AND: [
+                                                    { fromDateTime: { gte: checkInDate } },
+                                                    { fromDateTime: { lte: checkOutDate } },
+                                                ],
+                                            },
+                                            {
+                                                AND: [
+                                                    { toDateTime: { gte: checkInDate } },
+                                                    { toDateTime: { lte: checkOutDate } },
+                                                ],
+                                            },
+                                            {
+                                                AND: [
+                                                    { fromDateTime: { lte: checkInDate } },
+                                                    { toDateTime: { gte: checkOutDate } },
+                                                ],
+                                            },
                                         ],
                                     },
                                 ],
@@ -185,17 +197,28 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                         hotel: { select: { account: { select: { id: true, email: true, host: true } }, status: true } },
                         reservations: {
                             where: {
-                                OR: [
+                                AND: [
+                                    { status: { not: "CANCELED" } },  
                                     {
-                                        AND: [
-                                            { fromDateTime: { gte: checkInDate } },
-                                            { fromDateTime: { lte: checkOutDate } },
-                                        ],
-                                    },
-                                    {
-                                        AND: [
-                                            { toDateTime: { gte: checkInDate } },
-                                            { toDateTime: { lte: checkOutDate } },
+                                        OR: [
+                                            {
+                                                AND: [
+                                                    { fromDateTime: { gte: checkInDate } },
+                                                    { fromDateTime: { lte: checkOutDate } },
+                                                ],
+                                            },
+                                            {
+                                                AND: [
+                                                    { toDateTime: { gte: checkInDate } },
+                                                    { toDateTime: { lte: checkOutDate } },
+                                                ],
+                                            },
+                                            {
+                                                AND: [
+                                                    { fromDateTime: { lte: checkInDate } },
+                                                    { toDateTime: { gte: checkOutDate } },
+                                                ],
+                                            },
                                         ],
                                     },
                                 ],
@@ -254,19 +277,19 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                     : undefined,
             },
         });
-        if (!plan) throw new GqlError({ code: "NOT_FOUND", message: "Plan not found" });
+        if (!plan) throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
 
         Log("reserveHotelRoom:", "packagePlan:", plan);
 
         const { hotelRoom, packagePlan, priceOverrides, priceSettings } = plan;
 
         if (hotelRoom.hotel.status !== "PUBLISHED")
-            throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+            throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません" });
 
         if (packagePlan.paymentTerm === "PER_PERSON" && !nAdult && !nChild) {
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: "Missing number of adults or number of child",
+                message: "大人の人数または子供の人数が不足しています",
             });
         }
 
@@ -279,13 +302,13 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             ).forEach(({ optionId }) => {
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
-                    message: `Option with id ${optionId} not found in the plan.`,
+                    message: `オプションが見つかりません.`,
                 });
             });
             selectedOptions = packagePlan.additionalOptions.map((aOpts) => {
                 const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
                 if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
-                    throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+                    throw new GqlError({ code: "BAD_USER_INPUT", message: "オプションの数量が不足しています" });
                 }
                 return { ...aOpts, quantity: bOpt.quantity };
             });
@@ -297,20 +320,20 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         if (hotelRoom.reservations.length >= roomTotalStocks) {
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: "Reservation is not available for this hotel room in the selected time frame",
+                message: "選択された時間枠では、予約できません",
             });
         }
 
         if (packagePlan.reservations.length >= planTotalStocks) {
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: "This plan has already out of stock.",
+                message: "このプランは在庫切れです。",
             });
         }
 
         const paymentMethod = await stripe.retrievePaymentMethod(paymentSourceId);
         if (paymentMethod.customer !== user.stripeCustomerId)
-            throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
+            throw new GqlError({ code: "NOT_FOUND", message: "無効な支払い方法です。" });
 
         let appliedRoomPlanPriceOverrides = [];
         let appliedRoomPlanPriceSettings = [];
@@ -346,24 +369,31 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             const remWeekDays = remDates.map((d) => d.getDay());
             const remPriceSettings = priceSettings.filter(({ dayOfWeek }) => remWeekDays.includes(dayOfWeek));
             if (packagePlan.paymentTerm === "PER_ROOM") {
-                amount = sum(remPriceSettings.map(({ priceScheme }) => priceScheme.roomCharge));
+                amount = sum(
+                    remDates.map(d => {
+                        const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                        return priceSetting ? priceSetting.priceScheme.roomCharge : 0;
+                    })
+                );
             } else {
                 let adultPrice = 0;
                 let childPrice = 0;
                 if (nAdult) {
                     let numAdultField = mapNumAdultField(nAdult);
                     adultPrice = sum(
-                        remPriceSettings.map(
-                            ({ priceScheme }) => (priceScheme[numAdultField] || priceScheme.oneAdultCharge) * nAdult
-                        )
+                        remDates.map(d => {
+                            const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                            return priceSetting ? (priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge) * nAdult : 0;
+                        })
                     );
                 }
                 if (nChild) {
                     let numChildField = mapNumChildField(nChild);
                     childPrice = sum(
-                        remPriceSettings.map(
-                            ({ priceScheme }) => (priceScheme[numChildField] || priceScheme.oneChildCharge) * nChild
-                        )
+                        remDates.map(d => {
+                            const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                            return priceSetting ? (priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge) * nChild : 0;
+                        })
                     );
                 }
                 amount = adultPrice + childPrice;
@@ -457,7 +487,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                     userId: accountId,
                     hotelRoomId: hotelRoom.id,
                 },
-                statement_descriptor: `AUTH_${environment.APP_READABLE_NAME}`.substring(0, 22),
+                statement_descriptor: `${environment.APP_READABLE_NAME}`.substring(0, 22),
                 application_fee_amount: applicationFeeAmount,
                 transfer_data: { destination: hotelRoom.hotel.account.host.stripeAccountId },
                 confirm: true,

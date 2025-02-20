@@ -41,19 +41,19 @@ function validateUpdateMySpaceInput(input: UpdateMySpaceInput): UpdateMySpaceInp
         !numberOfSeats &&
         !spaceSize
     ) {
-        throw new GqlError({ code: "BAD_REQUEST", message: "All fields in submited space are empty" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "無効なリクエスト" });
     }
 
     if (maximumCapacity && maximumCapacity < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid maximum capacity" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "最大人数が無効です" });
 
     if (numberOfSeats && numberOfSeats < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of seats" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な最大シート数" });
 
-    if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid space size" });
+    if (spaceSize && spaceSize < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なスペースサイズ" });
 
     if (subcriptionPrice && subcriptionPrice < 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid subscription price" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なサブスクリプション料金" });
 
     return {
         id,
@@ -104,10 +104,9 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
         },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const updatedSpace = await store.space.update({
         where: { id },
@@ -161,7 +160,7 @@ const updateMySpace: UpdateMySpace = async (_, { input }, { authData, store, dat
         );
     }
 
-    return { message: `Successfully updated space` };
+    return { message: `スペースが更新されました` };
 };
 
 export const updateMySpaceTypeDefs = gql`

@@ -23,7 +23,7 @@ const removeStockOverrideFromOption: RemoveStockOverrideFromOption = async (
     { authData, store }
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     stockOverrideIds = compact(stockOverrideIds);
     stockOverrideIds = isEmpty(stockOverrideIds) ? undefined : stockOverrideIds;
@@ -35,11 +35,10 @@ const removeStockOverrideFromOption: RemoveStockOverrideFromOption = async (
             stockOverrides: { where: { id: { in: stockOverrideIds } }, select: { id: true } },
         },
     });
-    if (!option || !option.accountId) throw new GqlError({ code: "NOT_FOUND", message: "Option not found" });
-    if (accountId !== option.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this option" });
+    if (!option || !option.accountId) throw new GqlError({ code: "NOT_FOUND", message: "オプションが見つかりません" });
+    if (accountId !== option.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (isEmpty(option.stockOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Stock override not found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "在庫の上書きが見つかりません" });
 
     const stockOverridesToRemove = stockOverrideIds
         ? intersectionWith(stockOverrideIds, option.stockOverrides, (a, b) => a === b.id)
@@ -53,7 +52,7 @@ const removeStockOverrideFromOption: RemoveStockOverrideFromOption = async (
     Log(updatedOption);
 
     return {
-        message: `Successfully removed ${stockOverridesToRemove.length} stock overrides from your option`,
+        message: `「${stockOverridesToRemove.length}」在庫の上書きを削除しました`,
     };
 };
 

@@ -12,11 +12,11 @@ type AddSpacePhotoResult = Promise<ImageUploadResult[]>;
 type AddSpacePhotos = IFieldResolver<any, Context, AddSpacePhotosArgs, AddSpacePhotoResult>;
 
 const addSpacePhotos: AddSpacePhotos = async (_, { spaceId, imageInputs }, { store }) => {
-    if (imageInputs.length <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid image upload input" });
+    if (imageInputs.length <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な写真の種類" });
 
     const space = await store.space.findUnique({ where: { id: spaceId } });
 
-    if (!space) throw new GqlError({ code: "BAD_REQUEST", message: "Space does not exists" });
+    if (!space) throw new GqlError({ code: "BAD_REQUEST", message: "スペースが見つかりません" });
 
     const { photos } = await store.space.update({
         where: { id: spaceId },

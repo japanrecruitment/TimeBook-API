@@ -21,16 +21,15 @@ type AddOptionPhotos = IFieldResolver<any, Context, AddOptionPhotosArgs, Promise
 
 const addOptionPhotos: AddOptionPhotos = async (_, { optionId, photos }, { authData, store }) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const option = await store.option.findUnique({
         where: { id: optionId },
         select: { accountId: true, photos: { select: { id: true } } },
     });
-    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "Package plan not found" });
+    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
 
-    if (accountId !== option.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this package plan" });
+    if (accountId !== option.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const updatedOption = await store.option.update({
         where: { id: optionId },
@@ -54,7 +53,7 @@ const addOptionPhotos: AddOptionPhotos = async (_, { optionId, photos }, { authD
     Log(updatedOption, uploadRes);
 
     return {
-        message: `Photo uploaded sucessfully!!`,
+        message: `写真が追加されました`,
         uploadRes,
     };
 };

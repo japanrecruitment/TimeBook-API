@@ -56,7 +56,7 @@ const validateInput = (input: AddDefaultPriceInput) => {
         !thirtyMinuteAmount &&
         thirtyMinuteAmount <= 0
     ) {
-        throw new GqlError({ code: "BAD_REQUEST", message: "Add atleast one price plan" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "少なくとも 1 つの料金プランを追加します" });
     }
 };
 
@@ -90,10 +90,9 @@ const addDefaultPrice: AddDefaultPrice = async (_, { input, spaceId }, { authDat
         },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const pricePlansToAdd: Array<Pick<SpacePricePlan, "amount" | "duration" | "title" | "type" | "isDefault">> = [];
     if (input.dailyAmount)
@@ -157,7 +156,7 @@ const addDefaultPrice: AddDefaultPrice = async (_, { input, spaceId }, { authDat
         if (space.pricePlans.some((p) => p.type === type && p.duration === duration)) {
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: `This space already has default price plan of type ${type} and duration ${duration}`,
+                message: `このスペースには、「${type}」タイプ と「${duration}」期間のデフォルトの料金プランがすでにあります`,
             });
         }
     });
@@ -195,7 +194,7 @@ const addDefaultPrice: AddDefaultPrice = async (_, { input, spaceId }, { authDat
 
     const newPricePlans = updatedSpace.pricePlans.filter(({ createdAt }) => createdAt.getTime() >= currDate);
     return {
-        result: { message: `Successfully added ${newPricePlans.length} new default price plans in your space` },
+        result: { message: `料金プランを追加しました` },
         pricePlans: newPricePlans,
     };
 };

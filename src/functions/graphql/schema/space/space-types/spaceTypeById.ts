@@ -17,7 +17,7 @@ const spaceTypeById: SpaceTypeById = async (_, { id }, { dataSources, store }) =
 
     const spaceTypeById = await store.spaceType.findUnique({ where: { id } });
 
-    if (!spaceTypeById) throw new GqlError({ code: "NOT_FOUND", message: "Space type not found" });
+    if (!spaceTypeById) throw new GqlError({ code: "NOT_FOUND", message: "スペースタイプが見つかりません" });
 
     dataSources.redis.store(cacheKey, spaceTypeById, 600);
     return spaceTypeById;

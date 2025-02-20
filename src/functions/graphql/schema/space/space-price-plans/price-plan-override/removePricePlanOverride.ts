@@ -24,15 +24,15 @@ const removePricePlanOverride: RemovePricePlanOverride = async (_, { id }, { aut
     });
 
     if (!pricePlanOverride || pricePlanOverride.isDeleted)
-        throw new GqlError({ code: "NOT_FOUND", message: "Price plan override not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "料金プランの上書きが見つかりません" });
 
     if (accountId !== pricePlanOverride.pricePlan.space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+        throw new GqlError({ code: "FORBIDDEN", message: "この料金プランは変更できません" });
 
     await store.pricePlanOverride.update({ where: { id }, data: { isDeleted: true } });
 
     return {
-        message: `Successfully removed a override from your price plan named ${pricePlanOverride.pricePlan.title}`,
+        message: `料金プラン「${pricePlanOverride.pricePlan.title}」の上書きを削除しました`,
     };
 };
 

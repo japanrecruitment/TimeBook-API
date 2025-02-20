@@ -16,21 +16,20 @@ const removeOption: RemoveOption = async (_, { id }, { authData, store }) => {
     const { accountId } = authData;
 
     id = id?.trim();
-    if (isEmpty(id)) throw new GqlError({ code: "BAD_REQUEST", message: "Please provide remove id" });
+    if (isEmpty(id)) throw new GqlError({ code: "BAD_REQUEST", message: "無効なリクエスト" });
 
     const option = await store.option.findUnique({
         where: { id },
         select: { accountId: true },
     });
 
-    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "Option not found" });
+    if (!option) throw new GqlError({ code: "NOT_FOUND", message: "オプションが見つかりません" });
 
-    if (accountId !== option.accountId)
-        throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorized to modify this option" });
+    if (accountId !== option.accountId) throw new GqlError({ code: "UNAUTHORIZED", message: "無効なリクエスト" });
 
     await store.option.delete({ where: { id } });
 
-    return { message: "Successfully removed a option" };
+    return { message: "オプションが削除されました" };
 };
 
 export const removeOptionTypeDefs = gql`

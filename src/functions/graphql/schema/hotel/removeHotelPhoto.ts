@@ -13,16 +13,15 @@ type RemoveHotelPhoto = IFieldResolver<any, Context, RemoveHotelPhotoArgs, Promi
 
 const removeHotelPhoto: RemoveHotelPhoto = async (_, { photoId }, { authData, store }) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const photo = await store.photo.findUnique({
         where: { id: photoId },
         include: { hotel: { select: { accountId: true } } },
     });
-    if (!photo || !photo.hotel) throw new GqlError({ code: "NOT_FOUND", message: "Photo not found" });
+    if (!photo || !photo.hotel) throw new GqlError({ code: "NOT_FOUND", message: "写真が見つかりません。" });
 
-    if (accountId !== photo.hotel?.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to remove this hotel photo" });
+    if (accountId !== photo.hotel?.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     await store.photo.delete({ where: { id: photoId } });
 
@@ -41,7 +40,7 @@ const removeHotelPhoto: RemoveHotelPhoto = async (_, { photoId }, { authData, st
         if (photo.thumbnail) s3.deleteObject(`${photo.type}/thumbnail/${key}`);
     }
 
-    return { message: `Successfully removed hotel photo` };
+    return { message: `写真は削除されました。` };
 };
 
 export const removeHotelPhotoTypeDefs = gql`

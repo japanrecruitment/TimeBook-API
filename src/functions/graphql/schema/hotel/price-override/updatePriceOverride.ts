@@ -5,15 +5,15 @@ export function validateUpdatePriceOverrideInput(input: UpdatePriceOverrideInput
     let { id, endDate, priceSchemeId, startDate } = input;
 
     if (endDate && startDate) {
-        if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
-        if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+        if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
+        if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
     } else {
         endDate = undefined;
         startDate = undefined;
     }
 
     if (!endDate && !priceSchemeId && !startDate)
-        throw new GqlError({ code: "BAD_REQUEST", message: "Empty fields provided" });
+        throw new GqlError({ code: "BAD_REQUEST", message: "必要な情報をすべて入力してください。" });
 
     return { id, endDate, priceSchemeId, startDate };
 }

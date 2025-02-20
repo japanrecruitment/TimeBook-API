@@ -37,12 +37,11 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, context) => {
 
     Log(id, context.authData);
 
-    if (id !== input.id)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this profile" });
+    if (id !== input.id) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const updatedProfile = await updateProfileStrategies[profileType](input, context);
 
-    if (!updatedProfile) throw new GqlError({ code: "NOT_FOUND", message: "Profile not found" });
+    if (!updatedProfile) throw new GqlError({ code: "NOT_FOUND", message: "プロフィールが見つかりません" });
 
     await addEmailToQueue<ProfileUpdateEmailData>({
         template: "profile-updated",
@@ -50,7 +49,7 @@ const updateMyProfile: UpdateMyProfile = async (_, { input }, context) => {
         recipientName: "",
     });
 
-    return { message: `Successfully updated a profile` };
+    return { message: `プロファイルが更新されました` };
 };
 
 const updateUserProfile: UpdateProfileStrategy<UpdateUserProfileInput> = async (input, { store }) => {

@@ -18,11 +18,11 @@ const refreshToken: RefreshToken = async (_, { token }, { store }) => {
             select: { id: true, account: { include: { userProfile: true, companyProfile: true } } },
         });
 
-        if (!session) throw new GqlError({ code: "NOT_FOUND", message: "Invalid token", action: "logout" });
+        if (!session) throw new GqlError({ code: "NOT_FOUND", message: "無効なリクエスト。", action: "logout" });
 
         const { account } = session;
 
-        if (!account) throw new GqlError({ code: "NOT_FOUND", message: "Invalid token", action: "logout" });
+        if (!account) throw new GqlError({ code: "NOT_FOUND", message: "無効なリクエスト。", action: "logout" });
 
         const profile = merge(
             pick(account, "email", "phoneNumber", "profileType", "roles"),
@@ -30,7 +30,7 @@ const refreshToken: RefreshToken = async (_, { token }, { store }) => {
         );
         return encodeToken(profile, "access", { jwtid: accountId });
     } catch (error) {
-        const message = error.name === "TokenExpiredError" ? "Session expired" : "Invalid token";
+        const message = error.name === "TokenExpiredError" ? "Session expired" : "無効なリクエスト。";
         throw new GqlError({ code: "FORBIDDEN", message, action: "logout" });
     }
 };

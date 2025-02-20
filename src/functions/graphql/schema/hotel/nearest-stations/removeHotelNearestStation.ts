@@ -23,7 +23,7 @@ const removeHotelNearestStation: RemoveHotelNearestStation = async (
     { authData, dataSources, store }
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     stationIds = stationIds && stationIds.length > 0 ? stationIds : undefined;
 
@@ -31,9 +31,9 @@ const removeHotelNearestStation: RemoveHotelNearestStation = async (
         where: { id: hotelId, accountId },
         select: { nearestStations: { where: { stationId: { in: stationIds } }, select: { stationId: true } } },
     });
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません。" });
 
-    if (isEmpty(hotel.nearestStations)) throw new GqlError({ code: "NOT_FOUND", message: "Nearest station not found" });
+    if (isEmpty(hotel.nearestStations)) throw new GqlError({ code: "NOT_FOUND", message: "最寄駅が見つかりません。" });
 
     const nearestStationsToRemove = stationIds
         ? intersectionWith(stationIds, hotel.nearestStations, (id, { stationId }) => id === stationId)
@@ -54,7 +54,7 @@ const removeHotelNearestStation: RemoveHotelNearestStation = async (
     }
 
     return {
-        message: `Successfully removed ${nearestStationsToRemove.length} stations as nearest station from your hotel`,
+        message: `${nearestStationsToRemove.length} 駅を宿泊施設の最寄りの駅として削除しました`,
     };
 };
 

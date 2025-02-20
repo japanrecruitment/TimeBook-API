@@ -14,12 +14,12 @@ function validateAddCancelPolicyInput(input: AddCancelPolicyInput): AddCancelPol
     description = description?.trim();
     rates = uniqWith(rates, isEqual);
 
-    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid name" });
+    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な名前" });
 
     rates.forEach(({ beforeHours, percentage }) => {
-        if (beforeHours < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid before hours" });
+        if (beforeHours < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "営業時間前は無効" });
         if (percentage < 0 || percentage > 100)
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid percentage" });
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なパーセンテージ" });
     });
 
     differenceWith(
@@ -29,7 +29,7 @@ function validateAddCancelPolicyInput(input: AddCancelPolicyInput): AddCancelPol
     ).forEach(({ beforeHours }) => {
         throw new GqlError({
             code: "BAD_USER_INPUT",
-            message: `Multiple rates with same before hours {${beforeHours}} found`,
+            message: `営業時間前{${beforeHours}}が同じである複数の料金が見つかりました`,
         });
     });
 
@@ -63,19 +63,17 @@ const addCancelPolicy: AddCancelPolicy = async (_, { spaceId, hotelId, input }, 
     if (spaceId) {
         const space = await store.space.findUnique({ where: { id: spaceId }, select: { accountId: true } });
 
-        if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+        if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-        if (accountId !== space.accountId)
-            throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorized to modify this space" });
+        if (accountId !== space.accountId) throw new GqlError({ code: "UNAUTHORIZED", message: "無効なリクエスト" });
     }
 
     if (hotelId) {
         const hotel = await store.hotel.findUnique({ where: { id: hotelId }, select: { accountId: true } });
 
-        if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+        if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません" });
 
-        if (accountId !== hotel.accountId)
-            throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorized to modify this hotel" });
+        if (accountId !== hotel.accountId) throw new GqlError({ code: "UNAUTHORIZED", message: "無効なリクエスト" });
     }
 
     const cancelPolicySelect = toCancelPolicySelect(mapSelections(info)?.cancelPolicy)?.select;
@@ -93,7 +91,7 @@ const addCancelPolicy: AddCancelPolicy = async (_, { spaceId, hotelId, input }, 
 
     Log("addCancelPolicy", cancelPolicy);
 
-    return { message: "Added cancel policy", cancelPolicy };
+    return { message: "キャンセルポリシーを追加しました", cancelPolicy };
 };
 
 export const addCancelPolicyTypeDefs = gql`

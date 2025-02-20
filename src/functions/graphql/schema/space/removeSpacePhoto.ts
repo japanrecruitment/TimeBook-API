@@ -13,16 +13,15 @@ type RemoveSpacePhoto = IFieldResolver<any, Context, RemoveSpacePhotoArgs, Promi
 
 const removeSpacePhoto: RemoveSpacePhoto = async (_, { photoId }, { authData, store }) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const photo = await store.photo.findUnique({
         where: { id: photoId },
         include: { space: { select: { accountId: true } } },
     });
-    if (!photo || !photo.space) throw new GqlError({ code: "NOT_FOUND", message: "Photo not found" });
+    if (!photo || !photo.space) throw new GqlError({ code: "NOT_FOUND", message: "写真が見つかりません" });
 
-    if (accountId !== photo.space?.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to remove this space photo" });
+    if (accountId !== photo.space?.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     await store.photo.delete({ where: { id: photoId } });
 
@@ -41,7 +40,7 @@ const removeSpacePhoto: RemoveSpacePhoto = async (_, { photoId }, { authData, st
         if (photo.thumbnail) s3.deleteObject(`${photo.type}/thumbnail/${key}`);
     }
 
-    return { message: `Successfully removed space photo` };
+    return { message: `写真が削除されました` };
 };
 
 export const removeSpacePhotoTypeDefs = gql`

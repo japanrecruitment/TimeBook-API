@@ -16,21 +16,20 @@ const removeCancelPolicy: RemoveCancelPolicy = async (_, { id }, { authData, sto
     const { accountId } = authData;
 
     id = id?.trim();
-    if (isEmpty(id)) throw new GqlError({ code: "BAD_REQUEST", message: "Please provide cancel policy id" });
+    if (isEmpty(id)) throw new GqlError({ code: "BAD_REQUEST", message: "キャンセルポリシーIDを入力してください" });
 
     const cancelPolicy = await store.cancelPolicy.findUnique({
         where: { id },
         select: { accountId: true },
     });
 
-    if (!cancelPolicy) throw new GqlError({ code: "NOT_FOUND", message: "Cancel policy not found" });
+    if (!cancelPolicy) throw new GqlError({ code: "NOT_FOUND", message: "キャンセルポリシーが見つかりません" });
 
-    if (accountId !== cancelPolicy.accountId)
-        throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorized to modify this cancel policy" });
+    if (accountId !== cancelPolicy.accountId) throw new GqlError({ code: "UNAUTHORIZED", message: "無効なリクエスト" });
 
     await store.cancelPolicy.delete({ where: { id } });
 
-    return { message: "Successfully removed a cancel policy" };
+    return { message: "キャンセルポリシーを削除しました" };
 };
 
 export const removeCancelPolicyTypeDefs = gql`

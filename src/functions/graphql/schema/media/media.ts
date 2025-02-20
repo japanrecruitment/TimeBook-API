@@ -24,6 +24,7 @@ export type Image = {
 
 export type Photo = {
     id: string;
+    isDefault?: boolean;
     mime: string;
     type: ImageTypes;
     thumbnail: Image | any;
@@ -34,6 +35,7 @@ export type Photo = {
 
 export type PhotoSelect = {
     id: boolean;
+    isDefault: boolean;
     mime: boolean;
     type: boolean;
     thumbnail: boolean;
@@ -90,6 +92,7 @@ export const MediaTypeDefs = gql`
 
     type Photo {
         id: ID!
+        isDefault: Boolean
         mime: String!
         type: ImageType!
         thumbnail: Image

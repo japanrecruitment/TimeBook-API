@@ -29,7 +29,7 @@ const beAHost: BeAHost = async (_, { input }, { store, authData }) => {
     if (!name || name.trim() === "")
         throw new GqlError({
             code: "BAD_USER_INPUT",
-            message: "Please provide a valid name for your host account.",
+            message: "ホストの有効な名前を入力してください。",
         });
 
     // Create Host Account on DB
@@ -91,7 +91,7 @@ const beAHost: BeAHost = async (_, { input }, { store, authData }) => {
     });
 
     return {
-        message: `Successfull. Host ID: ${hostId}`,
+        message: `ホストアカウントが作成されました。`,
         url: accountLink.url,
     };
 };

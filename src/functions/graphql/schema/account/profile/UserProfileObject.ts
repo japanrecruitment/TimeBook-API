@@ -20,6 +20,7 @@ export type UserProfileSelect = {
     lastNameKana: boolean;
     accountId: true;
     stripeCustomerId: true;
+    dob: true;
     address: PrismaSelect<AddressSelect>;
     profilePhoto: PrismaSelect<PhotoSelect>;
 };
@@ -36,7 +37,8 @@ export const toUserProfileSelect = (selections, defaultValue: any = false): Pris
         "lastName",
         "firstNameKana",
         "lastNameKana",
-        "stripeCustomerId"
+        "stripeCustomerId",
+        "dob"
     );
 
     if (isEmpty(userProfileSelect) && !addressSelect && !profilePhotoSelect) return defaultValue;
@@ -62,6 +64,7 @@ export const userProfileObjectTypeDefs = gql`
         firstNameKana: String!
         lastNameKana: String!
         phoneNumber: String
+        dob: Date
         roles: [Role] @auth(requires: [admin], allowSelf: true)
         address: AddressObject
         profilePhoto: Photo
@@ -69,6 +72,8 @@ export const userProfileObjectTypeDefs = gql`
         host: Host @auth(requires: [admin], allowSelf: true)
         approved: Boolean @auth(requires: [admin], allowSelf: true)
         suspended: Boolean @auth(requires: [admin], allowSelf: true)
+        deactivated: Boolean @auth(requires: [admin], allowSelf: true)
+        deactivationReason: String @auth(requires: [admin], allowSelf: true)
         createdAt: Date @auth(requires: [admin], allowSelf: true)
         updatedAt: Date @auth(requires: [admin], allowSelf: true)
     }

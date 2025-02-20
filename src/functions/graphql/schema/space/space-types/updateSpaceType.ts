@@ -23,20 +23,19 @@ const updateSpaceType: UpdateSpaceType = async (_, { input }, { dataSources, sto
     title = title?.trim();
     description = description?.trim();
 
-    if (title && isEmpty(title)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid title" });
+    if (title && isEmpty(title)) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なタイトル" });
 
-    if (description && isEmpty(description))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid description" });
+    if (description && isEmpty(description)) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な説明" });
 
     const spaceType = await store.spaceType.findUnique({ where: { id } });
 
-    if (!spaceType) throw new GqlError({ code: "BAD_REQUEST", message: "Space type not found" });
+    if (!spaceType) throw new GqlError({ code: "BAD_REQUEST", message: "スペースタイプが見つかりません" });
 
     const updatedSpaceType = await store.spaceType.update({ where: { id }, data: { title, description, available } });
 
     dataSources.redis.deleteMany("space-types:*");
 
-    return { message: `Successfully updated ${updatedSpaceType.title} space type` };
+    return { message: `「${updatedSpaceType.title}」スペースタイプが更新されました` };
 };
 
 export const updateSpaceTypeTypeDefs = gql`

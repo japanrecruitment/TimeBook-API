@@ -27,7 +27,7 @@ const host: MyHostInfo = async (_, __, { authData, store }, info) => {
     if (hostAccount.suspended)
         throw new GqlError({
             code: "UNAUTHORIZED",
-            message: "Your account has been suspended. Please contact support.",
+            message: "アカウントは停止されました。 サポートにお問い合わせください。",
         });
 
     const hasPhotoId = hostAccount.photoId?.large || hostAccount.photoId?.medium || hostAccount.photoId?.small;
@@ -39,7 +39,7 @@ const host: MyHostInfo = async (_, __, { authData, store }, info) => {
 
     if (!hostAccount.approved) {
         if (hasPhotoId && hasStripeAccount.balance) {
-            throw new GqlError({ code: "PENDING_APPROVAL", message: "Your account is pending approval." });
+            throw new GqlError({ code: "PENDING_APPROVAL", message: "アカウントは承認待ちです。" });
         }
     }
 

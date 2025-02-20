@@ -24,7 +24,7 @@ type MyPackagePlans = IFieldResolver<any, Context, MyPackagePlansArgs, Promise<M
 
 const myPackagePlans: MyPackagePlans = async (_, { hotelId, paginate }, { authData, store }, info) => {
     const { accountId } = authData || { accountId: null };
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { take, skip } = paginate || {};
 
@@ -37,7 +37,7 @@ const myPackagePlans: MyPackagePlans = async (_, { hotelId, paginate }, { authDa
         },
     });
 
-    if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "Package plans not found" });
+    if (hotelId && isEmpty(myHotels)) throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません。" });
 
     const myPackagePlans = myHotels.flatMap(({ packagePlans }) => packagePlans).filter((packagePlans) => packagePlans);
 

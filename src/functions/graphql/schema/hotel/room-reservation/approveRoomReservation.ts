@@ -31,10 +31,10 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
         },
     });
 
-    if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "Reservation doesn't exist" });
+    if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "予約が見つかりません。" });
 
     if (reservation.hotelRoom?.hotel?.accountId !== accountId)
-        throw new GqlError({ code: "UNAUTHORIZED", message: "You are not authorize to modify this reservation" });
+        throw new GqlError({ code: "UNAUTHORIZED", message: "無効なリクエスト" });
 
     await store.hotelRoomReservation.update({
         where: { id: reservation.id },
@@ -50,7 +50,7 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
     });
 
     return {
-        message: "Successfully approved reservation.",
+        message: "予約が承認されました。",
     };
 };
 

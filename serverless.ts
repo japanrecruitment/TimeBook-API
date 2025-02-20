@@ -23,6 +23,11 @@ const serverlessConfiguration: AWS = {
                 ],
                 statements: [
                     { Effect: "Allow", Action: ["sqs:SendMessage"], Resource: { "Fn::GetAtt": ["EmailQueue", "Arn"] } },
+                    {
+                        Effect: "Allow",
+                        Action: ["sqs:SendMessage"],
+                        Resource: { "Fn::GetAtt": ["TransactionQueue", "Arn"] },
+                    },
                 ],
             },
         },
@@ -32,6 +37,7 @@ const serverlessConfiguration: AWS = {
         },
         environment: {
             NODE_ENV: "${opt:stage, 'dev'}",
+            ENV: "${env:ENV}",
             DB_URL: "${env:DB_URL}",
             TOKEN_SECRET: "${env:TOKEN_SECRET}",
             REFRESH_TOKEN_SECRET: "${env:REFRESH_TOKEN_SECRET}",
@@ -45,7 +51,7 @@ const serverlessConfiguration: AWS = {
             REDIS_PORT: { "Fn::GetAtt": ["ElastiCacheCluster", "RedisEndpoint.Port"] },
             IP_STACK_KEY: "${env:IP_STACK_KEY}",
             EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
-            // TRANSACTION_QUEUE: { Ref: "TransactionQueue" },
+            TRANSACTION_QUEUE: { Ref: "TransactionQueue" },
             MEDIA_BUCKET: "${self:custom.mediaBucket}",
             MEDIA_UPLOAD_BUCKET: "${self:custom.uploadMediaBucket}",
             PUBLIC_MEDIA_BUCKET: "${self:custom.publicMediaBucket}",
@@ -54,6 +60,12 @@ const serverlessConfiguration: AWS = {
             ALGOLIA_SEARCH_API_KEY: "${env:ALGOLIA_SEARCH_API_KEY}",
             FRONTEND_BASE_URL: "${env:FRONTEND_BASE_URL}",
             GOOGLE_MAP_API_KEY: "${env:GOOGLE_MAP_API_KEY}",
+            EXPO_ACCESS_TOKEN: "${env:EXPO_ACCESS_TOKEN}",
+            GOOGLE_AUTH_WEB_CLIENT_ID: "${env:GOOGLE_AUTH_WEB_CLIENT_ID}",
+            GOOGLE_AUTH_IOS_CLIENT_ID: "${env:GOOGLE_AUTH_IOS_CLIENT_ID}",
+            GOOGLE_AUTH_ANDROID_CLIENT_ID: "${env:GOOGLE_AUTH_ANDROID_CLIENT_ID}",
+            FACEBOOK_CLIENT_ID: "${env:FACEBOOK_CLIENT_ID}",
+            FACEBOOK_CLIENT_SECRET: "${env:FACEBOOK_CLIENT_SECRET}",
         },
         apiGateway: {
             shouldStartNameWithService: true,
@@ -74,7 +86,7 @@ const serverlessConfiguration: AWS = {
         uploadMediaBucket: "timebook-api-${sls:stage}-media-upload",
         publicMediaBucket: "timebook-public-media",
     },
-    plugins: ["serverless-webpack", "serverless-webpack-prisma", "serverless-offline"],
+    plugins: ["serverless-webpack", "serverless-webpack-prisma", "serverless-prune-plugin", "serverless-offline"],
     // package: {
     //     patterns: [
     //         "!node_modules/.prisma/client/libquery_engine-*",

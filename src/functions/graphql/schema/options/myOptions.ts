@@ -26,7 +26,7 @@ type MyOptions = IFieldResolver<any, Context, MyOptionsArgs, Promise<MyOptionsRe
 
 const myOptions: MyOptions = async (_, { hotelId, packagePlanId, spaceId, paginate }, { authData, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { skip, take } = paginate || {};
 

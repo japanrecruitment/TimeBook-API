@@ -9,11 +9,12 @@ export function validateUpdateAddressInput(input: UpdateAddressInput): UpdateAdd
     postalCode = postalCode?.trim();
     addressLine2 = addressLine2?.trim();
 
-    if (addressLine1 === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Address line 1 cannot be empty" });
+    if (addressLine1 === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "住所が空白です。" });
 
-    if (city === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "City cannot be empty" });
+    if (city === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "都市を空にすることはできません" });
 
-    if (postalCode === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "Postal code cannot be empty" });
+    if (postalCode === "")
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "郵便番号を空白にすることはできません" });
 
     return { id, addressLine1, city, postalCode, prefectureId, addressLine2 };
 }

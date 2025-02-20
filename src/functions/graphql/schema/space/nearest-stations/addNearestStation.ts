@@ -32,14 +32,14 @@ const addNearestStations: AddNearestStations = async (
     const { accountId } = authData;
 
     if (!stations || stations.length <= 0)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Please select some stations to add" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "追加するステーションをいくつか選択してください" });
 
     stations.forEach((station, index) => {
         const hasDuplicateStation = stations.slice(index + 1).some((s) => s.stationId === station.stationId);
         if (hasDuplicateStation)
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: "Multiple station with the same id found in the selection",
+                message: "選択範囲内に同じ ID を持つ複数のステーションが見つかりました",
             });
     });
 
@@ -48,10 +48,9 @@ const addNearestStations: AddNearestStations = async (
         select: { accountId: true, nearestStations: { select: { stationId: true } } },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const nearestStationsIds = space?.nearestStations?.map(({ stationId }) => stationId);
     const nearestStationToAdd = stations
@@ -59,7 +58,9 @@ const addNearestStations: AddNearestStations = async (
         .map(({ stationId, time, via, exit }) => ({ stationId, time, via: via?.trim(), exit: exit?.trim() }));
 
     if (nearestStationToAdd.length <= 0)
-        throw new GqlError({ message: `No new station found from submitted station list to add` });
+        throw new GqlError({
+            message: `送信されたステーション リストに追加する新しいステーションが見つかりませんでした`,
+        });
 
     const updatedSpace = await store.space.update({
         where: { id: spaceId },
@@ -82,7 +83,7 @@ const addNearestStations: AddNearestStations = async (
 
     return {
         nearestStations: updatedSpace.nearestStations,
-        result: { message: `Successfully added ${nearestStationToAdd.length} new nearest station in your space` },
+        result: { message: `新しい駅が追加されました` },
     };
 };
 

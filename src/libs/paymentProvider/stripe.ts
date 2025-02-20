@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { environment, Log } from "@utils/index";
-import { isEmpty, uniqWith } from "lodash";
+import { isEmpty } from "lodash";
+import moment from "moment";
 
 const returnURL = environment.STRIPE_CONNECT_ACCOUNT_RETURN_URL;
 const refreshURL = environment.STRIPE_CONNECT_ACCOUNT_REFRESH_URL;
@@ -9,7 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SK, {
     apiVersion: "2020-08-27",
 });
 
-const subcriptionProductsIds = [
+const subcriptionProductsIdsDev = [
     "prod_MHKkvxYDSR3Utl",
     "prod_MHL3nbPl5b5I7y",
     "prod_MHL95AQUXuIU5P",
@@ -17,6 +18,16 @@ const subcriptionProductsIds = [
     "prod_MHLEuTMpuVEuDh",
     "prod_MHLHPCH1h6bU6V",
 ];
+const subcriptionProductsIdsProd = [
+    "prod_MdnMVMcyknwVaj",
+    "prod_MdnMDFYT320DhG",
+    "prod_MdnMHjLshi1CYr",
+    "prod_MdnMLtieQrM5tl",
+    "prod_MdnMGttA1kazXy",
+    "prod_MdnME0bwFLqSdy",
+];
+
+const subcriptionProductsIds = process.env.ENV === "dev" ? subcriptionProductsIdsDev : subcriptionProductsIdsProd;
 
 interface CreateConnectAccountInput {
     email: string;
@@ -69,6 +80,9 @@ export class StripeLib implements IStripeUtil {
                         requested: true,
                     },
                 },
+                settings: {
+                    card_payments: { statement_descriptor_prefix: `${environment.APP_READABLE_NAME}`.substring(0, 22) },
+                },
             });
             return account;
         } catch (error) {
@@ -110,7 +124,7 @@ export class StripeLib implements IStripeUtil {
                 type: "account_onboarding",
             });
             return {
-                message: `Provide neccessary information.`,
+                message: `必要な情報をご提供してください`,
                 url: accountLink.url,
                 balance: null,
             };
@@ -122,7 +136,7 @@ export class StripeLib implements IStripeUtil {
             Log(available, pending);
 
             return {
-                message: `View account details.`,
+                message: `アカウントの詳細を表示する`,
                 url: loginLink.url,
                 balance: {
                     available,
@@ -301,15 +315,49 @@ export class StripeLib implements IStripeUtil {
     ): Promise<Stripe.Response<Stripe.Subscription>> {
         try {
             Log("[STARTED]: Creating subscription");
+            const startOfNextMonth = moment().add(1, "month").startOf("month").utc();
+            const billing_cycle_anchor = startOfNextMonth.valueOf() / 1000;
+            Log("billing_cycle_anchor", startOfNextMonth.format("YYYY/MM/DD"), billing_cycle_anchor);
             const subscription = await stripe.subscriptions.create({
                 customer: customerId,
                 items: [{ price: priceId }],
                 collection_method: "charge_automatically",
                 metadata: { productType, accountId },
-                // payment_behavior: "default_incomplete",
-                // expand: ["latest_invoice.payment_intent"],
+                billing_cycle_anchor,
+                proration_behavior: "none",
             });
-            Log("[COMPLETED]: Creating subscription", subscription);
+            Log("[COMPLETED]: Creating subscription");
+
+            Log("[STARTED]: Add invoice item");
+            await stripe.invoiceItems.create({
+                customer: customerId,
+                amount: subscription.items.data[0].plan.amount,
+                currency: subscription.items.data[0].plan.currency,
+                description: `PocketseQサブスクリップション`,
+                subscription: subscription.id,
+            });
+
+            Log("[COMPLETED]: Add invoice item");
+
+            Log("[STARTED]: Creating invoice for current month");
+
+            Log("subscription", subscription.id);
+
+            const invoice = await stripe.invoices.create({
+                auto_advance: true,
+                customer: customerId,
+                collection_method: "charge_automatically",
+            });
+
+            Log("[COMPLETED]: Creating invoice for current month");
+
+            Log("[STARTED]: Finalize invoice");
+
+            await stripe.invoices.finalizeInvoice(invoice.id);
+            await stripe.invoices.pay(invoice.id);
+
+            Log("[COMPLETED]: Finalize invoice");
+
             return subscription as any;
         } catch (error) {
             Log("[FAILED]: Creating subscription", error);
@@ -419,6 +467,8 @@ export class StripeLib implements IStripeUtil {
     async listPrices(): Promise<Stripe.Response<StripePrice[]>> {
         try {
             Log("[STARTED]: Fetching stripe subscription prices");
+            Log("subcriptionProductsIds", subcriptionProductsIds);
+            Log("process.env.NODE_ENV", process.env.NODE_ENV);
             const prices = await stripe.prices.search({
                 query: subcriptionProductsIds.map((id) => `product: '${id}'`).join(" OR "),
                 expand: ["data.product"],
@@ -428,6 +478,23 @@ export class StripeLib implements IStripeUtil {
             return prices.data as any;
         } catch (error) {
             Log("[FAILED]: Fetching stripe subscription prices", error);
+            return error;
+        }
+    }
+
+    async transferToConnect(destination: string, amount: number, reservationId: string) {
+        try {
+            Log(`[STARTED]: Transferring ${amount} to ${destination}`);
+            const transfer = await stripe.transfers.create({
+                amount,
+                currency: "jpy",
+                destination,
+                description: reservationId,
+            });
+            Log("[COMPLETED]: Transferring amount to destination", transfer);
+            return transfer as any;
+        } catch (error) {
+            Log("[FAILED]: Transferring amount to destination", error);
             return error;
         }
     }

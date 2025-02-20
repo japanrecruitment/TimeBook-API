@@ -23,7 +23,7 @@ const accountById: AccountById = async (_, { accountId }, { authData, store }, i
         ...profileSelect,
     });
 
-    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "Account not found" });
+    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "アカウントが見つかりませんでした。" });
 
     Log(`Found a record: `, account);
 

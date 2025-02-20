@@ -5,7 +5,7 @@ import { getDurationsBetn } from "@utils/date-utils";
 import { Log } from "@utils/logger";
 import { gql } from "apollo-server-core";
 import { differenceWith, isEmpty } from "lodash";
-import moment from "moment";
+import moment from "moment-timezone";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import ReservationPriceCalculator from "./ReservationPriceCalculator";
@@ -58,13 +58,20 @@ type GetApplicablePricePlansWithAuth = IFieldResolver<
 
 const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (_, { input }, { authData, store }) => {
     const { id: userId, accountId, email } = authData;
-    if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { duration, durationType, fromDateTime, spaceId, additionalOptions, useSubscription } = input;
-    if (fromDateTime.getTime() < Date.now())
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid from date." });
 
-    if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration." });
+    const utcFromDateTime = moment.tz(fromDateTime, "Asia/Tokyo");
+
+    if (utcFromDateTime.isBefore(moment().utc()))
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な開始日" });
+
+    if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な期間" });
+
+    additionalOptions?.forEach(({ quantity }) => {
+        if (quantity && quantity < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なオプション数量" });
+    });
 
     const durationUnit: Record<SpacePricePlanType, "days" | "hours" | "minutes"> = {
         DAILY: "days",
@@ -72,24 +79,36 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
         MINUTES: "minutes",
     };
 
-    const toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
+    let _fromDateTime: moment.Moment = utcFromDateTime.clone();
+    let _toDateTime: moment.Moment | null = null;
 
-    const { days, hours, minutes } = getDurationsBetn(fromDateTime, toDateTime);
+    if (durationType === "DAILY") {
+        _fromDateTime = utcFromDateTime.clone().startOf("day");
+
+        if (duration === 1) {
+            _toDateTime = _fromDateTime.clone().endOf("day");
+        } else {
+            _toDateTime = _fromDateTime
+                .clone()
+                .add(duration - 1, durationUnit[durationType])
+                .endOf("day");
+        }
+    } else {
+        _toDateTime = _fromDateTime.clone().add(duration, durationUnit[durationType]);
+    }
+
+    const { days, hours, minutes } = getDurationsBetn(_fromDateTime.toDate(), _toDateTime.toDate());
 
     Log("reserveSpace: durations:", days, hours, minutes);
 
     if (days <= 0 && hours <= 0 && minutes < 5)
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selection" });
-
-    additionalOptions?.forEach(({ quantity }) => {
-        if (quantity && quantity < 0)
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
-    });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
     if (useSubscription) {
         const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
-        if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
-        if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
+        if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "ユーザーが見つかりません" });
+        if (!user.stripeCustomerId)
+            throw new GqlError({ code: "BAD_REQUEST", message: "ストライプアカウントが見つかりません" });
     }
 
     const space = await store.space.findUnique({
@@ -103,7 +122,7 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
         },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
     let remSubscriptionUnit: number = undefined;
     if (useSubscription) {
@@ -112,7 +131,8 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
         if (stripeSubs.length > 1) {
             throw new GqlError({
                 code: "FORBIDDEN",
-                message: "Multiple subscription of space type found in your account. Please contact our support team",
+                message:
+                    "アカウント内でスペース タイプの複数のサブスクリプションが見つかりました。 弊社のサポートチームにお問い合わせください",
             });
         }
         if (stripeSubs.length === 1) {
@@ -135,7 +155,7 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
         }
     }
 
-    const totalReservationHours = (toDateTime.getTime() - fromDateTime.getTime()) / 3600000;
+    const totalReservationHours = (_toDateTime.toDate().getTime() - _fromDateTime.toDate().getTime()) / 3600000;
     const subscriptionUnit = remSubscriptionUnit
         ? remSubscriptionUnit < Math.ceil(totalReservationHours)
             ? remSubscriptionUnit
@@ -151,7 +171,7 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
 
     const hasRemDates = totalReservationHours - (subscriptionUnit || 0) > 0;
     if (hasRemDates) {
-        const newFromDateTime = moment(fromDateTime).add(subscriptionUnit, "hours").toDate();
+        const newFromDateTime = _fromDateTime.clone().add(subscriptionUnit, "hours").toDate();
         const pricePlans = await store.spacePricePlan.findMany({
             where: {
                 spaceId,
@@ -161,29 +181,35 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
                 OR: [
                     { isDefault: true },
                     {
-                        AND: [{ fromDate: { gte: newFromDateTime } }, { fromDate: { lte: toDateTime } }],
+                        AND: [{ fromDate: { gte: newFromDateTime } }, { fromDate: { lte: _toDateTime.toDate() } }],
                     },
                     {
-                        AND: [{ toDate: { gte: newFromDateTime } }, { toDate: { lte: toDateTime } }],
+                        AND: [{ toDate: { gte: newFromDateTime } }, { toDate: { lte: _toDateTime.toDate() } }],
                     },
                 ],
             },
             include: { overrides: true },
         });
 
-        Log("price plans: ", pricePlans);
+        // price plans may be deleted so need to filter it
+        const filteredPricePlans = pricePlans.map((plan) => {
+            if (!plan.isDeleted) {
+                const filteredOverrides = plan.overrides.filter((override) => !override.isDeleted);
+                return { ...plan, overrides: filteredOverrides };
+            }
+        });
 
         if (!pricePlans || pricePlans.length <= 0)
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: "Selected time frame doesn't satisfy the minimum required duration to book this space.",
+                message: "選択した時間枠は、このスペースを予約するために必要な最小期間を満たしていません。",
             });
 
         // Calculate reservation price
         const { appliedReservationPlans, price } = new ReservationPriceCalculator({
             checkIn: newFromDateTime,
-            checkOut: toDateTime,
-            pricePlans,
+            checkOut: _toDateTime.toDate(),
+            pricePlans: filteredPricePlans,
         });
         applicablePricePlans = appliedReservationPlans;
         amount = price;
@@ -195,14 +221,14 @@ const getApplicablePricePlansWithAuth: GetApplicablePricePlansWithAuth = async (
             ({ optionId }) => {
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
-                    message: `Option with id ${optionId} not found in the plan.`,
+                    message: `オプションが見つかりません`,
                 });
             }
         );
         selectedOptions = space.additionalOptions.map((aOpts) => {
             const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
             if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+                throw new GqlError({ code: "BAD_USER_INPUT", message: "オプション数量がありません" });
             }
             return { ...aOpts, quantity: bOpt.quantity };
         });

@@ -17,9 +17,11 @@ import { GqlError } from "../../error";
 import { getDurationsBetn } from "@utils/date-utils";
 import ReservationPriceCalculator from "./ReservationPriceCalculator";
 import { SpacePricePlanType } from "@prisma/client";
-import moment from "moment";
+import moment from "moment-timezone";
 import { environment } from "@utils/environment";
 import { differenceWith, isEmpty, sum } from "lodash";
+import { expoSendNotification } from "@utils/notification";
+import { fetchDeviceId } from "@utils/notification/fetch-device-id";
 
 type SelectedAdditionalOption = {
     optionId: string;
@@ -54,17 +56,18 @@ type ReserveSpace = IFieldResolver<any, Context, ReserveSpaceArgs, Promise<Reser
 
 const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => {
     const { id: userId, accountId, email } = authData;
-    if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId || !email || !userId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
-    const { paymentSourceId, spaceId, duration, durationType, additionalOptions, useSubscription } = input;
-    const fromDateTime = input.fromDateTime;
+    const { paymentSourceId, spaceId, duration, fromDateTime, durationType, additionalOptions, useSubscription } =
+        input;
+
+    const utcFromDateTime = moment.tz(fromDateTime, "Asia/Tokyo");
 
     try {
-        Log(fromDateTime, duration);
-        if (fromDateTime.getTime() < Date.now())
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid from date." });
+        if (utcFromDateTime.isBefore(moment().utc()))
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "開始日が無効です" });
 
-        if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid duration." });
+        if (duration <= 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な期間" });
 
         const durationUnit: Record<SpacePricePlanType, "days" | "hours" | "minutes"> = {
             DAILY: "days",
@@ -72,23 +75,42 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             MINUTES: "minutes",
         };
 
-        let toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
+        // let toDateTime = moment(fromDateTime).add(duration, durationUnit[durationType]).toDate();
+        let _fromDateTime: moment.Moment = utcFromDateTime.clone();
+        let _toDateTime: moment.Moment | null = null;
 
-        const { days, hours, minutes } = getDurationsBetn(fromDateTime, toDateTime);
+        if (durationType === "DAILY") {
+            _fromDateTime = utcFromDateTime.clone().startOf("day");
+
+            if (duration === 1) {
+                _toDateTime = _fromDateTime.clone().endOf("day");
+            } else {
+                _toDateTime = _fromDateTime
+                    .clone()
+                    .add(duration - 1, durationUnit[durationType])
+                    .endOf("day");
+            }
+        } else {
+            _toDateTime = _fromDateTime.clone().add(duration, durationUnit[durationType]);
+        }
+
+        console.log({ _fromDateTime, _toDateTime });
+
+        const { days, hours, minutes } = getDurationsBetn(_fromDateTime.toDate(), _toDateTime.toDate());
 
         Log("reserveSpace: durations:", days, hours, minutes);
 
         if (days <= 0 && hours <= 0 && minutes < 5)
-            throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selection" });
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択です" });
 
         additionalOptions?.forEach(({ quantity }) => {
             if (quantity && quantity < 0)
-                throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid option quantity" });
+                throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なオプション数量" });
         });
 
         const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
-        if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
-        if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
+        if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "ユーザーが見つかりません" });
+        if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "アカウントが見つかりません" });
 
         const space = await store.space.findFirst({
             where: { id: spaceId, isDeleted: false, published: true },
@@ -106,20 +128,20 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                                 OR: [
                                     {
                                         AND: [
-                                            { fromDateTime: { lte: fromDateTime } },
-                                            { toDateTime: { gte: toDateTime } },
+                                            { fromDateTime: { lte: _fromDateTime.toDate() } },
+                                            { toDateTime: { gte: _toDateTime.toDate() } },
                                         ],
                                     },
                                     {
                                         AND: [
-                                            { fromDateTime: { gte: fromDateTime } },
-                                            { fromDateTime: { lte: toDateTime } },
+                                            { fromDateTime: { gte: _fromDateTime.toDate() } },
+                                            { fromDateTime: { lte: _toDateTime.toDate() } },
                                         ],
                                     },
                                     {
                                         AND: [
-                                            { toDateTime: { gte: fromDateTime } },
-                                            { toDateTime: { lte: toDateTime } },
+                                            { toDateTime: { gte: _fromDateTime.toDate() } },
+                                            { toDateTime: { lte: _toDateTime.toDate() } },
                                         ],
                                     },
                                 ],
@@ -131,16 +153,31 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     where: {
                         OR: [
                             { isDefault: true },
-                            { AND: [{ fromDate: { lte: fromDateTime } }, { toDate: { gte: toDateTime } }] },
-                            { AND: [{ fromDate: { gte: fromDateTime } }, { fromDate: { lte: toDateTime } }] },
-                            { AND: [{ toDate: { gte: fromDateTime } }, { toDate: { lte: toDateTime } }] },
+                            {
+                                AND: [
+                                    { fromDate: { lte: _fromDateTime.toDate() } },
+                                    { toDate: { gte: _toDateTime.toDate() } },
+                                ],
+                            },
+                            {
+                                AND: [
+                                    { fromDate: { gte: _fromDateTime.toDate() } },
+                                    { fromDate: { lte: _toDateTime.toDate() } },
+                                ],
+                            },
+                            {
+                                AND: [
+                                    { toDate: { gte: _fromDateTime.toDate() } },
+                                    { toDate: { lte: _toDateTime.toDate() } },
+                                ],
+                            },
                         ],
                     },
                 },
             },
         });
 
-        if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+        if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
         Log("reserveSpace: space:", space);
 
@@ -151,14 +188,14 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         if (reservations && reservations.length >= totalStock)
             throw new GqlError({
                 code: "BAD_USER_INPUT",
-                message: "Reservation is not available for this space in the selected time frame",
+                message: "選択した時間枠では予約ができません",
             });
 
         const stripe = new StripeLib();
         const paymentMethod = await stripe.retrievePaymentMethod(paymentSourceId);
         const customerId = user.stripeCustomerId;
         if (paymentMethod.customer !== customerId)
-            throw new GqlError({ code: "NOT_FOUND", message: "Invalid payment source." });
+            throw new GqlError({ code: "NOT_FOUND", message: "無効な支払い方法です" });
 
         let remSubscriptionUnit: number = undefined;
         if (useSubscription) {
@@ -167,7 +204,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 throw new GqlError({
                     code: "FORBIDDEN",
                     message:
-                        "Multiple subscription of space type found in your account. Please contact our support team",
+                        "アカウント内でスペース タイプの複数のサブスクリプションが見つかりました。 弊社のサポートチームにお問い合わせください",
                 });
             }
             if (stripeSubs.length === 1) {
@@ -190,7 +227,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             }
         }
 
-        const totalReservationHours = (fromDateTime.getTime() - toDateTime.getTime()) / 3600000;
+        const totalReservationHours = (_toDateTime.toDate().getTime() - _fromDateTime.toDate().getTime()) / 3600000;
         const subscriptionUnit = remSubscriptionUnit
             ? remSubscriptionUnit < Math.ceil(totalReservationHours)
                 ? remSubscriptionUnit
@@ -204,8 +241,13 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         let amount = 0;
 
         const hasRemDates = totalReservationHours - (subscriptionUnit || 0) > 0;
+
+        Log("hasRemDates", hasRemDates);
+        Log("totalReservationHours", totalReservationHours);
+        Log("subscriptionUnit", subscriptionUnit);
+
         if (hasRemDates) {
-            const newFromDateTime = moment(fromDateTime).add(subscriptionUnit, "hours").toDate();
+            const newFromDateTime = _fromDateTime.clone().add(subscriptionUnit, "hours").toDate();
             const pricePlans = await store.spacePricePlan.findMany({
                 where: {
                     spaceId,
@@ -215,10 +257,10 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     OR: [
                         { isDefault: true },
                         {
-                            AND: [{ fromDate: { gte: newFromDateTime } }, { fromDate: { lte: toDateTime } }],
+                            AND: [{ fromDate: { gte: newFromDateTime } }, { fromDate: { lte: _toDateTime.toDate() } }],
                         },
                         {
-                            AND: [{ toDate: { gte: newFromDateTime } }, { toDate: { lte: toDateTime } }],
+                            AND: [{ toDate: { gte: newFromDateTime } }, { toDate: { lte: _toDateTime.toDate() } }],
                         },
                     ],
                 },
@@ -230,13 +272,13 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             if (!pricePlans || pricePlans.length <= 0)
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
-                    message: "Selected time frame doesn't satisfy the minimum required duration to book this space.",
+                    message: "選択した時間枠は、このスペースを予約するために必要な最小期間を満たしていません。",
                 });
 
             // Calculate reservation price
             const { price } = new ReservationPriceCalculator({
                 checkIn: newFromDateTime,
-                checkOut: toDateTime,
+                checkOut: _toDateTime.toDate(),
                 pricePlans,
             });
             amount = price;
@@ -250,13 +292,13 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             ).forEach(({ optionId }) => {
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
-                    message: `Option with id ${optionId} not found in the plan.`,
+                    message: `オプションが見つかりません`,
                 });
             });
             const selectedOptions = space.additionalOptions.map((aOpts) => {
                 const bOpt = additionalOptions.find(({ optionId }) => optionId === aOpts.id);
                 if ((aOpts.paymentTerm === "PER_PERSON" || aOpts.paymentTerm === "PER_USE") && !bOpt.quantity) {
-                    throw new GqlError({ code: "BAD_USER_INPUT", message: "Missing option quantity" });
+                    throw new GqlError({ code: "BAD_USER_INPUT", message: "オプション数量がありません" });
                 }
                 return { ...aOpts, quantity: bOpt.quantity };
             });
@@ -274,6 +316,8 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         // Create unique reservation Id
         const reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);
 
+        const notificationTokens = await fetchDeviceId([accountId, space.accountId]);
+
         await Promise.all([
             addEmailToQueue<ReservationReceivedData>({
                 template: "reservation-received",
@@ -289,6 +333,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 spaceId,
                 reservationId,
             }),
+            expoSendNotification([{ tokens: notificationTokens, body: "Reservation Received" }]),
         ]);
 
         const transaction = await store.transaction.create({
@@ -316,7 +361,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                         approved: !space.needApproval,
                         approvedOn: !space.needApproval ? new Date() : null,
                         fromDateTime,
-                        toDateTime,
+                        toDateTime: _toDateTime.toDate(),
                         status: "PENDING",
                         space: { connect: { id: spaceId } },
                         reservee: { connect: { id: accountId } },
@@ -325,6 +370,10 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                         subscriptionUnit,
                     },
                 },
+            },
+            select: {
+                id: true,
+                reservation: true,
             },
         });
 
@@ -349,7 +398,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     userId: accountId,
                     spaceId: spaceId,
                 },
-                statement_descriptor: `AUTH_${environment.APP_READABLE_NAME}`.substring(0, 22),
+                statement_descriptor: `${environment.APP_READABLE_NAME}`.substring(0, 22),
                 application_fee_amount: applicationFeeAmount,
                 transfer_data: { destination: space.account.host.stripeAccountId },
                 confirm: true,
@@ -366,7 +415,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                         reservation: { update: { status: "FAILED" } },
                     },
                 });
-                throw new GqlError({ code: "BAD_REQUEST", message: "Couldn't create a payment intent" });
+                throw new GqlError({ code: "BAD_REQUEST", message: "支払いインテントを作成できませんでした" });
             }
 
             await store.transaction.update({
@@ -380,13 +429,16 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         }
 
         if (!space.needApproval) {
-            await addEmailToQueue<ReservationCompletedData>({
-                template: "reservation-completed",
-                recipientEmail: email,
-                recipientName: "",
-                spaceId,
-                reservationId,
-            });
+            await Promise.all([
+                addEmailToQueue<ReservationCompletedData>({
+                    template: "reservation-completed",
+                    recipientEmail: email,
+                    recipientName: "",
+                    spaceId,
+                    reservationId,
+                }),
+                expoSendNotification([{ tokens: notificationTokens, body: "Reservation Complete" }]),
+            ]);
         } else {
             await Promise.all([
                 addEmailToQueue<ReservationPendingData>({
@@ -403,10 +455,14 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     spaceId,
                     reservationId,
                 }),
+                // expoSendNotification([{ tokens: notificationTokens, body: "Reservation Pending" }]),
             ]);
         }
 
+        Log("TRANSACTION INFO", { transaction });
+
         return {
+            id: transaction.reservation.id,
             transactionId: transaction.id,
             intentId: paymentIntent?.id,
             intentCode: paymentIntent?.client_secret,
@@ -419,12 +475,15 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             subscriptionUnit,
         };
     } catch (error) {
-        await addEmailToQueue<ReservationFailedData>({
-            template: "reservation-failed",
-            recipientEmail: email,
-            recipientName: "",
-            spaceId,
-        });
+        console.log(error);
+        await Promise.all([
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
+                recipientEmail: email,
+                recipientName: "",
+                spaceId,
+            }),
+        ]);
         throw error;
     }
 };
@@ -446,6 +505,7 @@ export const reserveSpaceTypeDefs = gql`
     }
 
     type ReserveSpaceResult {
+        id: ID
         transactionId: ID
         intentId: ID
         intentCode: String

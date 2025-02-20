@@ -24,10 +24,10 @@ const removeSpacePricePlan: RemoveSpacePricePlan = async (_, { id }, { authData,
     });
 
     if (!spacePricePlan || spacePricePlan.isDeleted || spacePricePlan.space.isDeleted)
-        throw new GqlError({ code: "NOT_FOUND", message: "Space price plan not found" });
+        throw new GqlError({ code: "NOT_FOUND", message: "料金プランが見つかりません" });
 
     if (accountId !== spacePricePlan.space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+        throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const updatedSpace = await store.space.update({
         where: { id: spacePricePlan.space.id },
@@ -52,7 +52,7 @@ const removeSpacePricePlan: RemoveSpacePricePlan = async (_, { id }, { authData,
         });
     }
 
-    return { message: `Successfully removed price plan named ${spacePricePlan.title} from your space` };
+    return { message: `「${spacePricePlan.title}」料金プランが削除されました` };
 };
 
 export const removeSpacePricePlanTypeDefs = gql`

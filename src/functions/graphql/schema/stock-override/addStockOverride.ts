@@ -4,11 +4,11 @@ import { GqlError } from "../../error";
 export function validateAddStockOverrideInput(input: AddStockOverrideInput): AddStockOverrideInput {
     let { endDate, stock, startDate } = input;
 
-    if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+    if (endDate < startDate) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
-    if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid date selections" });
+    if (startDate < new Date()) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
-    if (stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid number of stock" });
+    if (stock < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "在庫数が無効です" });
 
     return { endDate, stock, startDate };
 }

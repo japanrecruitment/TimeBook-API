@@ -29,6 +29,16 @@ const addPaymentMethod: TPaymentSource = async (_, { paymentMethodId }, { authDa
     } else {
         // stripe customer does not exists so we will make one
         customerId = await stripe.createCustomer(accountId, account.email);
+        await store.account.update({
+            where: { id: accountId },
+            data: {
+                userProfile: {
+                    update: {
+                        stripeCustomerId: customerId,
+                    },
+                },
+            },
+        });
     }
 
     const paymentMethod = await stripe.attachPaymentMethodToCustomer(customerId, paymentMethodId);

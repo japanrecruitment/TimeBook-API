@@ -18,7 +18,9 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
 
     async saveObject(object: R) {
         try {
-            await this.index.saveObject(object);
+            const result = await this.index.saveObject(object);
+            Log("[ALGOLIA LIB]: saved object");
+            Log("[ALGOLIA LIB]: ", result);
         } catch (error) {
             Log("[FAILED]: adding record in algolia", error);
         }
@@ -61,6 +63,36 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
             this.index.deleteObjects(objectIDs);
         } catch (error) {
             Log("[FAILED]: removing records in algolia", error);
+        }
+    }
+
+    async getPrefectures() {
+        try {
+            const result = await this.index.searchForFacetValues("prefecture", "", { maxFacetHits: 100 });
+            if (result.facetHits.length > 0) {
+                return result.facetHits.map((prefecture) => prefecture.value);
+            } else {
+                return null;
+            }
+        } catch (error) {
+            Log("[FAILED]: get prefectures from algolia", error);
+            return null;
+        }
+    }
+    async getCities(searchParams = "") {
+        try {
+            const result = await this.index.searchForFacetValues("city", "", {
+                maxFacetHits: 100,
+                filters: searchParams,
+            });
+            if (result.facetHits.length > 0) {
+                return result.facetHits.map((city) => city.value);
+            } else {
+                return [];
+            }
+        } catch (error) {
+            Log("[FAILED]: get cities from algolia", error);
+            return [];
         }
     }
 }

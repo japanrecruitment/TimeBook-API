@@ -35,23 +35,23 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
         },
     });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space with the given address not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "指定された住所のスペースが見つかりません" });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     if (addressLine1?.trim() === "")
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Address line 1 cannot be empty" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "住所行 1 を空にすることはできません" });
 
-    if (city?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "City cannot be empty" });
+    if (city?.trim() === "") throw new GqlError({ code: "BAD_USER_INPUT", message: "街を空にすることはできない" });
 
     if (postalCode?.trim() === "")
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Postal code cannot be empty" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "郵便番号を空白にすることはできません" });
 
     let mPrefecture = space.address.prefecture;
     if (prefectureId) {
         const prefecture = await store.prefecture.findUnique({ where: { id: prefectureId } });
-        if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
+        if (!prefecture)
+            throw new GqlError({ code: "BAD_USER_INPUT", message: "都道府県を空白にすることはできません" });
         mPrefecture = prefecture;
     }
 
@@ -62,7 +62,7 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
         (prefectureId && space.address.prefectureId !== prefectureId)
     ) {
         geoloc = await dataSources.googleMap.getLatLng(mPrefecture.name, city, addressLine1);
-        if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid address" });
+        if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な住所" });
     }
 
     const updatedAddress = await store.address.update({
@@ -108,7 +108,7 @@ const updateSpaceAddress: UpdateSpaceAddress = async (_, { spaceId, address }, {
         });
     }
 
-    return { message: `Successfully updated address in your space` };
+    return { message: `住所が更新されました` };
 };
 
 export const updateSpaceAddressTypeDefs = gql`

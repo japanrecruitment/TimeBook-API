@@ -13,13 +13,13 @@ type SuspendSpace = IFieldResolver<any, Context, SuspendSpaceArgs, SuspendSpaceR
 const suspendSpace: SuspendSpace = async (_, { id }, { store, dataSources }) => {
     const updatedSpace = await store.space.update({ where: { id }, data: { suspended: true } });
 
-    if (!updatedSpace) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!updatedSpace) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
     if (updatedSpace.published) {
         await dataSources.spaceAlgolia.deleteObject(id);
     }
 
-    return { message: `Successfully suspended space named ${updatedSpace.name}` };
+    return { message: `「${updatedSpace.name}」スペースが停止されました` };
 };
 
 export const suspendSpaceTypeDefs = gql`

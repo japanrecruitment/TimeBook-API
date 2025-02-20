@@ -44,32 +44,31 @@ const updateSpaceSetting: UpdateSpaceSetting = async (_, { input }, { authData, 
         include: { space: { select: { accountId: true } } },
     });
 
-    if (!setting) throw new GqlError({ code: "NOT_FOUND", message: "Space setting not found" });
+    if (!setting) throw new GqlError({ code: "NOT_FOUND", message: "スペース設定が見つかりません" });
 
-    if (accountId !== setting.space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space setting" });
+    if (accountId !== setting.space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const prevSetting = omit(setting, "createdAt", "space", "spaceId", "updatedAt");
     const mergedInput = merge(omit(prevSetting, "businessDays"), inputData);
     let { closingHr, openingHr, breakFromHr, breakToHr, businessDays, fromDate, toDate } = mergedInput;
 
     if (fromDate && (fromDate.getTime() < Date.now() || (toDate && fromDate.getTime() >= toDate.getTime())))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid start date" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な開始日" });
 
     if (toDate && (toDate.getTime() < Date.now() || (fromDate && toDate.getTime() <= fromDate.getTime())))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid end date" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な終了日" });
 
     if (closingHr && (closingHr < 0 || closingHr > 24 || (openingHr && closingHr < openingHr)))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid closing hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な閉店時間" });
 
     if (openingHr && (openingHr < 0 || openingHr > 24 || (closingHr && openingHr > closingHr)))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid opening hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な営業時間" });
 
     if ((breakFromHr && (breakFromHr > closingHr || breakFromHr < openingHr)) || (breakToHr && breakFromHr > breakToHr))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid break start hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な休憩開始時間" });
 
     if ((breakToHr && (breakToHr > closingHr || breakToHr < openingHr)) || (breakFromHr && breakToHr < breakFromHr))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid break end hour" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な休憩終了時間" });
 
     if (businessDays) {
         businessDays = businessDays.filter((d) => d < 7).sort();
@@ -83,7 +82,7 @@ const updateSpaceSetting: UpdateSpaceSetting = async (_, { input }, { authData, 
         ...select,
     });
 
-    return { result: { message: `Successfully updated a setting in your space` }, setting: updatedSetting };
+    return { result: { message: `設定が更新されました` }, setting: updatedSetting };
 };
 
 export const updateSpaceSettingTypeDefs = gql`

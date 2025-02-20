@@ -32,7 +32,7 @@ const addStockOverrideInOption: AddStockOverrideInOption = async (
     info
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { endDate, startDate, stock } = validateAddStockOverrideInput(stockOverride);
 
@@ -51,11 +51,10 @@ const addStockOverrideInOption: AddStockOverrideInOption = async (
             },
         },
     });
-    if (!option || !option.accountId) throw new GqlError({ code: "NOT_FOUND", message: "Option not found" });
-    if (accountId !== option.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this option" });
+    if (!option || !option.accountId) throw new GqlError({ code: "NOT_FOUND", message: "オプションが見つかりません" });
+    if (accountId !== option.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (!isEmpty(option.stockOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Overlapping stock override found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "重複する在庫の上書きが見つかりました。" });
 
     const stockOverrideSelect = toStockOverrideSelect(mapSelections(info)?.stockOverride)?.select;
     const newStockOverride = await store.stockOverride.create({
@@ -71,7 +70,7 @@ const addStockOverrideInOption: AddStockOverrideInOption = async (
     Log(newStockOverride);
 
     return {
-        message: "Successfully added stock override in option",
+        message: "在庫の上書きを追加しました",
         stockOverride: newStockOverride,
     };
 };

@@ -23,7 +23,7 @@ const myProfile: MyProfile = async (_, __, { store, authData }, info) => {
 
     Log(account);
 
-    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "User not found" });
+    if (!account) throw new GqlError({ code: "NOT_FOUND", message: "アカウントが見つかりませんでした。" });
 
     return merge(
         omit(account, "userProfile", "companyProfile"),

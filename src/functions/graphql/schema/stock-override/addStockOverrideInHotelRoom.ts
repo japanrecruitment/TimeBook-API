@@ -32,7 +32,7 @@ const addStockOverrideInHotelRoom: AddStockOverrideInHotelRoom = async (
     info
 ) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const { endDate, startDate, stock } = validateAddStockOverrideInput(stockOverride);
 
@@ -51,11 +51,10 @@ const addStockOverrideInHotelRoom: AddStockOverrideInHotelRoom = async (
             },
         },
     });
-    if (!hotelRoom || !hotelRoom.hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel room not found" });
-    if (accountId !== hotelRoom.hotel.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this hotel room" });
+    if (!hotelRoom || !hotelRoom.hotel) throw new GqlError({ code: "NOT_FOUND", message: "部屋が見つかりません" });
+    if (accountId !== hotelRoom.hotel.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
     if (!isEmpty(hotelRoom.stockOverrides))
-        throw new GqlError({ code: "BAD_REQUEST", message: "Overlapping stock override found." });
+        throw new GqlError({ code: "BAD_REQUEST", message: "重複する在庫の上書きが見つかりました。" });
 
     const stockOverrideSelect = toStockOverrideSelect(mapSelections(info)?.stockOverride)?.select;
     const newStockOverride = await store.stockOverride.create({
@@ -71,7 +70,7 @@ const addStockOverrideInHotelRoom: AddStockOverrideInHotelRoom = async (
     Log(newStockOverride);
 
     return {
-        message: "Successfully added stock override in hotel room",
+        message: "在庫の上書きが追加されました",
         stockOverride: newStockOverride,
     };
 };

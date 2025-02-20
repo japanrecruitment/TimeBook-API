@@ -15,12 +15,13 @@ type RemovePaymentMethod = IFieldResolver<any, Context, RemovePaymentMethodArgs,
 
 const removePaymentMethod: RemovePaymentMethod = async (_, { paymentMethodId }, { authData, store }) => {
     const { accountId, id: userId } = authData;
-    if (!accountId || !userId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId || !userId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     // get current customer ID
     const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
-    if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "User not found" });
-    if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "Stripe account not found" });
+    if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "ユーザーが見つかりません" });
+    if (!user.stripeCustomerId)
+        throw new GqlError({ code: "BAD_REQUEST", message: "ストライプアカウントが見つかりません" });
 
     Log("removePaymentMethod user:", user);
 
@@ -30,7 +31,7 @@ const removePaymentMethod: RemovePaymentMethod = async (_, { paymentMethodId }, 
 
     Log(paymentMethod);
 
-    return { message: `Payment method removed.` };
+    return { message: `支払い方法が削除されました` };
 };
 
 export const removePaymentMethodTypeDefs = gql`

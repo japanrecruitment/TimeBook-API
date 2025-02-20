@@ -21,7 +21,7 @@ const hotelById: HotelById = async (_, { id }, { store }, info) => {
 
     Log(`hotelById: `, hotel);
 
-    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "Hotel not found" });
+    if (!hotel) throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません。" });
 
     return hotel;
 };

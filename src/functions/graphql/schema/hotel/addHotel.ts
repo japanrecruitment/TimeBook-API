@@ -19,9 +19,13 @@ function validateAddHotelInput(input: AddHotelInput): AddHotelInput {
     name = name?.trim();
 
     if (isEmpty(description))
-        throw new GqlError({ code: "BAD_USER_INPUT", message: "Hotel description cannot be empty" });
+        throw new GqlError({ code: "BAD_USER_INPUT", message: "説明を空白にすることはできません" });
 
-    if (isEmpty(name)) throw new GqlError({ code: "BAD_USER_INPUT", message: "Hotel name cannot be empty" });
+    if (isEmpty(name))
+        throw new GqlError({
+            code: "BAD_USER_INPUT",
+            message: "名前を空にすることはできません",
+        });
 
     address = validateAddAddressInput(address);
 
@@ -55,15 +59,15 @@ type AddHotel = IFieldResolver<any, Context, AddHotelArgs, Promise<AddHotelResul
 
 const addHotel: AddHotel = async (_, { input }, { authData, dataSources, store }, info) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト!!" });
 
     const validInput = validateAddHotelInput(input);
     const { address, cancelPolicyId, nearestStations, photos, ...data } = validInput;
 
     const prefecture = await store.prefecture.findUnique({ where: { id: address.prefectureId } });
-    if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid prefecture selected" });
+    if (!prefecture) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な都道府県が選択されました" });
     const geoloc = await dataSources.googleMap.getLatLng(prefecture.name, address.city, address.addressLine1);
-    if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "Invalid address" });
+    if (!geoloc) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な住所" });
 
     const hotelSelect = toHotelSelect(mapSelections(info).hotel)?.select;
     const hotel = await store.hotel.create({
@@ -93,7 +97,7 @@ const addHotel: AddHotel = async (_, { input }, { authData, dataSources, store }
     Log(hotel, uploadRes);
 
     return {
-        message: "Successfully added a hotel in a draft",
+        message: "宿泊施設が追加されました",
         hotel,
         uploadRes,
     };

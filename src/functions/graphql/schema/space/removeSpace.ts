@@ -13,12 +13,11 @@ type RemoveSpace = IFieldResolver<any, Context, RemoveSpaceArgs, RemoveSpaceResu
 const removeSpace: RemoveSpace = async (_, { id }, { authData, dataSources, store }) => {
     const { accountId } = authData || {};
 
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const space = await store.space.findUnique({ where: { id }, select: { name: true, accountId: true } });
 
-    if (accountId !== space.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this space" });
+    if (accountId !== space.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const deletedSpace = await store.space.update({ where: { id }, data: { isDeleted: true } });
 
@@ -26,7 +25,7 @@ const removeSpace: RemoveSpace = async (_, { id }, { authData, dataSources, stor
         await dataSources.spaceAlgolia.deleteObject(id);
     }
 
-    return { message: `Successfully removed space named ${space.name}` };
+    return { message: `「${space.name}」スペースが削除されました` };
 };
 
 export const removeSpaceTypeDefs = gql`

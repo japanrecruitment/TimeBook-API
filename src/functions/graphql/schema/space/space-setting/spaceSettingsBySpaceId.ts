@@ -18,7 +18,7 @@ type SpaceSettingsBySpaceId = IFieldResolver<any, Context, SpaceSettingsBySpaceI
 const spaceSettingsBySpaceId: SpaceSettingsBySpaceId = async (_, { spaceId }, { store }, info) => {
     const space = await store.space.findFirst({ where: { id: spaceId, isDeleted: false } });
 
-    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "Space not found" });
+    if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
     const select = toSpaceSettingSelect(mapSelections(info));
     const spaceSettings = await store.spaceSetting.findMany({

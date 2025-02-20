@@ -25,9 +25,15 @@ export const environment = {
     S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
     GOOGLE_MAP_API_KEY: process.env.GOOGLE_MAP_API_KEY,
     isDev() {
-        return !this.NODE_ENV || !["production"].includes(this.NODE_ENV);
+        return process.env.ENV === "dev";
     },
     EMAIL_QUEUE_URL: process.env.EMAIL_QUEUE_URL,
     REDIS_HOST: process.env.REDIS_HOST,
     REDIS_PORT: process.env.REDIS_PORT,
+    EXPO_ACCESS_TOKEN: process.env.EXPO_ACCESS_TOKEN,
+    GOOGLE_AUTH_WEB_CLIENT_ID: process.env.GOOGLE_AUTH_WEB_CLIENT_ID,
+    GOOGLE_AUTH_IOS_CLIENT_ID: process.env.GOOGLE_AUTH_IOS_CLIENT_ID,
+    GOOGLE_AUTH_ANDROID_CLIENT_ID: process.env.GOOGLE_AUTH_ANDROID_CLIENT_ID,
+    FACEBOOK_CLIENT_ID: process.env.FACEBOOK_CLIENT_ID,
+    FACEBOOK_CLIENT_SECRET: process.env.FACEBOOK_CLIENT_SECRET,
 };

@@ -13,16 +13,15 @@ type RemoveOptionPhoto = IFieldResolver<any, Context, RemoveOptionPhotoArgs, Rem
 
 const removeOptionPhoto: RemoveOptionPhoto = async (_, { photoId }, { authData, store }) => {
     const { accountId } = authData || {};
-    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "Invalid token!!" });
+    if (!accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     const photo = await store.photo.findFirst({
         where: { id: photoId },
         include: { option: { select: { accountId: true } } },
     });
-    if (!photo || !photo.option) throw new GqlError({ code: "NOT_FOUND", message: "Photo not found" });
+    if (!photo || !photo.option) throw new GqlError({ code: "NOT_FOUND", message: "写真が見つかりません" });
 
-    if (accountId !== photo.option.accountId)
-        throw new GqlError({ code: "FORBIDDEN", message: "You are not allowed to modify this option photo" });
+    if (accountId !== photo.option.accountId) throw new GqlError({ code: "FORBIDDEN", message: "無効なリクエスト" });
 
     await store.photo.delete({ where: { id: photoId } });
 
@@ -41,7 +40,7 @@ const removeOptionPhoto: RemoveOptionPhoto = async (_, { photoId }, { authData, 
         if (photo.thumbnail) s3.deleteObject(`${photo.type}/thumbnail/${key}`);
     }
 
-    return { message: `Successfully removed option photo` };
+    return { message: `写真は削除されました` };
 };
 
 export const removeOptionPhotoTypeDefs = gql`
