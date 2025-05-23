@@ -62,7 +62,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
     const allDates = getAllDatesBetn(checkInDate, checkOutDate);
     const weekDays = allDates.map((d) => d.getDay());
 
-    Log(validInputlu);
+    Log(validInput);
 
     const plan = await store.hotelRoom_PackagePlan.findUnique({
         where: { id: roomPlanId },
@@ -164,7 +164,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
     });
     if (!plan) throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
 
-    Log("calculateRoomPlanPrice:", "packagePlan:", plan);
+    // Log("calculateRoomPlanPrice:", "packagePlan:", plan);
 
     const { hotelRoom, packagePlan, priceOverrides, priceSettings } = plan;
 
