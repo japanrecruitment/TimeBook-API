@@ -62,7 +62,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
     const allDates = getAllDatesBetn(checkInDate, checkOutDate);
     const weekDays = allDates.map((d) => d.getDay());
 
-    Log(validInput);
+    Log(validInputlu);
 
     const plan = await store.hotelRoom_PackagePlan.findUnique({
         where: { id: roomPlanId },
@@ -198,7 +198,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
 
     const planTotalStocks = packagePlan.stock;
     const roomTotalStocks = hotelRoom.stock;
-    Log("plan",planTotalStocks, roomTotalStocks, hotelRoom.reservations.length)
+    // Log("plan",planTotalStocks, roomTotalStocks, hotelRoom.reservations.length)
 
     if (hotelRoom.reservations.length >= roomTotalStocks) {
         throw new GqlError({

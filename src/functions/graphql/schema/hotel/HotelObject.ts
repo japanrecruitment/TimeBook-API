@@ -84,6 +84,8 @@ export const hotelObjectTypeDefs = gql`
         SIMPLE_ACCOMODATION
         HOTEL
         INN
+        AIR_BNB
+        FARM_STAY
     }
 
     enum HotelStatus {

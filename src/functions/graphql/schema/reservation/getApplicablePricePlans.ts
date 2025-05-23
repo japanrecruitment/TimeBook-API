@@ -95,7 +95,7 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
 
     const { days, hours, minutes } = getDurationsBetn(_fromDateTime.toDate(), _toDateTime.toDate());
 
-    Log("reserveSpace: durations:", days, hours, minutes);
+    // Log("reserveSpace: durations:", days, hours, minutes);
 
     if (days <= 0 && hours <= 0 && minutes < 5)
         throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
@@ -132,7 +132,7 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
             },
         },
     });
-
+// Log("space",space)
     const requestDateRange = { from: _fromDateTime, to: _toDateTime };
 
     // Check if applicable settings have space closed on the date
@@ -152,7 +152,6 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
         }
     });
 
-    // Log("Filtered Plans", filteredPricePlans);
 
     const { appliedReservationPlans, price } = new ReservationPriceCalculator({
         checkIn: _fromDateTime.toDate(),

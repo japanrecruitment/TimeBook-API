@@ -25,6 +25,7 @@ export default class ReservationPriceCalculator {
 
     constructor(args: ReservationPriceCalculatorConstructorArgs) {
         const { checkIn, checkOut, pricePlans } = args;
+        Log("ReservationPriceCalculator", pricePlans);
         this._checkIn = checkIn;
         this._checkOut = checkOut;
         this._pricePlans = concat(
@@ -76,12 +77,50 @@ export default class ReservationPriceCalculator {
         }
 
         // 'Thu Mar 24 2022 20:45:00 GMT+0545 (Nepal Time), Fri Mar 25 2022 20:45:00 GMT+0545 (Nepal Time)' { days: 1, hours: 0, minutes: 0 }
-        Log(`${mFrom}, ${mTo}`, mDurations);
+        // Log(`${mFrom}, ${mTo}`, mDurations);
+        // Log('mPlans', mPlans);
+        const sortedPlans = [...mPlans].sort((a, b) => {
+        // Check if plan a is time-bound and covers the reservation
+        const aIsActive = a.fromDate && a.toDate && 
+                            mFrom >= a.fromDate && 
+                            mTo <= a.toDate;
+        
+        // Check if plan b is time-bound and covers the reservation  
+        const bIsActive = b.fromDate && b.toDate && 
+                            mFrom >= b.fromDate && 
+                            mTo <= b.toDate;
 
-        for (let i = 0; i < mPlans.length; i++) {
-            const { amount, daysOfWeek, duration, fromDate, toDate, type } = mPlans[i];
+        // Active plans come first
+        if (aIsActive && !bIsActive) return -1;
+        if (!aIsActive && bIsActive) return 1;
+        
+        // If both are active, prioritize the one with earlier fromDate (more specific)
+        if (aIsActive && bIsActive) {
+            return a.fromDate!.getTime() - b.fromDate!.getTime();
+        }
+
+        // Then prioritize overrides
+        if (a.isOverride && !b.isOverride) return -1;
+        if (!a.isOverride && b.isOverride) return 1;
+
+        // Finally, default plans come last
+        if (a.isDefault && !b.isDefault) return 1;
+        if (!a.isDefault && b.isDefault) return -1;
+
+        return 0;
+        });
+        
+        for (let i = 0; i < sortedPlans.length; i++) {
+            const { amount, daysOfWeek, duration, fromDate, toDate, type } = sortedPlans[i];
             const unit = type === "DAILY" ? "days" : type === "HOURLY" ? "hours" : "minutes";
+            const coversReservation = mFrom >= fromDate && mTo <= toDate;
             if (fromDate && toDate) {
+                if (coversReservation) {
+                    mPrice = amount;
+                    this.appliedReservationPlans.push(sortedPlans[i]);
+                    this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
+                    break; 
+                }
                 const startMs = fromDate.getTime();
                 const endMs = toDate.getTime();
                 let isEligible: boolean = false;
@@ -253,7 +292,6 @@ export default class ReservationPriceCalculator {
 
     private logAppliedPrices(pricePlan: ReservationPricePlan, price: number, from?: Date, to?: Date) {
         Log(`plan: `, pricePlan);
-        Log(`from: ${from} to:${to} price: ${price}`);
-        Log();
+        // Log(`from: ${from} to:${to} price: ${price}`);
     }
 }
