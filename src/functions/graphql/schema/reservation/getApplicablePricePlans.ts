@@ -152,12 +152,28 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
         }
     });
 
+    const dailyPlan = filteredPricePlans.find(plan => plan.type === "DAILY");
+const hasDailyPlan = !!dailyPlan;
 
-    const { appliedReservationPlans, price } = new ReservationPriceCalculator({
-        checkIn: _fromDateTime.toDate(),
-        checkOut: _toDateTime.toDate(),
-        pricePlans: filteredPricePlans,
-    });
+const { appliedReservationPlans, price } = new ReservationPriceCalculator({
+    checkIn: hasDailyPlan 
+        ? _fromDateTime
+              .clone()
+              .tz("Asia/Tokyo")
+              .add(3, "hours")
+              .add(15, "minutes")
+              .toDate()
+        : _fromDateTime.toDate(),
+    checkOut: hasDailyPlan 
+        ? _toDateTime
+              .clone()
+              .tz("Asia/Tokyo")
+              .add(3, "hours")
+              .add(15, "minutes")
+              .toDate()
+        : _toDateTime.toDate(),
+    pricePlans: filteredPricePlans,
+});
 
     let selectedOptions = [];
     if (!isEmpty(additionalOptions) && !isEmpty(space.additionalOptions)) {

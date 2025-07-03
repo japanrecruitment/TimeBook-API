@@ -25,7 +25,7 @@ export default class ReservationPriceCalculator {
 
     constructor(args: ReservationPriceCalculatorConstructorArgs) {
         const { checkIn, checkOut, pricePlans } = args;
-        Log("ReservationPriceCalculator", pricePlans);
+        Log("ReservationPriceCalculator", pricePlans, checkIn, checkOut);
         this._checkIn = checkIn;
         this._checkOut = checkOut;
         this._pricePlans = concat(
@@ -47,9 +47,9 @@ export default class ReservationPriceCalculator {
         );
         Log(this._checkIn, this._checkOut);
         this.price = this.calculatePrice(checkIn, checkOut, this._pricePlans) + this.calculatePriceOfDumpedMinutes();
-        Log(this.price);
+        // Log(this.price,"price");
         this.appliedReservationPlans = this.distinctAppliedPlans(this.appliedReservationPlans);
-        Log(this.appliedReservationPlans);
+        // Log(this.appliedReservationPlans,"appliedReservationPlans");
     }
 
     private calculatePrice(from: Date, to: Date, plans: ReservationPricePlan[]) {
@@ -116,17 +116,24 @@ export default class ReservationPriceCalculator {
             const coversReservation = mFrom >= fromDate && mTo <= toDate;
             if (fromDate && toDate) {
                 if (coversReservation) {
-                    mPrice = amount;
+                    if (type === "DAILY") {
+                        // Calculate number of days in reservation
+                        const days = Math.ceil((mTo.getTime() - mFrom.getTime()) / (1000 * 60 * 60 * 24));
+                        mPrice = amount * days;
+                        sortedPlans[i].appliedTimes = days; // Track how many times applied
+                    } else {
+                        mPrice = amount;
+                    }
                     this.appliedReservationPlans.push(sortedPlans[i]);
                     this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
-                    break; 
+                    break;
                 }
                 const startMs = fromDate.getTime();
                 const endMs = toDate.getTime();
                 let isEligible: boolean = false;
                 let eligibleStartDate: Date;
                 let eligibleEndDate: Date;
-                if (startMs >= mStartMs() && startMs <= mEndMs() && endMs > mEndMs()) {
+                if (startMs > mStartMs() && startMs < mEndMs() && endMs > mEndMs()) {
                     isEligible = getDurationsBetn(fromDate, mTo)[unit] >= duration;
                     if (isEligible) {
                         eligibleStartDate = moment(mTo).subtract(duration, unit).toDate();
@@ -278,8 +285,10 @@ export default class ReservationPriceCalculator {
 
     private distinctAppliedPlans(plans: ReservationPricePlan[]) {
         let newPlans: ReservationPricePlan[] = [];
+
         for (const plan of plans) {
             const nPlan = newPlans.find((p) => p.id === plan.id);
+
             if (!nPlan) {
                 newPlans.push({ ...plan, appliedTimes: 1 });
             } else {
@@ -291,7 +300,7 @@ export default class ReservationPriceCalculator {
     }
 
     private logAppliedPrices(pricePlan: ReservationPricePlan, price: number, from?: Date, to?: Date) {
-        Log(`plan: `, pricePlan);
+        // Log(`plan: `, pricePlan);
         // Log(`from: ${from} to:${to} price: ${price}`);
     }
 }
