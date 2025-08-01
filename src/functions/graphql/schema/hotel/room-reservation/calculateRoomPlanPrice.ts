@@ -62,7 +62,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
     const allDates = getAllDatesBetn(checkInDate, checkOutDate);
     const weekDays = allDates.map((d) => d.getDay());
 
-    Log(validInput);
+    // Log(validInput);
 
     const plan = await store.hotelRoom_PackagePlan.findUnique({
         where: { id: roomPlanId },
@@ -231,11 +231,11 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                 } else {
                     if (nAdult) {
                         const charge = priceScheme[mapNumAdultField(nAdult)] || priceScheme.oneAdultCharge;
-                        planAmount += charge * nAdult * mDatesLen;
+                        planAmount += charge * mDatesLen;
                     }
                     if (nChild) {
                         const charge = priceScheme[mapNumChildField(nChild)] || priceScheme.oneChildCharge;
-                        planAmount += charge * nChild * mDatesLen;
+                        planAmount += charge * mDatesLen;
                     }
                 }
                 bookingDates = differenceWith(bookingDates, matchedDates, isEqualDate);
@@ -263,7 +263,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                 adultPrice = sum(
                     remDates.map(d => {
                         const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
-                        return priceSetting ? (priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge) * nAdult : 0;
+                        return priceSetting ? (priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge) : 0;
                     })
                 );
                 
@@ -273,7 +273,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                 childPrice = sum(
                     remDates.map(d => {
                         const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
-                        return priceSetting ? (priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge) * nChild : 0;
+                        return priceSetting ? (priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge) : 0;
                     })
                 );
                 

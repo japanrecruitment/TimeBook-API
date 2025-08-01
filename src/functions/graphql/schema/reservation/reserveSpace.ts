@@ -114,7 +114,23 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         const space = await store.space.findFirst({
             where: { id: spaceId, isDeleted: false, published: true },
+            
             include: {
+                pricePlans: {
+                    where: {
+                        AND: [
+                            { isDeleted: false, type: durationType, duration: { lte: duration }, spaceId },
+                            {
+                                OR: [
+                                    { isDefault: true },
+                                    { fromDate: { lte: _toDateTime.toDate() } },
+                                    { toDate: { lte: _toDateTime.toDate() } },
+                                ],
+                            },
+                        ],
+                    },
+                    include: { overrides: true },
+                },
                 account: { include: { host: true } },
                 additionalOptions: additionalOptions
                     ? { where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } } }
@@ -181,15 +197,15 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         Log("reserveSpace: space:", space);
 
-        const { reservations, settings } = space;
+        const { reservations, settings, pricePlans } = space;
 
         const totalStock = settings && settings.length > 0 ? settings[settings.length - 1].totalStock : 1;
 
-        if (reservations && reservations.length >= totalStock)
-            throw new GqlError({
-                code: "BAD_USER_INPUT",
-                message: "選択した時間枠では予約ができません",
-            });
+        // if (reservations && reservations.length >= totalStock)
+        //     throw new GqlError({
+        //         code: "BAD_USER_INPUT",
+        //         message: "選択した時間枠では予約ができません",
+        //     });
 
         const stripe = new StripeLib();
         const paymentMethod = await stripe.retrievePaymentMethod(paymentSourceId);
@@ -236,40 +252,27 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         // Calculating subscription price
         let subscriptionPrice =
             subscriptionUnit && subscriptionUnit > 0 ? space.subcriptionPrice * subscriptionUnit : undefined;
-        Log("applied subscription", totalReservationHours, remSubscriptionUnit, subscriptionUnit, subscriptionPrice);
+        // Log("applied subscription", totalReservationHours, remSubscriptionUnit, subscriptionUnit, subscriptionPrice);
 
         let amount = 0;
 
         const hasRemDates = totalReservationHours - (subscriptionUnit || 0) > 0;
 
-        Log("hasRemDates", hasRemDates);
-        Log("totalReservationHours", totalReservationHours);
-        Log("subscriptionUnit", subscriptionUnit);
+        // Log("hasRemDates", hasRemDates);
+        // Log("totalReservationHours", totalReservationHours);
+        // Log("subscriptionUnit", subscriptionUnit);
 
         if (hasRemDates) {
             const newFromDateTime = _fromDateTime.clone().add(subscriptionUnit, "hours").toDate();
-            const pricePlans = await store.spacePricePlan.findMany({
-                where: {
-                    spaceId,
-                    isDeleted: false,
-                    type: durationType,
-                    duration: { lte: duration },
-                    OR: [
-                        { isDefault: true },
-                        {
-                            AND: [{ fromDate: { gte: newFromDateTime } }, { fromDate: { lte: _toDateTime.toDate() } }],
-                        },
-                        {
-                            AND: [{ toDate: { gte: newFromDateTime } }, { toDate: { lte: _toDateTime.toDate() } }],
-                        },
-                    ],
-                },
-                include: { overrides: true },
+            const filteredPricePlans = pricePlans.map((plan) => {
+                if (!plan.isDeleted) {
+                    const filteredOverrides = plan.overrides.filter((override) => !override.isDeleted);
+                    return { ...plan, overrides: filteredOverrides };
+                }
             });
+        
 
-            Log("price plans: ", pricePlans);
-
-            if (!pricePlans || pricePlans.length <= 0)
+            if (!filteredPricePlans || filteredPricePlans.length <= 0)
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
                     message: "選択した時間枠は、このスペースを予約するために必要な最小期間を満たしていません。",
@@ -279,7 +282,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             const { price } = new ReservationPriceCalculator({
                 checkIn: newFromDateTime,
                 checkOut: _toDateTime.toDate(),
-                pricePlans,
+                pricePlans: filteredPricePlans,
             });
             amount = price;
         }
@@ -459,7 +462,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             ]);
         }
 
-        Log("TRANSACTION INFO", { transaction });
+        // Log("TRANSACTION INFO", { transaction });
 
         return {
             id: transaction.reservation.id,

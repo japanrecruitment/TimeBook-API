@@ -25,7 +25,7 @@ export default class ReservationPriceCalculator {
 
     constructor(args: ReservationPriceCalculatorConstructorArgs) {
         const { checkIn, checkOut, pricePlans } = args;
-        Log("ReservationPriceCalculator", pricePlans, checkIn, checkOut);
+        // Log("ReservationPriceCalculator", pricePlans, checkIn, checkOut);
         this._checkIn = checkIn;
         this._checkOut = checkOut;
         this._pricePlans = concat(
@@ -63,7 +63,7 @@ export default class ReservationPriceCalculator {
         const mStartMs = () => mFrom.getTime();
         const mEndMs = () => mTo.getTime();
         let mPrice: number = 0;
-
+Log(days(), hours(), minutes(),"ffff");
         const dailyPlans = days() > 0 ? this.filterAndSortPlans(plans, "DAILY", days()) : [];
         if (days() > 0 && isEmpty(dailyPlans)) mDurations.hours = hours() + days() * 24;
         const hourlyPlans = hours() > 0 ? this.filterAndSortPlans(plans, "HOURLY", hours()) : [];
@@ -80,98 +80,117 @@ export default class ReservationPriceCalculator {
         // Log(`${mFrom}, ${mTo}`, mDurations);
         // Log('mPlans', mPlans);
         const sortedPlans = [...mPlans].sort((a, b) => {
-        // Check if plan a is time-bound and covers the reservation
-        const aIsActive = a.fromDate && a.toDate && 
-                            mFrom >= a.fromDate && 
-                            mTo <= a.toDate;
-        
-        // Check if plan b is time-bound and covers the reservation  
-        const bIsActive = b.fromDate && b.toDate && 
-                            mFrom >= b.fromDate && 
-                            mTo <= b.toDate;
+            // Check if plan a is time-bound and covers the reservation
+            const aIsActive = a.fromDate && a.toDate && 
+                                mFrom >= a.fromDate && 
+                                mTo <= a.toDate;
+            
+            // Check if plan b is time-bound and covers the reservation  
+            const bIsActive = b.fromDate && b.toDate && 
+                                mFrom >= b.fromDate && 
+                                mTo <= b.toDate;
 
-        // Active plans come first
-        if (aIsActive && !bIsActive) return -1;
-        if (!aIsActive && bIsActive) return 1;
-        
-        // If both are active, prioritize the one with earlier fromDate (more specific)
-        if (aIsActive && bIsActive) {
-            return a.fromDate!.getTime() - b.fromDate!.getTime();
-        }
+            // Active plans come first
+            if (aIsActive && !bIsActive) return -1;
+            if (!aIsActive && bIsActive) return 1;
+            
+            // If both are active, prioritize overrides first
+            if (aIsActive && bIsActive) {
+                if (a.isOverride && !b.isOverride) return -1;
+                if (!a.isOverride && b.isOverride) return 1;
+                // If both are overrides or both are not overrides, prioritize the one with earlier fromDate
+                return a.fromDate!.getTime() - b.fromDate!.getTime();
+            }
 
-        // Then prioritize overrides
-        if (a.isOverride && !b.isOverride) return -1;
-        if (!a.isOverride && b.isOverride) return 1;
+            // Then prioritize overrides
+            if (a.isOverride && !b.isOverride) return -1;
+            if (!a.isOverride && b.isOverride) return 1;
 
-        // Finally, default plans come last
-        if (a.isDefault && !b.isDefault) return 1;
-        if (!a.isDefault && b.isDefault) return -1;
+            // Finally, default plans come last
+            if (a.isDefault && !b.isDefault) return 1;
+            if (!a.isDefault && b.isDefault) return -1;
 
-        return 0;
+            return 0;
         });
         
         for (let i = 0; i < sortedPlans.length; i++) {
-            const { amount, daysOfWeek, duration, fromDate, toDate, type } = sortedPlans[i];
+            const plan = sortedPlans[i];
+            const { amount, daysOfWeek, duration, fromDate, toDate, type } = plan;
             const unit = type === "DAILY" ? "days" : type === "HOURLY" ? "hours" : "minutes";
             const coversReservation = mFrom >= fromDate && mTo <= toDate;
             if (fromDate && toDate) {
                 if (coversReservation) {
-                    if (type === "DAILY") {
+                    if(type === "DAILY"){
                         // Calculate number of days in reservation
                         const days = Math.ceil((mTo.getTime() - mFrom.getTime()) / (1000 * 60 * 60 * 24));
                         mPrice = amount * days;
                         sortedPlans[i].appliedTimes = days; // Track how many times applied
+                        
+                        this.appliedReservationPlans.push(sortedPlans[i]);
+                        this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
+                        break;
+                    } else if (type === "HOURLY") {
+                        // Calculate number of hours in reservation
+                        const hours = Math.ceil((mTo.getTime() - mFrom.getTime()) / (1000 * 60 * 60));
+                        mPrice = amount * hours;
+                        sortedPlans[i].appliedTimes = hours;
+                        
+                        this.appliedReservationPlans.push(sortedPlans[i]);
+                        this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
+                        break;
                     } else {
+                        // For MINUTES type
                         mPrice = amount;
-                    }
-                    this.appliedReservationPlans.push(sortedPlans[i]);
-                    this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
-                    break;
-                }
-                const startMs = fromDate.getTime();
-                const endMs = toDate.getTime();
-                let isEligible: boolean = false;
-                let eligibleStartDate: Date;
-                let eligibleEndDate: Date;
-                if (startMs > mStartMs() && startMs < mEndMs() && endMs > mEndMs()) {
-                    isEligible = getDurationsBetn(fromDate, mTo)[unit] >= duration;
-                    if (isEligible) {
-                        eligibleStartDate = moment(mTo).subtract(duration, unit).toDate();
-                        eligibleEndDate = mTo;
-                    }
-                } else if (startMs >= mStartMs() && startMs <= mEndMs() && endMs >= mStartMs() && endMs <= mEndMs()) {
-                    isEligible = getDurationsBetn(fromDate, toDate)[unit] >= duration;
-                    if (isEligible) {
-                        eligibleStartDate = moment(toDate).subtract(duration, unit).toDate();
-                        eligibleEndDate = toDate;
-                    }
-                } else if (endMs >= mStartMs() && endMs <= mEndMs() && startMs < mStartMs()) {
-                    isEligible = getDurationsBetn(mFrom, toDate)[unit] >= 0;
-                    if (isEligible) {
-                        eligibleStartDate = moment(toDate).subtract(duration, unit).toDate();
-                        eligibleEndDate = toDate;
+                        sortedPlans[i].appliedTimes = 1;
+                        this.appliedReservationPlans.push(sortedPlans[i]);
+                        this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
+                        break;
                     }
                 }
-                if (daysOfWeek && daysOfWeek.length > 0 && isEligible) {
-                    const uDates = getAllDatesBetn(fromDate, toDate, { order: "desc" });
-                    let matchedDate = uDates.find((d) => daysOfWeek.includes(moment(d).weekday()));
-                    if (matchedDate) {
-                        eligibleStartDate = moment(matchedDate).subtract(duration, unit).toDate();
-                        eligibleEndDate = matchedDate;
-                    }
+            const startMs = fromDate.getTime();
+            const endMs = toDate.getTime();
+            let isEligible: boolean = false;
+            let eligibleStartDate: Date;
+            let eligibleEndDate: Date;
+            if (startMs > mStartMs() && startMs < mEndMs() && endMs > mEndMs()) {
+                isEligible = getDurationsBetn(fromDate, mTo)[unit] >= duration;
+                if (isEligible) {
+                    eligibleStartDate = moment(mTo).subtract(duration, unit).toDate();
+                    eligibleEndDate = mTo;
                 }
-                if (isEligible && eligibleStartDate && eligibleEndDate) {
-                    if (eligibleEndDate.getTime() <= mStartMs()) {
-                        mPrice = mPrice + amount;
-                    } else {
-                        let remPrice1 = this.calculatePrice(eligibleEndDate, mTo, plans);
-                        let remPrice2 = this.calculatePrice(mFrom, eligibleStartDate, plans);
-                        mPrice = mPrice + amount + remPrice1 + remPrice2;
-                    }
-                    this.appliedReservationPlans.push(mPlans[i]);
-                    this.logAppliedPrices(mPlans[i], mPrice, eligibleStartDate, eligibleEndDate);
-                    break;
+            } else if (startMs >= mStartMs() && startMs <= mEndMs() && endMs >= mStartMs() && endMs <= mEndMs()) {
+                isEligible = getDurationsBetn(fromDate, toDate)[unit] >= duration;
+                if (isEligible) {
+                    eligibleStartDate = moment(toDate).subtract(duration, unit).toDate();
+                    eligibleEndDate = toDate;
                 }
+            } else if (endMs >= mStartMs() && endMs <= mEndMs() && startMs < mStartMs()) {
+                isEligible = getDurationsBetn(mFrom, toDate)[unit] >= 0;
+                if (isEligible) {
+                    eligibleStartDate = moment(toDate).subtract(duration, unit).toDate();
+                    eligibleEndDate = toDate;
+                }
+            }
+            if (daysOfWeek && daysOfWeek.length > 0 && isEligible) {
+                const uDates = getAllDatesBetn(fromDate, toDate, { order: "desc" });
+                let matchedDate = uDates.find((d) => daysOfWeek.includes(moment(d).weekday()));
+                if (matchedDate) {
+                    eligibleStartDate = moment(matchedDate).subtract(duration, unit).toDate();
+                    eligibleEndDate = matchedDate;
+                }
+            }
+            if (isEligible && eligibleStartDate && eligibleEndDate) {
+                if (eligibleEndDate.getTime() <= mStartMs()) {
+                    mPrice = mPrice + amount;
+                } else {
+                    let remPrice1 = this.calculatePrice(eligibleEndDate, mTo, plans);
+                    let remPrice2 = this.calculatePrice(mFrom, eligibleStartDate, plans);
+                    mPrice = mPrice + amount + remPrice1 + remPrice2;
+                }
+                this.appliedReservationPlans.push(mPlans[i]);
+                this.logAppliedPrices(mPlans[i], mPrice, eligibleStartDate, eligibleEndDate);
+                break;
+            }
             } else if (daysOfWeek && daysOfWeek.length > 0) {
                 const uDates = getAllDatesBetn(mFrom, mTo, { order: "desc" });
                 let matchedDate = uDates.find((d) => daysOfWeek.includes(moment(d).weekday()));
@@ -200,7 +219,7 @@ export default class ReservationPriceCalculator {
                 }
             }
         }
-
+        Log(mPrice, "mPrice")
         return mPrice;
     }
 
