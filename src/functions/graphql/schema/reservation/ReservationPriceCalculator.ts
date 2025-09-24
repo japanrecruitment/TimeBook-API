@@ -63,7 +63,7 @@ export default class ReservationPriceCalculator {
         const mStartMs = () => mFrom.getTime();
         const mEndMs = () => mTo.getTime();
         let mPrice: number = 0;
-Log(days(), hours(), minutes(),"ffff");
+
         const dailyPlans = days() > 0 ? this.filterAndSortPlans(plans, "DAILY", days()) : [];
         if (days() > 0 && isEmpty(dailyPlans)) mDurations.hours = hours() + days() * 24;
         const hourlyPlans = hours() > 0 ? this.filterAndSortPlans(plans, "HOURLY", hours()) : [];
@@ -112,10 +112,11 @@ Log(days(), hours(), minutes(),"ffff");
 
             return 0;
         });
-        
+        Log(sortedPlans,"sortedPlans");
         for (let i = 0; i < sortedPlans.length; i++) {
             const plan = sortedPlans[i];
             const { amount, daysOfWeek, duration, fromDate, toDate, type } = plan;
+            console.log(plan, "plan");
             const unit = type === "DAILY" ? "days" : type === "HOURLY" ? "hours" : "minutes";
             const coversReservation = mFrom >= fromDate && mTo <= toDate;
             if (fromDate && toDate) {
@@ -130,11 +131,18 @@ Log(days(), hours(), minutes(),"ffff");
                         this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
                         break;
                     } else if (type === "HOURLY") {
+                        const reservationHours = Math.ceil((mTo.getTime() - mFrom.getTime()) / (1000 * 60 * 60));
+                        
+                        const matchesDuration =
+                        mFrom.getHours() === new Date(fromDate).getHours() &&
+                        mTo.getHours()   === new Date(toDate).getHours();
+                        if(!matchesDuration){
+                            continue;
+                        }
                         // Calculate number of hours in reservation
-                        const hours = Math.ceil((mTo.getTime() - mFrom.getTime()) / (1000 * 60 * 60));
+                        const hours = reservationHours;
                         mPrice = amount * hours;
                         sortedPlans[i].appliedTimes = hours;
-                        
                         this.appliedReservationPlans.push(sortedPlans[i]);
                         this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
                         break;
