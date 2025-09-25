@@ -116,7 +116,6 @@ export default class ReservationPriceCalculator {
         for (let i = 0; i < sortedPlans.length; i++) {
             const plan = sortedPlans[i];
             const { amount, daysOfWeek, duration, fromDate, toDate, type } = plan;
-            console.log(plan, "plan");
             const unit = type === "DAILY" ? "days" : type === "HOURLY" ? "hours" : "minutes";
             const coversReservation = mFrom >= fromDate && mTo <= toDate;
             if (fromDate && toDate) {
@@ -134,8 +133,10 @@ export default class ReservationPriceCalculator {
                         const reservationHours = Math.ceil((mTo.getTime() - mFrom.getTime()) / (1000 * 60 * 60));
                         
                         const matchesDuration =
-                        mFrom.getHours() === new Date(fromDate).getHours() &&
-                        mTo.getHours()   === new Date(toDate).getHours();
+                        mFrom.getUTCHours() === new Date(fromDate).getUTCHours() 
+                    
+                        Log(mFrom.getUTCHours(), mTo.getUTCHours(), fromDate.getUTCHours(), toDate.getUTCHours(), matchesDuration);
+                        
                         if(!matchesDuration){
                             continue;
                         }
