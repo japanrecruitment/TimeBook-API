@@ -10,6 +10,7 @@ import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
 import { Log } from "@utils/logger";
+import { addEmailToQueue, ReservationCancelledData } from "@utils/email-helper";
 
 type CancelRoomReservationInput = {
     hotelRoomReservationId: string;
@@ -39,7 +40,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             status: true,
             subscriptionPrice: true,
             subscriptionUnit: true,
-            reservee: { select: { suspended: true } },
+            reservee: { select: { suspended: true, email: true } },
             packagePlan: {
                 select: {
                     id: true,
@@ -55,7 +56,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             transaction: { select: { amount: true, paymentIntentId: true, responseReceivedLog: true } },
         },
     });
-    Log( "reservation", reservation)
+    // Log( "reservation", reservation)
 
     if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "予約が見つかりません" });
 
@@ -105,6 +106,32 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                 where: { id: hotelRoomReservationId },
                 data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
             });
+
+            Log("cancel room reservation - no cancel policy");
+
+            // Get host email for notification
+            const hostAccount = await store.account.findUnique({
+                where: { id: reservation.packagePlan.hotel.account.id },
+                select: { email: true },
+            });
+
+            await Promise.all([
+                // Email to customer
+                addEmailToQueue<ReservationCancelledData>({
+                    template: "reservation-cancelled",
+                    recipientEmail: reservation.reservee.email,
+                    recipientName: reservation.reservee.email,
+                    spaceId: hotelRoomReservationId,
+                }),
+                // Email to host
+                addEmailToQueue<ReservationCancelledData>({
+                    template: "reservation-cancelled",
+                    recipientEmail: hostAccount.email,
+                    recipientName: hostAccount.email,
+                    spaceId: hotelRoomReservationId,
+                }),
+            ]);
+
             return { message: "予約がキャンセルされました。" };
         }
 
@@ -120,7 +147,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                 break;
             }
         }
-        Log("Cncellation",cancellationChargeRate)
+        // Log("Cncellation",cancellationChargeRate)
     }
 
     if (cancellationChargeRate <= 0) {
@@ -128,12 +155,38 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             where: { id: hotelRoomReservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
+
+        Log("cancel room reservation - zero charge");
+
+        // Get host email for notification
+        const hostAccount = await store.account.findUnique({
+            where: { id: reservation.packagePlan.hotel.account.id },
+            select: { email: true },
+        });
+
+        await Promise.all([
+            // Email to customer
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled",
+                recipientEmail: reservation.reservee.email,
+                recipientName: reservation.reservee.email,
+                spaceId: hotelRoomReservationId,
+            }),
+            // Email to host
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled",
+                recipientEmail: hostAccount.email,
+                recipientName: hostAccount.email,
+                spaceId: hotelRoomReservationId,
+            }),
+        ]);
+
         return { message: "予約がキャンセルされました。" };
     }
 
     const amount = reservation.transaction.amount - cancellationChargeRate * reservation.transaction.amount;
     const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
-    Log(amount, "Amount")
+    // Log(amount, "Amount")
 
     const paymentIntent = reservation.transaction?.responseReceivedLog as any;
 
@@ -142,6 +195,32 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             where: { id: hotelRoomReservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
+
+        Log("cancel room reservation");
+
+        // Get host email for notification
+        const hostAccount = await store.account.findUnique({
+            where: { id: reservation.packagePlan.hotel.account.id },
+            select: { email: true },
+        });
+
+        await Promise.all([
+            // Email to customer
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled",
+                recipientEmail: reservation.reservee.email,
+                recipientName: reservation.reservee.email,
+                spaceId: hotelRoomReservationId,
+            }),
+            // Email to host
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled",
+                recipientEmail: hostAccount.email,
+                recipientName: hostAccount.email,
+                spaceId: hotelRoomReservationId,
+            }),
+        ]);
+
         return { message: `予約がキャンセルされました。` };
     }
 
@@ -172,6 +251,31 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
         where: { id: hotelRoomReservationId },
         data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
     });
+    Log("cancel room reservation");
+
+    // Get host email for notification
+    const hostAccount = await store.account.findUnique({
+        where: { id: reservation.packagePlan.hotel.account.id },
+        select: { email: true },
+    });
+
+    await Promise.all([
+        // Email to customer
+        addEmailToQueue<ReservationCancelledData>({
+            template: "reservation-cancelled",
+            recipientEmail: reservation.reservee.email,
+            recipientName: reservation.reservee.email,
+            spaceId: hotelRoomReservationId,
+        }),
+        // Email to host
+        addEmailToQueue<ReservationCancelledData>({
+            template: "reservation-cancelled",
+            recipientEmail: hostAccount.email,
+            recipientName: hostAccount.email,
+            spaceId: hotelRoomReservationId,
+        }),
+    ]);
+
     return { message: `予約がキャンセルされました. キャンセル料として ${amount} が請求されました。` };
 };
 

@@ -12,6 +12,15 @@ function isEqualDate(a: Date, b: Date) {
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+function getStockForDate(date: Date, defaultStock: number, stockOverrides: any[]): number {
+    const override = stockOverrides.find(({ startDate, endDate }) => date >= startDate && date <= endDate);
+    return override ? override.stock : defaultStock;
+}
+
+function getReservationsForDate(date: Date, reservations: any[]): number {
+    return reservations.filter(({ fromDateTime, toDateTime }) => date >= fromDateTime && date <= toDateTime).length;
+}
+
 function validateCalculateRoomPlanInput(input: CalculateRoomPlanInput): CalculateRoomPlanInput {
     let { checkInDate, checkOutDate, additionalOptions, ...others } = input;
 
@@ -79,7 +88,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                     reservations: {
                         where: {
                             AND: [
-                                { status: { not: "CANCELED" } },  
+                                { status: { not: "CANCELED" } },
                                 {
                                     OR: [
                                         {
@@ -108,15 +117,37 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                     },
                     stock: true,
                     subcriptionPrice: true,
+                    stockOverrides: {
+                        where: {
+                            OR: [
+                                { AND: [{ endDate: { gte: checkOutDate } }, { startDate: { lte: checkInDate } }] },
+                                { AND: [{ endDate: { gte: checkInDate } }, { endDate: { lte: checkOutDate } }] },
+                                { AND: [{ startDate: { gte: checkInDate } }, { startDate: { lte: checkOutDate } }] },
+                            ],
+                        },
+                        select: { id: true, endDate: true, stock: true, startDate: true },
+                        orderBy: { startDate: "desc" },
+                    },
                 },
             },
             hotelRoom: {
                 include: {
                     hotel: { select: { account: { select: { id: true, email: true, host: true } } } },
+                    stockOverrides: {
+                        where: {
+                            OR: [
+                                { AND: [{ endDate: { gte: checkOutDate } }, { startDate: { lte: checkInDate } }] },
+                                { AND: [{ endDate: { gte: checkInDate } }, { endDate: { lte: checkOutDate } }] },
+                                { AND: [{ startDate: { gte: checkInDate } }, { startDate: { lte: checkOutDate } }] },
+                            ],
+                        },
+                        select: { id: true, endDate: true, stock: true, startDate: true },
+                        orderBy: { startDate: "desc" },
+                    },
                     reservations: {
                         where: {
                             AND: [
-                                { status: { not: "CANCELED" } },  
+                                { status: { not: "CANCELED" } },
                                 {
                                     OR: [
                                         {
@@ -167,6 +198,8 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
     // Log("calculateRoomPlanPrice:", "packagePlan:", plan);
 
     const { hotelRoom, packagePlan, priceOverrides, priceSettings } = plan;
+    const { stockOverrides: packageStockOverrides } = packagePlan;
+    const { stockOverrides: roomStockOverrides } = hotelRoom;
 
     if (packagePlan.paymentTerm === "PER_PERSON" && !nAdult && !nChild) {
         throw new GqlError({
@@ -180,7 +213,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         differenceWith(
             additionalOptions,
             packagePlan.additionalOptions,
-            ({ optionId }, { id }) => optionId === id
+            ({ optionId }, { id }) => optionId === id,
         ).forEach(({ optionId }) => {
             throw new GqlError({
                 code: "BAD_USER_INPUT",
@@ -198,20 +231,28 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
 
     const planTotalStocks = packagePlan.stock;
     const roomTotalStocks = hotelRoom.stock;
-    // Log("plan",planTotalStocks, roomTotalStocks, hotelRoom.reservations.length)
 
-    if (hotelRoom.reservations.length >= roomTotalStocks) {
-        throw new GqlError({
-            code: "BAD_USER_INPUT",
-            message: "選択された時間枠では、この施設は予約できません",
-        });
-    }
+    // Check availability for each date in the reservation period
+    for (const date of allDates) {
+        const roomAvailableStock = getStockForDate(date, roomTotalStocks, roomStockOverrides);
+        const roomReservedCount = getReservationsForDate(date, hotelRoom.reservations);
 
-    if (packagePlan.reservations.length >= planTotalStocks) {
-        throw new GqlError({
-            code: "BAD_USER_INPUT",
-            message: "このプランは在庫切れです。",
-        });
+        if (roomReservedCount >= roomAvailableStock) {
+            throw new GqlError({
+                code: "BAD_USER_INPUT",
+                message: `選択された時間枠では、この施設は予約できません (${moment(date).format("YYYY-MM-DD")}に在庫がありません)`,
+            });
+        }
+
+        const planAvailableStock = getStockForDate(date, planTotalStocks, packageStockOverrides);
+        const planReservedCount = getReservationsForDate(date, packagePlan.reservations);
+
+        if (planReservedCount >= planAvailableStock) {
+            throw new GqlError({
+                code: "BAD_USER_INPUT",
+                message: `このプランは在庫切れです (${moment(date).format("YYYY-MM-DD")}に在庫がありません)`,
+            });
+        }
     }
 
     let appliedRoomPlanPriceOverrides = [];
@@ -249,34 +290,35 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         const remPriceSettings = priceSettings.filter(({ dayOfWeek }) => remWeekDays.includes(dayOfWeek));
         if (packagePlan.paymentTerm === "PER_ROOM") {
             planAmount = sum(
-                remDates.map(d => {
-                    const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                remDates.map((d) => {
+                    const priceSetting = priceSettings.find((ps) => ps.dayOfWeek === d.getDay());
                     return priceSetting ? priceSetting.priceScheme.roomCharge : 0;
-                })
+                }),
             );
-            
         } else {
             let adultPrice = 0;
             let childPrice = 0;
             if (nAdult) {
                 let numAdultField = mapNumAdultField(nAdult);
                 adultPrice = sum(
-                    remDates.map(d => {
-                        const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
-                        return priceSetting ? (priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge) : 0;
-                    })
+                    remDates.map((d) => {
+                        const priceSetting = priceSettings.find((ps) => ps.dayOfWeek === d.getDay());
+                        return priceSetting
+                            ? priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge
+                            : 0;
+                    }),
                 );
-                
             }
             if (nChild) {
                 let numChildField = mapNumChildField(nChild);
                 childPrice = sum(
-                    remDates.map(d => {
-                        const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
-                        return priceSetting ? (priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge) : 0;
-                    })
+                    remDates.map((d) => {
+                        const priceSetting = priceSettings.find((ps) => ps.dayOfWeek === d.getDay());
+                        return priceSetting
+                            ? priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge
+                            : 0;
+                    }),
                 );
-                
             }
             planAmount = adultPrice + childPrice;
         }

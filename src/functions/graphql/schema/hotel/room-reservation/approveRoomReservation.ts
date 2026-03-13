@@ -1,10 +1,11 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { addEmailToQueue, ReservationCompletedData } from "@utils/email-helper";
+import { addEmailToQueue, ReservationCompletedData, sendEmail } from "@utils/email-helper";
 import { gql } from "apollo-server-core";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
-
+import { Log } from "@utils/logger";
+import reservationCompleted from "@utils/email-helper/templates/reservation-completed";
 type ApproveRoomReservationArgs = {
     reservationId: string;
 };
@@ -30,7 +31,7 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
             transaction: { select: { paymentIntentId: true } },
         },
     });
-
+    // Log("reservation", reservation)
     if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "予約が見つかりません。" });
 
     if (reservation.hotelRoom?.hotel?.accountId !== accountId)
@@ -41,13 +42,30 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
         data: { status: "RESERVED", approved: true, approvedOn: new Date() },
     });
 
-    await addEmailToQueue<ReservationCompletedData>({
-        template: "reservation-completed",
-        recipientEmail: reservation.reservee.email,
-        recipientName: "",
-        spaceId: reservation.hotelRoom.id,
-        reservationId,
+    // Get host email for notification
+    const hostAccount = await store.account.findUnique({
+        where: { id: accountId },
+        select: { email: true },
     });
+
+    await Promise.all([
+        // Email to customer
+        addEmailToQueue<ReservationCompletedData>({
+            template: "reservation-completed",
+            recipientEmail: reservation.reservee.email,
+            recipientName: reservation.reservee.email,
+            spaceId: reservation.hotelRoom.id,
+            reservationId,
+        }),
+        // Email to host
+        addEmailToQueue<ReservationCompletedData>({
+            template: "reservation-completed",
+            recipientEmail: hostAccount.email,
+            recipientName: hostAccount.email,
+            spaceId: reservation.hotelRoom.id,
+            reservationId,
+        }),
+    ]);
 
     return {
         message: "予約が承認されました。",
