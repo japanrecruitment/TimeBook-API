@@ -4,6 +4,8 @@ import { gql } from "apollo-server-core";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
+import reservationFailed from "@utils/email-helper/templates/reservation-failed";
+import { Log } from "@utils/logger";
 
 type DenyRoomReservationArgs = {
     reservationId: string;
@@ -38,7 +40,7 @@ const denyRoomReservation: DenyRoomReservation = async (_, { reservationId }, { 
     await addEmailToQueue<ReservationFailedData>({
         template: "reservation-failed",
         recipientEmail: reservation.reservee.email,
-        recipientName: "",
+        recipientName: reservation.reservee.email,
         spaceId: reservation.hotelRoom.id,
     });
 

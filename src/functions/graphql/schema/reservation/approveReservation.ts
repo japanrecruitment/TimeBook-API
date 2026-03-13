@@ -26,7 +26,7 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
             transaction: { select: { paymentIntentId: true } },
         },
     });
-
+    console.log(reservation, "reservation");
     // Reservation not found
     if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "予約が見つかりませんでした。" });
 
@@ -38,13 +38,30 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
         data: { status: "RESERVED", approved: true, approvedOn: new Date() },
     });
 
-    await addEmailToQueue<ReservationCompletedData>({
-        template: "reservation-completed",
-        recipientEmail: reservation.reservee.email,
-        recipientName: "",
-        spaceId: reservation.space.id,
-        reservationId,
+    // Get host email for notification
+    const hostAccount = await store.account.findUnique({
+        where: { id: accountId },
+        select: { email: true },
     });
+
+    await Promise.all([
+        // Email to customer
+        addEmailToQueue<ReservationCompletedData>({
+            template: "reservation-completed",
+            recipientEmail: reservation.reservee.email,
+            recipientName: reservation.reservee.email,
+            spaceId: reservation.space.id,
+            reservationId,
+        }),
+        // Email to host
+        addEmailToQueue<ReservationCompletedData>({
+            template: "reservation-completed",
+            recipientEmail: hostAccount.email,
+            recipientName: hostAccount.email,
+            spaceId: reservation.space.id,
+            reservationId,
+        }),
+    ]);
 
     // reservation approved.
     return {

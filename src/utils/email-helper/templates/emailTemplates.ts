@@ -9,6 +9,7 @@ import reservationReceived from "./reservation-received";
 import reservationCompleted from "./reservation-completed";
 import reservationFailed from "./reservation-failed";
 import reservationPending from "./reservation-pending";
+import reservationCancelled from "./reservation-cancelled";
 import contactForm from "./contact-form";
 import hostRegistrationNotification from "./host-registration-notification";
 import accountDeactivated from "./account-deactivated";
@@ -25,6 +26,7 @@ export const emailTemplates = {
     "reservation-completed": reservationCompleted,
     "reservation-failed": reservationFailed,
     "reservation-pending": reservationPending,
+    "reservation-cancelled": reservationCancelled,
     "contact-form": contactForm,
     "host-registration-notification": hostRegistrationNotification,
     "account-deactivated": accountDeactivated,

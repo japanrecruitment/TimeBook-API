@@ -9,6 +9,7 @@ import Stripe from "stripe";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
+import { addEmailToQueue, ReservationFailedData, ReservationCancelledData } from "@utils/email-helper";
 
 type CancelReservationInput = {
     reservationId: string;
@@ -38,7 +39,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             status: true,
             subscriptionPrice: true,
             subscriptionUnit: true,
-            reservee: { select: { suspended: true } },
+            reservee: { select: { suspended: true, email: true } },
             space: {
                 select: {
                     account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } },
@@ -83,6 +84,30 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             where: { id: reservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
+
+        // Get host email for notification
+        const hostAccount = await store.account.findUnique({
+            where: { id: reservation.space.account.id },
+            select: { email: true },
+        });
+
+        await Promise.all([
+            // Email to customer
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
+                recipientEmail: reservation.reservee.email,
+                recipientName: reservation.reservee.email,
+                spaceId: reservation.space.account.id,
+            }),
+            // Email to host
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled",
+                recipientEmail: hostAccount.email,
+                recipientName: hostAccount.email,
+                spaceId: reservation.space.account.id,
+            }),
+        ]);
+
         return { message: "予約がキャンセルされました。" };
     }
 
@@ -95,6 +120,30 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
                 where: { id: reservationId },
                 data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
             });
+
+            // Get host email for notification
+            const hostAccount = await store.account.findUnique({
+                where: { id: reservation.space.account.id },
+                select: { email: true },
+            });
+
+            await Promise.all([
+                // Email to customer
+                addEmailToQueue<ReservationFailedData>({
+                    template: "reservation-failed",
+                    recipientEmail: reservation.reservee.email,
+                    recipientName: reservation.reservee.email,
+                    spaceId: reservation.space.account.id,
+                }),
+                // Email to host
+                addEmailToQueue<ReservationCancelledData>({
+                    template: "reservation-cancelled",
+                    recipientEmail: hostAccount.email,
+                    recipientName: hostAccount.email,
+                    spaceId: reservation.space.account.id,
+                }),
+            ]);
+
             return { message: "予約がキャンセルされました。" };
         }
 
@@ -116,6 +165,30 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             where: { id: reservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
+
+        // Get host email for notification
+        const hostAccount = await store.account.findUnique({
+            where: { id: reservation.space.account.id },
+            select: { email: true },
+        });
+
+        await Promise.all([
+            // Email to customer
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
+                recipientEmail: reservation.reservee.email,
+                recipientName: reservation.reservee.email,
+                spaceId: reservation.space.account.id,
+            }),
+            // Email to host
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled",
+                recipientEmail: hostAccount.email,
+                recipientName: hostAccount.email,
+                spaceId: reservation.space.account.id,
+            }),
+        ]);
+
         return { message: "予約がキャンセルされました。" };
     }
 
@@ -129,6 +202,30 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             where: { id: reservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
+
+        // Get host email for notification
+        const hostAccount = await store.account.findUnique({
+            where: { id: reservation.space.account.id },
+            select: { email: true },
+        });
+
+        await Promise.all([
+            // Email to customer
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
+                recipientEmail: reservation.reservee.email,
+                recipientName: reservation.reservee.email,
+                spaceId: reservation.space.account.id,
+            }),
+            // Email to host
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled",
+                recipientEmail: hostAccount.email,
+                recipientName: hostAccount.email,
+                spaceId: reservation.space.account.id,
+            }),
+        ]);
+
         return { message: `予約がキャンセルされました。` };
     }
 
@@ -160,6 +257,30 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
         where: { id: reservationId },
         data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
     });
+
+    // Get host email for notification
+    const hostAccount = await store.account.findUnique({
+        where: { id: reservation.space.account.id },
+        select: { email: true },
+    });
+
+    await Promise.all([
+        // Email to customer
+        addEmailToQueue<ReservationFailedData>({
+            template: "reservation-failed",
+            recipientEmail: reservation.reservee.email,
+            recipientName: reservation.reservee.email,
+            spaceId: reservation.space.account.id,
+        }),
+        // Email to host
+        addEmailToQueue<ReservationCancelledData>({
+            template: "reservation-cancelled",
+            recipientEmail: hostAccount.email,
+            recipientName: hostAccount.email,
+            spaceId: reservation.space.account.id,
+        }),
+    ]);
+
     return {
         message: `予約がキャンセルされました。キャンセル料として${amount}円いただきました。`,
     };
