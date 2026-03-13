@@ -11,7 +11,7 @@ WORKDIR /usr/src
 # copy source files
 COPY . /usr/src
 # Not sure if you will need this
-RUN apk add --update openssl
+RUN apk add --update openssl redis
 
 # install deps and run postinstall in one step
 RUN yarn install && yarn postinstall
@@ -20,4 +20,5 @@ RUN yarn install && yarn postinstall
 EXPOSE 3001
 
 #run the application
-CMD ["yarn", "local"]
+# Command to run Redis (internal) and start the app
+CMD redis-server --daemonize no & yarn local
