@@ -147,7 +147,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                         reservations: {
                             where: {
                                 AND: [
-                                    { status: { not: "CANCELED" } },  
+                                    { status: { not: "CANCELED" } },
                                     {
                                         OR: [
                                             {
@@ -198,7 +198,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                         reservations: {
                             where: {
                                 AND: [
-                                    { status: { not: "CANCELED" } },  
+                                    { status: { not: "CANCELED" } },
                                     {
                                         OR: [
                                             {
@@ -298,7 +298,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             differenceWith(
                 additionalOptions,
                 packagePlan.additionalOptions,
-                ({ optionId }, { id }) => optionId === id
+                ({ optionId }, { id }) => optionId === id,
             ).forEach(({ optionId }) => {
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
@@ -370,10 +370,10 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             const remPriceSettings = priceSettings.filter(({ dayOfWeek }) => remWeekDays.includes(dayOfWeek));
             if (packagePlan.paymentTerm === "PER_ROOM") {
                 amount = sum(
-                    remDates.map(d => {
-                        const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
+                    remDates.map((d) => {
+                        const priceSetting = priceSettings.find((ps) => ps.dayOfWeek === d.getDay());
                         return priceSetting ? priceSetting.priceScheme.roomCharge : 0;
-                    })
+                    }),
                 );
             } else {
                 let adultPrice = 0;
@@ -381,19 +381,25 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 if (nAdult) {
                     let numAdultField = mapNumAdultField(nAdult);
                     adultPrice = sum(
-                        remDates.map(d => {
-                            const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
-                            return priceSetting ? (priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge) * nAdult : 0;
-                        })
+                        remDates.map((d) => {
+                            const priceSetting = priceSettings.find((ps) => ps.dayOfWeek === d.getDay());
+                            return priceSetting
+                                ? (priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge) *
+                                      nAdult
+                                : 0;
+                        }),
                     );
                 }
                 if (nChild) {
                     let numChildField = mapNumChildField(nChild);
                     childPrice = sum(
-                        remDates.map(d => {
-                            const priceSetting = priceSettings.find(ps => ps.dayOfWeek === d.getDay());
-                            return priceSetting ? (priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge) * nChild : 0;
-                        })
+                        remDates.map((d) => {
+                            const priceSetting = priceSettings.find((ps) => ps.dayOfWeek === d.getDay());
+                            return priceSetting
+                                ? (priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge) *
+                                      nChild
+                                : 0;
+                        }),
                     );
                 }
                 amount = adultPrice + childPrice;
@@ -419,23 +425,6 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         Log("applied amount", amount);
 
         const reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);
-
-        await Promise.all([
-            addEmailToQueue<ReservationReceivedData>({
-                template: "reservation-received",
-                recipientEmail: email,
-                recipientName: "",
-                spaceId: hotelRoom.id,
-                reservationId,
-            }),
-            addEmailToQueue<ReservationReceivedData>({
-                template: "reservation-received",
-                recipientEmail: hotelRoom.hotel.account.email,
-                recipientName: "",
-                spaceId: hotelRoom.id,
-                reservationId,
-            }),
-        ]);
 
         const transaction = await store.transaction.create({
             data: {
@@ -518,14 +507,14 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         }
         await Promise.all([
             addEmailToQueue<ReservationPendingData>({
-                template: "reservation-pending",
+                template: "reservation-received",
                 recipientEmail: email,
                 recipientName: "",
                 spaceId: hotelRoom.id,
                 reservationId,
             }),
             addEmailToQueue<ReservationPendingData>({
-                template: "reservation-pending",
+                template: "reservation-received",
                 recipientEmail: hotelRoom.hotel.account.email,
                 recipientName: "",
                 spaceId: hotelRoom.id,

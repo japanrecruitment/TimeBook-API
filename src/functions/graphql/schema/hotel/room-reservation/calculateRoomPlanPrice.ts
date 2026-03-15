@@ -12,15 +12,6 @@ function isEqualDate(a: Date, b: Date) {
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-function getStockForDate(date: Date, defaultStock: number, stockOverrides: any[]): number {
-    const override = stockOverrides.find(({ startDate, endDate }) => date >= startDate && date <= endDate);
-    return override ? override.stock : defaultStock;
-}
-
-function getReservationsForDate(date: Date, reservations: any[]): number {
-    return reservations.filter(({ fromDateTime, toDateTime }) => date >= fromDateTime && date <= toDateTime).length;
-}
-
 function validateCalculateRoomPlanInput(input: CalculateRoomPlanInput): CalculateRoomPlanInput {
     let { checkInDate, checkOutDate, additionalOptions, ...others } = input;
 
@@ -29,7 +20,7 @@ function validateCalculateRoomPlanInput(input: CalculateRoomPlanInput): Calculat
     if (checkInDate < moment().subtract(1, "days").toDate())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
-    checkOutDate = moment(checkOutDate).subtract(1, "days").endOf("day").toDate();
+    checkOutDate = moment(checkOutDate).subtract(1, "days").startOf("day").toDate();
 
     additionalOptions?.forEach(({ quantity }) => {
         if (quantity && quantity < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なオプション数量" });
@@ -71,7 +62,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
     const allDates = getAllDatesBetn(checkInDate, checkOutDate);
     const weekDays = allDates.map((d) => d.getDay());
 
-    // Log(validInput);
+    Log(validInput);
 
     const plan = await store.hotelRoom_PackagePlan.findUnique({
         where: { id: roomPlanId },
@@ -117,33 +108,11 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                     },
                     stock: true,
                     subcriptionPrice: true,
-                    stockOverrides: {
-                        where: {
-                            OR: [
-                                { AND: [{ endDate: { gte: checkOutDate } }, { startDate: { lte: checkInDate } }] },
-                                { AND: [{ endDate: { gte: checkInDate } }, { endDate: { lte: checkOutDate } }] },
-                                { AND: [{ startDate: { gte: checkInDate } }, { startDate: { lte: checkOutDate } }] },
-                            ],
-                        },
-                        select: { id: true, endDate: true, stock: true, startDate: true },
-                        orderBy: { startDate: "desc" },
-                    },
                 },
             },
             hotelRoom: {
                 include: {
                     hotel: { select: { account: { select: { id: true, email: true, host: true } } } },
-                    stockOverrides: {
-                        where: {
-                            OR: [
-                                { AND: [{ endDate: { gte: checkOutDate } }, { startDate: { lte: checkInDate } }] },
-                                { AND: [{ endDate: { gte: checkInDate } }, { endDate: { lte: checkOutDate } }] },
-                                { AND: [{ startDate: { gte: checkInDate } }, { startDate: { lte: checkOutDate } }] },
-                            ],
-                        },
-                        select: { id: true, endDate: true, stock: true, startDate: true },
-                        orderBy: { startDate: "desc" },
-                    },
                     reservations: {
                         where: {
                             AND: [
@@ -198,8 +167,6 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
     // Log("calculateRoomPlanPrice:", "packagePlan:", plan);
 
     const { hotelRoom, packagePlan, priceOverrides, priceSettings } = plan;
-    const { stockOverrides: packageStockOverrides } = packagePlan;
-    const { stockOverrides: roomStockOverrides } = hotelRoom;
 
     if (packagePlan.paymentTerm === "PER_PERSON" && !nAdult && !nChild) {
         throw new GqlError({
@@ -231,28 +198,20 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
 
     const planTotalStocks = packagePlan.stock;
     const roomTotalStocks = hotelRoom.stock;
+    // Log("plan",planTotalStocks, roomTotalStocks, hotelRoom.reservations.length)
 
-    // Check availability for each date in the reservation period
-    for (const date of allDates) {
-        const roomAvailableStock = getStockForDate(date, roomTotalStocks, roomStockOverrides);
-        const roomReservedCount = getReservationsForDate(date, hotelRoom.reservations);
+    if (hotelRoom.reservations.length >= roomTotalStocks) {
+        throw new GqlError({
+            code: "BAD_USER_INPUT",
+            message: "選択された時間枠では、この施設は予約できません",
+        });
+    }
 
-        if (roomReservedCount >= roomAvailableStock) {
-            throw new GqlError({
-                code: "BAD_USER_INPUT",
-                message: `選択された時間枠では、この施設は予約できません (${moment(date).format("YYYY-MM-DD")}に在庫がありません)`,
-            });
-        }
-
-        const planAvailableStock = getStockForDate(date, planTotalStocks, packageStockOverrides);
-        const planReservedCount = getReservationsForDate(date, packagePlan.reservations);
-
-        if (planReservedCount >= planAvailableStock) {
-            throw new GqlError({
-                code: "BAD_USER_INPUT",
-                message: `このプランは在庫切れです (${moment(date).format("YYYY-MM-DD")}に在庫がありません)`,
-            });
-        }
+    if (packagePlan.reservations.length >= planTotalStocks) {
+        throw new GqlError({
+            code: "BAD_USER_INPUT",
+            message: "このプランは在庫切れです。",
+        });
     }
 
     let appliedRoomPlanPriceOverrides = [];
@@ -272,11 +231,11 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                 } else {
                     if (nAdult) {
                         const charge = priceScheme[mapNumAdultField(nAdult)] || priceScheme.oneAdultCharge;
-                        planAmount += charge * mDatesLen;
+                        planAmount += charge * nAdult * mDatesLen;
                     }
                     if (nChild) {
                         const charge = priceScheme[mapNumChildField(nChild)] || priceScheme.oneChildCharge;
-                        planAmount += charge * mDatesLen;
+                        planAmount += charge * nChild * mDatesLen;
                     }
                 }
                 bookingDates = differenceWith(bookingDates, matchedDates, isEqualDate);
@@ -304,7 +263,8 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                     remDates.map((d) => {
                         const priceSetting = priceSettings.find((ps) => ps.dayOfWeek === d.getDay());
                         return priceSetting
-                            ? priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge
+                            ? (priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge) *
+                                  nAdult
                             : 0;
                     }),
                 );
@@ -315,7 +275,8 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                     remDates.map((d) => {
                         const priceSetting = priceSettings.find((ps) => ps.dayOfWeek === d.getDay());
                         return priceSetting
-                            ? priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge
+                            ? (priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge) *
+                                  nChild
                             : 0;
                     }),
                 );
@@ -334,7 +295,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
         }
     });
 
-    // Log(remDates, appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings, planAmount, optionAmount);
+    Log(remDates, appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings, planAmount, optionAmount);
 
     return {
         appliedRoomPlanPriceOverrides,

@@ -6,12 +6,19 @@ import { EmailData } from "./templates/generateTemplate";
 
 export type EmailQueueData<D extends EmailData = EmailData> = D & { template: EmailTemplates };
 
-const SQS = new AWS.SQS({ apiVersion: "2012-11-05", region: "ap-northeast-1" });
+// Configure AWS with environment credentials
+const SQS = new AWS.SQS({
+    apiVersion: "2012-11-05",
+    region: environment.AWS_REGION,
+    accessKeyId: environment.AWS_ACCESS_KEY_ID,
+    secretAccessKey: environment.AWS_SECRET_ACCESS_KEY,
+});
 
 export const addEmailToQueue = async <D extends EmailData = EmailData>(data: EmailQueueData<D>) => {
     try {
         Log("[STARTED]: Adding to queue");
         Log(data);
+
         const result = await SQS.sendMessage({
             DelaySeconds: 0,
             QueueUrl: environment.EMAIL_QUEUE_URL,
