@@ -50,7 +50,7 @@ const serverlessConfiguration: AWS = {
             REDIS_HOST: { "Fn::GetAtt": ["ElastiCacheCluster", "RedisEndpoint.Address"] },
             REDIS_PORT: { "Fn::GetAtt": ["ElastiCacheCluster", "RedisEndpoint.Port"] },
             IP_STACK_KEY: "${env:IP_STACK_KEY}",
-            EMAIL_QUEUE_URL: { Ref: "EmailQueue" },
+            EMAIL_QUEUE_URL: "${env:EMAIL_QUEUE_URL}",
             TRANSACTION_QUEUE: { Ref: "TransactionQueue" },
             MEDIA_BUCKET: "${self:custom.mediaBucket}",
             MEDIA_UPLOAD_BUCKET: "${self:custom.uploadMediaBucket}",
@@ -66,6 +66,10 @@ const serverlessConfiguration: AWS = {
             GOOGLE_AUTH_ANDROID_CLIENT_ID: "${env:GOOGLE_AUTH_ANDROID_CLIENT_ID}",
             FACEBOOK_CLIENT_ID: "${env:FACEBOOK_CLIENT_ID}",
             FACEBOOK_CLIENT_SECRET: "${env:FACEBOOK_CLIENT_SECRET}",
+            // AWS Credentials
+            AWS_ACCESS_KEY_ID: "${env:AWS_ACCESS_KEY_ID}",
+            AWS_SECRET_ACCESS_KEY: "${env:AWS_ACCESS_SECRET_KEY}",
+            AWS_REGION: "${env:REGION}",
         },
         apiGateway: {
             shouldStartNameWithService: true,

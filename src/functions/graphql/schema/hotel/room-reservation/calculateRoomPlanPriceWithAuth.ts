@@ -14,7 +14,7 @@ function isEqualDate(a: Date, b: Date) {
 }
 
 function validateCalculateRoomPlanPriceWithAuthInput(
-    input: CalculateRoomPlanPriceWithAuthInput
+    input: CalculateRoomPlanPriceWithAuthInput,
 ): CalculateRoomPlanPriceWithAuthInput {
     let { checkInDate, checkOutDate, additionalOptions, ...others } = input;
 
@@ -23,7 +23,7 @@ function validateCalculateRoomPlanPriceWithAuthInput(
     if (checkInDate < moment().subtract(1, "days").toDate())
         throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択" });
 
-    checkOutDate = moment(checkOutDate).subtract(1, "days").endOf("day").toDate();
+    checkOutDate = moment(checkOutDate).subtract(1, "days").startOf("day").toDate();
 
     additionalOptions?.forEach(({ quantity }) => {
         if (quantity && quantity < 0) throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なオプション数量" });
@@ -226,7 +226,7 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
         differenceWith(
             additionalOptions,
             packagePlan.additionalOptions,
-            ({ optionId }, { id }) => optionId === id
+            ({ optionId }, { id }) => optionId === id,
         ).forEach(({ optionId }) => {
             throw new GqlError({
                 code: "BAD_USER_INPUT",
@@ -301,16 +301,16 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
                 let numAdultField = mapNumAdultField(nAdult);
                 adultPrice = sum(
                     remPriceSettings.map(
-                        ({ priceScheme }) => (priceScheme[numAdultField] || priceScheme.oneAdultCharge) * nAdult
-                    )
+                        ({ priceScheme }) => (priceScheme[numAdultField] || priceScheme.oneAdultCharge) * nAdult,
+                    ),
                 );
             }
             if (nChild) {
                 let numChildField = mapNumChildField(nChild);
                 childPrice = sum(
                     remPriceSettings.map(
-                        ({ priceScheme }) => (priceScheme[numChildField] || priceScheme.oneChildCharge) * nChild
-                    )
+                        ({ priceScheme }) => (priceScheme[numChildField] || priceScheme.oneChildCharge) * nChild,
+                    ),
                 );
             }
             planAmount = adultPrice + childPrice;

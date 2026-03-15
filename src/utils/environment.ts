@@ -27,7 +27,7 @@ export const environment = {
     isDev() {
         return process.env.ENV === "dev";
     },
-    EMAIL_QUEUE_URL: process.env.EMAIL_QUEUE_URL,
+    EMAIL_QUEUE_URL: "https://sqs.ap-northeast-1.amazonaws.com/753724766204/pocketseq-api-prod-queue",
     REDIS_HOST: process.env.REDIS_HOST,
     REDIS_PORT: process.env.REDIS_PORT,
     EXPO_ACCESS_TOKEN: process.env.EXPO_ACCESS_TOKEN,
@@ -36,4 +36,8 @@ export const environment = {
     GOOGLE_AUTH_ANDROID_CLIENT_ID: process.env.GOOGLE_AUTH_ANDROID_CLIENT_ID,
     FACEBOOK_CLIENT_ID: process.env.FACEBOOK_CLIENT_ID,
     FACEBOOK_CLIENT_SECRET: process.env.FACEBOOK_CLIENT_SECRET,
+    // AWS Credentials
+    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: process.env.AWS_ACCESS_SECRET_KEY,
+    AWS_REGION: process.env.AWS_REGION || "ap-northeast-1",
 };
