@@ -5,6 +5,7 @@ import { footer, header } from "./share";
 export type ReservationPendingData = EmailData & {
     spaceId: string;
     reservationId: string;
+    spaceType: string;
 };
 
 const template = `
@@ -20,10 +21,13 @@ const template = `
               <h1>こんにちは {{recipientName}}、</h1>
               <p>いつも${environment.APP_READABLE_NAME}をご利用いただき、誠にありがとうございます。</p>
               <p>
-                スペース{{spaceId}}の予約には、ホストの承認が必要です。
+                
+                {{spaceType}} {{spaceId}}の予約には、ホストの承認が必要です。
+            
               </p>
               <p>
-                スペース: {{spaceId}}<br />
+                {{spaceType}}: {{spaceId}}<br />
+                  
                 予約番号: {{reservationId}}
               </p>
             </div>

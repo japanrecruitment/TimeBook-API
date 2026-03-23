@@ -100,8 +100,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
                 spaceId: reservation.space.account.id,
             }),
             // Email to host
-            addEmailToQueue<ReservationCancelledData>({
-                template: "reservation-cancelled",
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
                 recipientEmail: hostAccount.email,
                 recipientName: hostAccount.email,
                 spaceId: reservation.space.account.id,
@@ -136,8 +136,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
                     spaceId: reservation.space.account.id,
                 }),
                 // Email to host
-                addEmailToQueue<ReservationCancelledData>({
-                    template: "reservation-cancelled",
+                addEmailToQueue<ReservationFailedData>({
+                    template: "reservation-failed",
                     recipientEmail: hostAccount.email,
                     recipientName: hostAccount.email,
                     spaceId: reservation.space.account.id,
@@ -181,8 +181,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
                 spaceId: reservation.space.account.id,
             }),
             // Email to host
-            addEmailToQueue<ReservationCancelledData>({
-                template: "reservation-cancelled",
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
                 recipientEmail: hostAccount.email,
                 recipientName: hostAccount.email,
                 spaceId: reservation.space.account.id,
@@ -218,8 +218,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
                 spaceId: reservation.space.account.id,
             }),
             // Email to host
-            addEmailToQueue<ReservationCancelledData>({
-                template: "reservation-cancelled",
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
                 recipientEmail: hostAccount.email,
                 recipientName: hostAccount.email,
                 spaceId: reservation.space.account.id,
@@ -271,13 +271,15 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             recipientEmail: reservation.reservee.email,
             recipientName: reservation.reservee.email,
             spaceId: reservation.space.account.id,
+            spaceType: "スペース",
         }),
         // Email to host
-        addEmailToQueue<ReservationCancelledData>({
-            template: "reservation-cancelled",
+        addEmailToQueue<ReservationFailedData>({
+            template: "reservation-failed",
             recipientEmail: hostAccount.email,
             recipientName: hostAccount.email,
             spaceId: reservation.space.account.id,
+            spaceType: "スペース",
         }),
     ]);
 

@@ -56,6 +56,7 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
             recipientName: reservation.reservee.email,
             spaceId: reservation.hotelRoom.id,
             reservationId,
+            spaceType: "宿泊施",
         }),
         // Email to host
         addEmailToQueue<ReservationCompletedData>({
@@ -64,6 +65,7 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
             recipientName: hostAccount.email,
             spaceId: reservation.hotelRoom.id,
             reservationId,
+            spaceType: "宿泊施",
         }),
     ]);
 
