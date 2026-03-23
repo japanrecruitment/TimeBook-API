@@ -20,7 +20,7 @@ const template = `
               <h1>こんにちは {{recipientName}}、</h1>
               <p>いつも${environment.APP_READABLE_NAME}をご利用いただき、誠にありがとうございます。</p>
               <p>
-                残念ながら、{{spaceType}} {{spaceId}}の予約がキャンセルされました
+                残念ながら、{{spaceType}} {{spaceId}} はキャンセルされました
               </p>
             </div>
           </td>

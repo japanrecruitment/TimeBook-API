@@ -4,8 +4,7 @@ import { gql } from "apollo-server-core";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
-import { Log } from "@utils/logger";
-import reservationCompleted from "@utils/email-helper/templates/reservation-completed";
+
 type ApproveRoomReservationArgs = {
     reservationId: string;
 };

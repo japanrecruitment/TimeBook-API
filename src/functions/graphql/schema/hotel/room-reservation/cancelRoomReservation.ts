@@ -122,6 +122,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                     recipientEmail: reservation.reservee.email,
                     recipientName: reservation.reservee.email,
                     spaceId: hotelRoomReservationId,
+                    spaceType: "宿泊施",
                 }),
                 // Email to host
                 addEmailToQueue<ReservationFailedData>({
@@ -129,6 +130,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                     recipientEmail: hostAccount.email,
                     recipientName: hostAccount.email,
                     spaceId: hotelRoomReservationId,
+                    spaceType: "宿泊施",
                 }),
             ]);
 
@@ -171,6 +173,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                 recipientEmail: reservation.reservee.email,
                 recipientName: reservation.reservee.email,
                 spaceId: hotelRoomReservationId,
+                spaceType: "宿泊施",
             }),
             // Email to host
             addEmailToQueue<ReservationFailedData>({
@@ -178,6 +181,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                 recipientEmail: hostAccount.email,
                 recipientName: hostAccount.email,
                 spaceId: hotelRoomReservationId,
+                spaceType: "宿泊施",
             }),
         ]);
 
@@ -211,7 +215,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                 recipientEmail: reservation.reservee.email,
                 recipientName: reservation.reservee.email,
                 spaceId: hotelRoomReservationId,
-                spaceType: "hotel",
+                spaceType: "宿泊施",
             }),
             // Email to host
             addEmailToQueue<ReservationFailedData>({
@@ -219,7 +223,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                 recipientEmail: hostAccount.email,
                 recipientName: hostAccount.email,
                 spaceId: hotelRoomReservationId,
-                spaceType: "hotel",
+                spaceType: "宿泊施",
             }),
         ]);
 
