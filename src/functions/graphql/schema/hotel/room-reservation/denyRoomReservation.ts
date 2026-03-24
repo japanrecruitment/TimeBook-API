@@ -37,12 +37,30 @@ const denyRoomReservation: DenyRoomReservation = async (_, { reservationId }, { 
         data: { status: "DISAPPROVED", approved: false, approvedOn: new Date() },
     });
 
-    await addEmailToQueue<ReservationFailedData>({
-        template: "reservation-failed",
-        recipientEmail: reservation.reservee.email,
-        recipientName: reservation.reservee.email,
-        spaceId: reservation.hotelRoom.id,
+    // Get host email for notification
+    const hostAccount = await store.account.findUnique({
+        where: { id: reservation.hotelRoom.hotel.accountId },
+        select: { email: true },
     });
+
+    await Promise.all([
+        // Email to customer
+        addEmailToQueue<ReservationFailedData>({
+            template: "reservation-failed",
+            recipientEmail: reservation.reservee.email,
+            recipientName: reservation.reservee.email,
+            spaceId: reservation.hotelRoom.id,
+            spaceType: "宿泊施",
+        }),
+        // Email to host
+        addEmailToQueue<ReservationFailedData>({
+            template: "reservation-failed",
+            recipientEmail: hostAccount.email,
+            recipientName: hostAccount.email,
+            spaceId: reservation.hotelRoom.id,
+            spaceType: "宿泊施",
+        }),
+    ]);
 
     return {
         message: "予約を拒否されました。",
