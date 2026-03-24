@@ -5,6 +5,7 @@ import { footer, header } from "./share";
 export type ReservationCompletedData = EmailData & {
     spaceId: string;
     reservationId: string;
+    spaceType?: string; // Add space type for dynamic content
 };
 
 const template = `
@@ -20,10 +21,12 @@ const template = `
               <h1>こんにちは {{recipientName}}、</h1>
               <p>いつも${environment.APP_READABLE_NAME}をご利用いただき、誠にありがとうございます。</p>
               <p>
-                スペース{{spaceid}}のご予約が完了しましたことをお知らせいたします。
+              
+                 {{spaceType}} {{spaceId}}のご予約が完了しましたことをお知らせいたします.
+               
               </p>
               <p>
-                スペース: {{spaceId}}<br />
+                {{spaceType}} ID: {{spaceId}}<br />
                 予約番号: {{reservationId}}
               </p>
             </div>

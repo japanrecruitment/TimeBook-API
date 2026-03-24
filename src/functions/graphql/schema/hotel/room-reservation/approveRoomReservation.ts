@@ -4,8 +4,7 @@ import { gql } from "apollo-server-core";
 import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
-import { Log } from "@utils/logger";
-import reservationCompleted from "@utils/email-helper/templates/reservation-completed";
+
 type ApproveRoomReservationArgs = {
     reservationId: string;
 };
@@ -56,6 +55,7 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
             recipientName: reservation.reservee.email,
             spaceId: reservation.hotelRoom.id,
             reservationId,
+            spaceType: "宿泊施",
         }),
         // Email to host
         addEmailToQueue<ReservationCompletedData>({
@@ -64,6 +64,7 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
             recipientName: hostAccount.email,
             spaceId: reservation.hotelRoom.id,
             reservationId,
+            spaceType: "宿泊施",
         }),
     ]);
 

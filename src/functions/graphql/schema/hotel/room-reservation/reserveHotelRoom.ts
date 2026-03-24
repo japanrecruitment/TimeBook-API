@@ -507,18 +507,20 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         }
         await Promise.all([
             addEmailToQueue<ReservationPendingData>({
-                template: "reservation-received",
+                template: "reservation-pending",
                 recipientEmail: email,
                 recipientName: "",
                 spaceId: hotelRoom.id,
                 reservationId,
+                spaceType: "宿泊施",
             }),
-            addEmailToQueue<ReservationPendingData>({
+            addEmailToQueue<ReservationReceivedData>({
                 template: "reservation-received",
                 recipientEmail: hotelRoom.hotel.account.email,
                 recipientName: "",
                 spaceId: hotelRoom.id,
                 reservationId,
+                spaceType: "宿泊施",
             }),
         ]);
 
@@ -540,6 +542,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             recipientEmail: email,
             recipientName: "",
             spaceId: roomPlanId,
+            spaceType: "hotel",
         });
         throw error;
     }

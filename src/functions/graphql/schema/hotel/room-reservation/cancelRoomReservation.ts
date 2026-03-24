@@ -10,7 +10,7 @@ import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
 import { Log } from "@utils/logger";
-import { addEmailToQueue, ReservationCancelledData } from "@utils/email-helper";
+import { addEmailToQueue, ReservationFailedData } from "@utils/email-helper";
 
 type CancelRoomReservationInput = {
     hotelRoomReservationId: string;
@@ -117,18 +117,20 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
             await Promise.all([
                 // Email to customer
-                addEmailToQueue<ReservationCancelledData>({
-                    template: "reservation-cancelled",
+                addEmailToQueue<ReservationFailedData>({
+                    template: "reservation-failed",
                     recipientEmail: reservation.reservee.email,
                     recipientName: reservation.reservee.email,
                     spaceId: hotelRoomReservationId,
+                    spaceType: "宿泊施",
                 }),
                 // Email to host
-                addEmailToQueue<ReservationCancelledData>({
-                    template: "reservation-cancelled",
+                addEmailToQueue<ReservationFailedData>({
+                    template: "reservation-failed",
                     recipientEmail: hostAccount.email,
                     recipientName: hostAccount.email,
                     spaceId: hotelRoomReservationId,
+                    spaceType: "宿泊施",
                 }),
             ]);
 
@@ -166,18 +168,20 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationCancelledData>({
-                template: "reservation-cancelled",
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
                 recipientEmail: reservation.reservee.email,
                 recipientName: reservation.reservee.email,
                 spaceId: hotelRoomReservationId,
+                spaceType: "宿泊施",
             }),
             // Email to host
-            addEmailToQueue<ReservationCancelledData>({
-                template: "reservation-cancelled",
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
                 recipientEmail: hostAccount.email,
                 recipientName: hostAccount.email,
                 spaceId: hotelRoomReservationId,
+                spaceType: "宿泊施",
             }),
         ]);
 
@@ -206,18 +210,20 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationCancelledData>({
-                template: "reservation-cancelled",
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
                 recipientEmail: reservation.reservee.email,
                 recipientName: reservation.reservee.email,
                 spaceId: hotelRoomReservationId,
+                spaceType: "宿泊施",
             }),
             // Email to host
-            addEmailToQueue<ReservationCancelledData>({
-                template: "reservation-cancelled",
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
                 recipientEmail: hostAccount.email,
                 recipientName: hostAccount.email,
                 spaceId: hotelRoomReservationId,
+                spaceType: "宿泊施",
             }),
         ]);
 
@@ -261,18 +267,20 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
     await Promise.all([
         // Email to customer
-        addEmailToQueue<ReservationCancelledData>({
-            template: "reservation-cancelled",
+        addEmailToQueue<ReservationFailedData>({
+            template: "reservation-failed",
             recipientEmail: reservation.reservee.email,
             recipientName: reservation.reservee.email,
             spaceId: hotelRoomReservationId,
+            spaceType: "宿泊施",
         }),
         // Email to host
-        addEmailToQueue<ReservationCancelledData>({
-            template: "reservation-cancelled",
+        addEmailToQueue<ReservationFailedData>({
+            template: "reservation-failed",
             recipientEmail: hostAccount.email,
             recipientName: hostAccount.email,
             spaceId: hotelRoomReservationId,
+            spaceType: "宿泊施",
         }),
     ]);
 

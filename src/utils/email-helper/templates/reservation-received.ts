@@ -5,6 +5,7 @@ import { environment } from "@utils/environment";
 export type ReservationReceivedData = EmailData & {
     spaceId: string;
     reservationId: string;
+    spaceType: string;
 };
 
 const template = `
@@ -20,10 +21,10 @@ const template = `
               <h1>こんにちは {{recipientName}}、</h1>
               <p>いつも${environment.APP_READABLE_NAME}をご利用いただき、誠にありがとうございます。</p>
               <p>
-                スペース{{spaceId}}の予約リクエストを受け取りました。
+                {{spaceType}} {{spaceId}}の予約リクエストを受け取りました。
               </p>
               <p>
-                スペース: {{spaceId}}<br />
+                {{spaceType}}: {{spaceId}}<br />
                 予約番号: {{reservationId}}
               </p>
             </div>
@@ -37,5 +38,5 @@ const template = `
 
 export default generateTemplate<ReservationReceivedData>(
     template,
-    `【${environment.APP_READABLE_NAME}】予約リクエストを受け取りました。`
+    `【${environment.APP_READABLE_NAME}】予約リクエストを受け取りました。`,
 );

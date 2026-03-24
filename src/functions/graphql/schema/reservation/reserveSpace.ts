@@ -328,6 +328,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 recipientName: "",
                 spaceId,
                 reservationId,
+                spaceType: "space",
             }),
             addEmailToQueue<ReservationReceivedData>({
                 template: "reservation-received",
@@ -335,6 +336,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 recipientName: "",
                 spaceId,
                 reservationId,
+                spaceType: "space",
             }),
             expoSendNotification([{ tokens: notificationTokens, body: "Reservation Received" }]),
         ]);
@@ -392,12 +394,12 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 customer: paymentMethod.customer,
                 payment_method: paymentMethod.id,
                 payment_method_types: [paymentMethod.type],
-                description: transaction.description,
+                description: paymentIntent.description,
                 receipt_email: email,
                 capture_method: "manual",
                 metadata: {
                     transactionId: transaction.id,
-                    reservationId: transaction.reservationId,
+                    reservationId: transaction.reservation?.reservationId,
                     userId: accountId,
                     spaceId: spaceId,
                 },
@@ -450,6 +452,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     recipientName: "",
                     spaceId,
                     reservationId,
+                    spaceType: "space",
                 }),
                 addEmailToQueue<ReservationPendingData>({
                     template: "reservation-pending",
@@ -457,6 +460,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     recipientName: "",
                     spaceId,
                     reservationId,
+                    spaceType: "space",
                 }),
                 // expoSendNotification([{ tokens: notificationTokens, body: "Reservation Pending" }]),
             ]);
@@ -485,6 +489,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 recipientEmail: email,
                 recipientName: "",
                 spaceId,
+                spaceType: "space",
             }),
         ]);
         throw error;

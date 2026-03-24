@@ -4,6 +4,7 @@ import { footer, header } from "./share";
 
 export type ReservationCancelledData = EmailData & {
     spaceId: string;
+    spaceType?: "hotel" | "space"; // Add space type for dynamic content
 };
 
 const template = `
@@ -19,7 +20,15 @@ const template = `
               <h1>こんにちは {{recipientName}}、</h1>
               <p>いつも${environment.APP_READABLE_NAME}をご利用いただき、誠にありがとうございます。</p>
               <p>
-                残念ながら、予約スペース {{spaceId}} はキャンセルされました
+                {{#if spaceType}}
+                  {{#if (eq spaceType "hotel")}}
+                    残念ながら、宿泊施 {{spaceId}} はキャンセルされました
+                  {{else}}
+                    残念ながら、予約スペース {{spaceId}} はキャンセルされました
+                  {{/if}}
+                {{else}}
+                  残念ながら、予約スペース {{spaceId}} はキャンセルされました
+                {{/if}}
               </p>
             </div>
           </td>
@@ -32,5 +41,5 @@ const template = `
 
 export default generateTemplate<ReservationCancelledData>(
     template,
-    `【${environment.APP_READABLE_NAME}】予約に失敗しました`
+    `【${environment.APP_READABLE_NAME}】予約に失敗しました`,
 );
