@@ -321,25 +321,25 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         const notificationTokens = await fetchDeviceId([accountId, space.accountId]);
 
-        await Promise.all([
-            addEmailToQueue<ReservationReceivedData>({
-                template: "reservation-received",
-                recipientEmail: email,
-                recipientName: "",
-                spaceId,
-                reservationId,
-                spaceType: "space",
-            }),
-            addEmailToQueue<ReservationReceivedData>({
-                template: "reservation-received",
-                recipientEmail: space.account.email,
-                recipientName: "",
-                spaceId,
-                reservationId,
-                spaceType: "space",
-            }),
-            expoSendNotification([{ tokens: notificationTokens, body: "Reservation Received" }]),
-        ]);
+        // await Promise.all([
+        //     addEmailToQueue<ReservationReceivedData>({
+        //         template: "reservation-received",
+        //         recipientEmail: email,
+        //         recipientName: "",
+        //         spaceId,
+        //         reservationId,
+        //         spaceType: "space",
+        //     }),
+        //     addEmailToQueue<ReservationReceivedData>({
+        //         template: "reservation-received",
+        //         recipientEmail: space.account.email,
+        //         recipientName: "",
+        //         spaceId,
+        //         reservationId,
+        //         spaceType: "スペース",
+        //     }),
+        //     expoSendNotification([{ tokens: notificationTokens, body: "Reservation Received" }]),
+        // ]);
 
         const transaction = await store.transaction.create({
             data: {
@@ -394,7 +394,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 customer: paymentMethod.customer,
                 payment_method: paymentMethod.id,
                 payment_method_types: [paymentMethod.type],
-                description: paymentIntent.description,
+                description: `Reservation of ${space.name}`,
                 receipt_email: email,
                 capture_method: "manual",
                 metadata: {
@@ -441,6 +441,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     recipientName: "",
                     spaceId,
                     reservationId,
+                    spaceType: "スペース",
                 }),
                 expoSendNotification([{ tokens: notificationTokens, body: "Reservation Complete" }]),
             ]);
@@ -452,7 +453,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     recipientName: "",
                     spaceId,
                     reservationId,
-                    spaceType: "space",
+                    spaceType: "スペース",
                 }),
                 addEmailToQueue<ReservationPendingData>({
                     template: "reservation-pending",
@@ -460,7 +461,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     recipientName: "",
                     spaceId,
                     reservationId,
-                    spaceType: "space",
+                    spaceType: "スペース",
                 }),
                 // expoSendNotification([{ tokens: notificationTokens, body: "Reservation Pending" }]),
             ]);
@@ -474,7 +475,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             intentId: paymentIntent?.id,
             intentCode: paymentIntent?.client_secret,
             amount: paymentIntent?.amount,
-            description: paymentIntent?.description,
+            description: `Reservation of ${space.name}`,
             currency: paymentIntent?.currency,
             paymentMethodTypes: paymentIntent?.payment_method_types,
             reservationId,
@@ -489,7 +490,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 recipientEmail: email,
                 recipientName: "",
                 spaceId,
-                spaceType: "space",
+                spaceType: "スペース",
             }),
         ]);
         throw error;
