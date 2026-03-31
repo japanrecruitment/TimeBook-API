@@ -11,5 +11,8 @@ export * from "./reservation-completed";
 export * from "./reservation-failed";
 export * from "./reservation-received";
 export * from "./reservation-pending";
+export * from "./reservation-cancelled-user";
+export * from "./reservation-completed-user";
+export * from "./reservation-received-user"
 export * from "./contact-form";
 export * from "./host-registration-notification";

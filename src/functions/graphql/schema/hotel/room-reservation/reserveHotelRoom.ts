@@ -83,7 +83,14 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
     const { checkInDate, checkOutDate, paymentSourceId, roomPlanId, additionalOptions, nAdult, nChild } = validInput;
 
     try {
-        const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
+        const user = await store.user.findUnique({
+            where: { id: userId },
+            select: {
+                stripeCustomerId: true,
+                firstName: true,
+                lastName: true,
+            },
+        });
         if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "無効なリクエスト" });
         if (!user.stripeCustomerId)
             throw new GqlError({ code: "BAD_REQUEST", message: "Stripe アカウントが見つかりません" });
@@ -130,7 +137,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
 
         allReservationDates.splice(0, subscriptionUnit);
 
-        Log(remSubscriptionUnit, subscriptionUnit, totalReservationUnits, allReservationDates);
+        // Log(remSubscriptionUnit, subscriptionUnit, totalReservationUnits, allReservationDates);
 
         const plan = await store.hotelRoom_PackagePlan.findUnique({
             where: { id: roomPlanId },
@@ -194,7 +201,24 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                 },
                 hotelRoom: {
                     include: {
-                        hotel: { select: { account: { select: { id: true, email: true, host: true } }, status: true } },
+                        hotel: {
+                            select: {
+                                account: {
+                                    select: {
+                                        id: true,
+                                        email: true,
+                                        host: {
+                                            select: {
+                                                name: true,
+                                                stripeAccountId: true,
+                                            },
+                                        },
+                                    },
+                                },
+                                status: true,
+                                name: true,
+                            },
+                        },
                         reservations: {
                             where: {
                                 AND: [
@@ -279,9 +303,12 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         });
         if (!plan) throw new GqlError({ code: "NOT_FOUND", message: "プランが見つかりません" });
 
-        Log("reserveHotelRoom:", "packagePlan:", plan);
+        // Log("reserveHotelRoom:", "packagePlan:", plan);
 
         const { hotelRoom, packagePlan, priceOverrides, priceSettings } = plan;
+
+        // Create user full name
+        const userFullName = `${user.firstName} ${user.lastName}`;
 
         if (hotelRoom.hotel.status !== "PUBLISHED")
             throw new GqlError({ code: "NOT_FOUND", message: "宿泊施設が見つかりません" });
@@ -415,13 +442,13 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             }
         });
 
-        Log("applied plan", appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings);
+        // Log("applied plan", appliedRoomPlanPriceOverrides, appliedRoomPlanPriceSettings);
 
         // Calculating subscription price
         let subscriptionPrice =
             subscriptionUnit && subscriptionUnit > 0 ? packagePlan.subcriptionPrice * subscriptionUnit : undefined;
 
-        Log("applied subscription", subscriptionUnit, subscriptionPrice);
+        // Log("applied subscription", subscriptionUnit, subscriptionPrice);
         Log("applied amount", amount);
 
         const reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);
@@ -506,21 +533,33 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             });
         }
         await Promise.all([
-            addEmailToQueue<ReservationPendingData>({
-                template: "reservation-pending",
+            addEmailToQueue<ReservationReceivedData>({
+                template: "reservation-received",
                 recipientEmail: email,
-                recipientName: "",
+                recipientName: userFullName,
                 spaceId: hotelRoom.id,
                 reservationId,
-                spaceType: "宿泊施",
+                checkInDate: checkInDate.toISOString().split("T")[0],
+                checkInTime: checkInDate.toTimeString().slice(0, 5),
+                checkOutTime: checkOutDate.toTimeString().slice(0, 5),
+                planName: hotelRoom.name,
+                options: "",
+                totalPrice: amount?.toString() ?? "0",
+                spaceName: hotelRoom.hotel.name,
             }),
             addEmailToQueue<ReservationReceivedData>({
                 template: "reservation-received",
                 recipientEmail: hotelRoom.hotel.account.email,
-                recipientName: "",
+                recipientName: hotelRoom.hotel.account.host?.name || hotelRoom.hotel.account.email,
                 spaceId: hotelRoom.id,
                 reservationId,
-                spaceType: "宿泊施",
+                checkInDate: checkInDate.toISOString().split("T")[0],
+                checkInTime: checkInDate.toTimeString().slice(0, 5),
+                checkOutTime: checkOutDate.toTimeString().slice(0, 5),
+                planName: hotelRoom.name,
+                options: "",
+                totalPrice: amount?.toString() ?? "0",
+                spaceName: hotelRoom.hotel.name,
             }),
         ]);
 
@@ -537,13 +576,6 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
             subscriptionUnit,
         };
     } catch (error) {
-        await addEmailToQueue<ReservationFailedData>({
-            template: "reservation-failed",
-            recipientEmail: email,
-            recipientName: "",
-            spaceId: roomPlanId,
-            spaceType: "hotel",
-        });
         throw error;
     }
 };

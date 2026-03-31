@@ -9,8 +9,14 @@ export default `
             <td class="content-cell">
                 <div class="f-fallback">
                     <p style="margin-bottom: 16px;">
-                        予約の確認・変更・取消につきましては、管理画面よりお手続きください。<br>
+                        予約の確認・変更・取消につきましては、マイページよりお手続きください。<br>
                         <a href="https://www.pocketseq.com" style="color: #007bff; text-decoration: none;">https://www.pocketseq.com</a>
+                    </p>
+                    <p style="margin-bottom: 8px;">
+                        ※ご精算はクレジットカード決済にて承っております。
+                    </p>
+                    <p style="margin-bottom: 8px;">
+                        キャンセルの場合は規定に基づいてキャンセル料を申し受けます。
                     </p>
                     <p style="margin-bottom: 8px;">
                         ※本メールは送信専用アドレスから送信しております。

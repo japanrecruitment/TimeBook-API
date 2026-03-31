@@ -98,7 +98,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         const { days, hours, minutes } = getDurationsBetn(_fromDateTime.toDate(), _toDateTime.toDate());
 
-        Log("reserveSpace: durations:", days, hours, minutes);
+        // Log("reserveSpace: durations:", days, hours, minutes);
 
         if (days <= 0 && hours <= 0 && minutes < 5)
             throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な日付の選択です" });
@@ -108,13 +108,24 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 throw new GqlError({ code: "BAD_USER_INPUT", message: "無効なオプション数量" });
         });
 
-        const user = await store.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
+        const user = await store.user.findUnique({
+            where: { id: userId },
+            select: {
+                stripeCustomerId: true,
+                firstName: true,
+                lastName: true,
+                account: {
+                    select: {
+                        email: true,
+                    },
+                },
+            },
+        });
         if (!user) throw new GqlError({ code: "BAD_REQUEST", message: "ユーザーが見つかりません" });
         if (!user.stripeCustomerId) throw new GqlError({ code: "BAD_REQUEST", message: "アカウントが見つかりません" });
 
         const space = await store.space.findFirst({
             where: { id: spaceId, isDeleted: false, published: true },
-            
             include: {
                 pricePlans: {
                     where: {
@@ -131,7 +142,18 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     },
                     include: { overrides: true },
                 },
-                account: { include: { host: true } },
+                account: {
+                    select: {
+                        id: true,
+                        email: true,
+                        host: {
+                            select: {
+                                name: true,
+                                stripeAccountId: true,
+                            },
+                        },
+                    },
+                },
                 additionalOptions: additionalOptions
                     ? { where: { id: { in: additionalOptions.map(({ optionId }) => optionId) } } }
                     : undefined,
@@ -195,7 +217,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         if (!space) throw new GqlError({ code: "NOT_FOUND", message: "スペースが見つかりません" });
 
-        Log("reserveSpace: space:", space);
+        // Log("reserveSpace: space:", space);
 
         const { reservations, settings, pricePlans } = space;
 
@@ -270,7 +292,6 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     return { ...plan, overrides: filteredOverrides };
                 }
             });
-        
 
             if (!filteredPricePlans || filteredPricePlans.length <= 0)
                 throw new GqlError({
@@ -291,7 +312,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
             differenceWith(
                 additionalOptions,
                 space.additionalOptions,
-                ({ optionId }, { id }) => optionId === id
+                ({ optionId }, { id }) => optionId === id,
             ).forEach(({ optionId }) => {
                 throw new GqlError({
                     code: "BAD_USER_INPUT",
@@ -317,7 +338,9 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         Log("applied amount", amount);
 
         // Create unique reservation Id
-        const reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);
+        let reservationId = "PS" + Math.floor(100000 + Math.random() * 900000);
+
+        const userFullName = `${user.firstName} ${user.lastName}`;
 
         const notificationTokens = await fetchDeviceId([accountId, space.accountId]);
 
@@ -325,7 +348,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         //     addEmailToQueue<ReservationReceivedData>({
         //         template: "reservation-received",
         //         recipientEmail: email,
-        //         recipientName: "",
+        //         recipientName: userFullName,
         //         spaceId,
         //         reservationId,
         //         spaceType: "space",
@@ -333,7 +356,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         //     addEmailToQueue<ReservationReceivedData>({
         //         template: "reservation-received",
         //         recipientEmail: space.account.email,
-        //         recipientName: "",
+        //         recipientName: userFullName,
         //         spaceId,
         //         reservationId,
         //         spaceType: "スペース",
@@ -353,7 +376,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     "additionalOptions",
                     "updatedAt",
                     "reservations",
-                    "settings"
+                    "settings",
                 ),
                 currency: "JPY",
                 description: `Reservation of ${space.name}`,
@@ -438,30 +461,48 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                 addEmailToQueue<ReservationCompletedData>({
                     template: "reservation-completed",
                     recipientEmail: email,
-                    recipientName: "",
+                    recipientName: userFullName,
                     spaceId,
                     reservationId,
-                    spaceType: "スペース",
+                    spaceName: space.name,
+                    checkInDate: fromDateTime.toISOString().split("T")[0],
+                    checkInTime: fromDateTime.toTimeString().slice(0, 5),
+                    checkOutTime: _toDateTime.toDate().toTimeString().slice(0, 5),
+                    planName: space.name,
+                    options: "",
+                    totalPrice: amount?.toString() ?? "0",
                 }),
                 expoSendNotification([{ tokens: notificationTokens, body: "Reservation Complete" }]),
             ]);
         } else {
             await Promise.all([
-                addEmailToQueue<ReservationPendingData>({
-                    template: "reservation-pending",
+                addEmailToQueue<ReservationReceivedData>({
+                    template: "reservation-received",
                     recipientEmail: email,
-                    recipientName: "",
+                    recipientName: userFullName,
                     spaceId,
                     reservationId,
-                    spaceType: "スペース",
+                    spaceName: space.name,
+                    checkInDate: fromDateTime.toISOString().split("T")[0],
+                    checkInTime: fromDateTime.toTimeString().slice(0, 5),
+                    checkOutTime: _toDateTime.toDate().toTimeString().slice(0, 5),
+                    planName: space.name,
+                    options: "",
+                    totalPrice: amount?.toString() ?? "0",
                 }),
-                addEmailToQueue<ReservationPendingData>({
-                    template: "reservation-pending",
+                addEmailToQueue<ReservationReceivedData>({
+                    template: "reservation-received",
                     recipientEmail: space.account.email,
-                    recipientName: "",
+                    recipientName: space.account.host?.name || "",
                     spaceId,
                     reservationId,
-                    spaceType: "スペース",
+                    spaceName: space.name,
+                    checkInDate: fromDateTime.toISOString().split("T")[0],
+                    checkInTime: fromDateTime.toTimeString().slice(0, 5),
+                    checkOutTime: _toDateTime.toDate().toTimeString().slice(0, 5),
+                    planName: space.name,
+                    options: "",
+                    totalPrice: amount?.toString() ?? "0",
                 }),
                 // expoSendNotification([{ tokens: notificationTokens, body: "Reservation Pending" }]),
             ]);
@@ -484,15 +525,6 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         };
     } catch (error) {
         console.log(error);
-        await Promise.all([
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
-                recipientEmail: email,
-                recipientName: "",
-                spaceId,
-                spaceType: "スペース",
-            }),
-        ]);
         throw error;
     }
 };

@@ -9,7 +9,7 @@ import reservationReceived from "./reservation-received";
 import reservationCompleted from "./reservation-completed";
 import reservationFailed from "./reservation-failed";
 import reservationPending from "./reservation-pending";
-import reservationCancelled from "./reservation-cancelled";
+import reservationCancelled from "./reservation-cancelled-user";
 import contactForm from "./contact-form";
 import hostRegistrationNotification from "./host-registration-notification";
 import accountDeactivated from "./account-deactivated";

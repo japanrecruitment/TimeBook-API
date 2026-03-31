@@ -34,15 +34,40 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     const reservation = await store.reservation.findUnique({
         where: { id: reservationId },
         select: {
+            reservationId: true,
             fromDateTime: true,
+            toDateTime: true,
             reserveeId: true,
             status: true,
             subscriptionPrice: true,
             subscriptionUnit: true,
-            reservee: { select: { suspended: true, email: true } },
+            reservee: {
+                select: {
+                    suspended: true,
+                    email: true,
+                    userProfile: {
+                        select: {
+                            firstName: true,
+                            lastName: true,
+                        },
+                    },
+                },
+            },
             space: {
                 select: {
-                    account: { select: { id: true, suspended: true, host: { select: { suspended: true } } } },
+                    name: true,
+                    account: {
+                        select: {
+                            id: true,
+                            suspended: true,
+                            host: {
+                                select: {
+                                    suspended: true,
+                                    name: true,
+                                },
+                            },
+                        },
+                    },
                     cancelPolicy: { select: { rates: { orderBy: { beforeHours: "asc" } } } },
                 },
             },
@@ -52,6 +77,11 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
     // Reservation not found
     if (!reservation) throw new GqlError({ code: "NOT_FOUND", message: "予約が見つかりませんでした。" });
+
+    // Create user full name
+    const userFullName = reservation.reservee.userProfile
+        ? `${reservation.reservee.userProfile.firstName} ${reservation.reservee.userProfile.lastName}`
+        : reservation.reservee.email;
 
     // Unauthorized
     if (reservation.reserveeId !== accountId && reservation.space.account.id !== accountId)
@@ -88,7 +118,14 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
         // Get host email for notification
         const hostAccount = await store.account.findUnique({
             where: { id: reservation.space.account.id },
-            select: { email: true },
+            select: {
+                email: true,
+                host: {
+                    select: {
+                        name: true,
+                    },
+                },
+            },
         });
 
         await Promise.all([
@@ -96,17 +133,31 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
                 recipientEmail: reservation.reservee.email,
-                recipientName: reservation.reservee.email,
+                recipientName: userFullName,
                 spaceId: reservation.space.account.id,
-                spaceType: "スペース",
+                reservationId: reservation.reservationId,
+                spaceName: reservation.space.name,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                planName: reservation.space.name,
+                options: "",
+                totalPrice: reservation?.transaction?.amount?.toString() ?? "0",
             }),
             // Email to host
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
                 recipientEmail: hostAccount.email,
-                recipientName: hostAccount.email,
+                recipientName: hostAccount.host?.name || hostAccount.email,
                 spaceId: reservation.space.account.id,
-                spaceType: "スペース",
+                spaceName: reservation.space.name,
+                reservationId: reservation.reservationId,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                planName: reservation.space.name,
+                options: "",
+                totalPrice: reservation?.transaction?.amount?.toString() ?? "0",
             }),
         ]);
 
@@ -126,7 +177,14 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             // Get host email for notification
             const hostAccount = await store.account.findUnique({
                 where: { id: reservation.space.account.id },
-                select: { email: true },
+                select: {
+                    email: true,
+                    host: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                },
             });
 
             await Promise.all([
@@ -134,17 +192,31 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
                 addEmailToQueue<ReservationFailedData>({
                     template: "reservation-failed",
                     recipientEmail: reservation.reservee.email,
-                    recipientName: reservation.reservee.email,
+                    recipientName: userFullName,
                     spaceId: reservation.space.account.id,
-                    spaceType: "スペース",
+                    spaceName: reservation.space.name,
+                    reservationId: reservation.reservationId,
+                    checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                    checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                    checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                    planName: reservation.space.name,
+                    options: "",
+                    totalPrice: reservation?.transaction?.amount?.toString() ?? "0",
                 }),
                 // Email to host
                 addEmailToQueue<ReservationFailedData>({
                     template: "reservation-failed",
                     recipientEmail: hostAccount.email,
-                    recipientName: hostAccount.email,
+                    recipientName: hostAccount.host?.name || hostAccount.email,
                     spaceId: reservation.space.account.id,
-                    spaceType: "スペース",
+                    reservationId: reservation.reservationId,
+                    spaceName: reservation.space.name,
+                    checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                    checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                    checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                    planName: reservation.space.name,
+                    options: "",
+                    totalPrice: reservation?.transaction?.amount?.toString() ?? "0",
                 }),
             ]);
 
@@ -173,7 +245,14 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
         // Get host email for notification
         const hostAccount = await store.account.findUnique({
             where: { id: reservation.space.account.id },
-            select: { email: true },
+            select: {
+                email: true,
+                host: {
+                    select: {
+                        name: true,
+                    },
+                },
+            },
         });
 
         await Promise.all([
@@ -181,17 +260,31 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
                 recipientEmail: reservation.reservee.email,
-                recipientName: reservation.reservee.email,
+                recipientName: userFullName,
                 spaceId: reservation.space.account.id,
-                spaceType: "スペース",
+                spaceName: reservation.space.name,
+                reservationId: reservation.reservationId,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                planName: reservation.space.name,
+                options: "",
+                totalPrice: reservation?.transaction?.amount?.toString() ?? "0",
             }),
             // Email to host
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
                 recipientEmail: hostAccount.email,
-                recipientName: hostAccount.email,
+                recipientName: hostAccount.host?.name || hostAccount.email,
                 spaceId: reservation.space.account.id,
-                spaceType: "スペース",
+                spaceName: reservation.space.name,
+                reservationId: reservation.reservationId,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                planName: reservation.space.name,
+                options: "",
+                totalPrice: reservation?.transaction?.amount?.toString() ?? "0",
             }),
         ]);
 
@@ -212,7 +305,14 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
         // Get host email for notification
         const hostAccount = await store.account.findUnique({
             where: { id: reservation.space.account.id },
-            select: { email: true },
+            select: {
+                email: true,
+                host: {
+                    select: {
+                        name: true,
+                    },
+                },
+            },
         });
 
         await Promise.all([
@@ -220,17 +320,31 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
                 recipientEmail: reservation.reservee.email,
-                recipientName: reservation.reservee.email,
+                recipientName: userFullName,
                 spaceId: reservation.space.account.id,
-                spaceType: "スペース",
+                spaceName: reservation.space.name,
+                reservationId: reservation.reservationId,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                planName: reservation.space.name,
+                options: "",
+                totalPrice: reservation?.transaction?.amount?.toString() ?? "0",
             }),
             // Email to host
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
                 recipientEmail: hostAccount.email,
-                recipientName: hostAccount.email,
+                recipientName: hostAccount.host?.name || hostAccount.email,
                 spaceId: reservation.space.account.id,
-                spaceType: "スペース",
+                spaceName: reservation.space.name,
+                reservationId: reservation.reservationId,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                planName: reservation.space.name,
+                options: "",
+                totalPrice: reservation?.transaction?.amount?.toString() ?? "0",
             }),
         ]);
 
@@ -269,7 +383,14 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     // Get host email for notification
     const hostAccount = await store.account.findUnique({
         where: { id: reservation.space.account.id },
-        select: { email: true },
+        select: {
+            email: true,
+            host: {
+                select: {
+                    name: true,
+                },
+            },
+        },
     });
 
     await Promise.all([
@@ -277,17 +398,31 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
         addEmailToQueue<ReservationFailedData>({
             template: "reservation-failed",
             recipientEmail: reservation.reservee.email,
-            recipientName: reservation.reservee.email,
+            recipientName: userFullName,
             spaceId: reservation.space.account.id,
-            spaceType: "スペース",
+            spaceName: reservation.space.name,
+            reservationId: reservation.reservationId,
+            checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+            checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+            checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+            planName: reservation.space.name,
+            options: "",
+            totalPrice: reservation?.transaction?.amount?.toString() ?? "0",
         }),
         // Email to host
         addEmailToQueue<ReservationFailedData>({
             template: "reservation-failed",
             recipientEmail: hostAccount.email,
-            recipientName: hostAccount.email,
+            recipientName: hostAccount.host?.name || hostAccount.email,
             spaceId: reservation.space.account.id,
-            spaceType: "スペース",
+            spaceName: reservation.space.name,
+            reservationId: reservation.reservationId,
+            checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+            checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+            checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+            planName: reservation.space.name,
+            options: "",
+            totalPrice: reservation?.transaction?.amount?.toString() ?? "0",
         }),
     ]);
 

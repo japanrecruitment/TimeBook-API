@@ -1,8 +1,8 @@
-import { environment } from "@utils/environment";
 import generateTemplate, { EmailData } from "./generateTemplate";
-import { footer, header } from "./share";
+import { footeruser, header } from "./share";
+import { environment } from "@utils/environment";
 
-export type ReservationFailedData = EmailData & {
+export type ReservationCompletedUserData = EmailData & {
     spaceId: string;
     reservationId: string;
     spaceName: string;
@@ -12,7 +12,6 @@ export type ReservationFailedData = EmailData & {
     planName: string;
     options: string;
     totalPrice: string;
-    cancellationReason?: string;
 };
 
 const template = `
@@ -27,17 +26,10 @@ const template = `
             <div class="f-fallback">
               <h1>こんにちは {{recipientName}}様</h1>
               <p>いつも${environment.APP_READABLE_NAME}をご利用いただき、誠にありがとうございます。</p>
-              <p>以下のご予約のキャンセルを承りました。</p>
-              
-              {{#if cancellationReason}}
-              <div style="background-color: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #ffc107;">
-                <h3 style="margin-top: 0; color: #856404;">キャンセルに伴うホストからのメッセージ</h3>
-                <p style="margin-bottom: 0;">{{cancellationReason}}</p>
-              </div>
-              {{/if}}
+              <p>ホストより予約の承認があり、以下の内容でご予約が完了いたしました。</p>
               
               <div style="background-color: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
-                <h3 style="margin-top: 0; color: #333;">キャンセルされた予約詳細</h3>
+                <h3 style="margin-top: 0; color: #333;">予約詳細</h3>
                 <table style="width: 100%; border-collapse: collapse;">
                   <tr>
                     <td style="padding: 8px 0; border-bottom: 1px solid #ddd; font-weight: bold; width: 30%;">予約番号：</td>
@@ -70,6 +62,12 @@ const template = `
                 </table>
               </div>
               
+              <div style="background-color: #d4edda; padding: 15px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #28a745;">
+                <h3 style="margin-top: 0; color: #155724;">予約完了のお知らせ</h3>
+                <p style="margin-bottom: 8px;">ご予約が確定いたしました。</p>
+                <p style="margin-bottom: 0;">ご利用当日、スムーズにご入館いただけますようお願いいたします。</p>
+              </div>
+              
               <p>ご不明な点がございましたら、お気軽にお問い合わせください。</p>
               <p>引き続き${environment.APP_READABLE_NAME}をよろしくお願いいたします。</p>
             </div>
@@ -78,10 +76,10 @@ const template = `
       </table>
     </td>
   </tr>
-  ${footer}
+  ${footeruser}
 `;
 
-export default generateTemplate<ReservationFailedData>(
+export default generateTemplate<ReservationCompletedUserData>(
     template,
-    `【${environment.APP_READABLE_NAME}】{{checkInDate}}「{{spaceName}}」：予約キャンセルのおしらせ`,
+    `【${environment.APP_READABLE_NAME}】{{checkInDate}}「{{spaceName}}」：予約完了のおしらせ`,
 );

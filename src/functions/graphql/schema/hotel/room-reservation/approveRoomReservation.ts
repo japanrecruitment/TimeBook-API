@@ -25,9 +25,15 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
         where: { id: reservationId },
         select: {
             id: true,
-            reservee: { select: { email: true } },
-            hotelRoom: { select: { id: true, hotel: { select: { accountId: true } } } },
-            transaction: { select: { paymentIntentId: true } },
+            reservationId: true,
+            fromDateTime: true,
+            toDateTime: true,
+            subscriptionUnit: true,
+            subscriptionPrice: true,
+            reservee: { select: { email: true, userProfile: { select: { firstName: true, lastName: true } } } },
+            hotelRoom: { select: { id: true, name: true, hotel: { select: { accountId: true } } } },
+            packagePlan: { select: { name: true } },
+            transaction: { select: { amount: true, assetData: true } },
         },
     });
     // Log("reservation", reservation)
@@ -44,7 +50,7 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
     // Get host email for notification
     const hostAccount = await store.account.findUnique({
         where: { id: accountId },
-        select: { email: true },
+        select: { email: true, host: { select: { name: true } } },
     });
 
     await Promise.all([
@@ -52,19 +58,31 @@ const approveRoomReservation: ApproveRoomReservation = async (_, { reservationId
         addEmailToQueue<ReservationCompletedData>({
             template: "reservation-completed",
             recipientEmail: reservation.reservee.email,
-            recipientName: reservation.reservee.email,
+            recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
             spaceId: reservation.hotelRoom.id,
-            reservationId,
-            spaceType: "宿泊施",
+            reservationId: reservation.reservationId,
+            spaceName: reservation.hotelRoom.name,
+            checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+            checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+            checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+            planName: reservation.packagePlan?.name || "Standard",
+            options: "",
+            totalPrice: reservation.transaction?.amount?.toString() || "0",
         }),
         // Email to host
         addEmailToQueue<ReservationCompletedData>({
             template: "reservation-completed",
             recipientEmail: hostAccount.email,
-            recipientName: hostAccount.email,
+            recipientName: hostAccount.host?.name || hostAccount.email,
             spaceId: reservation.hotelRoom.id,
-            reservationId,
-            spaceType: "宿泊施",
+            reservationId: reservation.reservationId,
+            spaceName: reservation.hotelRoom.name,
+            checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+            checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+            checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+            planName: reservation.packagePlan?.name || "Standard",
+            options: "",
+            totalPrice: reservation.transaction?.amount?.toString() || "0",
         }),
     ]);
 
