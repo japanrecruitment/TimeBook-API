@@ -186,6 +186,17 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
             hotelRoom: {
                 include: {
                     hotel: { select: { account: { select: { id: true, email: true, host: true } } } },
+                    stockOverrides: {
+                        where: {
+                            OR: [
+                                { AND: [{ endDate: { gte: checkOutDate } }, { startDate: { lte: checkInDate } }] },
+                                { AND: [{ endDate: { gte: checkInDate } }, { endDate: { lte: checkOutDate } }] },
+                                { AND: [{ startDate: { gte: checkInDate } }, { startDate: { lte: checkOutDate } }] },
+                            ],
+                        },
+                        select: { id: true, endDate: true, stock: true, startDate: true },
+                        orderBy: { startDate: "desc" },
+                    },
                     reservations: {
                         where: {
                             OR: [
@@ -244,6 +255,8 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
 
     const { hotelRoom, packagePlan, priceOverrides, priceSettings } = plan;
     const { stockOverrides: packageStockOverrides } = packagePlan;
+    const { stockOverrides: roomStockOverrides } = hotelRoom;
+    
     if (packagePlan.paymentTerm === "PER_PERSON" && !nAdult && !nChild) {
         throw new GqlError({
             code: "BAD_USER_INPUT",
@@ -273,23 +286,23 @@ const calculateRoomPlanPriceWithAuth: CalculateRoomPlanPriceWithAuth = async (_,
     }
 
     const planTotalStocks = packagePlan.stock;
-    // const roomTotalStocks = hotelRoom.stock;
+    const roomTotalStocks = hotelRoom.stock;
 
     // Check availability for each date in the reservation period
     for (const date of allReservationDates) {
-        // const roomAvailableStock = getStockForDate(date, roomTotalStocks, roomStockOverrides);
-        // const roomReservedCount = getReservationsForDate(date, hotelRoom.reservations);
+        const roomAvailableStock = getStockForDate(date, roomTotalStocks, roomStockOverrides);
+        const roomReservedCount = getReservationsForDate(date, hotelRoom.reservations);
 
         // console.log(
         //     `Date: ${moment(date).format("YYYY-MM-DD")}, Room Stock: ${roomAvailableStock}, Room Reserved: ${roomReservedCount}`,
         // );
 
-        // if (roomReservedCount >= roomAvailableStock) {
-        //     throw new GqlError({
-        //         code: "BAD_USER_INPUT",
-        //         message: `選択された時間枠では、この施設は予約できません (${moment(date).format("YYYY-MM-DD")}に在庫がありません)`,
-        //     });
-        // }
+        if (roomReservedCount >= roomAvailableStock) {
+            throw new GqlError({
+                code: "BAD_USER_INPUT",
+                message: `選択された時間枠では、この施設は予約できません (${moment(date).format("YYYY-MM-DD")}に在庫がありません)`,
+            });
+        }
 
         const planAvailableStock = getStockForDate(date, planTotalStocks, packageStockOverrides);
         const planReservedCount = getReservationsForDate(date, packagePlan.reservations);

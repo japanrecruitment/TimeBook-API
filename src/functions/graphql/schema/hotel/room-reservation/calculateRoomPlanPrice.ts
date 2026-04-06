@@ -210,6 +210,7 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
 
     const { hotelRoom, packagePlan, priceOverrides, priceSettings } = plan;
     const { stockOverrides: packageStockOverrides } = packagePlan;
+    const { stockOverrides: roomStockOverrides } = hotelRoom;
 
     if (packagePlan.paymentTerm === "PER_PERSON" && !nAdult && !nChild) {
         throw new GqlError({
@@ -240,23 +241,23 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
     }
 
     const planTotalStocks = packagePlan.stock;
-    // const roomTotalStocks = hotelRoom.stock;
+    const roomTotalStocks = hotelRoom.stock;
 
     // Check availability for each date in the reservation period
     for (const date of allDates) {
-        // const roomAvailableStock = getStockForDate(date, roomTotalStocks, roomStockOverrides);
-        // const roomReservedCount = getReservationsForDate(date, hotelRoom.reservations);
+        const roomAvailableStock = getStockForDate(date, roomTotalStocks, roomStockOverrides);
+        const roomReservedCount = getReservationsForDate(date, hotelRoom.reservations);
 
-        // console.log(
-        //     `Date: ${moment(date).format("YYYY-MM-DD")}, Room Stock: ${roomAvailableStock}, Room Reserved: ${roomReservedCount}`,
-        // );
+        console.log(
+            `Date: ${moment(date).format("YYYY-MM-DD")}, Room Stock: ${roomAvailableStock}, Room Reserved: ${roomReservedCount}`,
+        );
 
-        // if (roomReservedCount >= roomAvailableStock) {
-        //     throw new GqlError({
-        //         code: "BAD_USER_INPUT",
-        //         message: `選択された時間枠では、この施設は予約できません (${moment(date).format("YYYY-MM-DD")}に在庫がありません)`,
-        //     });
-        // }
+        if (roomReservedCount >= roomAvailableStock) {
+            throw new GqlError({
+                code: "BAD_USER_INPUT",
+                message: `選択された時間枠では、この施設は予約できません (${moment(date).format("YYYY-MM-DD")}に在庫がありません)`,
+            });
+        }
 
         const planAvailableStock = getStockForDate(date, planTotalStocks, packageStockOverrides);
         const planReservedCount = getReservationsForDate(date, packagePlan.reservations);
