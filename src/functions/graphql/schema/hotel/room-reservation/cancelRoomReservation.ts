@@ -35,15 +35,19 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     const reservation = await store.hotelRoomReservation.findUnique({
         where: { id: hotelRoomReservationId },
         select: {
+            reservationId: true,
             fromDateTime: true,
             reserveeId: true,
             status: true,
             subscriptionPrice: true,
             subscriptionUnit: true,
-            reservee: { select: { suspended: true, email: true } },
+            reservee: { select: { suspended: true, email: true, userProfile: { select: { firstName: true, lastName: true } } } },
+            toDateTime: true,
+            hotelRoom: { select: { id: true, name: true, hotel: { select: { accountId: true } } } },
             packagePlan: {
                 select: {
                     id: true,
+                    name: true,
                     hotel: {
                         select: {
                             id: true,
@@ -98,7 +102,10 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     }
 
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
-
+    const hostAccount = await store.account.findUnique({
+        where: { id: reservation.packagePlan.hotel.account.id },
+        select: { email: true, host: { select: { name: true } } },
+    });
     if (!isHost) {
         const cancelPolicyRates = reservation.packagePlan.cancelPolicy?.rates;
         if (isEmpty(cancelPolicyRates)) {
@@ -109,28 +116,40 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
             Log("cancel room reservation - no cancel policy");
 
-            // Get host email for notification
-            const hostAccount = await store.account.findUnique({
-                where: { id: reservation.packagePlan.hotel.account.id },
-                select: { email: true },
-            });
-
             await Promise.all([
                 // Email to customer
                 addEmailToQueue<ReservationFailedData>({
-                    template: "reservation-failed",
+                    template: "reservation-cancelled",
                     recipientEmail: reservation.reservee.email,
-                    recipientName: reservation.reservee.email,
+                    recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
                     spaceId: hotelRoomReservationId,
-                    spaceType: "宿泊施",
+                    reservationId: reservation.reservationId,
+                    spaceName: reservation.hotelRoom.name,
+                    checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                    checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                    checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+    
+                    planName: reservation.packagePlan.name,
+                    options: "",
+                    totalPrice: reservation.transaction?.amount?.toString() || "0",
+                    cancellationReason: remarks,
                 }),
                 // Email to host
                 addEmailToQueue<ReservationFailedData>({
-                    template: "reservation-failed",
+                    template: "reservation-cancelled",
                     recipientEmail: hostAccount.email,
-                    recipientName: hostAccount.email,
+                    recipientName: hostAccount.host?.name || hostAccount.email,
                     spaceId: hotelRoomReservationId,
-                    spaceType: "宿泊施",
+                    reservationId: reservation.reservationId,
+                    spaceName: reservation.hotelRoom.name,
+                    checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                    checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                    checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+    
+                    planName: reservation.packagePlan.name,
+                    options: "",
+                    totalPrice: reservation.transaction?.amount?.toString() || "0",
+                    cancellationReason: remarks,
                 }),
             ]);
 
@@ -160,28 +179,40 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
         Log("cancel room reservation - zero charge");
 
-        // Get host email for notification
-        const hostAccount = await store.account.findUnique({
-            where: { id: reservation.packagePlan.hotel.account.id },
-            select: { email: true },
-        });
-
         await Promise.all([
             // Email to customer
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
                 recipientEmail: reservation.reservee.email,
-                recipientName: reservation.reservee.email,
+                recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
                 spaceId: hotelRoomReservationId,
-                spaceType: "宿泊施",
+                reservationId: reservation.reservationId,
+                spaceName: reservation.hotelRoom.name,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+
+                planName: reservation.packagePlan.name,
+                options: "",
+                totalPrice: reservation.transaction?.amount?.toString() || "0",
+                cancellationReason: remarks,
             }),
             // Email to host
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
                 recipientEmail: hostAccount.email,
-                recipientName: hostAccount.email,
+                recipientName: hostAccount.host?.name || hostAccount.email,
                 spaceId: hotelRoomReservationId,
-                spaceType: "宿泊施",
+                reservationId: reservation.reservationId,
+                spaceName: reservation.hotelRoom.name,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+
+                planName: reservation.packagePlan.name,
+                options: "",
+                totalPrice: reservation.transaction?.amount?.toString() || "0",
+                cancellationReason: remarks,
             }),
         ]);
 
@@ -202,28 +233,40 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
         Log("cancel room reservation");
 
-        // Get host email for notification
-        const hostAccount = await store.account.findUnique({
-            where: { id: reservation.packagePlan.hotel.account.id },
-            select: { email: true },
-        });
-
         await Promise.all([
             // Email to customer
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
                 recipientEmail: reservation.reservee.email,
-                recipientName: reservation.reservee.email,
+                recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
                 spaceId: hotelRoomReservationId,
-                spaceType: "宿泊施",
+                reservationId: reservation.reservationId,
+                spaceName: reservation.hotelRoom.name,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+
+                planName: reservation.packagePlan.name,
+                options: "",
+                totalPrice: reservation.transaction?.amount?.toString() || "0",
+                cancellationReason: remarks,
             }),
             // Email to host
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
                 recipientEmail: hostAccount.email,
-                recipientName: hostAccount.email,
+                recipientName: hostAccount.host?.name,
                 spaceId: hotelRoomReservationId,
-                spaceType: "宿泊施",
+                reservationId: reservation.reservationId,
+                spaceName: reservation.hotelRoom.name,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+
+                planName: reservation.packagePlan.name,
+                options: "",
+                totalPrice: reservation.transaction?.amount?.toString() || "0",
+                cancellationReason: remarks,
             }),
         ]);
 
@@ -259,28 +302,38 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     });
     Log("cancel room reservation");
 
-    // Get host email for notification
-    const hostAccount = await store.account.findUnique({
-        where: { id: reservation.packagePlan.hotel.account.id },
-        select: { email: true },
-    });
-
     await Promise.all([
         // Email to customer
         addEmailToQueue<ReservationFailedData>({
             template: "reservation-failed",
             recipientEmail: reservation.reservee.email,
-            recipientName: reservation.reservee.email,
+            recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
             spaceId: hotelRoomReservationId,
-            spaceType: "宿泊施",
+            reservationId: reservation.reservationId,
+            spaceName: reservation.hotelRoom.name,
+            checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+            checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+            checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+            planName: reservation.packagePlan.name,
+            options: "",
+            totalPrice: reservation.transaction?.amount?.toString() || "0",
+            cancellationReason: remarks,
         }),
         // Email to host
         addEmailToQueue<ReservationFailedData>({
             template: "reservation-failed",
             recipientEmail: hostAccount.email,
-            recipientName: hostAccount.email,
+            recipientName: hostAccount.host?.name,
             spaceId: hotelRoomReservationId,
-            spaceType: "宿泊施",
+            reservationId: reservation.reservationId,
+            spaceName: reservation.hotelRoom.name,
+            checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+            checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+            checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+            planName: reservation.packagePlan.name,
+            options: "",
+            totalPrice: reservation.transaction?.amount?.toString() || "0",
+            cancellationReason: remarks,
         }),
     ]);
 

@@ -26,9 +26,31 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
 
         if (hotel.status !== "PUBLISHED") return { message: `宿泊施設が非公開化に成功しました` };
 
-        await store.hotel.update({ where: { id }, data: { status: "DRAFTED" } });
+        // Delete from Algolia first
+        Log("Unpublishing hotel from Algolia...");
+        Log({ hotelId: id, currentStatus: hotel.status });
 
-        await dataSources.hotelAlgolia.deleteObject(id);
+        try {
+            await dataSources.hotelAlgolia.deleteObject(id);
+            Log("Hotel successfully unpublished from Algolia");
+            
+            // Then update database only if Algolia succeeded
+            await store.hotel.update({ where: { id }, data: { status: "DRAFTED" } });
+            Log("NOTE: If hotel still appears in search, wait 1-2 minutes for Algolia replication");
+        } catch (algoliaError) {
+            Log("Algolia delete error:", algoliaError);
+
+            // Check if it's a "not found" error (which is actually OK)
+            if (algoliaError.message && algoliaError.message.includes("ObjectID does not exist")) {
+                Log("Object not found in Algolia - this is OK, updating DB anyway");
+                await store.hotel.update({ where: { id }, data: { status: "DRAFTED" } });
+            } else {
+                throw new GqlError({
+                    code: "INTERNAL_ERROR",
+                    message: "Algoliaでの削除に失敗しました",
+                });
+            }
+        }
 
         return { message: `宿泊施設が非公開化に成功しました` };
     }
@@ -74,8 +96,6 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
     if (isEmpty(hotel.packagePlans))
         throw new GqlError({ code: "BAD_REQUEST", message: "宿泊施設には少なくとも 1 つのプランが必要です" });
 
-    await store.hotel.update({ where: { id }, data: { status: "PUBLISHED" } });
-
     const thumbnailPhoto = hotel.photos[0];
     const publicBucketName = environment.PUBLIC_MEDIA_BUCKET;
     const awsRegion = "ap-northeast-1";
@@ -102,6 +122,8 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
         if (maxCapacityChild > maxChild) maxChild = maxCapacityAdult;
     });
 
+    // Publish to Algolia first
+    Log("Publishing hotel to Algolia...");
     await dataSources.hotelAlgolia.saveObject({
         objectID: id,
         name: hotel.name,
@@ -120,6 +142,10 @@ const publishHotel: PublishHotel = async (_, { id, publish }, { authData, dataSo
         thumbnail: mediumImageUrl,
         _geoloc: { lat: hotel.address.latitude, lng: hotel.address.longitude },
     });
+    Log("Hotel successfully published to Algolia");
+
+    // Then update database only if Algolia succeeded
+    await store.hotel.update({ where: { id }, data: { status: "PUBLISHED" } });
 
     return { message: `宿泊施設を公開しました。` };
 };

@@ -57,8 +57,16 @@ type GetApplicablePricePlans = IFieldResolver<
 
 const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { store }) => {
     const { duration, durationType, fromDateTime, spaceId, additionalOptions } = input;
-
+    Log("Input Debug", { duration, durationType, fromDateTime, spaceId });
+    Log(duration, "duration");
+    Log(durationType, "durationType");
     const utcFromDateTime = moment.tz(fromDateTime, "Asia/Tokyo");
+
+    Log("Date Conversion Debug", {
+        originalInput: fromDateTime,
+        utcFromDateTime: utcFromDateTime.toISOString(),
+        timezone: utcFromDateTime.format("Z"),
+    });
 
     if (utcFromDateTime.isBefore(moment().utc()))
         throw new GqlError({ code: "BAD_USER_INPUT", message: "無効な開始日" });
@@ -93,6 +101,17 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
         _toDateTime = _fromDateTime.clone().add(duration, durationUnit[durationType]);
     }
 
+    Log("Date Range Debug", {
+        durationType,
+        duration,
+        _fromDateTime: _fromDateTime.toISOString(),
+        _toDateTime: _toDateTime.toISOString(),
+        calculatedDuration: {
+            from: _fromDateTime.format("YYYY-MM-DD HH:mm:ss"),
+            to: _toDateTime.format("YYYY-MM-DD HH:mm:ss"),
+        },
+    });
+
     const { days, hours, minutes } = getDurationsBetn(_fromDateTime.toDate(), _toDateTime.toDate());
 
     // Log("reserveSpace: durations:", days, hours, minutes);
@@ -106,12 +125,18 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
             pricePlans: {
                 where: {
                     AND: [
-                        { isDeleted: false, type: durationType, duration: { lte: duration }, spaceId },
+                        {
+                            isDeleted: false,
+                            type: durationType,
+                            duration: durationType === "DAILY" ? duration : { gte: duration },
+                            spaceId,
+                        },
                         {
                             OR: [
                                 { isDefault: true },
                                 { fromDate: { lte: _toDateTime.toDate() } },
-                                { toDate: { lte: _toDateTime.toDate() } },
+                                { toDate: { gte: _fromDateTime.toDate() } },
+                                { fromDate: null, toDate: null }, // Include plans without date restrictions
                             ],
                         },
                     ],
@@ -132,7 +157,23 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
             },
         },
     });
-    // Log("space",space)
+
+    Log("Query Debug", {
+        spaceId,
+        duration,
+        durationType,
+        queryConditions: {
+            isDeleted: false,
+            type: durationType,
+            duration: durationType === "DAILY" ? duration : { gte: duration },
+            spaceId,
+            dateRange: {
+                from: _fromDateTime.toDate(),
+                to: _toDateTime.toDate(),
+            },
+        },
+    });
+    Log("space", space);
     const requestDateRange = { from: _fromDateTime, to: _toDateTime };
 
     // Check if applicable settings have space closed on the date
@@ -152,6 +193,21 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
         }
     });
 
+    Log("Filtered Price Plans", {
+        totalPlans: filteredPricePlans.length,
+        plans: filteredPricePlans.map((p) => ({
+            title: p.title,
+            amount: p.amount,
+            duration: p.duration,
+            isDefault: p.isDefault,
+            overrides: p.overrides?.map((o) => ({
+                amount: o.amount,
+                fromDate: o.fromDate,
+                toDate: o.toDate,
+            })),
+        })),
+    });
+
     const dailyPlan = filteredPricePlans.find((plan) => plan.type === "DAILY");
     const hasDailyPlan = !!dailyPlan;
 
@@ -159,6 +215,22 @@ const getApplicablePricePlans: GetApplicablePricePlans = async (_, { input }, { 
         checkIn: hasDailyPlan ? _fromDateTime.toDate() : _fromDateTime.toDate(),
         checkOut: hasDailyPlan ? _toDateTime.toDate() : _toDateTime.toDate(),
         pricePlans: filteredPricePlans,
+    });
+
+    Log("ReservationPriceCalculator Input", {
+        checkIn: _fromDateTime.toDate(),
+        checkOut: _toDateTime.toDate(),
+        filteredPricePlans: filteredPricePlans.map((p) => ({
+            title: p.title,
+            amount: p.amount,
+            isDefault: p.isDefault,
+            overrides: p.overrides?.map((o) => ({
+                amount: o.amount,
+                fromDate: o.fromDate,
+                toDate: o.toDate,
+                isDeleted: o.isDeleted,
+            })),
+        })),
     });
 
     let selectedOptions = [];

@@ -1,8 +1,8 @@
 import { environment } from "@utils/environment";
 import generateTemplate, { EmailData } from "./generateTemplate";
-import { footer, header } from "./share";
+import { footeruser, header } from "./share";
 
-export type ReservationFailedData = EmailData & {
+export type ReservationCancelledData = EmailData & {
     spaceId: string;
     reservationId: string;
     spaceName: string;
@@ -31,7 +31,7 @@ const template = `
               
               {{#if cancellationReason}}
               <div style="background-color: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #ffc107;">
-                <h3 style="margin-top: 0; color: #856404;">キャンセルに伴うホストからのメッセージ</h3>
+                <h3 style="margin-top: 0; color: #856404;">キャンセル理由</h3>
                 <p style="margin-bottom: 0;">{{cancellationReason}}</p>
               </div>
               {{/if}}
@@ -70,6 +70,12 @@ const template = `
                 </table>
               </div>
               
+              <div style="background-color: #f8d7da; padding: 15px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #dc3545;">
+                <h3 style="margin-top: 0; color: #721c24;">キャンセルについて</h3>
+                <p style="margin-bottom: 8px;">ご予約はキャンセルされております。</p>
+                <p style="margin-bottom: 0;">キャンセル料については規定に基づいて計算されますので、マイページよりご確認ください。</p>
+              </div>
+              
               <p>ご不明な点がございましたら、お気軽にお問い合わせください。</p>
               <p>引き続き${environment.APP_READABLE_NAME}をよろしくお願いいたします。</p>
             </div>
@@ -78,10 +84,10 @@ const template = `
       </table>
     </td>
   </tr>
-  ${footer}
+  ${footeruser}
 `;
 
-export default generateTemplate<ReservationFailedData>(
+export default generateTemplate<ReservationCancelledData>(
     template,
     `【${environment.APP_READABLE_NAME}】{{checkInDate}}「{{spaceName}}」：予約キャンセルのおしらせ`,
 );

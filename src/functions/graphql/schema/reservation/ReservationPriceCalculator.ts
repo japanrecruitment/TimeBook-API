@@ -135,6 +135,17 @@ export default class ReservationPriceCalculator {
             return 0;
         });
         // Log(sortedPlans, "sortedPlans");
+        Log("Available Plans Before Processing", {
+            totalPlans: sortedPlans.length,
+            plans: sortedPlans.map((p) => ({
+                title: p.title,
+                amount: p.amount,
+                isOverride: p.isOverride,
+                fromDate: p.fromDate,
+                toDate: p.toDate,
+                duration: p.duration,
+            })),
+        });
         for (let i = 0; i < sortedPlans.length; i++) {
             const plan = sortedPlans[i];
             const { amount, daysOfWeek, duration, fromDate, toDate, type } = plan;
@@ -154,62 +165,54 @@ export default class ReservationPriceCalculator {
             // Only consider override if at least 50% of reservation is covered
             const shouldUseOverride = overlapPercentage >= 0.5;
 
-            // Log("Plan Check", {
-            //     planTitle: plan.title,
-            //     planAmount: amount,
-            //     isOverride: plan.isOverride,
-            //     fromDate,
-            //     toDate,
-            //     mFrom,
-            //     mTo,
-            //     overlapPercentage,
-            //     shouldUseOverride,
-            // });
+            // Debug overlap calculation
+            Log("Overlap Calculation", {
+                planTitle: plan.title,
+                mFrom: mFrom.toISOString(),
+                mTo: mTo.toISOString(),
+                fromDate: fromDate ? fromDate.toISOString() : "null",
+                toDate: toDate ? toDate.toISOString() : "null",
+                overlapStart: new Date(overlapStart).toISOString(),
+                overlapEnd: new Date(overlapEnd).toISOString(),
+                overlapDuration: overlapDuration / (1000 * 60 * 60), // in hours
+                reservationDuration: reservationDuration / (1000 * 60 * 60), // in hours
+                overlapPercentage: overlapPercentage * 100, // in percentage
+            });
 
-            if (fromDate && toDate) {
-                // Use shouldUseOverride instead of hasOverlap for partial coverage
-                if (shouldUseOverride) {
-                    if (type === "DAILY") {
-                        // Calculate number of days in reservation
-                        const days = Math.ceil((mTo.getTime() - mFrom.getTime()) / (1000 * 60 * 60 * 24));
-                        mPrice = amount * days;
-                        sortedPlans[i].appliedTimes = days; // Track how many times applied
+            if (shouldUseOverride) {
+                if (type === "DAILY") {
+                    // For DAILY plans, amount is the total price for the duration, not per-day
+                    const days = Math.ceil((mTo.getTime() - mFrom.getTime()) / (1000 * 60 * 60 * 24));
+                    mPrice = amount; // Fixed: 23 total for 2-day block, not 23 * days
+                    sortedPlans[i].appliedTimes = 1; // Applied once for the duration block
 
-                        this.appliedReservationPlans.push(sortedPlans[i]);
-                        this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
-                        break;
-                    } else if (type === "HOURLY") {
-                        const reservationHours = Math.ceil((mTo.getTime() - mFrom.getTime()) / (1000 * 60 * 60));
+                    this.appliedReservationPlans.push(sortedPlans[i]);
+                    this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
+                    break;
+                } else if (type === "HOURLY") {
+                    const reservationHours = Math.ceil((mTo.getTime() - mFrom.getTime()) / (1000 * 60 * 60));
 
-                        const matchesDuration = mFrom.getUTCHours() === new Date(fromDate).getUTCHours();
-
-                        // Log(
-                        //     mFrom.getUTCHours(),
-                        //     mTo.getUTCHours(),
-                        //     fromDate.getUTCHours(),
-                        //     toDate.getUTCHours(),
-                        //     matchesDuration,
-                        // );
-
-                        if (!matchesDuration) {
-                            continue;
-                        }
-                        // Calculate number of hours in reservation
-                        const hours = reservationHours;
-                        mPrice = amount * hours;
-                        sortedPlans[i].appliedTimes = hours;
-                        this.appliedReservationPlans.push(sortedPlans[i]);
-                        this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
-                        break;
-                    } else {
-                        // For MINUTES type
-                        mPrice = amount;
-                        sortedPlans[i].appliedTimes = 1;
-                        this.appliedReservationPlans.push(sortedPlans[i]);
-                        this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
-                        break;
+                    // Only apply the plan if reservation duration matches plan duration
+                    if (reservationHours !== duration) {
+                        continue;
                     }
+
+                    // For HOURLY plans, amount is the total price for the duration, not per-hour
+                    mPrice = amount; // Fixed: 2500 total, not 2500 * hours
+                    sortedPlans[i].appliedTimes = 1; // Applied once for the duration
+                    this.appliedReservationPlans.push(sortedPlans[i]);
+                    this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
+                    break;
+                } else {
+                    // For MINUTES type
+                    mPrice = amount;
+                    sortedPlans[i].appliedTimes = 1;
+                    this.appliedReservationPlans.push(sortedPlans[i]);
+                    this.logAppliedPrices(sortedPlans[i], mPrice, mFrom, mTo);
+                    break;
                 }
+            } else if (fromDate && toDate) {
+                // Handle plans with date ranges that don't meet 50% threshold
                 const startMs = fromDate.getTime();
                 const endMs = toDate.getTime();
                 let isEligible: boolean = false;
@@ -347,7 +350,7 @@ export default class ReservationPriceCalculator {
 
     private filterAndSortPlans(plans: ReservationPricePlan[], type: SpacePricePlanType, maxDuration: number) {
         return plans
-            .filter((p) => p.type === type && p.duration <= maxDuration)
+            .filter((p) => p.type === type) // Remove duration filter to allow longer plans for shorter requests
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
             .sort((a, b) => {
                 if (a.fromDate && b.fromDate) return b.fromDate.getTime() - a.fromDate.getTime();
