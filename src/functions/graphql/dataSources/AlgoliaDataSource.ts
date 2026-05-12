@@ -52,15 +52,19 @@ export default class AlgoliaDataSource<R extends AlgoliaRecord = AlgoliaRecord> 
 
     async deleteObject(objectID: string) {
         try {
-            this.index.deleteObject(objectID);
+            const result = await this.index.deleteObject(objectID);
+            Log("[ALGOLIA LIB]: deleted object");
+            Log("[ALGOLIA LIB]: ", result);
+            return result;
         } catch (error) {
             Log("[FAILED]: removing record in algolia", error);
+            throw error;
         }
     }
 
     async deleteObjects(objectIDs: Array<string>) {
         try {
-            this.index.deleteObjects(objectIDs);
+            await this.index.deleteObjects(objectIDs);
         } catch (error) {
             Log("[FAILED]: removing records in algolia", error);
         }

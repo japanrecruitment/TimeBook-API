@@ -35,30 +35,27 @@ const publishSpace: PublishSpace = async (_, { id, publish }, { authData, store,
         if (publish === true && space.published === true)
             throw new GqlError({ code: "BAD_REQUEST", message: "スペースはすでに公開されています" });
 
-        // Allow unpublishing even if already unpublished to ensure Algolia sync
-        // Remove the check that prevents unpublishing already unpublished spaces
-
+        // Validation checks
         if (!space.name) throw new GqlError({ code: "BAD_REQUEST", message: "スペースのタイトルが空です" });
-
         if (!space.address?.id)
             throw new GqlError({ code: "BAD_REQUEST", message: "スペースの住所が指定されていません" });
-
         if (!space.pricePlans || space.pricePlans.length <= 0)
             throw new GqlError({ code: "BAD_REQUEST", message: "スペースには少なくとも 1 つの料金プランが必要です" });
-
         if (!space.spaceTypes || space.spaceTypes.length <= 0)
             throw new GqlError({
                 code: "BAD_REQUEST",
                 message: "スペースには少なくとも 1 つのスペース タイプが必要です",
             });
-
         if (!space.photos || space.photos.length <= 0)
             throw new GqlError({ code: "BAD_REQUEST", message: "スペースには少なくとも 1 枚の写真が必要です" });
 
-        await store.space.update({ where: { id }, data: { published: publish } });
+        // REMOVED: Don't update DB here anymore
+        // await store.space.update({ where: { id }, data: { published: publish } });
+        
         Log({ publish, spacePublished: space.published }, "publish");
+        
         if (publish) {
-            // publish object to Algolia
+            // Publish to Algolia FIRST
             Log("Publishing space to Algolia...");
             const defaultPhoto = space.photos.filter((photo) => photo.isDefault);
             const thumbnailPhoto = defaultPhoto.length > 0 ? defaultPhoto[0] : space.photos[0];
@@ -85,18 +82,21 @@ const publishSpace: PublishSpace = async (_, { id, publish }, { authData, store,
                 _geoloc: { lat: space.address?.latitude, lng: space.address?.longitude },
             });
             Log("Space successfully published to Algolia");
+            
+            // THEN update database
+            await store.space.update({ where: { id }, data: { published: true } });
+            
             return { message: `スペースが公開されました` };
         } else {
-            // unpublish object from Algolia
+            // Unpublish from Algolia FIRST
             Log("Unpublishing space from Algolia...");
             Log({ spaceId: id, currentPublishedStatus: space.published });
 
             try {
-                // First, delete from Algolia
                 const deleteResponse = await dataSources.spaceAlgolia.deleteObject(id);
                 Log("Algolia deleteObject response:", deleteResponse);
                 
-                // Then update the database only if Algolia succeeded
+                // THEN update database only if Algolia succeeded
                 await store.space.update({ where: { id }, data: { published: false } });
                 
                 Log("Space successfully unpublished from Algolia");
@@ -104,7 +104,6 @@ const publishSpace: PublishSpace = async (_, { id, publish }, { authData, store,
             } catch (algoliaError) {
                 Log("Algolia delete error:", algoliaError);
 
-                // Check if it's a "not found" error (which is actually OK)
                 if (algoliaError.message && algoliaError.message.includes("ObjectID does not exist")) {
                     Log("Object not found in Algolia - this is OK, updating DB anyway");
                     await store.space.update({ where: { id }, data: { published: false } });
@@ -120,7 +119,7 @@ const publishSpace: PublishSpace = async (_, { id, publish }, { authData, store,
         }
     } catch (error) {
         Log("PublishSpace error:", error);
-        throw error; // Re-throw the error so it's not silently swallowed
+        throw error;
     }
 };
 
