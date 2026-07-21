@@ -104,8 +104,9 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
     const hostAccount = await store.account.findUnique({
         where: { id: reservation.packagePlan.hotel.account.id },
-        select: { email: true, host: { select: { name: true } } },
+        select: { email: true, host: { select: { name: true, commissionRate: true } } },
     });
+    console.log(hostAccount,"host")
     if (!isHost) {
         const cancelPolicyRates = reservation.packagePlan.cancelPolicy?.rates;
         if (isEmpty(cancelPolicyRates)) {
@@ -220,7 +221,12 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     }
 
     const amount = reservation.transaction.amount - cancellationChargeRate * reservation.transaction.amount;
-    const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+    // const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+    const hostCommissionRate = hostAccount.host?.commissionRate ?? 30; // default to 30
+    const applicationFeeAmount = parseInt(
+        (amount * (hostCommissionRate / 100)).toString()
+    );
+
     // Log(amount, "Amount")
 
     const paymentIntent = reservation.transaction?.responseReceivedLog as any;

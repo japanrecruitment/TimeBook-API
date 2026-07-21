@@ -23,6 +23,7 @@ export type HostSelect = {
     id: boolean;
     type: boolean;
     name: boolean;
+    commissionRate: boolean;
     approved: true;
     suspended: true;
     accountId: true;
@@ -37,7 +38,7 @@ export const toHostSelect = (selections, defaultValue: any = false): PrismaSelec
     const photoIdSelect = toPhotoSelect(selections?.photoId);
     const profilePhotoSelect = toPhotoSelect(selections?.profilePhoto);
     const licenseSelect = toLicenseSelect(selections?.license);
-    const hostSelect = pick(selections, "id", "type", "name", "stripeAccountId");
+    const hostSelect = pick(selections, "id", "type", "name", "commissionRate", "stripeAccountId");
 
     if (isEmpty(hostSelect) && !photoIdSelect && !profilePhotoSelect && !selections.stripeAccount && !licenseSelect)
         return defaultValue;
@@ -46,6 +47,7 @@ export const toHostSelect = (selections, defaultValue: any = false): PrismaSelec
         select: {
             ...hostSelect,
             id: true,
+            commissionRate: true,
             approved: true,
             suspended: true,
             accountId: true,
@@ -105,6 +107,7 @@ export const hostObjectTypeDefs = gql`
         id: ID!
         type: HostType
         name: String
+        commissionRate: Int
         approved: Boolean
         photoId: Photo
         profilePhoto: Photo

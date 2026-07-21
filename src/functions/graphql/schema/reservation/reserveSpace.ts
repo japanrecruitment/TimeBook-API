@@ -150,6 +150,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                             select: {
                                 name: true,
                                 stripeAccountId: true,
+                                commissionRate: true,
                             },
                         },
                     },
@@ -407,7 +408,11 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         let paymentIntent: Stripe.PaymentIntent;
         if (amount > 0) {
-            const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+            // const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+            const hostCommissionRate = space.account.host?.commissionRate ?? 30; // default to 30
+            const applicationFeeAmount = parseInt(
+                (amount * (hostCommissionRate / 100)).toString()
+            );
             const transferAmount = amount - applicationFeeAmount;
             Log(amount, applicationFeeAmount, transferAmount);
 

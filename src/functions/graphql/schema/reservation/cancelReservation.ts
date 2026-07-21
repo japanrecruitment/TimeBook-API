@@ -64,6 +64,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
                                 select: {
                                     suspended: true,
                                     name: true,
+                                    commissionRate: true,
                                 },
                             },
                         },
@@ -292,7 +293,11 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     }
 
     const amount = cancellationChargeRate * reservation.transaction.amount;
-    const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+    // const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+    const hostCommissionRate = reservation.space.account.host?.commissionRate ?? 30; // default to 30
+    const applicationFeeAmount = parseInt(
+        (amount * (hostCommissionRate / 100)).toString()
+    );
 
     const paymentIntent = reservation.transaction?.responseReceivedLog as any;
 

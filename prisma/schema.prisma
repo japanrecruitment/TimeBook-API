@@ -212,6 +212,7 @@ model Host {
     type            HostType
     name            String    @db.VarChar(255)
     stripeAccountId String?   @db.VarChar(255)
+    commissionRate  Int       @default(30)
     approved        Boolean   @default(false)
     suspended       Boolean   @default(false)
     createdAt       DateTime  @default(now()) @db.Timestamp(6)
