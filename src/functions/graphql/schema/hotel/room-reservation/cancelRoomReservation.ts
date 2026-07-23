@@ -93,20 +93,60 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     const stripe = new StripeLib();
     await stripe.cancelPaymentIntent(reservation.transaction.paymentIntentId);
 
+    const hostAccount = await store.account.findUnique({
+        where: { id: reservation.packagePlan.hotel.account.id },
+        select: { email: true, host: { select: { name: true, commissionRate: true } } },
+    });
+
+    const userFullName =
+        `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() ||
+        reservation.reservee.email;
+
     if (reservation.packagePlan.hotel.account.suspended || reservation.packagePlan.hotel.account.host.suspended) {
         await store.hotelRoomReservation.update({
             where: { id: hotelRoomReservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
+
+        await Promise.all([
+            // Email to customer
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
+                recipientEmail: reservation.reservee.email,
+                recipientName: userFullName,
+                spaceId: hotelRoomReservationId,
+                reservationId: reservation.reservationId,
+                spaceName: reservation.hotelRoom.name,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                planName: reservation.packagePlan.name,
+                options: "",
+                totalPrice: reservation.transaction?.amount?.toString() || "0",
+                cancellationReason: remarks,
+            }),
+            // Email to host
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
+                recipientEmail: hostAccount.email,
+                recipientName: hostAccount.host?.name || hostAccount.email,
+                spaceId: hotelRoomReservationId,
+                reservationId: reservation.reservationId,
+                spaceName: reservation.hotelRoom.name,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                planName: reservation.packagePlan.name,
+                options: "",
+                totalPrice: reservation.transaction?.amount?.toString() || "0",
+                cancellationReason: remarks,
+            }),
+        ]);
+
         return { message: "予約がキャンセルされました。" };
     }
 
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
-    const hostAccount = await store.account.findUnique({
-        where: { id: reservation.packagePlan.hotel.account.id },
-        select: { email: true, host: { select: { name: true, commissionRate: true } } },
-    });
-    console.log(hostAccount,"host")
     if (!isHost) {
         const cancelPolicyRates = reservation.packagePlan.cancelPolicy?.rates;
         if (isEmpty(cancelPolicyRates)) {

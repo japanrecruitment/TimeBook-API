@@ -11,6 +11,7 @@ import { myHotelsResolvers, myHotelsTypeDefs } from "./myHotels";
 import { packagePlanResolvers, packagePlanTypeDefs } from "./package-plan";
 import { priceSchemeResolvers, priceSchemeTypeDefs } from "./price-scheme";
 import { removeHotelPhotoResolvers, removeHotelPhotoTypeDefs } from "./removeHotelPhoto";
+import { removeHotelResolvers, removeHotelTypeDefs } from "./removeHotel";
 import { updateHotelAddressResolvers, updateHotelAddressTypeDefs } from "./updateHotelAddress";
 import { updateHotelResolvers, updateHotelTypeDefs } from "./updateHotel";
 import { priceOverrideResolvers, priceOverrideTypeDefs } from "./price-override";
@@ -34,6 +35,7 @@ export const typeDefs = mergeTypeDefs([
     priceSchemeTypeDefs,
     publishHotelTypeDefs,
     removeHotelPhotoTypeDefs,
+    removeHotelTypeDefs,
     roomReservationTypeDefs,
     updateHotelTypeDefs,
     updateHotelAddressTypeDefs,
@@ -55,6 +57,7 @@ export const resolvers = mergeResolvers([
     priceSchemeResolvers,
     publishHotelResolvers,
     removeHotelPhotoResolvers,
+    removeHotelResolvers,
     roomReservationResolvers,
     updateHotelResolvers,
     updateHotelAddressResolvers,

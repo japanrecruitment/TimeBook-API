@@ -6,6 +6,7 @@ import { myPackagePlansResolvers, myPackagePlansTypeDefs } from "./myPackagePlan
 import { packagePlanByIdResolvers, packagePlanByIdTypeDefs } from "./packagePlanById";
 import { packagePlanObjectResolvers, packagePlanObjectTypeDefs } from "./PackagePlanObject";
 import { packagePlanRoomTypeObjectResolvers, packagePlanRoomTypeObjectTypeDefs } from "./PackagePlanRoomTypeObject";
+import { removePackagePlanResolvers, removePackagePlanTypeDefs } from "./removePackagePlan";
 import { removePackagePlanPhotoResolvers, removePackagePlanPhotoTypeDefs } from "./removePackagePlanPhoto";
 import {
     removeRoomTypesFromPackagePlanResolvers,
@@ -25,6 +26,7 @@ export const packagePlanTypeDefs = mergeTypeDefs([
     packagePlanByIdTypeDefs,
     packagePlanObjectTypeDefs,
     packagePlanRoomTypeObjectTypeDefs,
+    removePackagePlanTypeDefs,
     removePackagePlanPhotoTypeDefs,
     removeRoomTypesFromPackagePlanTypeDefs,
     updatePackagePlanTypeDefs,
@@ -39,6 +41,7 @@ export const packagePlanResolvers = mergeResolvers([
     packagePlanByIdResolvers,
     packagePlanObjectResolvers,
     packagePlanRoomTypeObjectResolvers,
+    removePackagePlanResolvers,
     removePackagePlanPhotoResolvers,
     removeRoomTypesFromPackagePlanResolvers,
     updatePackagePlanResolvers,

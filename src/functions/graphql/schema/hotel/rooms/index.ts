@@ -4,6 +4,7 @@ import { addHotelRoomPhotosResolvers, addHotelRoomPhotosTypeDefs } from "./addHo
 import { hotelRoomByIdResolvers, hotelRoomByIdTypeDefs } from "./hotelRoomById";
 import { hotelRoomObjectResolvers, hotelRoomObjectTypeDefs } from "./HotelRoomObject";
 import { myHotelRoomsResolvers, myHotelRoomsTypeDefs } from "./myHotelRooms";
+import { removeHotelRoomResolvers, removeHotelRoomTypeDefs } from "./removeHotelRoom";
 import { removeHotelRoomPhotoResolvers, removeHotelRoomPhotoTypeDefs } from "./removeHotelRoomPhoto";
 import { updateHotelRoomResolvers, updateHotelRoomTypeDefs } from "./updateHotelRoom";
 import {
@@ -17,6 +18,7 @@ export const hotelRoomTypeDefs = mergeTypeDefs([
     hotelRoomByIdTypeDefs,
     hotelRoomObjectTypeDefs,
     myHotelRoomsTypeDefs,
+    removeHotelRoomTypeDefs,
     removeHotelRoomPhotoTypeDefs,
     updateHotelRoomTypeDefs,
     updateHotelRoomPriceSettingTypeDefs,
@@ -28,6 +30,7 @@ export const hotelRoomResolvers = mergeResolvers([
     hotelRoomByIdResolvers,
     hotelRoomObjectResolvers,
     myHotelRoomsResolvers,
+    removeHotelRoomResolvers,
     removeHotelRoomPhotoResolvers,
     updateHotelRoomResolvers,
     updateHotelRoomPriceSettingResolvers,
