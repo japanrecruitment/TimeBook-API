@@ -55,7 +55,7 @@ const approveReservation: ApproveReservation = async (_, { reservationId }, { au
     await Promise.all([
         // Email to customer
         addEmailToQueue<ReservationCompletedData>({
-            template: "reservation-completed",
+            template: "reservation-completed-user",
             recipientEmail: reservation.reservee.email,
             recipientName: reservation.reservee.userProfile 
                 ? `${reservation.reservee.userProfile.firstName} ${reservation.reservee.userProfile.lastName}`

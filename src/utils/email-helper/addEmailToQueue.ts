@@ -1,34 +1,31 @@
-import AWS from "aws-sdk";
-import { environment } from "@utils/environment";
 import { Log } from "@utils/logger";
-import { EmailTemplates } from "./templates/emailTemplates";
+import { EmailTemplates, emailTemplates } from "./templates/emailTemplates";
 import { EmailData } from "./templates/generateTemplate";
+import { sendEmail } from "./sendEmail";
+import { validateEmail, validateEmailOnCertainDomain, verifyEmailViaSMTP } from "./validateEmail";
 
 export type EmailQueueData<D extends EmailData = EmailData> = D & { template: EmailTemplates };
 
-// Configure AWS with environment credentials
-const SQS = new AWS.SQS({
-    apiVersion: "2012-11-05",
-    region: environment.AWS_REGION,
-    accessKeyId: environment.AWS_ACCESS_KEY_ID,
-    secretAccessKey: environment.AWS_SECRET_ACCESS_KEY,
-});
-
+// NOTE: Emails are now rendered and sent directly from this process (EC2) instead of
+// being pushed to SQS for the `email-worker` Lambda to render. The templates in
+// ./templates are therefore applied at runtime here, so editing a template only
+// requires redeploying this app — no `serverless deploy` of the email-worker Lambda.
 export const addEmailToQueue = async <D extends EmailData = EmailData>(data: EmailQueueData<D>) => {
     try {
-        Log("[STARTED]: Adding to queue");
+        Log("[STARTED]: Sending email");
         Log(data);
 
-        const result = await SQS.sendMessage({
-            DelaySeconds: 0,
-            QueueUrl: environment.EMAIL_QUEUE_URL,
-            MessageBody: JSON.stringify(data),
-        }).promise();
-        Log("[COMPLETED]: Adding to queue");
-        Log(result);
+        const { template, ...emailData } = data;
+        const { to, subject, body } = emailTemplates[template](emailData as any);
+
+        if (!validateEmail(to)) return;
+        if (!validateEmailOnCertainDomain(to) && !(await verifyEmailViaSMTP(to))) return;
+
+        const result = await sendEmail(to, subject, body);
+        Log("[COMPLETED]: Sending email");
         return result;
     } catch (error) {
-        Log("[FAILED]: Adding to queue");
+        Log("[FAILED]: Sending email");
         Log(error);
     }
 };

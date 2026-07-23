@@ -464,7 +464,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         if (!space.needApproval) {
             await Promise.all([
                 addEmailToQueue<ReservationCompletedData>({
-                    template: "reservation-completed",
+                    template: "reservation-completed-user",
                     recipientEmail: email,
                     recipientName: userFullName,
                     spaceId,
@@ -496,7 +496,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         } else {
             await Promise.all([
                 addEmailToQueue<ReservationReceivedData>({
-                    template: "reservation-received",
+                    template: "reservation-received-user",
                     recipientEmail: email,
                     recipientName: userFullName,
                     spaceId,

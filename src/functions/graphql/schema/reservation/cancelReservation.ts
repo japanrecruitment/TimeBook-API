@@ -131,8 +131,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: userFullName,
                 spaceId: reservation.space.account.id,
@@ -190,8 +190,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
             await Promise.all([
                 // Email to customer
-                addEmailToQueue<ReservationFailedData>({
-                    template: "reservation-failed",
+                addEmailToQueue<ReservationCancelledData>({
+                    template: "reservation-cancelled-user",
                     recipientEmail: reservation.reservee.email,
                     recipientName: userFullName,
                     spaceId: reservation.space.account.id,
@@ -258,8 +258,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: userFullName,
                 spaceId: reservation.space.account.id,
@@ -322,8 +322,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: userFullName,
                 spaceId: reservation.space.account.id,
@@ -400,8 +400,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
     await Promise.all([
         // Email to customer
-        addEmailToQueue<ReservationFailedData>({
-            template: "reservation-failed",
+        addEmailToQueue<ReservationCancelledData>({
+            template: "reservation-cancelled-user",
             recipientEmail: reservation.reservee.email,
             recipientName: userFullName,
             spaceId: reservation.space.account.id,

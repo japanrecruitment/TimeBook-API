@@ -10,7 +10,7 @@ import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
 import { Log } from "@utils/logger";
-import { addEmailToQueue, ReservationFailedData } from "@utils/email-helper";
+import { addEmailToQueue, ReservationFailedData, ReservationCancelledData } from "@utils/email-helper";
 
 type CancelRoomReservationInput = {
     hotelRoomReservationId: string;
@@ -110,8 +110,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: userFullName,
                 spaceId: hotelRoomReservationId,
@@ -159,8 +159,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
             await Promise.all([
                 // Email to customer
-                addEmailToQueue<ReservationFailedData>({
-                    template: "reservation-cancelled",
+                addEmailToQueue<ReservationCancelledData>({
+                    template: "reservation-cancelled-user",
                     recipientEmail: reservation.reservee.email,
                     recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
                     spaceId: hotelRoomReservationId,
@@ -177,7 +177,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                 }),
                 // Email to host
                 addEmailToQueue<ReservationFailedData>({
-                    template: "reservation-cancelled",
+                    template: "reservation-failed",
                     recipientEmail: hostAccount.email,
                     recipientName: hostAccount.host?.name || hostAccount.email,
                     spaceId: hotelRoomReservationId,
@@ -222,8 +222,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
                 spaceId: hotelRoomReservationId,
@@ -281,8 +281,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
                 spaceId: hotelRoomReservationId,
@@ -350,8 +350,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
     await Promise.all([
         // Email to customer
-        addEmailToQueue<ReservationFailedData>({
-            template: "reservation-failed",
+        addEmailToQueue<ReservationCancelledData>({
+            template: "reservation-cancelled-user",
             recipientEmail: reservation.reservee.email,
             recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
             spaceId: hotelRoomReservationId,

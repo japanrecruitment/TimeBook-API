@@ -539,7 +539,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
         }
         await Promise.all([
             addEmailToQueue<ReservationReceivedData>({
-                template: "reservation-received",
+                template: "reservation-received-user",
                 recipientEmail: email,
                 recipientName: userFullName,
                 spaceId: hotelRoom.id,
