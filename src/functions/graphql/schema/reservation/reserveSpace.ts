@@ -477,6 +477,20 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                     options: "",
                     totalPrice: amount?.toString() ?? "0",
                 }),
+                addEmailToQueue<ReservationCompletedData>({
+                    template: "reservation-completed",
+                    recipientEmail: space.account.email,
+                    recipientName: space.account.host?.name || "",
+                    spaceId,
+                    reservationId,
+                    spaceName: space.name,
+                    checkInDate: fromDateTime.toISOString().split("T")[0],
+                    checkInTime: fromDateTime.toTimeString().slice(0, 5),
+                    checkOutTime: _toDateTime.toDate().toTimeString().slice(0, 5),
+                    planName: space.name,
+                    options: "",
+                    totalPrice: amount?.toString() ?? "0",
+                }),
                 expoSendNotification([{ tokens: notificationTokens, body: "Reservation Complete" }]),
             ]);
         } else {
