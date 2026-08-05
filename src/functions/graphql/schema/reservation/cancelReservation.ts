@@ -9,6 +9,7 @@ import Stripe from "stripe";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
+import { calculateApplicationFeeAmount } from "@utils/commission";
 import { addEmailToQueue, ReservationFailedData, ReservationCancelledData } from "@utils/email-helper";
 
 type CancelReservationInput = {
@@ -64,7 +65,9 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
                                 select: {
                                     suspended: true,
                                     name: true,
+                                    commissionType: true,
                                     commissionRate: true,
+                                    commissionYen: true,
                                 },
                             },
                         },
@@ -293,11 +296,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     }
 
     const amount = cancellationChargeRate * reservation.transaction.amount;
-    // const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
-    const hostCommissionRate = reservation.space.account.host?.commissionRate ?? 30; // default to 30
-    const applicationFeeAmount = parseInt(
-        (amount * (hostCommissionRate / 100)).toString()
-    );
+    const applicationFeeAmount = calculateApplicationFeeAmount(amount, reservation.space.account.host);
 
     const paymentIntent = reservation.transaction?.responseReceivedLog as any;
 

@@ -8,6 +8,7 @@ import {
 } from "@utils/email-helper";
 import { appConfig } from "@utils/appConfig";
 import { Log } from "@utils/logger";
+import { calculateApplicationFeeAmount } from "@utils/commission";
 import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import Stripe from "stripe";
@@ -211,7 +212,9 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
                                             select: {
                                                 name: true,
                                                 stripeAccountId: true,
-                                                commissionRate: true
+                                                commissionType: true,
+                                                commissionRate: true,
+                                                commissionYen: true,
                                             },
                                         },
                                     },
@@ -485,11 +488,7 @@ const reserveHotelRoom: ReserveHotelRoom = async (_, { input }, { authData, stor
 
         let paymentIntent: Stripe.PaymentIntent;
         if (amount > 0) {
-            // const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
-            const hostCommissionRate = hotelRoom.hotel.account.host?.commissionRate ?? 30; // default to 30
-            const applicationFeeAmount = parseInt(
-                (amount * (hostCommissionRate / 100)).toString()
-            );
+            const applicationFeeAmount = calculateApplicationFeeAmount(amount, hotelRoom.hotel.account.host);
             const transferAmount = amount - applicationFeeAmount;
             Log(amount, applicationFeeAmount, transferAmount);
 

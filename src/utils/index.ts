@@ -1,6 +1,7 @@
 export * from "./algolia";
 export * from "./appConfig";
 export * from "./authUtils";
+export * from "./commission";
 export * from "./compute";
 export * from "./date-utils";
 export * from "./environment";

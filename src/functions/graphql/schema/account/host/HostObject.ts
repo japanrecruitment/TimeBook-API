@@ -23,7 +23,9 @@ export type HostSelect = {
     id: boolean;
     type: boolean;
     name: boolean;
+    commissionType: boolean;
     commissionRate: boolean;
+    commissionYen: boolean;
     approved: true;
     suspended: true;
     accountId: true;
@@ -33,12 +35,21 @@ export type HostSelect = {
     stripeAccountId: boolean;
 };
 
-export const toHostSelect = (selections, defaultValue: any = false): PrismaSelect<HostSelect> => {
+export const toHostSelect = (selections:any, defaultValue: any = false): PrismaSelect<HostSelect> => {
     if (!selections || isEmpty(selections)) return defaultValue;
     const photoIdSelect = toPhotoSelect(selections?.photoId);
     const profilePhotoSelect = toPhotoSelect(selections?.profilePhoto);
     const licenseSelect = toLicenseSelect(selections?.license);
-    const hostSelect = pick(selections, "id", "type", "name", "commissionRate", "stripeAccountId");
+    const hostSelect = pick(
+        selections,
+        "id",
+        "type",
+        "name",
+        "commissionType",
+        "commissionRate",
+        "commissionYen",
+        "stripeAccountId",
+    );
 
     if (isEmpty(hostSelect) && !photoIdSelect && !profilePhotoSelect && !selections.stripeAccount && !licenseSelect)
         return defaultValue;
@@ -47,7 +58,9 @@ export const toHostSelect = (selections, defaultValue: any = false): PrismaSelec
         select: {
             ...hostSelect,
             id: true,
+            commissionType: true,
             commissionRate: true,
+            commissionYen: true,
             approved: true,
             suspended: true,
             accountId: true,
@@ -87,6 +100,11 @@ export const hostObjectTypeDefs = gql`
         Corporate
     }
 
+    enum CommissionType {
+        Percentage
+        Fixed
+    }
+
     type Balance {
         amount: Int
         currency: String
@@ -107,7 +125,10 @@ export const hostObjectTypeDefs = gql`
         id: ID!
         type: HostType
         name: String
+        commissionType: CommissionType
         commissionRate: Int
+        commissionYen: Int
+
         approved: Boolean
         photoId: Photo
         profilePhoto: Photo
