@@ -14,6 +14,8 @@ COPY . /usr/src
 RUN apk add --update openssl redis
 
 # install deps and run postinstall in one step
+# skip puppeteer's chromium download — only needed by the (disabled) prisma erd/dbml generators
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN yarn install && yarn postinstall
 
 #expose port

@@ -9,6 +9,7 @@ import {
 } from "@utils/email-helper";
 import { appConfig } from "@utils/appConfig";
 import { Log } from "@utils/logger";
+import { calculateApplicationFeeAmount } from "@utils/commission";
 import { omit } from "@utils/object-helper";
 import { gql } from "apollo-server-core";
 import Stripe from "stripe";
@@ -41,15 +42,17 @@ type ReserveSpaceInput = {
 type ReserveSpaceArgs = { input: ReserveSpaceInput };
 
 type ReserveSpaceResult = {
+    id: string;
     transactionId: string;
-    intentId: string;
-    intentCode: string;
-    amount: number;
+    intentId?: string;
+    intentCode?: string | null;
+    amount?: number;
     description: string;
-    currency: string;
-    subscriptionPrice: number;
-    subscriptionUnit: number;
-    paymentMethodTypes: string[];
+    currency?: string;
+    subscriptionPrice?: number;
+    subscriptionUnit?: number;
+    paymentMethodTypes?: string[];
+    reservationId: string;
 };
 
 type ReserveSpace = IFieldResolver<any, Context, ReserveSpaceArgs, Promise<ReserveSpaceResult>>;
@@ -150,6 +153,9 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
                             select: {
                                 name: true,
                                 stripeAccountId: true,
+                                commissionType: true,
+                                commissionRate: true,
+                                commissionYen: true,
                             },
                         },
                     },
@@ -407,7 +413,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
 
         let paymentIntent: Stripe.PaymentIntent;
         if (amount > 0) {
-            const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+            const applicationFeeAmount = calculateApplicationFeeAmount(amount, space.account.host);
             const transferAmount = amount - applicationFeeAmount;
             Log(amount, applicationFeeAmount, transferAmount);
 
@@ -459,9 +465,23 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         if (!space.needApproval) {
             await Promise.all([
                 addEmailToQueue<ReservationCompletedData>({
-                    template: "reservation-completed",
+                    template: "reservation-completed-user",
                     recipientEmail: email,
                     recipientName: userFullName,
+                    spaceId,
+                    reservationId,
+                    spaceName: space.name,
+                    checkInDate: fromDateTime.toISOString().split("T")[0],
+                    checkInTime: fromDateTime.toTimeString().slice(0, 5),
+                    checkOutTime: _toDateTime.toDate().toTimeString().slice(0, 5),
+                    planName: space.name,
+                    options: "",
+                    totalPrice: amount?.toString() ?? "0",
+                }),
+                addEmailToQueue<ReservationCompletedData>({
+                    template: "reservation-completed",
+                    recipientEmail: space.account.email,
+                    recipientName: space.account.host?.name || "",
                     spaceId,
                     reservationId,
                     spaceName: space.name,
@@ -477,7 +497,7 @@ const reserveSpace: ReserveSpace = async (_, { input }, { authData, store }) => 
         } else {
             await Promise.all([
                 addEmailToQueue<ReservationReceivedData>({
-                    template: "reservation-received",
+                    template: "reservation-received-user",
                     recipientEmail: email,
                     recipientName: userFullName,
                     spaceId,
@@ -567,3 +587,4 @@ export const reserveSpaceTypeDefs = gql`
 export const reserveSpaceResolvers = {
     Mutation: { reserveSpace },
 };
+

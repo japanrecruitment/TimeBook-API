@@ -1,0 +1,2 @@
+ALTER TYPE "BuildingType" ADD VALUE 'AIR_BNB';
+ALTER TYPE "BuildingType" ADD VALUE 'FARM_STAY';

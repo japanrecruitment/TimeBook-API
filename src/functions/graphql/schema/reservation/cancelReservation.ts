@@ -9,6 +9,7 @@ import Stripe from "stripe";
 import { Context } from "../../context";
 import { GqlError } from "../../error";
 import { Result } from "../core/result";
+import { calculateApplicationFeeAmount } from "@utils/commission";
 import { addEmailToQueue, ReservationFailedData, ReservationCancelledData } from "@utils/email-helper";
 
 type CancelReservationInput = {
@@ -64,6 +65,9 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
                                 select: {
                                     suspended: true,
                                     name: true,
+                                    commissionType: true,
+                                    commissionRate: true,
+                                    commissionYen: true,
                                 },
                             },
                         },
@@ -130,8 +134,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: userFullName,
                 spaceId: reservation.space.account.id,
@@ -189,8 +193,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
             await Promise.all([
                 // Email to customer
-                addEmailToQueue<ReservationFailedData>({
-                    template: "reservation-failed",
+                addEmailToQueue<ReservationCancelledData>({
+                    template: "reservation-cancelled-user",
                     recipientEmail: reservation.reservee.email,
                     recipientName: userFullName,
                     spaceId: reservation.space.account.id,
@@ -257,8 +261,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: userFullName,
                 spaceId: reservation.space.account.id,
@@ -292,7 +296,7 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
     }
 
     const amount = cancellationChargeRate * reservation.transaction.amount;
-    const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+    const applicationFeeAmount = calculateApplicationFeeAmount(amount, reservation.space.account.host);
 
     const paymentIntent = reservation.transaction?.responseReceivedLog as any;
 
@@ -317,8 +321,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: userFullName,
                 spaceId: reservation.space.account.id,
@@ -395,8 +399,8 @@ const cancelReservation: CancelReservation = async (_, { input }, { authData, st
 
     await Promise.all([
         // Email to customer
-        addEmailToQueue<ReservationFailedData>({
-            template: "reservation-failed",
+        addEmailToQueue<ReservationCancelledData>({
+            template: "reservation-cancelled-user",
             recipientEmail: reservation.reservee.email,
             recipientName: userFullName,
             spaceId: reservation.space.account.id,

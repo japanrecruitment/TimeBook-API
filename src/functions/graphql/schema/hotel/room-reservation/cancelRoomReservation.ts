@@ -10,7 +10,8 @@ import { Context } from "../../../context";
 import { GqlError } from "../../../error";
 import { Result } from "../../core/result";
 import { Log } from "@utils/logger";
-import { addEmailToQueue, ReservationFailedData } from "@utils/email-helper";
+import { calculateApplicationFeeAmount } from "@utils/commission";
+import { addEmailToQueue, ReservationFailedData, ReservationCancelledData } from "@utils/email-helper";
 
 type CancelRoomReservationInput = {
     hotelRoomReservationId: string;
@@ -25,7 +26,7 @@ type CancelRoomReservationResult = Promise<Result>;
 type CancelRoomReservation = IFieldResolver<any, Context, CancelRoomReservationArgs, CancelRoomReservationResult>;
 
 const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { authData, store }) => {
-    const { accountId } = authData;
+    const { accountId } = authData as { accountId: string };
 
     const { hotelRoomReservationId, cancelCharge = 0, remarks } = input;
 
@@ -82,7 +83,7 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
     const isHost = reservation.packagePlan.hotel.account.id === accountId;
 
     const isSuspended = isHost
-        ? reservation.packagePlan.hotel.account.suspended || reservation.packagePlan.hotel.account.host.suspended
+        ? reservation.packagePlan.hotel.account.suspended || reservation?.packagePlan?.hotel?.account?.host?.suspended
         : reservation.reservee.suspended;
     if (isSuspended)
         throw new GqlError({
@@ -91,23 +92,67 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
         });
 
     const stripe = new StripeLib();
-    await stripe.cancelPaymentIntent(reservation.transaction.paymentIntentId);
+    await stripe.cancelPaymentIntent(reservation?.transaction?.paymentIntentId || "");
 
-    if (reservation.packagePlan.hotel.account.suspended || reservation.packagePlan.hotel.account.host.suspended) {
+    const hostAccount = await store.account.findUnique({
+        where: { id: reservation.packagePlan.hotel.account.id },
+        select: {
+            email: true,
+            host: { select: { name: true, commissionType: true, commissionRate: true, commissionYen: true } },
+        },
+    });
+
+    const userFullName =
+        `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() ||
+        reservation.reservee.email;
+
+    if (reservation.packagePlan.hotel.account.suspended || reservation?.packagePlan?.hotel?.account?.host?.suspended) {
         await store.hotelRoomReservation.update({
             where: { id: hotelRoomReservationId },
             data: { status: "CANCELED", remarks, transaction: { update: { status: "CANCELED" } } },
         });
+
+        await Promise.all([
+            // Email to customer
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
+                recipientEmail: reservation.reservee.email,
+                recipientName: userFullName,
+                spaceId: hotelRoomReservationId,
+                reservationId: reservation.reservationId,
+                spaceName: reservation.hotelRoom.name,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                planName: reservation.packagePlan.name,
+                options: "",
+                totalPrice: reservation.transaction?.amount?.toString() || "0",
+                cancellationReason: remarks,
+            }),
+            // Email to host
+            addEmailToQueue<ReservationFailedData>({
+                template: "reservation-failed",
+                recipientEmail: hostAccount?.email || "",
+                recipientName: hostAccount?.host?.name || hostAccount?.email || "",
+                spaceId: hotelRoomReservationId,
+                reservationId: reservation.reservationId,
+                spaceName: reservation.hotelRoom.name,
+                checkInDate: reservation.fromDateTime.toISOString().split("T")[0],
+                checkInTime: reservation.fromDateTime.toTimeString().slice(0, 5),
+                checkOutTime: reservation.toDateTime.toTimeString().slice(0, 5),
+                planName: reservation.packagePlan.name,
+                options: "",
+                totalPrice: reservation.transaction?.amount?.toString() || "0",
+                cancellationReason: remarks,
+            }),
+        ]);
+
         return { message: "予約がキャンセルされました。" };
     }
 
     let cancellationChargeRate = isHost ? cancelCharge / 100 : 0;
-    const hostAccount = await store.account.findUnique({
-        where: { id: reservation.packagePlan.hotel.account.id },
-        select: { email: true, host: { select: { name: true } } },
-    });
     if (!isHost) {
-        const cancelPolicyRates = reservation.packagePlan.cancelPolicy?.rates;
+        const cancelPolicyRates:any = reservation?.packagePlan?.cancelPolicy?.rates;
         if (isEmpty(cancelPolicyRates)) {
             await store.hotelRoomReservation.update({
                 where: { id: hotelRoomReservationId },
@@ -118,8 +163,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
             await Promise.all([
                 // Email to customer
-                addEmailToQueue<ReservationFailedData>({
-                    template: "reservation-cancelled",
+                addEmailToQueue<ReservationCancelledData>({
+                    template: "reservation-cancelled-user",
                     recipientEmail: reservation.reservee.email,
                     recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
                     spaceId: hotelRoomReservationId,
@@ -136,9 +181,9 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
                 }),
                 // Email to host
                 addEmailToQueue<ReservationFailedData>({
-                    template: "reservation-cancelled",
-                    recipientEmail: hostAccount.email,
-                    recipientName: hostAccount.host?.name || hostAccount.email,
+                    template: "reservation-failed",
+                    recipientEmail: hostAccount?.email || "",
+                    recipientName: hostAccount?.host?.name || hostAccount?.email || "",
                     spaceId: hotelRoomReservationId,
                     reservationId: reservation.reservationId,
                     spaceName: reservation.hotelRoom.name,
@@ -181,8 +226,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
                 spaceId: hotelRoomReservationId,
@@ -200,8 +245,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             // Email to host
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
-                recipientEmail: hostAccount.email,
-                recipientName: hostAccount.host?.name || hostAccount.email,
+                recipientEmail: hostAccount?.email || "",
+                recipientName: hostAccount?.host?.name || hostAccount?.email || "",
                 spaceId: hotelRoomReservationId,
                 reservationId: reservation.reservationId,
                 spaceName: reservation.hotelRoom.name,
@@ -219,11 +264,12 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
         return { message: "予約がキャンセルされました。" };
     }
 
-    const amount = reservation.transaction.amount - cancellationChargeRate * reservation.transaction.amount;
-    const applicationFeeAmount = parseInt((amount * (appConfig.platformFeePercent / 100)).toString());
+    const amount = (reservation?.transaction?.amount || 0) - cancellationChargeRate * (reservation?.transaction?.amount || 0);
+    const applicationFeeAmount = calculateApplicationFeeAmount(amount, hostAccount?.host);
+
     // Log(amount, "Amount")
 
-    const paymentIntent = reservation.transaction?.responseReceivedLog as any;
+    const paymentIntent = reservation?.transaction?.responseReceivedLog as any;
 
     if (!paymentIntent && !reservation.subscriptionPrice && !reservation.subscriptionUnit) {
         await store.hotelRoomReservation.update({
@@ -235,8 +281,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
         await Promise.all([
             // Email to customer
-            addEmailToQueue<ReservationFailedData>({
-                template: "reservation-failed",
+            addEmailToQueue<ReservationCancelledData>({
+                template: "reservation-cancelled-user",
                 recipientEmail: reservation.reservee.email,
                 recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
                 spaceId: hotelRoomReservationId,
@@ -254,8 +300,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
             // Email to host
             addEmailToQueue<ReservationFailedData>({
                 template: "reservation-failed",
-                recipientEmail: hostAccount.email,
-                recipientName: hostAccount.host?.name,
+                recipientEmail: hostAccount?.email || "",
+                recipientName: hostAccount?.host?.name || hostAccount?.email || "",
                 spaceId: hotelRoomReservationId,
                 reservationId: reservation.reservationId,
                 spaceName: reservation.hotelRoom.name,
@@ -304,8 +350,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
 
     await Promise.all([
         // Email to customer
-        addEmailToQueue<ReservationFailedData>({
-            template: "reservation-failed",
+        addEmailToQueue<ReservationCancelledData>({
+            template: "reservation-cancelled-user",
             recipientEmail: reservation.reservee.email,
             recipientName: `${reservation.reservee.userProfile?.firstName || ""} ${reservation.reservee.userProfile?.lastName || ""}`.trim() || reservation.reservee.email,
             spaceId: hotelRoomReservationId,
@@ -322,8 +368,8 @@ const cancelRoomReservation: CancelRoomReservation = async (_, { input }, { auth
         // Email to host
         addEmailToQueue<ReservationFailedData>({
             template: "reservation-failed",
-            recipientEmail: hostAccount.email,
-            recipientName: hostAccount.host?.name,
+            recipientEmail: hostAccount?.email || "",
+            recipientName: hostAccount?.host?.name || hostAccount?.email || "",
             spaceId: hotelRoomReservationId,
             reservationId: reservation.reservationId,
             spaceName: reservation.hotelRoom.name,

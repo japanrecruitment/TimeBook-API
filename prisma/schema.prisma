@@ -35,6 +35,11 @@ enum HostType {
     Corporate
 }
 
+enum CommissionType {
+    Percentage
+    Fixed
+}
+
 enum Gender {
     Male
     Female
@@ -212,6 +217,9 @@ model Host {
     type            HostType
     name            String    @db.VarChar(255)
     stripeAccountId String?   @db.VarChar(255)
+    commissionType  CommissionType @default(Percentage)
+    commissionRate  Int       @default(30)
+    commissionYen   Int       @default(0)
     approved        Boolean   @default(false)
     suspended       Boolean   @default(false)
     createdAt       DateTime  @default(now()) @db.Timestamp(6)
