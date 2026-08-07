@@ -291,11 +291,11 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                 } else {
                     if (nAdult) {
                         const charge = priceScheme[mapNumAdultField(nAdult)] || priceScheme.oneAdultCharge;
-                        planAmount += charge * mDatesLen;
+                        planAmount += charge * nAdult * mDatesLen;
                     }
                     if (nChild) {
                         const charge = priceScheme[mapNumChildField(nChild)] || priceScheme.oneChildCharge;
-                        planAmount += charge * mDatesLen;
+                        planAmount += charge * nChild * mDatesLen;
                     }
                 }
                 bookingDates = differenceWith(bookingDates, matchedDates, isEqualDate);
@@ -323,7 +323,8 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                     remDates.map((d) => {
                         const priceSetting = priceSettings.find((ps) => ps.dayOfWeek === d.getDay());
                         return priceSetting
-                            ? priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge
+                            ? (priceSetting.priceScheme[numAdultField] || priceSetting.priceScheme.oneAdultCharge) *
+                                  nAdult
                             : 0;
                     }),
                 );
@@ -334,7 +335,8 @@ const calculateRoomPlanPrice: CalculateRoomPlan = async (_, { input }, { authDat
                     remDates.map((d) => {
                         const priceSetting = priceSettings.find((ps) => ps.dayOfWeek === d.getDay());
                         return priceSetting
-                            ? priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge
+                            ? (priceSetting.priceScheme[numChildField] || priceSetting.priceScheme.oneChildCharge) *
+                                  nChild
                             : 0;
                     }),
                 );
