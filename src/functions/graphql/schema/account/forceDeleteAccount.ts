@@ -1,18 +1,18 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { gql } from "apollo-server-core";
-import { GqlError } from "../../../error";
-import { Context } from "../../../context";
-import { Result } from "../../core/result";
+import { GqlError } from "../../error";
+import { Context } from "../../context";
+import { Result } from "../core/result";
 import { addEmailToQueue } from "@utils/index";
 import { AccountDeactivated } from "@utils/email-helper/templates/account-deactivated";
 
-type ForceDeleteHostAccountArgs = { accountId: string; reason?: string };
+type ForceDeleteAccountArgs = { accountId: string; reason?: string };
 
-type ForceDeleteHostAccountResult = Promise<Result>;
+type ForceDeleteAccountResult = Promise<Result>;
 
-type ForceDeleteHostAccount = IFieldResolver<any, Context, ForceDeleteHostAccountArgs, ForceDeleteHostAccountResult>;
+type ForceDeleteAccount = IFieldResolver<any, Context, ForceDeleteAccountArgs, ForceDeleteAccountResult>;
 
-const forceDeleteHostAccount: ForceDeleteHostAccount = async (_, { accountId, reason }, { store }) => {
+const forceDeleteAccount: ForceDeleteAccount = async (_, { accountId, reason }, { store }) => {
     const account = await store.account.findUnique({
         where: { id: accountId },
         select: { email: true, roles: true, deactivated: true, host: { select: { id: true } } },
@@ -20,10 +20,9 @@ const forceDeleteHostAccount: ForceDeleteHostAccount = async (_, { accountId, re
 
     if (!account) throw new GqlError({ code: "NOT_FOUND", message: "アカウントが見つかりませんでした。" });
 
-    if (!account.roles.includes("host") || !account.host)
-        throw new GqlError({ code: "BAD_REQUEST", message: "ホストアカウントではありません。" });
-
     if (account.deactivated) throw new GqlError({ code: "BAD_REQUEST", message: "アカウントはすでに削除されています。" });
+
+    const isHost = account.roles.includes("host") && !!account.host;
 
     await store.account.update({
         where: { id: accountId },
@@ -31,7 +30,7 @@ const forceDeleteHostAccount: ForceDeleteHostAccount = async (_, { accountId, re
             deactivated: true,
             deactivationReason: reason || "管理者によるアカウント強制削除",
             suspended: true,
-            host: { update: { suspended: true } },
+            ...(isHost && { host: { update: { suspended: true } } }),
         },
     });
 
@@ -41,13 +40,13 @@ const forceDeleteHostAccount: ForceDeleteHostAccount = async (_, { accountId, re
         recipientName: "",
     });
 
-    return { message: `ホストアカウントが強制的に削除されました。` };
+    return { message: `アカウントが強制的に削除されました。` };
 };
 
-export const forceDeleteHostAccountTypeDefs = gql`
+export const forceDeleteAccountTypeDefs = gql`
     type Mutation {
-        forceDeleteHostAccount(accountId: ID!, reason: String): Result @auth(requires: [admin])
+        forceDeleteAccount(accountId: ID!, reason: String): Result @auth(requires: [admin])
     }
 `;
 
-export const forceDeleteHostAccountResolvers = { Mutation: { forceDeleteHostAccount } };
+export const forceDeleteAccountResolvers = { Mutation: { forceDeleteAccount } };
