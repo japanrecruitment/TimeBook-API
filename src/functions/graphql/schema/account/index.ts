@@ -11,6 +11,7 @@ import { verifyEmailResolvers, verifyEmailTypeDefs } from "./verifyEmail";
 import { verifyResetPasswordRequestResolvers, verifyResetPasswordRequestTypeDefs } from "./verifyResetPasswordRequest";
 import { hostResolvers, hostTypeDefs } from "./host";
 import { deactivateAccountResolvers, deactivateAccountTypeDefs } from "./deactivateAccount";
+import { forceDeleteAccountResolvers, forceDeleteAccountTypeDefs } from "./forceDeleteAccount";
 
 export const accountTypeDefs = mergeTypeDefs([
     forgotPasswordTypeDefs,
@@ -25,6 +26,7 @@ export const accountTypeDefs = mergeTypeDefs([
     hostTypeDefs,
     changePasswordTypeDefs,
     deactivateAccountTypeDefs,
+    forceDeleteAccountTypeDefs,
 ]);
 
 export const accountResolvers = mergeResolvers([
@@ -40,4 +42,5 @@ export const accountResolvers = mergeResolvers([
     hostResolvers,
     changePasswordResolvers,
     deactivateAccountResolvers,
+    forceDeleteAccountResolvers,
 ]);
